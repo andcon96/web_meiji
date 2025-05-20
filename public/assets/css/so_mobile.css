@@ -1,0 +1,264 @@
+@media screen and (max-width: 992px) {
+
+    .mini-table {
+      border: 0;
+    }
+
+    .mini-table thead {
+        display: none;
+    }
+
+    .mini-table tr {
+        margin-bottom: 10px;
+        display: block;
+        border-bottom: 15px block #ddd;
+    }
+        
+    .foottr{
+        margin-top : 30px !important;
+        margin-bottom: 60px !important;
+        border-bottom: 0px !important;
+    }
+    .foottr .foot1{
+        border-bottom: 0px  !important;
+        background-color:#007bff;
+        color: white !important;
+        padding:15px !important;
+    }
+        
+    .foottr .foot2{
+        border-bottom: 0px  !important;
+        background-color:#450159;
+        color: white !important;
+        padding:15px !important;
+    }
+        
+    .foottr .footend{
+        background-color: white;
+        padding: 15px !important;
+    }
+
+    .foottr .footerr{
+        border-bottom: 0px  !important;
+        background-color:rgb(154, 27, 27);
+        color: white !important;
+        padding:15px !important;
+        font-size: 13px;
+        font-weight: bold;
+    }
+        
+
+    .mini-table td {
+        display: block;
+        text-align: right !important;
+        font-size: 13px;
+        border-bottom: 1px dotted #ccc;
+    }
+
+    /* .mini-table td:last-child {
+        border-bottom: 0;
+    } */
+
+    .mini-table td:before {
+        content: attr(data-label);
+        float: left !important;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+
+    .select2-selection{
+        text-align: left !important;
+    }
+
+    .nodata{
+        display: none !important;
+    }
+
+    .rowbtn{
+        margin-left: 8px;
+    }
+
+    .btnactionfilter{
+        margin-right: 20px;
+        margin-bottom: 10px;
+    }
+
+    li.page-item {
+
+        display: none;
+    }
+
+    .page-item:first-child,
+    .page-item:nth-child( 2 ),
+    .page-item:nth-last-child( 2 ),
+    .page-item:last-child,
+    .page-item.active,
+    .page-item.disabled {
+
+        display: block;
+    }
+
+    .word-wrap {
+        white-space: pre-wrap; /* Ini memastikan pemecahan baris bekerja */
+    }
+
+    table {
+        margin-top: 0px;
+    }
+
+    .form-group{
+        margin-bottom: 0px !important;
+    }
+}
+
+@media (min-width: 992px){
+    .btnactionfilter{
+        margin-right: 20px;
+    }
+
+    table {
+        margin-top: 1em;
+        width: 100%;
+        border-collapse: collapse; /* Menghilangkan jarak antar border */
+      }
+      
+      th, td {
+        padding: 8px;
+        border: 1px solid #ddd; /* Memberi border */
+        text-align: left;
+      }
+    
+      /* Menerapkan strip pada baris genap */
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+    
+      /* Opsional: Mengubah warna baris saat di-hover */
+      /* tr:hover {
+        background-color: #ddd;
+      } */
+    
+      /* Membuat header table lebih menonjol */
+      .col-test {
+        background-color: #1E90FF;
+        border: 1px solid black !important;
+        text-decoration: double;
+        color: white;
+      }
+
+      .pm-table th {
+        background-color: #f79923;
+      }
+
+      .sr-table th {
+        background-color: #1E90FF;
+      }
+
+      .wo-table th {
+        background-color: #14961e;
+      }
+
+      .table td, .table th{
+            padding:.3rem !important;
+        }
+}
+
+.lds-dual-ring.hidden {
+    display: none;
+  }
+  
+  /*Add an overlay to the entire page blocking any further presses to buttons or other elements.*/
+  .overlay {
+    position: static;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0,0,0,.8);
+    z-index: 999;
+    opacity: 1;
+    transition: all 0.5s;
+  }
+  
+  /*Spinner Styles*/
+  .lds-dual-ring {
+    display: inline-block;
+    width: 80px;
+    height: 80px;
+  }
+  .lds-dual-ring:after {
+    content: " ";
+    display: block;
+    width: 64px;
+    height: 64px;
+    margin: 5% auto;
+    border-radius: 50%;
+    border: 6px solid #fff;
+    border-color: #fff transparent #fff transparent;
+    animation: lds-dual-ring 1.2s linear infinite;
+  }
+  @keyframes lds-dual-ring {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+  }
+
+.select2-selection__rendered{
+    color: black !important;
+}
+
+.select2-results__option { 
+    font-size: 14px;
+}
+
+.iniselect .select2-selection__rendered {
+    line-height: 25px !important;
+    font-size:14px !important;
+    /* margin-top:1px !important; */
+    /* margin-bottom: 1px; */
+}
+
+.select2-container .select2-selection--single {
+    height: 36px !important;
+    font-size:14px !important;
+}
+
+.select2-container .select2-selection--multiple {
+    /* height: 36px !important; */
+    font-size:14px !important;
+    padding-top:2px !important;
+    padding-left:5px !important;
+}
+
+.newtable {
+    overflow-x:auto;
+    white-space: nowrap;
+}
+
+.newtable tbody tr td{
+    padding-left: 25px !important;
+    padding-right: 25px !important;
+}
+
+.btnfilter {
+    width: 50px;
+}
+
+/* .form-group{
+    margin-bottom: 0px !important;
+} */
+
+.card{
+    margin-bottom: 10px !important;
+}
+
+input{
+    font-size: 14px !important;
+}
+
+.inputblack{
+    color: black !important;
+}

@@ -1,0 +1,202 @@
+thead{
+    background-color: #2D5FA5;
+    text-align: left;
+    color:white !important;
+    font-size:14px;
+}
+
+tr:nth-child(even) {background-color: #f2f2f2;}
+
+tr{
+  border-bottom: 1px solid #6D6F70 !important;
+}
+
+#dataTable thead,
+#dataTable tbody,
+#dataTable td{
+    vertical-align: middle;
+    color:#000000;
+    border: none;
+    font-size:15px;
+    font-weight: 500;
+    padding: 5px 10px 5px 10px;
+}
+
+#dataTable thead{
+  font-size: 15px;
+  font-weight: 300;
+  font-family:'Open Sans';
+}
+
+
+.bt-action{
+  font-size: 14px;
+  width: 140px;
+  background-color:#2D5FA5;
+  color:white;
+}
+
+.bt-action:hover{
+  background-color:#000066;
+  color:white;
+}
+
+.bt-ref{
+  font-size: 14px;
+  background-color:#2D5FA5;
+  color:white;
+}
+
+.bt-ref:hover{
+  background-color:#000066;
+  color:white;
+}
+
+tbody .fas{
+  margin-right: 5px;
+  margin-left: 5px;
+}
+
+
+.select2-results__option { 
+  font-size: 14px;
+}
+
+.select2-selection__rendered {
+  line-height: 31px !important;
+  font-size:14px !important;
+  margin-top:3px;
+}
+.select2-container .select2-selection--single {
+    height: 36px !important;
+  font-size:14px !important;
+}
+.select2-selection__arrow {
+    height: 36px !important;
+}
+
+.newUser{
+  margin-bottom: 15px;
+  width: 12em;
+}
+
+.icon-table{
+  color: #2D5FA5;
+}
+
+.alert ul{
+  margin-left : 20px;
+}
+
+.min-txt { display: none; }
+
+@media (max-width: 1200px) {
+    .min-txt { display: inline-block; }
+    .full-txt { display: none; }
+}
+
+@media (min-width: 768px){
+    .modal-xl {
+      width: 90%;
+      max-width: 1200px;
+  }
+}
+
+.fas{
+  color:#2D5FA5;
+}
+
+.fas:hover{
+  color:#000066;
+}
+
+.form-group{
+  padding-left:20px !important;
+}
+
+
+@media (min-width: 992px){
+  .history{
+      width: 1400px;
+  } 
+}
+
+@media (min-width: 768px) and (max-width: 991px){
+  .history{
+      width: 650px;
+  } 
+}
+
+input[type="checkbox"]:focus {
+  box-shadow: 0 0 0 3px orange;
+}
+
+.buttonreport{
+   background-color: #EB7805;
+   color:white;
+}
+
+.buttoncheckin{
+  background-color: blue;
+  padding: 24px 200px;
+  margin-top: 75px;
+  color: white;
+  display:visible;
+}
+
+.buttoncheckout{
+  background-color: blue;
+  padding: 24px 200px;
+  margin-top: 75px;
+  color: white;
+  display: none;
+}
+#footer {
+  padding: 20px;
+  width: 100%;
+  color: white;
+  text-align: center;
+}
+
+.bt-actsales{
+  font-size: 14px;
+  width: 120px;
+  background-color:#5C8E75;
+  color:white;
+}
+
+.bt-actsales:hover{
+  background-color:#416452;
+  color:white;
+}
+
+.btn-focus:focus{
+  border: 3px solid black;
+}
+
+/*Hidden class for adding and removing*/
+/*Spinner Styles*/
+.lds-dual-ring {
+  display: inline-block;
+  width: 80px;
+  height: 80px;
+}
+.lds-dual-ring:after {
+  content: " ";
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin: 20% auto;
+  border-radius: 50%;
+  border: 6px solid #fff;
+  border-color: #fff transparent #fff transparent;
+  animation: lds-dual-ring 1.2s linear infinite;
+}
+@keyframes lds-dual-ring {
+  0% {
+      transform: rotate(0deg);
+  }
+  100% {
+      transform: rotate(360deg);
+  }
+}

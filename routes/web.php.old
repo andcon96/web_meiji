@@ -1,0 +1,718 @@
+<?php
+
+use App\Http\Controllers\CustomerShipTo\CustomerShipToController;
+use App\Http\Controllers\GeneralController;
+use App\Http\Controllers\ItemTransfer\ItemTFConfirmController;
+use App\Http\Controllers\ItemTransfer\ItemTransferController;
+use App\Http\Controllers\ItemTransferShortage\ItemTransferShortageController;
+use App\Http\Controllers\LaborFeedback\LaborFeedbackController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Picklist\PicklistController;
+use App\Http\Controllers\PurchaseOrder\BuildPOFromPRController;
+use App\Http\Controllers\PurchaseOrder\ConvertPOMonthlyController;
+use App\Http\Controllers\PurchaseOrder\POPrintController;
+use App\Http\Controllers\PurchaseOrder\POReprintApprovalController;
+use App\Http\Controllers\PurchaseOrder\PurchaseOrderController;
+use App\Http\Controllers\PurchaseRequisition\PlannedOrderController;
+use App\Http\Controllers\PurchaseRequisition\PRApprovalController;
+use App\Http\Controllers\PurchaseRequisition\PurchaseRequisitionController;
+use App\Http\Controllers\QxtendLog\QxtendLogController;
+use App\Http\Controllers\SalesOrder\SalesOrderController;
+use App\Http\Controllers\Settings\AccountManagementController;
+use App\Http\Controllers\Settings\ApprovalCodesController;
+use App\Http\Controllers\Settings\ConnectionController;
+use App\Http\Controllers\Settings\CostController;
+use App\Http\Controllers\Settings\DepartmentController;
+use App\Http\Controllers\Settings\DomainController;
+use App\Http\Controllers\Settings\ExternalLinkController;
+use App\Http\Controllers\Settings\IconController;
+use App\Http\Controllers\Settings\ItemController;
+use App\Http\Controllers\Settings\MenuAccessController;
+use App\Http\Controllers\Settings\MenuController;
+use App\Http\Controllers\Settings\MenuStructureController;
+use App\Http\Controllers\Settings\MonthlyPOSOEmailController;
+use App\Http\Controllers\Settings\PrefixController;
+use App\Http\Controllers\Settings\RetailPriceController;
+use App\Http\Controllers\Settings\RoleController;
+use App\Http\Controllers\Settings\SuppliersController;
+use App\Http\Controllers\Settings\UserController;
+use App\Http\Controllers\StockRequest\StockRequestConfirmController;
+use App\Http\Controllers\StockRequest\StockRequestController;
+use App\Http\Controllers\StockRequestShortage\StockRequestShortageController;
+use App\Http\Controllers\WAController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
+
+// Default Auth Laravel
+Route::get('/', function () {
+	if(Auth::check()){return Redirect::to('home');}
+    return view('auth.login');
+})->name('defaultLogin');
+
+Route::group(['middleware' => ['auth']], function() {
+	Route::get('logout', '\App\Http\Controllers\Auth\LoginController@logout');
+
+	// Master role
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'roles';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(403, 'Sorry you do not have access to this menu');
+	}], function () {
+		Route::resource('roles', RoleController::class);
+		Route::post('/deleteRole', [RoleController::class, 'delete'])->name('deleteRole');
+	});
+
+	// Master Department
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'departments';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(403, 'Sorry you do not have access to this menu');
+	}], function () {
+		Route::resource('departments', DepartmentController::class);
+		Route::post('/deleteDepartment', [DepartmentController::class, 'delete'])->name('deleteDepartment');
+	});
+
+	// Domain
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'domains';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('domains', DomainController::class);
+		Route::post('/deleteDomain', [DomainController::class, 'delete'])->name('deleteDomain');
+	});
+
+	// User
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'users';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('users', UserController::class);
+		Route::post('/deleteUser', [UserController::class, 'delete'])->name('deleteUser');
+		Route::put('/resetPassword', [UserController::class, 'resetPassword'])->name('resetPassword');
+	});
+
+	// Icon
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'icons';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('icons', IconController::class);
+		Route::post('/deleteIcon', [IconController::class, 'delete'])->name('deleteIcon');
+	});
+
+	// Menu master
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'menus';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('menus', MenuController::class);
+		Route::post('/deleteMenu', [MenuController::class, 'delete'])->name('deleteMenu');
+	});
+
+	// Menu structure
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'menuStructure';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('menuStructure', MenuStructureController::class);
+		Route::post('/deleteMenuStructure', [MenuStructureController::class, 'delete'])->name('deleteMenuStructure');
+		Route::post('/moveUpMenuStructure', [MenuStructureController::class, 'moveUp'])->name('moveUpMenuStructure');
+		Route::post('/moveDownMenuStructure', [MenuStructureController::class, 'moveDown'])->name('moveDownMenuStructure');
+	});
+
+	// Connection
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'connections';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('connections', ConnectionController::class);
+		Route::post('/deleteConnection', [ConnectionController::class, 'delete'])->name('deleteConnection');
+	});
+
+	// Supplier
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'suppliers';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('suppliers', SuppliersController::class);
+		Route::post('/loadSupplier', [SuppliersController::class, 'loadSupplier'])->name('loadSupplier');
+	});
+
+	// Email PO SO Monthly
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'emailMonthlyPOSO';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+            'Sorry you do not have access to this menu'
+		);
+	}], function() {
+		Route::resource('emailMonthlyPOSO', MonthlyPOSOEmailController::class);
+	});
+
+	// Items master
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'items';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('items', ItemController::class);
+		Route::post('/loadItem', [ItemController::class, 'loadItem'])->name('loadItem');
+	});
+
+	// Menu Access
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'menuAccess';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('menuAccess', MenuAccessController::class);
+		Route::post('/createOrUpdate', [MenuAccessController::class, 'createOrUpdate'])->name('createOrUpdate');
+	});
+
+	// Prefix
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'prefix';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('prefix', PrefixController::class);
+		Route::post('/deletePrefix', [PrefixController::class, 'delete'])->name('deletePrefix');
+	});
+
+	// Account Management
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'accountManagement';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('accountManagement', AccountManagementController::class);
+		Route::get('getAccountManagementCode', [AccountManagementController::class, 'getAccountManagementCode'])->name('getAccountManagementCode');
+		Route::post('deleteAccountManagement', [AccountManagementController::class, 'delete'])->name('deleteAccountManagement');
+	});
+
+	// Approval codes
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'approvalCodes';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('approvalCodes', ApprovalCodesController::class);
+		Route::post('/deleteApprovalCode', [ApprovalCodesController::class, 'delete'])->name('deleteApprovalCode');
+	});
+
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'externalLink';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('externalLink', ExternalLinkController::class);
+	});
+
+	// Cost Control
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'costControl';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('costControl', CostController::class);
+		Route::post('deleteCostControl', [CostController::class, 'deleteCostControl'])->name('deleteCostControl');
+		Route::get('fetchItemGroup', [CostController::class, 'fetchItemGroup'])->name('fetchItemGroup');
+	});
+
+	// Retail Price Control
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'retailPriceControl';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('retailPriceControl', RetailPriceController::class);
+		Route::post('deleteRetailPriceControl', [RetailPriceController::class, 'deleteRetailPriceControl'])->name('deleteRetailPriceControl');
+		Route::get('fetchItemGroupForRetail', [RetailPriceController::class, 'fetchItemGroupForRetail'])->name('fetchItemGroupForRetail');
+	});
+
+	Route::get('allowSeePrice', [CostController::class, 'allowSeePrice'])->name('allowSeePrice');
+	Route::get('allowRetailPrice', [RetailPriceController::class, 'allowRetailPrice'])->name('allowRetailPrice');
+
+	// Sales Order
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'salesOrder';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('salesOrder', SalesOrderController::class);
+		Route::post('deleteSO', [SalesOrderController::class, 'delete'])->name('deleteSO');
+		Route::get('getShipTo', [SalesOrderController::class, 'getShipTo'])->name('getShipTo');
+		Route::get('getTermsAndTax', [SalesOrderController::class, 'getTermsAndTax'])->name('getTermsAndTax');
+		Route::post('submitSOToQAD', [SalesOrderController::class, 'submitSOToQAD'])->name('submitSOToQAD');
+		Route::post('printSO', [SalesOrderController::class, 'printSO'])->name('printSO');
+		Route::post('printDO', [SalesOrderController::class, 'printDO'])->name('printDO');
+	});
+
+	// Purchase Requisition
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'purchaseRequisition';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('purchaseRequisition', PurchaseRequisitionController::class);
+		Route::post('deletePR', [PurchaseRequisitionController::class, 'delete'])->name('deletePR');
+		Route::get('findImageLink', [PurchaseRequisitionController::class, 'findImageLink'])->name('findImageLink');
+		Route::post('requestApproval', [PurchaseRequisitionController::class, 'requestApproval'])->name('requestApproval');
+		Route::get('getItemPriceForPR', [PurchaseRequisitionController::class, 'getPriceByItemSupplier'])->name('getItemPriceForPR');
+		Route::get('getPRDetailAttachments', [PurchaseRequisitionController::class, 'getPRDetailAttachments'])->name('getPRDetailAttachments');
+		Route::get('downloadPRAttachment/{id}', [PurchaseRequisitionController::class, 'downloadPRAttachment'])->name('downloadPRAttachment');
+		Route::post('deleteAttachment', [PurchaseRequisitionController::class, 'deleteAttachment'])->name('deleteAttachment');
+		Route::get('getTermsAndTaxBySupplier', [PurchaseRequisitionController::class, 'getTermsAndTaxBySupplier'])->name('getTermsAndTaxBySupplier');
+	});
+
+	// Planned order to PR
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'plannedOrder';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('plannedOrder', PlannedOrderController::class);
+		Route::get('fetchPlannedOrder', [PlannedOrderController::class, 'fetchPlannedOrder'])->name('fetchPlannedOrder');
+	});
+
+
+	// Purchase Requisition Approval
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'prApproval';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('prApproval', PRApprovalController::class);
+	});
+
+	// Item transfer
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'itemTransfer';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('itemTransfer', ItemTransferController::class);
+		// Route::get('getLotSerial', [ItemTransferController::class, 'getLotSerial'])->name('getLotSerial');
+		Route::get('inventoryLookup', [ItemTransferController::class, 'inventoryLookup'])->name('inventoryLookup');
+		Route::get('locationLookup', [ItemTransferController::class, 'locationLookup'])->name('locationLookup');
+		Route::get('lotLookup', [ItemTransferController::class, 'lotLookup'])->name('lotLookup');
+		Route::post('deleteItemTF', [ItemTransferController::class, 'delete'])->name('deleteItemTF');
+		Route::post('requestConfirmation', [ItemTransferController::class, 'requestConfirmation'])->name('requestConfirmation');
+		Route::post('printItemTransfer', [ItemTransferController::class, 'printItemTransfer'])->name('printItemTransfer');
+        Route::post('reprintItemTransferConfirm', [ItemTransferController::class, 'reprintItemTransferConfirm'])->name('reprintItemTransferConfirm');
+	});
+
+	// Item Transfer confirm
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'itemTransferConfirm';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('itemTransferConfirm', ItemTFConfirmController::class);
+		Route::get('redirectItemTFConfirm', [ItemTFConfirmController::class, 'redirectItemTFConfirm'])->name('redirectItemTFConfirm');
+	});
+
+    // Item Transfer shortage report
+    Route::group(['middleware' => function ($request, $next) {
+        $menuLink = 'itemTransferShortage';
+
+        if (Gate::allows('access_menu', $menuLink)) {
+            return $next($request);
+        }
+
+        abort(
+            403,
+            'Sorry you do not have access to this menu'
+        );
+    }], function() {
+        Route::resource('itemTransferShortage', ItemTransferShortageController::class);
+    });
+
+	// Build PO from PR
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'buildPOFromPR';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('buildPOFromPR', BuildPOFromPRController::class);
+		Route::get('fetchPR', [BuildPOFromPRController::class, 'fetchPR'])->name('fetchPR');
+	});
+
+	// PO Print
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'poPrint';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('poPrint', POPrintController::class);
+		Route::post('requestReprintApproval', [POPrintController::class, 'requestReprintApproval'])->name('requestReprintApproval');
+		Route::post('previewPOPrint', [POPrintController::class, 'previewPOPrint'])->name('previewPOPrint');
+		Route::post('printPO', [POPrintController::class, 'printPO'])->name('printPO');
+		Route::get('postPOPrint', [POPrintController::class, 'postPOPrint'])->name('postPOPrint');
+        Route::get('showPoPrint', [POPrintController::class, 'showPoPrint'])->name('showPoPrint');
+	});
+
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'poReprintApproval';
+
+        if (Gate::allows('access_menu', $menuLink)) {
+            return $next($request);
+        }
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('poReprintApproval', POReprintApprovalController::class);
+        Route::get('showPoReprint', [POReprintApprovalController::class, 'showPoReprint'])->name('showPoReprint');
+	});
+
+	// Stock Request
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'stockRequest';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(403, 'Sorry you do not have access to this menu');
+	}], function () {
+		Route::resource('stockRequest', StockRequestController::class);
+		Route::post('deleteStockRequest', [StockRequestController::class, 'delete'])->name('deleteStockRequest');
+		Route::post('stockRequestConfirmation', [StockRequestController::class, 'stockRequestConfirmation'])->name('stockRequestConfirmation');
+		Route::post('printStockRequest', [StockRequestController::class, 'printStockRequest'])->name('printStockRequest');
+	});
+
+    Route::group(['middleware' => function($request, $next) {
+        $menuLink = 'stockRequestShortage';
+
+        if (Gate::allows('access_menu', $menuLink)) {
+            return $next($request);
+        }
+
+        abort(
+            403,
+            'Sorry you do not have access to this menu'
+        );
+    }], function() {
+        Route::resource('stockRequestShortage', StockRequestShortageController::class);
+    });
+
+	// Stock Request approval
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'stockRequestApproval';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('stockRequestApproval', StockRequestConfirmController::class);
+        Route::get('postPrintStockRequest', [StockRequestConfirmController::class, 'postPrintStockRequest'])->name('postPrintStockRequest');
+	});
+
+	// Qxtend Log
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'qxtendLog';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('qxtendLog', QxtendLogController::class);
+		Route::post('resendQxtend', [QxtendLogController::class, 'resendQxtend'])->name('resendQxtend');
+	});
+
+	// Convert PO SO Monthly schedule
+	Route::get('convertPOMonthly', [ConvertPOMonthlyController::class, 'convertPOMonthly'])->name('convertPOMonthly');
+
+	// Edit PO
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'purchaseOrder';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('purchaseOrder', PurchaseOrderController::class);
+		Route::get('/fetchItemByFirstInput', [PurchaseOrderController::class, 'fetchItemByFirstInput'])->name('fetchItemByFirstInput');
+	});
+
+	// Picklist
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'picklist';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('picklist', PicklistController::class);
+		Route::get('fetchWOBillBrowse', [PicklistController::class, 'fetchWOBillBrowse'])->name('fetchWOBillBrowse');
+		Route::post('cancelPicklist', [PicklistController::class, 'cancelPicklist'])->name('cancelPicklist');
+		Route::post('closePicklist', [PicklistController::class, 'closePicklist'])->name('closePicklist');
+		Route::post('previewPicklist', [PicklistController::class, 'previewPicklist'])->name('previewPicklist');
+	});
+
+	// Labor Feedback
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'laborFeedback';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('laborFeedback', LaborFeedbackController::class);
+		Route::get('fetchWRRoute', [LaborFeedbackController::class, 'fetchWRRoute'])->name('fetchWRRoute');
+		Route::get('checkLastOperation', [LaborFeedbackController::class, 'checkLastOperation'])->name('checkLastOperation');
+		Route::post('deleteLaborFeedback', [LaborFeedbackController::class, 'deleteLaborFeedback'])->name('deleteLaborFeedback');
+		Route::post('confirmLabor', [LaborFeedbackController::class, 'confirmLabor'])->name('confirmLabor');
+		Route::post('rejectLabor', [LaborFeedbackController::class, 'rejectLabor'])->name('rejectLabor');
+		Route::get('getListLaborfeedback', [LaborFeedbackController::class, 'getListLaborfeedback'])->name('getListLaborfeedback');
+		Route::post('sendLaborfeedback', [LaborFeedbackController::class, 'sendLaborFeedback'])->name('sendLaborfeedback');
+	});
+
+	// Customer Ship To
+	Route::group(['middleware' => function ($request, $next) {
+		$menuLink = 'customerShipTo';
+
+		if (Gate::allows('access_menu', $menuLink)) {
+			return $next($request);
+		}
+
+		abort(
+			403,
+			'Sorry you do not have access to this menu'
+		);
+	}], function () {
+		Route::resource('customerShipTo', CustomerShipToController::class);
+	});
+
+	Route::get('send-whatsapp', [WAController::class, 'sendWA'])->name('sendWA');
+	Route::post('markAsRead', [NotificationController::class, 'markAsRead'])->name('markAsRead');
+	Route::post('markAllAsRead', [NotificationController::class, 'markAllAsRead'])->name('markAllAsRead');
+	Route::get('getItemCode', [GeneralController::class, 'getItemCode'])->name('getItemCode');
+	Route::get('getTaxIn', [GeneralController::class, 'getTaxIn'])->name('getTaxIn');
+	Route::get('getCurrencyBySupplier', [GeneralController::class, 'getCurrencyBySupplier'])->name('getCurrencyBySupplier');
+	Route::get('getExchangeRate', [GeneralController::class, 'getExchangeRate'])->name('getExchangeRate');
+});
+
+Auth::routes();
+Route::get('/home', 'HomeController@index')->name('home');
