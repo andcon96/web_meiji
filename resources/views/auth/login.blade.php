@@ -82,29 +82,17 @@
                     </div>
                     <!-- /Logo -->
 
-                    <form method="POST" action="{{ route('login') }}" name='loginform' id="formAuthentication" class="form" autocomplete="off">
+                    <form method="POST" action="{{ route('login') }}" name='loginform' id="formAuthentication"
+                        class="form" autocomplete="off">
                         @csrf
                         <div class="mb-3">
-                            <label for="domain" class="form-label">Domain</label>
-                            <select class="form-select select2" name="domain" id="domain" required>
-                                @php
-                                    $domainName = isset($_GET['domain']) ? ($_GET['domain'] == 'SILVADOR' ? 2 : 1)  : 1;
-                                @endphp
-                                @foreach ($domains as $domain)
-                                    <option value="{{ $domain->id }}" {{$domainName == $domain->id ? 'selected' : ''}}>{{ $domain->domain }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="mb-3">
                             <label for="email" class="form-label">Username</label>
-                            <input type="text" class="form-control" id='username' name='username' placeholder="Enter your email or username" autofocus required>
+                            <input type="text" class="form-control" id='username' name='username'
+                                placeholder="Enter your email or username" autofocus required>
                         </div>
                         <div class="mb-3 form-password-toggle">
                             <div class="d-flex justify-content-between">
                                 <label class="form-label" for="password">Password</label>
-                                {{-- <a href="auth-forgot-password-cover.html">
-                                    <small>Forgot Password?</small>
-                                </a> --}}
                             </div>
                             <div class="input-group input-group-merge">
                                 <input type="password" id="password" class="form-control" name="password"
@@ -159,9 +147,3 @@
 </body>
 
 </html>
-
-<script type="text/javascript">
-    $(document).ready(function() {
-        $('#domain').select2();
-    });
-</script>

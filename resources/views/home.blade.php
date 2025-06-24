@@ -1,5 +1,5 @@
 @extends('layout.layout')
-@section('title', 'Home - RISIS')
+@section('title', 'Home - Meiji')
 
 @section('content')
     <!-- Flash Menu -->

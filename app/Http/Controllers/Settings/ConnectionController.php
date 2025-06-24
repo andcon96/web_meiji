@@ -40,39 +40,21 @@ class ConnectionController extends Controller
 
     public function store(Request $request)
     {
-        $domain_id = $request->domain_id;
         $wsaURL = $request->wsaURL;
         $wsaPath = $request->wsaPath;
         $qxURL = $request->qxURL;
-        $qxPath = $request->qxPath;
-
-        $currentUser = Auth::user()->id;
-
-        // Cek connection untuk domain itu udah ada atau belum
-        $connectionExists = qxwsa::where('domain_id', $domain_id)->first();
-
-        $domain = Domain::where('id', $domain_id)->first();
-        if ($connectionExists) {
-            toast('Connection for ' . $domain->domain . ' already exists', 'info');
-
-            return redirect()->back()->withInput();
-        }
 
         DB::beginTransaction();
 
         try {
             $connection = new qxwsa();
-            $connection->domain_id = $domain_id;
             $connection->wsa_url = $wsaURL;
             $connection->wsa_path = $wsaPath;
             $connection->qx_url = $qxURL;
-            $connection->qx_path = $qxPath;
-            $connection->created_by = $currentUser;
-
             $connection->save();
 
             DB::commit();
-            
+
             toast('Connection saved successfully', 'success');
 
             return redirect()->back();
@@ -80,7 +62,7 @@ class ConnectionController extends Controller
             DB::rollback();
 
             toast('Failed to save connection settings', 'error');
-
+            dd($err);
             return redirect()->back()->withInput();
         }
     }
@@ -88,34 +70,19 @@ class ConnectionController extends Controller
     public function update(Request $request)
     {
         $id = $request->u_id;
-        $domain_id = $request->domain_id;
         $wsaURL = $request->wsaURL;
         $wsaPath = $request->wsaPath;
         $qxURL = $request->qxURL;
-        $qxPath = $request->qxPath;
 
-        $currentUser = Auth::user()->id;
-
-        // Cek connection untuk domain itu udah ada atau belum
-        $connectionExists = qxwsa::where('domain_id', $domain_id)->where('id', '!=', $id)->first();
-        if ($connectionExists) {
-            $domain = Domain::where('id', $domain_id)->first();
-            toast('Connection for ' . $domain->domain . ' already exists', 'info');
-
-            return redirect()->back()->withInput();
-        }
 
         DB::beginTransaction();
 
         try {
             $connection = qxwsa::where('id', $id)->first();
-            $connection->domain_id = $domain_id;
             $connection->wsa_url = $wsaURL;
             $connection->wsa_path = $wsaPath;
             $connection->qx_url = $qxURL;
-            $connection->qx_path = $qxPath;
             if ($connection->isDirty()) {
-                $connection->updated_by = $currentUser;
                 $connection->save();
 
                 DB::commit();

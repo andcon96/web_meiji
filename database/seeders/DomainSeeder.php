@@ -14,8 +14,8 @@ class DomainSeeder extends Seeder
     public function run(): void
     {
         $data = new Domain();
-        $data->domain = 'RISIS';
-        $data->domain_desc = 'RISIS';
+        $data->domain = 'MEIJI';
+        $data->domain_desc = 'MEIJI';
         $data->save();
     }
 }

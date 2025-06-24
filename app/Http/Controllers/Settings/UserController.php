@@ -21,7 +21,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $menuMaster = (new ServerURL())->currentURL($request);
-        $users = User::where('domain_id', Session::get('domain'))->with(['getDomain', 'getDepartment', 'getRole'])->orderBy('name')->get();
+        $users = User::with(['getDomain', 'getDepartment', 'getRole'])->orderBy('name')->get();
         $currentUser = Auth::user()->id;
 
         return view('setting.user.index', compact('users', 'currentUser', 'menuMaster'));
@@ -30,37 +30,33 @@ class UserController extends Controller
     public function create(Request $request)
     {
         $domains = Domain::orderBy('domain')->get();
-        $roles = Role::where('domain_id', Session::get('domain'))->orderBy('role_code')->get();
+        $roles = Role::orderBy('role_code')->get();
         $departments = Department::orderBy('department_code')->get();
-        $currentDomainID = Session::get('domain');
-        $currentDomain = Session::get('domain_name');
 
         $workCenters = [];
         // $wsaWorkCenter = (new WSAServices())->getWorkCenter($currentDomainID, $currentDomain);
-        $wsaWorkCenter = (new WSAServices())->getWorkCenter($currentDomainID, 'Silvador');
-        if ($wsaWorkCenter[0] == 'true') {
-            $workCenters = $wsaWorkCenter[1];
-        }
+        // $wsaWorkCenter = (new WSAServices())->getWorkCenter($currentDomainID, 'Silvador');
+        // if ($wsaWorkCenter[0] == 'true') {
+        //     $workCenters = $wsaWorkCenter[1];
+        // }
 
         return view('setting.user.create', compact('domains', 'roles', 'departments', 'workCenters'));
     }
 
     public function edit($id)
     {
-        $user = User::with(['getWorkCenter'])->where('id', $id)->first();
+        $user = User::where('id', $id)->first();
         // dd($user);
         $domains = Domain::orderBy('domain')->get();
-        $roles = Role::where('domain_id', Session::get('domain'))->orderBy('role_code')->get();
+        $roles = Role::orderBy('role_code')->get();
         $departments = Department::orderBy('department_code')->get();
-        $currentDomainID = Session::get('domain');
-        $currentDomain = Session::get('domain_name');
 
         $workCenters = [];
         // $wsaWorkCenter = (new WSAServices())->getWorkCenter($currentDomainID, $currentDomain);
-        $wsaWorkCenter = (new WSAServices())->getWorkCenter($currentDomainID, 'Silvador');
-        if ($wsaWorkCenter[0] == 'true') {
-            $workCenters = $wsaWorkCenter[1];
-        }
+        // $wsaWorkCenter = (new WSAServices())->getWorkCenter($currentDomainID, 'Silvador');
+        // if ($wsaWorkCenter[0] == 'true') {
+        //     $workCenters = $wsaWorkCenter[1];
+        // }
 
         return view('setting.user.edit', compact('user', 'domains', 'roles', 'departments', 'workCenters'));
     }
@@ -70,13 +66,13 @@ class UserController extends Controller
         $username = $request->username;
         $name = $request->name;
         $email = $request->email;
-        $domain = $request->domain_id;
+        // $domain = $request->domain_id;
         $role = $request->role_id;
-        $department = $request->department_id;
-        $workCenter = $request->workCenter;
-        $workCenterDesc = $request->workCenterDesc;
+        // $department = $request->department_id;
+        // $workCenter = $request->workCenter;
+        // $workCenterDesc = $request->workCenterDesc;
         $isSuperUser = $request->isSuperUser;
-        $canAccessAllDomain = $request->accessAllDomain;
+        // $canAccessAllDomain = $request->accessAllDomain;
         $isActive = $request->isActive;
         $password = $request->password;
         $currentUser = Auth::user()->id;
@@ -102,34 +98,34 @@ class UserController extends Controller
 
         try {
             $user = new User();
-            $user->domain_id = $domain;
+            // $user->domain_id = $domain;
             $user->role_id = $role;
-            $user->department_id = $department;
+            // $user->department_id = $department;
             $user->username = $username;
             $user->name = $name;
             $user->email = $email;
             $user->is_super_user = $isSuperUser;
-            $user->can_access_all_domains = $canAccessAllDomain;
+            // $user->can_access_all_domains = $canAccessAllDomain;
             $user->is_active = $isActive;
             $user->password = Hash::make($password);
             $user->created_by = $currentUser;
             $user->updated_by = $currentUser;
             $user->save();
 
-            if (isset($workCenter) && count($workCenter) > 0) {
-                foreach ($workCenter as $key => $wc) {
-                    if ($workCenterDesc != '') {
-                        $decodedWorkCenterDesc = json_decode($workCenterDesc);
-                    }
+            // if (isset($workCenter) && count($workCenter) > 0) {
+            //     foreach ($workCenter as $key => $wc) {
+            //         if ($workCenterDesc != '') {
+            //             $decodedWorkCenterDesc = json_decode($workCenterDesc);
+            //         }
 
-                    $userWorkCenter = new UserWorkCenter();
-                    $userWorkCenter->user_id = $user->id;
-                    $userWorkCenter->work_center_code = $wc;
-                    $userWorkCenter->work_center_desc = $decodedWorkCenterDesc[$key]->description;
-                    $userWorkCenter->created_by = Auth::user()->id;
-                    $userWorkCenter->save();
-                }
-            }
+            //         $userWorkCenter = new UserWorkCenter();
+            //         $userWorkCenter->user_id = $user->id;
+            //         $userWorkCenter->work_center_code = $wc;
+            //         $userWorkCenter->work_center_desc = $decodedWorkCenterDesc[$key]->description;
+            //         $userWorkCenter->created_by = Auth::user()->id;
+            //         $userWorkCenter->save();
+            //     }
+            // }
 
             DB::commit();
 
@@ -150,14 +146,14 @@ class UserController extends Controller
         $id = $request->u_id;
         $name = $request->name;
         $email = $request->email;
-        $domain = $request->domain_id;
+        // $domain = $request->domain_id;
         $role = $request->role_id;
-        $department = $request->department_id;
-        $workCenter = $request->workCenter;
-        $workCenterDesc = $request->workCenterDesc;
+        // $department = $request->department_id;
+        // $workCenter = $request->workCenter;
+        // $workCenterDesc = $request->workCenterDesc;
         $password = $request->password;
         $isSuperUser = $request->isSuperUser;
-        $canAccessAllDomain = $request->accessAllDomain;
+        // $canAccessAllDomain = $request->accessAllDomain;
         $isActive = $request->isActive;
         $currentUser = Auth::user()->id;
 
@@ -167,14 +163,14 @@ class UserController extends Controller
             $user = User::where('id', $id)->first();
             $user->name = $name;
             $user->email = $email;
-            $user->domain_id = $domain;
+            // $user->domain_id = $domain;
             $user->role_id = $role;
-            $user->department_id = $department;
+            // $user->department_id = $department;
             if ($password != '') {
                 $user->password = Hash::make($password);
             }
             $user->is_super_user = $isSuperUser;
-            $user->can_access_all_domains = $canAccessAllDomain;
+            // $user->can_access_all_domains = $canAccessAllDomain;
             $user->is_active = $isActive;
             $user->updated_by = $currentUser;
 
@@ -184,24 +180,24 @@ class UserController extends Controller
                     ->whereNotIn('work_center_code', $workCenter)
                     ->delete();
 
-                foreach ($workCenter as $key => $wc) {
-                    if ($workCenterDesc != '') {
-                        $decodedWorkCenterDesc = json_decode($workCenterDesc);
-                    }
+                // foreach ($workCenter as $key => $wc) {
+                //     if ($workCenterDesc != '') {
+                //         $decodedWorkCenterDesc = json_decode($workCenterDesc);
+                //     }
 
-                    $checkUserWorkCenter = UserWorkCenter::where('user_id', $user->id)
-                        ->where('work_center_code', $wc)
-                        ->first();
+                //     $checkUserWorkCenter = UserWorkCenter::where('user_id', $user->id)
+                //         ->where('work_center_code', $wc)
+                //         ->first();
 
-                    if (!$checkUserWorkCenter) {
-                        $userWorkCenter = new UserWorkCenter();
-                        $userWorkCenter->user_id = $user->id;
-                        $userWorkCenter->work_center_code = $wc;
-                        $userWorkCenter->work_center_desc = $decodedWorkCenterDesc[$key]->description;
-                        $userWorkCenter->created_by = Auth::user()->id;
-                        $userWorkCenter->save();
-                    }
-                }
+                //     if (!$checkUserWorkCenter) {
+                //         $userWorkCenter = new UserWorkCenter();
+                //         $userWorkCenter->user_id = $user->id;
+                //         $userWorkCenter->work_center_code = $wc;
+                //         $userWorkCenter->work_center_desc = $decodedWorkCenterDesc[$key]->description;
+                //         $userWorkCenter->created_by = Auth::user()->id;
+                //         $userWorkCenter->save();
+                //     }
+                // }
             }
             $user->save();
 

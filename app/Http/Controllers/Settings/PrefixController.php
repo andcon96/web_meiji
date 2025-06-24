@@ -18,9 +18,7 @@ class PrefixController extends Controller
     public function index(Request $request)
     {
         $menuMaster = (new ServerURL())->currentURL($request);
-        $prefixes = Prefix::with(['getDomain' => function ($query) {
-            $query->orderBy('domain');
-        }])->get();
+        $prefixes = Prefix::get();
 
         return view('setting.prefix.index', compact('menuMaster', 'prefixes'));
     }
@@ -40,75 +38,25 @@ class PrefixController extends Controller
      */
     public function store(Request $request)
     {
+        $prefixReceipt = $request->prefixReceipt;
+        $prefixBukuPenerimaan = $request->prefixBukuPenerimaan;
 
-        $domain_id = $request->domain_id;
-        $prefixYear = $request->prefixYear;
-        $prefixSO = $request->prefixSO;
-        $prefixPR = $request->prefixPR;
-        $prefixPO = $request->prefixPO;
-        $prefixPOSOOtomatis = $request->prefixPOSOOtomatis;
-        $prefixSOPOOtomatis = $request->prefixSOPOOtomatis;
-        $prefixSOPOMonthly = $request->prefixSOPOMonthly;
-        $prefixItemTransfer = $request->prefixItemTransfer;
-        $prefixStockRequest = $request->prefixStockRequest;
-        $prefixPicklist = $request->prefixPicklist;
-        $prefixComplain = $request->prefixComplain;
-        $prefixSOErb = $request->prefixSOERB;
-        $prefixSOErbResult = $request->prefixSOERBResult;
-
-        $runningNbrSO = $request->runningNbrSO;
-        $runningNbrPR = $request->runningNbrPR;
-        $runningNbrPO = $request->runningNbrPO;
-        $runningNbrPOSOOtomatis = $request->runningNbrPOSOOtomatis;
-        $runningNbrItemTransfer = $request->runningNbrItemTransfer;
-        $runningNbrStockRequest = $request->runningNbrStockRequest;
-        $runningNbrPicklist = $request->runningNbrPicklist;
-        $runningNbrComplain = $request->runningNbrComplain;
-        $runningNbrErb = $request->runningNbrSOERB;
-        $runningNbrErbResult = $request->runningNbrSOERBResult;
+        $runningNbrReceipt = $request->runningNbrReceipt;
+        $runningNbrBukuPenerimaan = $request->runningNbrBukuPenerimaan;
 
         DB::beginTransaction();
 
         try {
-            // Cek kalau domainnya sudah ada
-            $domainPrefixExists = Prefix::where('domain_id', $domain_id)->first();
-            if ($domainPrefixExists) {
-                toast('Prefix for this domain already exists', 'info');
-
-                return redirect()->back()->withInput();
-            }
-
             $domainPrefix = new Prefix();
-            $domainPrefix->domain_id = $domain_id;
-            $domainPrefix->prefix_year = $prefixYear;
-            $domainPrefix->prefix_so_po_monthly = $prefixSOPOMonthly;
-            $domainPrefix->prefix_so = $prefixSO;
-            $domainPrefix->prefix_pr = $prefixPR;
-            $domainPrefix->prefix_po = $prefixPO;
-            $domainPrefix->prefix_po_for_so_auto = $prefixPOSOOtomatis;
-            $domainPrefix->prefix_so_auto = $prefixSOPOOtomatis;
-            $domainPrefix->prefix_item_transfer = $prefixItemTransfer;
-            $domainPrefix->prefix_stock_request = $prefixStockRequest;
-            $domainPrefix->prefix_picklist = $prefixPicklist;
-            $domainPrefix->prefix_complain = $prefixComplain;
-            $domainPrefix->prefix_so_ERB = $prefixSOErb;
-            $domainPrefix->prefix_so_ERB_result = $prefixSOErbResult;
-            $domainPrefix->running_nbr_so = $runningNbrSO;
-            $domainPrefix->running_nbr_pr = $runningNbrPR;
-            $domainPrefix->running_nbr_po = $runningNbrPO;
-            $domainPrefix->running_nbr_po_for_so_auto = $runningNbrPOSOOtomatis;
-            $domainPrefix->running_nbr_item_transfer = $runningNbrItemTransfer;
-            $domainPrefix->running_nbr_stock_request = $runningNbrStockRequest;
-            $domainPrefix->running_nbr_picklist = $runningNbrPicklist;
-            $domainPrefix->running_nbr_so_ERB = $runningNbrErb;
-            $domainPrefix->running_nbr_so_ERB_result = $runningNbrErbResult;
-            $domainPrefix->running_nbr_complain = $runningNbrComplain;
+            $domainPrefix->prefix_receipt = $prefixReceipt;
+            $domainPrefix->prefix_buku_penerimaan = $prefixBukuPenerimaan;
+            $domainPrefix->running_nbr_receipt = $runningNbrReceipt;
+            $domainPrefix->running_nbr_buku_penerimaan = $runningNbrBukuPenerimaan;
 
             $domainPrefix->save();
 
             DB::commit();
             toast('Prefix saved successfully', 'success');
-
         } catch (Exception $err) {
             DB::rollBack();
 
@@ -116,14 +64,6 @@ class PrefixController extends Controller
         }
 
         return redirect()->back();
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
     }
 
     /**
@@ -143,59 +83,20 @@ class PrefixController extends Controller
     {
 
         $id = $request->u_id;
-        $prefixYear = $request->prefixYear;
-        $prefixSOPOMonthly = $request->prefixSOPOMonthly;
-        $prefixSO = $request->prefixSO;
-        $prefixPR = $request->prefixPR;
-        $prefixPO = $request->prefixPO;
-        $prefixPOSOOtomatis = $request->prefixPOSOOtomatis;
-        $prefixPOMemo = $request->prefixPOMemo;
-        $prefixSOErb = $request->prefixSOERB;
-        $prefixSOErbResult = $request->prefixSOERBResult;
-        $prefixItemTransfer = $request->prefixItemTransfer;
-        $prefixStockRequest = $request->prefixStockRequest;
-        $prefixPicklist = $request->prefixPicklist;
-        $prefixComplain = $request->prefixComplain;
-        $runningNbrSO = $request->runningNbrSO;
-        $runningNbrPR = $request->runningNbrPR;
-        $runningNbrPO = $request->runningNbrPO;
-        $runningNbrPOSOOtomatis = $request->runningNbrPOSOOtomatis;
-        $runningNbrPOMemo = $request->runningNbrPOMemo;
-        $runningNbrItemTransfer = $request->runningNbrItemTransfer;
-        $runningNbrStockRequest = $request->runningNbrStockRequest;
-        $runningNbrPicklist = $request->runningNbrPicklist;
-        $runningNbrErb = $request->runningNbrSOERB;
-        $runningNbrErbResult = $request->runningNbrSOERBResult;
-        $runningNbrComplain = $request->runningNbrComplain;
+        $prefixReceipt = $request->prefixReceipt;
+        $prefixBukuPenerimaan = $request->prefixBukuPenerimaan;
+
+        $runningNbrReceipt = $request->runningNbrReceipt;
+        $runningNbrBukuPenerimaan = $request->runningNbrBukuPenerimaan;
 
         DB::beginTransaction();
 
         try {
             $prefix = Prefix::where('id', $id)->first();
-            $prefix->prefix_year = $prefixYear;
-            $prefix->prefix_so_po_monthly = $prefixSOPOMonthly;
-            $prefix->prefix_so = $prefixSO;
-            $prefix->prefix_pr = $prefixPR;
-            $prefix->prefix_po = $prefixPO;
-            $prefix->prefix_po_for_so_auto = $prefixPOSOOtomatis;
-            $prefix->prefix_po_memo = $prefixPOMemo;
-            $prefix->prefix_item_transfer = $prefixItemTransfer;
-            $prefix->prefix_stock_request = $prefixStockRequest;
-            $prefix->prefix_picklist = $prefixPicklist;
-            $prefix->prefix_so_ERB = $prefixSOErb;
-            $prefix->prefix_so_ERB_result = $prefixSOErbResult;
-            $prefix->prefix_complain = $prefixComplain;
-            $prefix->running_nbr_so = $runningNbrSO;
-            $prefix->running_nbr_pr = $runningNbrPR;
-            $prefix->running_nbr_po = $runningNbrPO;
-            $prefix->running_nbr_po_for_so_auto = $runningNbrPOSOOtomatis;
-            $prefix->running_nbr_po_memo = $runningNbrPOMemo;
-            $prefix->running_nbr_item_transfer = $runningNbrItemTransfer;
-            $prefix->running_nbr_stock_request = $runningNbrStockRequest;
-            $prefix->running_nbr_picklist = $runningNbrPicklist;
-            $prefix->running_nbr_so_ERB = $runningNbrErb;
-            $prefix->running_nbr_so_ERB_result = $runningNbrErbResult;
-            $prefix->running_nbr_complain = $runningNbrComplain;
+            $prefix->prefix_receipt = $prefixReceipt;
+            $prefix->prefix_buku_penerimaan = $prefixBukuPenerimaan;
+            $prefix->running_nbr_receipt = $runningNbrReceipt;
+            $prefix->running_nbr_buku_penerimaan = $runningNbrBukuPenerimaan;
             $prefix->save();
 
             DB::commit();
@@ -203,7 +104,7 @@ class PrefixController extends Controller
             toast('Prefix updated successfully', 'success');
         } catch (Exception $err) {
             DB::rollBack();
-            dd($err);
+
             toast('Failed to update prefix', 'error');
         }
 

@@ -15,16 +15,15 @@ class ItemController extends Controller
     public function index(Request $request)
     {
         $menuMaster = (new ServerURL())->currentURL($request);
-        $items = Item::with(['getDomain', 'getLoadedBy', 'getUpdatedBy'])
-            ->orderBy('im_item_part')->get();
+        $items = Item::orderBy('im_item_part')->get();
+
         return view('setting.items.index', compact('menuMaster', 'items'));
     }
 
 
     public function loadItem(Request $request)
     {
-        $dataDomain = Auth::user()->getDomain;
-        $dataItems = (new WSAServices())->wsaitem($dataDomain->domain);
+        $dataItems = (new WSAServices())->wsaitem();
         if ($dataItems[0] == 'true') {
             DB::beginTransaction();
 
@@ -34,12 +33,10 @@ class ItemController extends Controller
 
                 foreach ($dataItems as $item) {
                     // Cek dulu supplier code nya ada atau engga.
-                    $itemExists = Item::where('im_domain_id', $dataDomain->id)
-                        ->where('im_item_part', $item->t_part)
+                    $itemExists = Item::where('im_item_part', $item->t_part)
                         ->first();
 
                     if ($itemExists) {
-                        $itemExists->im_domain_id = $dataDomain->id;
                         $itemExists->im_item_part = $item->t_part;
                         $itemExists->im_item_desc = strval($item->t_desc);
                         $itemExists->im_item_um = strval($item->t_um);
@@ -59,7 +56,6 @@ class ItemController extends Controller
                     } else {
                         // Create supplier baru
                         $newItem = new Item();
-                        $newItem->im_domain_id = $dataDomain->id;
                         $newItem->im_item_part = strval($item->t_part);
                         $newItem->im_item_desc = strval($item->t_desc);
                         $newItem->im_item_um = strval($item->t_um);

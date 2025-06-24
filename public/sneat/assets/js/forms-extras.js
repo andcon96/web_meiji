@@ -138,7 +138,7 @@ $(function () {
     var row = 2;
     var col = 1;
     formRepeater.on('submit', function (e) {
-      e.preventDefault();
+      // e.preventDefault();
     });
     formRepeater.repeater({
       show: function () {

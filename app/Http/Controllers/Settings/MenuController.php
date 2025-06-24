@@ -19,7 +19,7 @@ class MenuController extends Controller
         return view('setting.menus.index', compact('menus', 'menuMaster'));
     }
 
-    public function create(Request $request)
+    public function create()
     {
         return view('setting.menus.create');
     }
@@ -34,7 +34,6 @@ class MenuController extends Controller
     {
         $menuName = $request->menuName;
         $menuRoute = $request->menuRoute;
-        $hasApproval = $request->hasApproval;
         $currentUser = Auth::user()->id;
 
         // Cek nama menu nya sudah ada atau belum
@@ -51,7 +50,6 @@ class MenuController extends Controller
             $menu = new Menu();
             $menu->menu_name = $menuName;
             $menu->menu_route = $menuRoute;
-            $menu->has_approval = $hasApproval;
             $menu->created_by = $currentUser;
             $menu->save();
 
@@ -61,7 +59,7 @@ class MenuController extends Controller
             return redirect()->back();
         } catch (\Exception $err) {
             DB::rollBack();
-
+            dd($err);
             toast('Failed to save menu', 'error');
 
             return redirect()->back()->withInput();
@@ -73,14 +71,11 @@ class MenuController extends Controller
 
     public function update(Request $request)
     {
-        // dd($request->all());
         $id = $request->u_id;
         $menuName = $request->menuName;
         $menuRoute = $request->menuRoute;
-        $hasApproval = $request->hasApproval;
         $currentUser = Auth::user()->id;
 
-        // Buat cek kalau nama menu nya udah ada atau belum
         $menuExists = Menu::where('menu_name', $menuName)->where('id', '!=', $id)->first();
         if ($menuExists) {
             toast('Menu already exists', 'info');
@@ -94,7 +89,6 @@ class MenuController extends Controller
             $menu = Menu::where('id', $id)->first();
             $menu->menu_name = $menuName;
             $menu->menu_route = $menuRoute;
-            $menu->has_approval = $hasApproval;
             if ($menu->isDirty()) {
                 $menu->updated_by = $currentUser;
                 $menu->save();
@@ -106,7 +100,6 @@ class MenuController extends Controller
                 toast('No changes were made', 'info');
             }
             return redirect()->route('menus.index');
-
         } catch (\Exception $err) {
             DB::rollBack();
 

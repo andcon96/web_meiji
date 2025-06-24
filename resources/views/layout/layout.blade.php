@@ -60,7 +60,8 @@
         href="{{ url('sneat/assets/vendor/libs/bootstrap-datepicker/bootstrap-datepicker.css') }}" />
     <link rel="stylesheet" href="{{ url('sneat/assets/vendor/libs/pickr/pickr-themes.css') }}" />
     <link rel="stylesheet" href="{{ url('sneat/assets/vendor/libs/datatables-bs5/datatables.bootstrap5.css') }}" />
-    <link rel="stylesheet" href="{{ url('sneat/assets/vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css') }}" />
+    <link rel="stylesheet"
+        href="{{ url('sneat/assets/vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css') }}" />
     <link rel="stylesheet"
         href="{{ url('sneat/assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css') }}" />
     <link rel="stylesheet"
@@ -72,9 +73,8 @@
     <!-- Calendar -->
     <link rel="stylesheet" href="{{ url('sneat/assets/vendor/libs/fullcalendar/fullcalendar.css') }}" />
     <link rel="stylesheet" href="{{ url('sneat/assets/vendor/css/pages/app-calendar.css') }}" />
-    {{-- <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.2.0/css/buttons.dataTables.css"> --}}
     <!-- End Calendar -->
+    <link href="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone.css" rel="stylesheet" type="text/css" />
 
 
     <!-- Helpers -->
@@ -88,7 +88,7 @@
 
 <body>
     <!-- Layout wrapper -->
-    <div class="layout-wrapper layout-navbar-full layout-horizontal layout-without-menu">
+    <div class="layout-wrapper layout-navbar-full layout-horizontal layout-without-menu" id="card-block">
         <div class="layout-container">
             <!-- Navbar -->
 
@@ -99,7 +99,7 @@
                             {{-- <span class="app-brand-logo demo">
                                 <img src="{{ url('images/logo.png') }}" width="35" alt="">
                             </span> --}}
-                            <span class="app-brand-text demo menu-text fw-bold">QAD Add-on</span>
+                            <span class="app-brand-text demo menu-text fw-bold">IMI - WMS</span>
                         </a>
 
                         <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-xl-none">
@@ -159,9 +159,6 @@
                             <!-- /Language -->
 
                             <!-- Quick links  -->
-                            <div>
-                                Domain: {{Session::get('domain_name')}}
-                            </div>
                             {{-- <li class="nav-item dropdown-shortcuts navbar-dropdown dropdown me-2 me-xl-0">
                                 <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);"
                                     data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
@@ -188,7 +185,8 @@
                                 <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);"
                                     data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                                     <i class="bx bx-bell bx-sm"></i>
-                                    <span class="badge bg-danger rounded-pill badge-notifications">{{ auth()->user()->unreadNotifications->count() }}</span>
+                                    <span
+                                        class="badge bg-danger rounded-pill badge-notifications">{{ auth()->user()->unreadNotifications->count() }}</span>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end py-0">
                                     <li class="dropdown-menu-header border-bottom">
@@ -204,24 +202,29 @@
                                     <li class="dropdown-notifications-list scrollable-container">
                                         <ul class="list-group list-group-flush">
                                             @forelse(Auth::User()->unreadNotifications as $notif)
-                                                <li class="list-group-item list-group-item-action dropdown-notifications-item">
-                                                    <a href="{{ $notif->data['url'] }}" class="d-flex mark-as-read" data-id="{{ $notif->id }}"
+                                                <li
+                                                    class="list-group-item list-group-item-action dropdown-notifications-item">
+                                                    <a href="{{ $notif->data['url'] }}" class="d-flex mark-as-read"
+                                                        data-id="{{ $notif->id }}"
                                                         data-link="{{ $notif->data['url'] }}">
                                                         <div class="flex-shrink-0 me-3">
                                                             <div class="avatar">
-                                                                <span class="avatar-initial rounded-circle bg-label-danger">
-                                                                    {{ substr($notif->data['data'],0,2) }}
+                                                                <span
+                                                                    class="avatar-initial rounded-circle bg-label-danger">
+                                                                    {{ substr($notif->data['data'], 0, 2) }}
                                                                 </span>
                                                             </div>
                                                         </div>
                                                         <div class="flex-grow-1">
                                                             <p class="mb-0">{{ $notif->data['data'] }}</p>
-                                                            <small class="text-muted">{{ $notif->data['note'] }}</small>
+                                                            <small
+                                                                class="text-muted">{{ $notif->data['note'] }}</small>
                                                         </div>
                                                     </a>
                                                 </li>
-                                                @empty
-                                                <li class="list-group-item list-group-item-action dropdown-notifications-item">
+                                            @empty
+                                                <li
+                                                    class="list-group-item list-group-item-action dropdown-notifications-item">
                                                     <div class="d-flex">
                                                         {{-- <div class="flex-shrink-0 me-3">
                                                             <div class="avatar">
@@ -287,7 +290,8 @@
                                         <div class="dropdown-divider"></div>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                                        <a class="dropdown-item" href="#" data-bs-toggle="modal"
+                                            data-bs-target="#changePasswordModal">
                                             <i class="bx bxs-key me-2"></i>
                                             <span class="align-middle">Change Password</span>
                                         </a>
@@ -332,15 +336,15 @@
                                     <li class="menu-item">
                                         @if ($menu->children->count() > 0)
                                             <a href="javascript:void(0)" class="menu-link menu-toggle">
-                                                <i class="menu-icon tf-icons {{ $menu->getIcon->icon_value ?? '' }}"></i>
+                                                <i
+                                                    class="menu-icon tf-icons {{ $menu->getIcon->icon_value ?? '' }}"></i>
                                                 <div data-i18n="{{ $menu->getMenu->menu_name }}">
                                                     {{ $menu->getMenu->menu_name }}</div>
                                             </a>
                                         @else
-                                            <a href="/{{ $menu->getMenu->menu_route }}"
-                                                class="menu-link">
-                                                <div data-i18n="{{ $menu->getMenu->menu_name }}"
-                                                    class="menu-text">{{ $menu->getMenu->menu_name }}
+                                            <a href="/{{ $menu->getMenu->menu_route }}" class="menu-link">
+                                                <div data-i18n="{{ $menu->getMenu->menu_name }}" class="menu-text">
+                                                    {{ $menu->getMenu->menu_name }}
                                                 </div>
                                             </a>
                                         @endif
@@ -396,23 +400,6 @@
                     </div>
                     <!--/ Content -->
 
-                    <!-- Footer -->
-                    {{-- <footer class="content-footer footer bg-footer-theme">
-                        <div
-                            class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
-                            <div class="mb-2 mb-md-0">
-                                ©
-                                <script>
-                                    document.write(new Date().getFullYear());
-                                </script>
-                                ,
-                                <a href="https://ptimi.co.id" target="_blank" class="footer-link fw-medium">PT.
-                                    Intelegensia Mustaka Indonesia</a>
-                            </div>
-                        </div>
-                    </footer> --}}
-                    <!-- / Footer -->
-
                     <div class="content-backdrop fade"></div>
                 </div>
                 <!--/ Content wrapper -->
@@ -425,17 +412,18 @@
     @include('sweetalert::alert')
 
     <!-- Change password Modal -->
-    <form action="{{route('changePassword')}}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('changePassword') }}" method="POST" enctype="multipart/form-data">
         {{ csrf_field() }}
         @method('POST')
-        <input type="hidden" name="id" value="{{Auth::user()->id}}">
-        <div class="modal fade" id="changePasswordModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-            aria-hidden="true">
+        <input type="hidden" name="id" value="{{ Auth::user()->id }}">
+        <div class="modal fade" id="changePasswordModal" tabindex="-1" role="dialog"
+            aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="exampleModalLabel5">Change Password</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <div class="col-md-6 form-password-toggle">
@@ -443,7 +431,8 @@
                                 <input type="password" name="password" id="multicol-password" class="form-control"
                                     placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
                                     aria-describedby="multicol-password2" value="{{ old('password') }}" />
-                                <span class="input-group-text cursor-pointer" id="multicol-password2"><i class="bx bx-hide"></i></span>
+                                <span class="input-group-text cursor-pointer" id="multicol-password2"><i
+                                        class="bx bx-hide"></i></span>
                             </div>
                         </div>
                     </div>
@@ -549,22 +538,15 @@
     <script src="{{ url('sneat/assets/vendor/libs/bloodhound/bloodhound.js') }}"></script>
     <script src="{{ url('sneat/assets/vendor/libs/datatables-bs5/datatables-bootstrap5.js') }}"></script>
     <script src="{{ url('sneat/assets/vendor/libs/datatables-buttons-bs5/jszip.min.js') }}"></script>
-    {{-- <script src="{{ url('sneat/assets/vendor/libs/datatables-buttons-bs5/buttons.dataTables.js') }}"></script> --}}
-    {{-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
-    <script src="https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.js"></script>
-    <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.dataTables.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js"></script> --}}
 
     <script src="{{ url('sneat/assets/vendor/libs/jquery-repeater/jquery-repeater.js') }}"></script>
     <script src="{{ url('sneat/assets/vendor/libs/block-ui/block-ui.js') }}"></script>
+    <script src="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone-min.js"></script>
 
     <!-- Main JS -->
     <script src="{{ url('sneat/assets/js/main.js') }}"></script>
 
     <!-- Page JS -->
-    {{-- <script src="{{ url('sneat/assets/js/app-ecommerce-order-list.js') }}"></script> --}}
     <script src="{{ url('sneat/assets/js/dashboards-analytics.js') }}"></script>
     <script src="{{ url('sneat/assets/js/cards-actions.js') }}"></script>
     <script src="{{ url('sneat/assets/js/ui-modals.js') }}"></script>
@@ -574,7 +556,6 @@
     <script src="{{ url('sneat/assets/vendor/libs/bootstrap-datepicker/bootstrap-datepicker.js') }}"></script>
     <script src="{{ url('sneat/assets/js/forms-pickers.js') }}"></script>
     <script src="{{ url('sneat/assets/js/forms-extras.js') }}"></script>
-    {{-- <script src="{{ url('sneat/assets/js/tables-datatables-advanced.js') }}"></script> --}}
 
     <!-- js calendar -->
     <script src="{{ url('sneat/assets/js/app-calendar-events.js') }}"></script>

@@ -13,26 +13,26 @@ use Illuminate\Support\Facades\Session;
 
 class RoleController extends Controller
 {
-    public function index (Request $request)
+    public function index(Request $request)
     {
         $menuMaster = (new ServerURL())->currentURL($request);
-        $roles = Role::where('domain_id', Session::get('domain'))->orderBy('role_desc')->get();
+        $roles = Role::orderBy('role_desc')->get();
         return view('setting.role.index', compact('roles', 'menuMaster'));
     }
 
-    public function create (Request $request)
+    public function create()
     {
         return view('setting.role.create');
     }
 
-    public function edit ($id)
+    public function edit($id)
     {
         $dataRole = Role::where('id', $id)->first();
 
         return view('setting.role.edit', compact('dataRole'));
     }
 
-    public function store (Request $request)
+    public function store(Request $request)
     {
         $domain_id = $request->domain_id;
         $roleCode = $request->roleCode;
@@ -62,7 +62,7 @@ class RoleController extends Controller
         return redirect()->back()->withInput();
     }
 
-    public function update (Request $request)
+    public function update(Request $request)
     {
         $domain_id = $request->domain_id;
         $id = $request->u_id;

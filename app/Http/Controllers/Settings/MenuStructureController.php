@@ -48,8 +48,7 @@ class MenuStructureController extends Controller
         $menuID = $request->menu_id;
         $menuParentID = $request->menu_parent_id;
         // $menuSequence = $request->menuSequence;
-        $currentUser = Auth::user()->id;
-        
+
         // cek kombinasi menu nya sudah ada atau belum
         $menuStructureExists = MenuStructure::where('menu_id', $menuID)
             ->where('menu_parent_id', $menuParentID)
@@ -63,7 +62,7 @@ class MenuStructureController extends Controller
 
         // Cek menu sequence terakhir
         $lastMenuSequence = MenuStructure::orderBy('menu_sequence', 'desc')->first();
-        
+
         if (!$lastMenuSequence) {
             $menuSequence = 1;
         } else {
@@ -79,7 +78,6 @@ class MenuStructureController extends Controller
             $menuStructure->menu_icon_id  = $iconID;
             $menuStructure->menu_parent_id = $menuParentID;
             $menuStructure->menu_sequence = $menuSequence;
-            $menuStructure->created_by = $currentUser;
 
             $menuStructure->save();
 
@@ -87,10 +85,9 @@ class MenuStructureController extends Controller
             toast('Menu structure saved successfully', 'success');
 
             return redirect()->back();
-
         } catch (\Exception $err) {
             DB::rollBack();
-            // dd($err);
+            dd($err);
             toast('Failed to save menu structure', 'error');
 
             return redirect()->back()->withInput();
@@ -113,7 +110,7 @@ class MenuStructureController extends Controller
 
         if ($menuStructureExists) {
             toast('Menu structure already exists', 'info');
-            
+
             return redirect()->back()->withInput();
         }
 
