@@ -26,7 +26,7 @@ class UserFactory extends Factory
             'username' => fake()->userName(),
             'email' => fake()->unique()->safeEmail(),
             'role_id' => 1,
-            'is_super_user' => 'No',
+            'is_super_user' => 'Yes',
             'is_active' => 'Active',
             'created_by' => 'System',
             'updated_by' => 'System',
