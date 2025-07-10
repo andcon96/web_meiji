@@ -26,7 +26,6 @@ class LocationController extends Controller
         return view('setting.location.index', compact('menuMaster', 'data'));
     }
 
-
     public function edit($id)
     {
         $data = Location::with('getDetailLocation')->where('id', $id)->first();
