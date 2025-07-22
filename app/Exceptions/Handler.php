@@ -8,14 +8,12 @@ use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\RouteNotFoundException;
 use Throwable;
-use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 class Handler extends ExceptionHandler
 {
-    public function render($request, Throwable $e): JsonResponse
+    public function render($request, Throwable $e)
     {
         if ($request->is('api/*')) {
             return match (true) {

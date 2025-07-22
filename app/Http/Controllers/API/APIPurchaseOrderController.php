@@ -6,16 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\GeneralResources;
 use App\Models\API\PurchaseOrderDetail;
 use App\Models\API\PurchaseOrderMaster;
+use App\Models\Settings\ItemLocation;
+use App\Models\Settings\LocationDetail;
 use App\Services\WSAServices;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Services\ReceiptServices;
+use Illuminate\Support\Facades\Cache;
 
 class APIPurchaseOrderController extends Controller
 {
     public function index(Request $req)
     {
-        $data = PurchaseOrderMaster::query()->with('getDetail');
+        $data = PurchaseOrderMaster::query()->with(['getDetail', 'getReceipt']);
 
         if ($req->search) {
             $data->where('po_nbr', 'LIKE', '%' . $req->search . '%')
@@ -110,5 +115,88 @@ class APIPurchaseOrderController extends Controller
                 'Message' => "Unable to Proccess Request"
             ], 422);
         }
+    }
+
+    public function saveReceipt(Request $req)
+    {
+        $inputan = json_decode($req->data);
+
+        $saveData = (new ReceiptServices())->saveDataReceiptPerLot($inputan);
+
+        if ($saveData == false) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Failed To Save Receipt Data."
+            ], 422);
+        }
+
+        return response()->json([
+            'Status' => 'Success',
+            'Message' => 'Data Receipt Saved',
+            'ReceiptNumber' => 'RCPT00001'
+        ], 200);
+    }
+
+    public function wsaLotBatch(Request $req)
+    {
+        $itemCode = $req->search;
+
+        $wsaData = Cache::remember('wsaLotSerial', 60, function () use ($itemCode) {
+            return (new WSAServices())->wsaLotSerialLdDetail($itemCode);
+        });
+
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+
+        return response()->json($wsaData[1]);
+    }
+
+    public function wsaPenyimpanan(Request $req)
+    {
+        $itemCode = $req->search;
+
+        // Ambil Relati Item ke Location di Web
+        $getAllItemLocation = LocationDetail::query()->with(['getListItem.getItem', 'getMaster']);
+        if ($itemCode) {
+            $getAllItemLocation->whereRelation('getListItem.getItem', 'im_item_part', '=', $itemCode);
+        }
+        $getAllItemLocation = $getAllItemLocation->get();
+
+
+        // Ambil List Location di QAD untuk dibanding ke Web
+        $wsaData = Cache::remember('wsaPenyimpanan', 60, function () use ($itemCode) {
+            return (new WSAServices())->wsaPenyimpanan($itemCode);
+        });
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+
+        // Prioritaskan Location yang ada di Web by order.
+        $dataQAD = collect($wsaData[1]);
+        $dataQAD = $dataQAD->map(function ($item) use ($getAllItemLocation) {
+            foreach ($getAllItemLocation as $datas) {
+                if (
+                    $item['t_inv_level'] == $datas->ld_rak &&
+                    $item['t_inv_wrh'] == $datas->ld_building &&
+                    $item['t_inv_bin'] == $datas->ld_bin &&
+                    $item['t_inv_loc'] == $datas->getMaster->location_code
+                ) {
+                    $item['t_is_prioritize'] = '1';
+                    break;
+                }
+            }
+            return $item;
+        });
+
+        $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
+
+        return response()->json($dataQAD);
     }
 }

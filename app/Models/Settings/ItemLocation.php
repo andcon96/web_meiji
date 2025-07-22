@@ -15,4 +15,9 @@ class ItemLocation extends Model
     {
         return $this->belongsTo(Item::class, 'il_item_id');
     }
+
+    public function getLocationDetail()
+    {
+        return $this->belongsTo(LocationDetail::class, 'il_ld_id');
+    }
 }

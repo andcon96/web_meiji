@@ -19,4 +19,9 @@ class PurchaseOrderMaster extends Model
     {
         return $this->hasMany(PurchaseOrderDetail::class, 'pod_po_mstr_id');
     }
+
+    public function getReceipt()
+    {
+        return $this->hasMany(ReceiptMaster::class, 'rm_po_mstr_id');
+    }
 }
