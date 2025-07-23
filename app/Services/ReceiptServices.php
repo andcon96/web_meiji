@@ -35,10 +35,16 @@ class ReceiptServices
 
             // Create Receipt Detail
             foreach ($data as $dataDetail) {
+                // Generate Running Number Buku
+                $getRunningNumberBuku = (new RunningNumberServices())->getRunningNumberReceipt();
+
+
                 // Receipt Detail
                 $newReceiptDetail = new ReceiptDetail();
                 $newReceiptDetail->rd_rm_id = $newReceiptMaster->id;
                 $newReceiptDetail->rd_pod_det_id = $dataDetail->id_pod_det;
+                $newReceiptDetail->rd_nomor_buku = $getRunningNumberBuku;
+                $newReceiptDetail->rd_tanggal_datang = $dataDetail->tgl_datang;
                 $newReceiptDetail->rd_nama_barang = $dataDetail->nama_barang;
                 $newReceiptDetail->rd_nama_barang_note = $dataDetail->nama_barang_note;
                 $newReceiptDetail->rd_batch = $dataDetail->batch;
@@ -106,7 +112,6 @@ class ReceiptServices
                 $newReceiptDetailPenanda->rdp_mfg_date = $dataDetail->mfg_date_penanda;
                 $newReceiptDetailPenanda->save();
             }
-
 
             DB::commit();
             return true;
