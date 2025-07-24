@@ -110,6 +110,7 @@ class ReceiptServices
                 $newReceiptDetailPenanda->rdp_nomor_lot = $dataDetail->batch_penanda;
                 $newReceiptDetailPenanda->rdp_expire_date = $dataDetail->exp_date_penanda;
                 $newReceiptDetailPenanda->rdp_mfg_date = $dataDetail->mfg_date_penanda;
+                $newReceiptDetailPenanda->rdp_suhu = $dataDetail->suhu_penanda;
                 $newReceiptDetailPenanda->save();
             }
 

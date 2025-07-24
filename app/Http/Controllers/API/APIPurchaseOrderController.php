@@ -20,7 +20,15 @@ class APIPurchaseOrderController extends Controller
 {
     public function index(Request $req)
     {
-        $data = PurchaseOrderMaster::query()->with(['getDetail', 'getReceipt']);
+        $data = PurchaseOrderMaster::query()->with([
+            'getDetail',
+            'getReceipt.getDetailReceipt',
+            'getReceipt.getDetailReceipt.getPurchaseOrderDetail',
+            'getReceipt.getDetailReceipt.getDokumen',
+            'getReceipt.getDetailReceipt.getKemasan',
+            'getReceipt.getDetailReceipt.getKendaraan',
+            'getReceipt.getDetailReceipt.getPenanda',
+        ]);
 
         if ($req->search) {
             $data->where('po_nbr', 'LIKE', '%' . $req->search . '%')

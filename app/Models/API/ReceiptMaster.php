@@ -11,7 +11,7 @@ class ReceiptMaster extends Model
 
     protected $table = 'receipt_mstr';
 
-    public function getDetail()
+    public function getDetailReceipt()
     {
         return $this->hasMany(ReceiptDetail::class, 'rd_rm_id', 'id');
     }
