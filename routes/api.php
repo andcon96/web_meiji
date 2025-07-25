@@ -23,6 +23,7 @@ Route::post('changepass', [APIController::class, 'resetPass']);
 Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getDataPO', [APIPurchaseOrderController::class, 'index']);
     Route::post('saveReceipt', [APIPurchaseOrderController::class, 'saveReceipt']);
+    Route::post('saveEditReceipt', [APIPurchaseOrderController::class, 'saveEditReceipt']);
 
     // WSA PO 
     Route::post('wsaDataPO', [APIPurchaseOrderController::class, 'wsaDataPO']);

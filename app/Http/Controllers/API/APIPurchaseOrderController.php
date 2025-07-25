@@ -34,6 +34,8 @@ class APIPurchaseOrderController extends Controller
             $data->where('po_nbr', 'LIKE', '%' . $req->search . '%')
                 ->orWhere('po_vend', 'LIKE', '%' . $req->search . '%')
                 ->orWhere('po_vend_desc', 'LIKE', '%' . $req->search . '%')
+                ->orWhereRelation('getReceipt', 'rm_rn_number', 'LIKE', '%' . $req->search . '%')
+                ->orWhereRelation('getReceipt.getDetailReceipt', 'rd_nomor_buku', 'LIKE', '%' . $req->search . '%')
                 ->orWhereRelation('getDetail', 'pod_part', 'LIKE', '%' . $req->search . '%')
                 ->orWhereRelation('getDetail', 'pod_part_desc', 'LIKE', '%' . $req->search . '%')
             ;
@@ -142,6 +144,24 @@ class APIPurchaseOrderController extends Controller
             'Status' => 'Success',
             'Message' => 'Data Receipt Saved',
             'ReceiptNumber' => 'RCPT00001'
+        ], 200);
+    }
+
+    public function saveEditReceipt(Request $req)
+    {
+        $inputan = json_decode($req->data);
+
+        $saveData = (new ReceiptServices())->editDataReceipt($inputan);
+        if ($saveData == false) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Failed To Save Receipt Data."
+            ], 422);
+        }
+
+        return response()->json([
+            'Status' => 'Success',
+            'Message' => 'Data Receipt Updated',
         ], 200);
     }
 

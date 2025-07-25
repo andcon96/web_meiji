@@ -30,7 +30,7 @@ class ReceiptServices
             $newReceiptMaster = new ReceiptMaster();
             $newReceiptMaster->rm_po_mstr_id = $poMasterID;
             $newReceiptMaster->rm_rn_number = $getRunningNumber;
-            $newReceiptMaster->rm_status = 'Draft';
+            $newReceiptMaster->rm_status = 'Waiting';
             $newReceiptMaster->save();
 
             // Create Receipt Detail
@@ -63,6 +63,7 @@ class ReceiptServices
                 $newReceiptDetail->rd_location_penyimpanan = $dataDetail->loc_penyimpanan;
                 $newReceiptDetail->rd_level_penyimpanan = $dataDetail->level_penyimpanan;
                 $newReceiptDetail->rd_bin_penyimpanan = $dataDetail->bin_penyimpanan;
+                $newReceiptDetail->rd_status = 'Waiting'; // Langsung Approval
                 $newReceiptDetail->save();
 
                 // Dokumen
@@ -113,6 +114,88 @@ class ReceiptServices
                 $newReceiptDetailPenanda->rdp_suhu = $dataDetail->suhu_penanda;
                 $newReceiptDetailPenanda->save();
             }
+
+            DB::commit();
+            return true;
+        } catch (Exception $e) {
+            Log::info($e);
+            DB::rollBack();
+
+            return false;
+        }
+    }
+
+    public function editDataReceipt($data)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Receipt Detail
+            $findReceiptDetail = ReceiptDetail::findOrFail($data->id);
+            $findReceiptDetail->rd_tanggal_datang = $data->rd_tanggal_datang;
+            $findReceiptDetail->rd_nama_barang = $data->rd_nama_barang;
+            $findReceiptDetail->rd_nama_barang_note = $data->rd_nama_barang_note;
+            $findReceiptDetail->rd_batch = $data->rd_batch;
+            $findReceiptDetail->rd_batch_note = $data->rd_batch_note;
+            $findReceiptDetail->rd_tgl_expire = $data->rd_tgl_expire;
+            $findReceiptDetail->rd_tgl_expire_note = $data->rd_tgl_expire_note;
+            $findReceiptDetail->rd_tgl_retest = $data->rd_tgl_retest;
+            $findReceiptDetail->rd_tgl_retest_note = $data->rd_tgl_retest_note;
+            $findReceiptDetail->rd_kode_cetak = $data->rd_kode_cetak;
+            $findReceiptDetail->rd_kode_cetak_note = $data->rd_kode_cetak_note;
+            $findReceiptDetail->rd_qty_terima = $data->rd_qty_terima;
+            $findReceiptDetail->rd_qty_terima_note = $data->rd_qty_terima_note;
+            $findReceiptDetail->rd_qty_potensi = $data->rd_qty_potensi;
+            $findReceiptDetail->rd_qty_pallete = $data->rd_qty_pallete;
+            $findReceiptDetail->rd_site_penyimpanan = $data->rd_site_penyimpanan;
+            $findReceiptDetail->rd_location_penyimpanan = $data->rd_location_penyimpanan;
+            $findReceiptDetail->rd_level_penyimpanan = $data->rd_level_penyimpanan;
+            $findReceiptDetail->rd_bin_penyimpanan = $data->rd_bin_penyimpanan;
+            $findReceiptDetail->save();
+
+            // Dokumen
+            $newReceiptDetailDokumen = ReceiptDokumen::findOrFail($data->get_dokumen->id);
+            $newReceiptDetailDokumen->rdd_is_purchase_order = $data->get_dokumen->rdd_is_purchase_order;
+            $newReceiptDetailDokumen->rdd_is_msds = $data->get_dokumen->rdd_is_msds;
+            $newReceiptDetailDokumen->rdd_is_packing_list = $data->get_dokumen->rdd_is_packing_list;
+            $newReceiptDetailDokumen->rdd_is_coa = $data->get_dokumen->rdd_is_coa;
+            $newReceiptDetailDokumen->rdd_is_surat_jalan = $data->get_dokumen->rdd_is_surat_jalan;
+            $newReceiptDetailDokumen->rdd_surat_jalan = $data->get_dokumen->rdd_surat_jalan;
+            $newReceiptDetailDokumen->save();
+
+            // Kemasan
+            $newReceiptDetailKemasan = ReceiptKemasan::findOrFail($data->get_kemasan->id);
+            $newReceiptDetailKemasan->rdk_is_pabrik_pembuat = $data->get_kemasan->rdk_is_pabrik_pembuat;
+            $newReceiptDetailKemasan->rdk_is_alamat_pembuat = $data->get_kemasan->rdk_is_alamat_pembuat;
+            $newReceiptDetailKemasan->rdk_is_agen_pemasuk = $data->get_kemasan->rdk_is_agen_pemasuk;
+            $newReceiptDetailKemasan->rdk_jenis_kemasan_luar = $data->get_kemasan->rdk_jenis_kemasan_luar;
+            $newReceiptDetailKemasan->rdk_jenis_kemasan_dalam = $data->get_kemasan->rdk_jenis_kemasan_dalam;
+            $newReceiptDetailKemasan->rdk_isi_per_kemasan = $data->get_kemasan->rdk_isi_per_kemasan;
+            $newReceiptDetailKemasan->rdk_isi_total_kemasan = $data->get_kemasan->rdk_isi_total_kemasan;
+            $newReceiptDetailKemasan->rdk_jumlah_kemasan_luar = $data->get_kemasan->rdk_jumlah_kemasan_luar;
+            $newReceiptDetailKemasan->rdk_jumlah_kemasan_luar_baik = $data->get_kemasan->rdk_jumlah_kemasan_luar_baik;
+            $newReceiptDetailKemasan->rdk_jumlah_kemasan_luar_tidak_baik = $data->get_kemasan->rdk_jumlah_kemasan_luar_tidak_baik;
+            $newReceiptDetailKemasan->rdk_jumlah_kemasan_dalam = $data->get_kemasan->rdk_jumlah_kemasan_dalam;
+            $newReceiptDetailKemasan->rdk_jumlah_kemasan_dalam_baik = $data->get_kemasan->rdk_jumlah_kemasan_dalam_baik;
+            $newReceiptDetailKemasan->rdk_jumlah_kemasan_dalam_tidak_baik = $data->get_kemasan->rdk_jumlah_kemasan_dalam_tidak_baik;
+            $newReceiptDetailKemasan->save();
+
+            // Kendaraan
+            $newReceiptDetailKendaraan = ReceiptKendaraan::findOrFail($data->get_kendaraan->id);
+            $newReceiptDetailKendaraan->rdken_is_bersih = $data->get_kendaraan->rdken_is_bersih;
+            $newReceiptDetailKendaraan->rdken_is_tidak_bersih = $data->get_kendaraan->rdken_is_tidak_bersih;
+            $newReceiptDetailKendaraan->rdken_is_ada_serangga = $data->get_kendaraan->rdken_is_ada_serangga;
+            $newReceiptDetailKendaraan->rdken_keterangan = $data->get_kendaraan->rdken_keterangan;
+            $newReceiptDetailKendaraan->save();
+
+            // Penanda
+            $newReceiptDetailPenanda = ReceiptPenanda::findOrFail($data->get_penanda->id);
+            $newReceiptDetailPenanda->rdp_nama_barang = $data->get_penanda->rdp_nama_barang;
+            $newReceiptDetailPenanda->rdp_nomor_lot = $data->get_penanda->rdp_nomor_lot;
+            $newReceiptDetailPenanda->rdp_expire_date = $data->get_penanda->rdp_expire_date;
+            $newReceiptDetailPenanda->rdp_mfg_date = $data->get_penanda->rdp_mfg_date;
+            $newReceiptDetailPenanda->rdp_suhu = $data->get_penanda->rdp_suhu;
+            $newReceiptDetailPenanda->save();
 
             DB::commit();
             return true;
