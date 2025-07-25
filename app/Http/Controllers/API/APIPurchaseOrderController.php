@@ -106,7 +106,7 @@ class APIPurchaseOrderController extends Controller
                     'pod_part_desc' => (string)$listDatas->t_podPartDesc,
                     'pod_qty_ord' => (string)$listDatas->t_podQtyOrd,
                     'pod_qty_rcpt' => (string)$listDatas->t_podQtyRcpt,
-                    'pod_qty_ongoing' => $newDataDetail->pod_qty_ongoing,
+                    'pod_qty_ongoing' => '0',
                     'pod_um' => (string)$listDatas->t_podUm,
                     'is_selected' => false, // Buat Menu Android
                     'is_expandable' => false, // Buat Menu Android
