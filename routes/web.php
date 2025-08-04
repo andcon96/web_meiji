@@ -10,6 +10,7 @@ use App\Http\Controllers\Settings\MenuController;
 use App\Http\Controllers\Settings\MenuStructureController;
 use App\Http\Controllers\Settings\PrefixController;
 use App\Http\Controllers\Settings\RoleController;
+use App\Http\Controllers\Settings\ShipmentSchedulePrefixController;
 use App\Http\Controllers\Settings\UserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -81,6 +82,10 @@ Route::group(['middleware' => ['auth']], function () {
 	Route::get('itemlocationdetail/{id}', [ItemLocationController::class, 'itemLocationDetail'])->name('itemLocationDetail');
 	Route::get('createitemlocationdetail/{id}', [ItemLocationController::class, 'createItemLocationDetail'])->name('createItemLocationDetail');
 	Route::get('/downloadTemplateLoadItemLocation', [ItemLocationController::class, 'downloadTemplateLoadItemLocation'])->name('downloadTemplateLoadItemLocation');
+
+    // Shipment Schedule Prefix
+    Route::resource('shipmentSchedulePrefix', ShipmentSchedulePrefixController::class);
+    Route::post('deleteShipmentScedulePrefix', [ShipmentSchedulePrefixController::class, 'delete'])->name('deleteShipmentScedulePrefix');
 });
 
 Auth::routes();

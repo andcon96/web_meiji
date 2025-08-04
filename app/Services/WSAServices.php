@@ -20,6 +20,64 @@ class WSAServices
         );
     }
 
+    private function sendQdocRequest($qdocRequest, $activeConnectionType)
+    {
+        $wsa_path = $activeConnectionType->wsa_path;
+        $wsa_url = $activeConnectionType->wsa_url;
+        // $wsa_path = 'urn:imi.co.id:wsaweb';
+        // $wsa_url = 'http://qad2021ee.server:22079/wsa/wsaweb/';
+
+        $timeout = 0;
+        $wsaUrl = $wsa_url;
+        $curlOptions = array(
+            CURLOPT_URL => $wsaUrl,
+            CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
+            CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
+            CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false
+        );
+
+        $getInfo = '';
+        $httpCode = 0;
+        $curlErrno = 0;
+        $curlError = '';
+        $qdocResponse = '';
+
+        $curl = curl_init();
+        if ($curl) {
+            curl_setopt_array($curl, $curlOptions);
+            $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
+            $curlErrno    = curl_errno($curl);
+            $curlError    = curl_error($curl);
+            $first        = true;
+
+            foreach (curl_getinfo($curl) as $key => $value) {
+                if (gettype($value) != 'array') {
+                    if (!$first) $getInfo .= ", ";
+                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $first = false;
+                    if ($key == 'http_code') $httpCode = $value;
+                }
+            }
+            curl_close($curl);
+        }
+
+        if (is_bool($qdocResponse)) {
+            return false;
+        }
+
+        $xmlResp = simplexml_load_string($qdocResponse);
+        $xmlResp->registerXPathNamespace('ns1', $wsa_path);
+        $dataloop   = $xmlResp->xpath('//ns1:tempRow');
+        $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
+
+        return [$qdocResult, $dataloop];
+    }
+
     public function wsaitem()
     {
         $wsa = qxwsa::first();
@@ -396,5 +454,49 @@ class WSAServices
             $qdocResult,
             json_decode(json_encode($dataloop), true),
         ];
+    }
+
+    public function wsaCustomer($activeConnectionType)
+    {
+        $qdocRequest =
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+                <Body>
+                    <meiji_cust_mstr xmlns="urn:imi.co.id:wsaweb">
+                        <inpdomain>10USA</inpdomain>
+                    </meiji_cust_mstr>
+                </Body>
+            </Envelope>';
+
+        return $this->sendQdocRequest($qdocRequest, $activeConnectionType);
+    }
+
+    public function wsaSalesOrder($customer, $activeConnectionType)
+    {
+        $qdocRequest =
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+                <Body>
+                    <meiji_get_SO xmlns="urn:imi.co.id:wsaweb">
+                        <inpdomain>10USA</inpdomain>
+                        <inpcust>' . $customer . '</inpcust>
+                    </meiji_get_SO>
+                </Body>
+            </Envelope>';
+
+        return $this->sendQdocRequest($qdocRequest, $activeConnectionType);
+    }
+
+    public function wsaInventoryDetail($itemCode, $activeConnectionType)
+    {
+        $qdocRequest =
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
+            '<Body>' .
+            '<meiji_xxinv_det xmlns="urn:imi.co.id:wsaweb">' .
+            '<inpdomain>10USA</inpdomain>' .
+            '<inppart>' . $itemCode . '</inppart>' .
+            '</meiji_xxinv_det>' .
+            '</Body>' .
+            '</Envelope>';
+
+        return $this->sendQdocRequest($qdocRequest, $activeConnectionType);
     }
 }
