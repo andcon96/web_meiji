@@ -493,6 +493,7 @@ class WSAServices
             '<meiji_xxinv_det xmlns="urn:imi.co.id:wsaweb">' .
             '<inpdomain>10USA</inpdomain>' .
             '<inppart>' . $itemCode . '</inppart>' .
+            '<inpbin></inpbin>' .
             '</meiji_xxinv_det>' .
             '</Body>' .
             '</Envelope>';

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('shipment_schedule_det', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('ssm_id')->index();
-            $table->foreign('ssm_id')->references('id')->on('users')->onDelete('restrict');
+            $table->foreign('ssm_id')->references('id')->on('shipment_schedule_mstr')->onDelete('restrict');
             $table->string('ssd_sod_nbr')->index();
             $table->string('ssd_sod_line')->index();
             $table->string('ssd_sod_part')->index();
@@ -25,8 +25,8 @@ return new class extends Migration
             $table->enum('ssd_sent_to_qad', ['Yes', 'No'])->default('No');
             $table->unsignedBigInteger('created_by')->index();
             $table->foreign('created_by')->references('id')->on('users')->onDelete('restrict');
-            $table->unsignedBigInteger('updated_By')->index()->nullable();
-            $table->foreign('updated_By')->references('id')->on('users')->onDelete('restrict');
+            $table->unsignedBigInteger('updated_by')->index()->nullable();
+            $table->foreign('updated_by')->references('id')->on('users')->onDelete('restrict');
             $table->timestamps();
         });
     }

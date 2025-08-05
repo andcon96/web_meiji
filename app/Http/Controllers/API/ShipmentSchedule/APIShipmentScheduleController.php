@@ -118,6 +118,8 @@ class APIShipmentScheduleController extends Controller
 
     public function store(Request $request)
     {
+        // Log::channel('shipmentSchedule')->info(json_encode($request->all()));
+
         $customerCode = $request->customer_id;
         $customerName = $request->customer_desc;
         $salesOrders = $request->sales_orders;
