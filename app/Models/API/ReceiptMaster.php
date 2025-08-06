@@ -18,6 +18,6 @@ class ReceiptMaster extends Model
 
     public function getPurchaseOrderMaster()
     {
-        return $this->belongsTo(PurchaseOrderMaster::class, 'id', 'rm_po_mstr_id');
+        return $this->belongsTo(PurchaseOrderMaster::class, 'rm_po_mstr_id', 'id');
     }
 }

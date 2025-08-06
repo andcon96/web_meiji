@@ -1,8 +1,11 @@
 <?php
 
 use App\Http\Controllers\API\APIController;
+use App\Http\Controllers\API\APIPurchaseOrderApprovalController;
 use App\Http\Controllers\API\APIPurchaseOrderController;
+use App\Http\Controllers\API\APIQualityInfoController;
 use App\Http\Controllers\API\APIServiceRequestController;
+use App\Http\Controllers\API\APITrasnferStockController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,12 +24,28 @@ Route::post('login', [APIController::class, 'login']);
 Route::post('changepass', [APIController::class, 'resetPass']);
 
 Route::middleware(['auth:api', 'token.api'])->group(function () {
+    // PO
     Route::get('getDataPO', [APIPurchaseOrderController::class, 'index']);
     Route::post('saveReceipt', [APIPurchaseOrderController::class, 'saveReceipt']);
     Route::post('saveEditReceipt', [APIPurchaseOrderController::class, 'saveEditReceipt']);
+    Route::get('getPoApproval', [APIPurchaseOrderApprovalController::class, 'getPoApproval']);
+
+    // PO Approval
+    Route::get('getDataApprovalPO', [APIPurchaseOrderApprovalController::class, 'index']);
+    Route::post('approveRejectReceipt', [APIPurchaseOrderApprovalController::class, 'approveRejectReceipt']);
+
+    // PO Quality Info
+    Route::get('getReceiptSeenBy', [APIQualityInfoController::class, 'index']);
+    Route::post('updateReceiptSeenBy', [APIQualityInfoController::class, 'store']);
+
+    // PO Transfer WMS
+    Route::get('getTransferList', [APITrasnferStockController::class, 'index']);
+    Route::get('getStockItemBin', [APITrasnferStockController::class, 'getStockItemBin']);
+    Route::post('saveTransfer', [APITrasnferStockController::class, 'saveTransfer']);
 
     // WSA PO 
     Route::post('wsaDataPO', [APIPurchaseOrderController::class, 'wsaDataPO']);
     Route::post('wsaLotBatch', [APIPurchaseOrderController::class, 'wsaLotBatch']);
     Route::post('wsaPenyimpanan', [APIPurchaseOrderController::class, 'wsaPenyimpanan']);
+    Route::get('getDefaultSampleLoc', [APITrasnferStockController::class, 'getDefaultSampleLoc']);
 });
