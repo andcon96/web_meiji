@@ -11,6 +11,7 @@ use App\Http\Controllers\Settings\MenuStructureController;
 use App\Http\Controllers\Settings\PrefixController;
 use App\Http\Controllers\Settings\RoleController;
 use App\Http\Controllers\Settings\ShipmentSchedulePrefixController;
+use App\Http\Controllers\Settings\ShipperPrefixController;
 use App\Http\Controllers\Settings\UserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -86,6 +87,9 @@ Route::group(['middleware' => ['auth']], function () {
     // Shipment Schedule Prefix
     Route::resource('shipmentSchedulePrefix', ShipmentSchedulePrefixController::class);
     Route::post('deleteShipmentScedulePrefix', [ShipmentSchedulePrefixController::class, 'delete'])->name('deleteShipmentScedulePrefix');
+
+    Route::resource('shipperPrefix', ShipperPrefixController::class);
+    Route::post('deleteShipperPrefix', [ShipperPrefixController::class, 'delete'])->name('deleteShipperPrefix');
 });
 
 Auth::routes();
