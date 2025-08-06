@@ -289,6 +289,13 @@ return [
             'days' => '30',
             'permission' => 0775,
         ],
+        'shipmentSchedule' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/shipmentSchedule.log'),
+            'level' => 'info',
+            'days' => '30',
+            'permission' => 0775,
+        ],
     ]
 
 ];
