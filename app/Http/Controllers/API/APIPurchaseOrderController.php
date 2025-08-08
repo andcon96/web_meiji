@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\GeneralResources;
 use App\Models\API\PurchaseOrderDetail;
 use App\Models\API\PurchaseOrderMaster;
+use App\Models\API\ReceiptAttachment;
 use App\Models\Settings\ItemLocation;
 use App\Models\Settings\LocationDetail;
 use App\Services\WSAServices;
@@ -28,6 +29,14 @@ class APIPurchaseOrderController extends Controller
             'getReceipt.getDetailReceipt.getKemasan',
             'getReceipt.getDetailReceipt.getKendaraan',
             'getReceipt.getDetailReceipt.getPenanda',
+            'getReceipt.getDetailReceipt.getAttachment',
+            'getReceipt.getDetailReceipt.getApprovalTemp.getUserApprove:id,username,name',
+            'getReceipt.getDetailReceipt.getApprovalTemp.getUserApproveAlt:id,username,name',
+            'getReceipt.getDetailReceipt.getApprovalTemp.getUserApproveBy:id,username,name',
+
+            'getReceipt.getDetailReceipt.getApprovalHist.getUserApprove:id,username,name',
+            'getReceipt.getDetailReceipt.getApprovalHist.getUserApproveAlt:id,username,name',
+            'getReceipt.getDetailReceipt.getApprovalHist.getUserApproveBy:id,username,name',
         ]);
 
         if ($req->search) {
@@ -57,81 +66,45 @@ class APIPurchaseOrderController extends Controller
             ], 422);
         }
 
-        $listData = $hasil[1];
-        try {
-            DB::beginTransaction();
-            $dataHeader = [];
-
-            $dataMaster = PurchaseOrderMaster::firstOrNew(
-                ['po_nbr' => (string)$listData[0]->t_poNbr]
-            );
-            $dataMaster->po_vend = (string)$listData[0]->t_poVend;
-            $dataMaster->po_vend_desc = (string)$listData[0]->t_poVendDesc;
-            $dataMaster->po_ord_date = (string)$listData[0]->t_poOrdDate;
-            $dataMaster->po_due_date = (string)$listData[0]->t_poDueDate;
-            $dataMaster->po_rmks = (string)$listData[0]->t_poRmks;
-            $dataMaster->po_stat = (string)$listData[0]->t_poStat;
-            $dataMaster->save();
-
-            $dataHeader[] = [
-                'id' => $dataMaster->id,
-                'po_nbr' => (string)$listData[0]->t_poNbr,
-                'po_vend' => (string)$listData[0]->t_poVend,
-                'po_vend_desc' => (string)$listData[0]->t_poVendDesc,
-                'po_ord_date' => (string)$listData[0]->t_poOrdDate,
-                'po_due_date' => (string)$listData[0]->t_poDueDate,
-                'po_stat' => (string)$listData[0]->t_poStat,
-            ];
-
-            $dataDetail = [];
-            foreach ($listData as $listDatas) {
-                $newDataDetail = PurchaseOrderDetail::firstOrNew(
-                    [
-                        'pod_po_mstr_id' => $dataMaster->id,
-                        'pod_line' => (string)$listDatas->t_podLine
-                    ]
-                );
-                $newDataDetail->pod_part = (string)$listDatas->t_podPart;
-                $newDataDetail->pod_part_desc = (string)$listDatas->t_podPartDesc;
-                $newDataDetail->pod_qty_ord = (string)$listDatas->t_podQtyOrd;
-                $newDataDetail->pod_qty_rcpt = (string)$listDatas->t_podQtyRcpt;
-                $newDataDetail->pod_um = (string)$listDatas->t_podUm;
-                $newDataDetail->save();
-
-                $dataDetail[] = [
-                    'id' => $newDataDetail->id,
-                    'po_mstr_id' => $dataMaster->id,
-                    'pod_line' => (string)$listDatas->t_podLine,
-                    'pod_part' => (string)$listDatas->t_podPart,
-                    'pod_part_desc' => (string)$listDatas->t_podPartDesc,
-                    'pod_qty_ord' => (string)$listDatas->t_podQtyOrd,
-                    'pod_qty_rcpt' => (string)$listDatas->t_podQtyRcpt,
-                    'pod_qty_ongoing' => '0',
-                    'pod_um' => (string)$listDatas->t_podUm,
-                    'is_selected' => false, // Buat Menu Android
-                    'is_expandable' => false, // Buat Menu Android
-                ];
-            }
-
-            DB::commit();
-            return response()->json([
-                'DataHeader' => $dataHeader,
-                'DataWSA' => $dataDetail
-            ], 200);
-        } catch (Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "Unable to Proccess Request"
-            ], 422);
-        }
+        return response()->json([
+            'DataHeader' => $hasil[1],
+            'DataWSA' => $hasil[2]
+        ], 200);
     }
 
     public function saveReceipt(Request $req)
     {
         $inputan = json_decode($req->data);
+        $images = $req->input('images', []); // Gets indexTabPod values
+        $files = $req->file('images');       // Gets UploadedFile objects
 
-        $saveData = (new ReceiptServices())->saveDataReceiptPerLot($inputan);
+        $arrayKoneksiImage = [];
+        foreach ($images as $index => $imageInfo) {
+            $idPodTab = $imageInfo['idPodTab'] ?? null;
+            $idSubTab = $imageInfo['idSubTab'] ?? null;
+
+            if (isset($files[$index]['file'])) {
+                $file = $files[$index]['file'];
+
+                if ($file instanceof \Illuminate\Http\UploadedFile) {
+                    $dataTime = date('Ymd_His');
+                    $filename = $dataTime . '-' . $file->getClientOriginalName();
+
+                    // Simpan File Upload pada Public
+                    $savepath = public_path('upload/receipttemp/');
+                    $file->move($savepath, $filename);
+
+                    $arrayKoneksiImage[] = [
+                        'idSubTab' => $idSubTab,
+                        'idPodTab' => $idPodTab,
+                        'fileName' => $filename,
+                    ];
+                }
+            }
+        }
+
+        $saveData = (new ReceiptServices())->saveDataReceiptPerLot($inputan, $arrayKoneksiImage);
+
 
         if ($saveData == false) {
             return response()->json([
@@ -149,7 +122,28 @@ class APIPurchaseOrderController extends Controller
 
     public function saveEditReceipt(Request $req)
     {
+        $data = $req->all();
         $inputan = json_decode($req->data);
+
+        if (array_key_exists('images', $data)) {
+            foreach ($data['images'] as $key => $dataImage) {
+                if ($dataImage->isValid()) {
+                    $dataTime = date('Ymd_His');
+                    $filename = $dataTime . '-EDIT-' . $dataImage->getClientOriginalName();
+
+                    // Simpan File Upload pada Public
+                    $savepath = public_path('upload/receipt/');
+                    $filepath = 'upload/receipt/';
+                    $dataImage->move($savepath, $filename);
+
+
+                    $newReceiptAttachment = new ReceiptAttachment();
+                    $newReceiptAttachment->rda_rd_det_id = $inputan->rd_pod_det_id;
+                    $newReceiptAttachment->rda_filepath = $filepath . $filename;
+                    $newReceiptAttachment->save();
+                }
+            }
+        }
 
         $saveData = (new ReceiptServices())->editDataReceipt($inputan);
         if ($saveData == false) {
@@ -197,7 +191,7 @@ class APIPurchaseOrderController extends Controller
 
         // Ambil List Location di QAD untuk dibanding ke Web
         $wsaData = Cache::remember('wsaPenyimpanan', 60, function () use ($itemCode) {
-            return (new WSAServices())->wsaPenyimpanan($itemCode);
+            return (new WSAServices())->wsaPenyimpanan($itemCode, '');
         });
         if ($wsaData[0] == 'false') {
             return response()->json([
@@ -207,8 +201,20 @@ class APIPurchaseOrderController extends Controller
         }
 
         // Prioritaskan Location yang ada di Web by order.
-        $dataQAD = collect($wsaData[1]);
-        $dataQAD = $dataQAD->map(function ($item) use ($getAllItemLocation) {
+        $getDataQAD = collect($wsaData[1]);
+        $grouped = $getDataQAD->groupBy(function ($item) {
+            return $item['t_inv_site'] . '-' . $item['t_inv_loc'] . '-' . $item['t_inv_bin'] . '-' . $item['t_inv_wrh'] . '-' . $item['t_inv_level'];
+        });
+
+        $merged = $grouped->map(function ($items) {
+            $first = $items->first(); // take base data from the first item
+            $first['t_inv_qtyoh'] = $items->sum(function ($i) {
+                return (int)$i['t_inv_qtyoh'];
+            });
+            return $first;
+        })->values();
+
+        $dataQAD = $merged->map(function ($item) use ($getAllItemLocation) {
             foreach ($getAllItemLocation as $datas) {
                 if (
                     $item['t_inv_level'] == $datas->ld_rak &&

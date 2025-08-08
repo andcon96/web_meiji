@@ -15,4 +15,9 @@ class PurchaseOrderDetail extends Model
         'pod_po_mstr_id',
         'pod_line'
     ];
+
+    public function getMaster()
+    {
+        return $this->belongsTo(PurchaseOrderMaster::class, 'pod_po_mstr_id');
+    }
 }

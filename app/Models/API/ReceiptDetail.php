@@ -45,4 +45,19 @@ class ReceiptDetail extends Model
     {
         return $this->hasOne(ReceiptPenanda::class, 'rdp_rd_det_id', 'id');
     }
+
+    public function getApprovalTemp()
+    {
+        return $this->hasMany(ApprovalReceiptTemp::class, 'art_receipt_det_id', 'id');
+    }
+
+    public function getApprovalHist()
+    {
+        return $this->hasMany(ApprovalReceiptHistory::class, 'arh_receipt_det_id', 'id');
+    }
+
+    public function getUserSeenBy()
+    {
+        return $this->hasOne(ReceiptDetailUserSeenBy::class, 'rdup_rd_id', 'id');
+    }
 }
