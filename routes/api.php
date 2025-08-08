@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\APIController;
 use App\Http\Controllers\API\APIPurchaseOrderController;
 use App\Http\Controllers\API\APIServiceRequestController;
+use App\Http\Controllers\API\APIWorkOrderController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -29,4 +30,9 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post('wsaDataPO', [APIPurchaseOrderController::class, 'wsaDataPO']);
     Route::post('wsaLotBatch', [APIPurchaseOrderController::class, 'wsaLotBatch']);
     Route::post('wsaPenyimpanan', [APIPurchaseOrderController::class, 'wsaPenyimpanan']);
+    Route::post('wsaDataWo', [APIWorkOrderController::class, 'wsaDataWo']);
+
+    
 });
+    // WSA Picklist 
+    
