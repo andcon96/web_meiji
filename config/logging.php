@@ -296,6 +296,12 @@ return [
             'days' => '30',
             'permission' => 0775,
         ],
+        'packingReplenishment' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/packingReplenishment.log'),
+            'level' => 'info',
+            'days' => '30',
+            'permission' => 0775,
+        ]
     ]
-
 ];

@@ -712,14 +712,30 @@ class WSAServices
         return $this->sendQdocRequest($qdocRequest, $activeConnectionType);
     }
 
+    public function wsaGetShipperNumber($site, $packingReplenishmentID, $activeConnectionType)
+    {
+        $qdocRequest =
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+                <Body>
+                    <meiji_get_shipper_number xmlns="urn:imi.co.id:wsaweb">
+                        <inpdomain>10USA</inpdomain>
+                        <inpship>' . $site . '</inpship>
+                        <inpidref>' . $packingReplenishmentID . '</inpidref>
+                    </meiji_get_shipper_number>
+                </Body>
+            </Envelope>';
+
+        return $this->sendQdocRequest($qdocRequest, $activeConnectionType);
+    }
+
     public function wsaGetWO($wonbr)
     {
-        
+
         $wsa = qxwsa::first();
-        
+
 
         $qxUrl = $wsa->wsa_url;
-        
+
         $qxReceiver = '';
         $qxSuppRes = 'false';
         $qxScopeTrx = '';

@@ -8,6 +8,8 @@ define output parameter outMsg as character no-undo initial "".
 
 define temp-table temp
 field t_so_domain       like so_domain
+field t_so_site         like so_site
+field t_so_ship         like so_ship
 field t_so_nbr          like so_nbr
 field t_so_line         like sod_line
 field t_so_part         like sod_part
@@ -33,6 +35,8 @@ for each so_mstr where so_domain = inpdomain and so_cust = inpcust no-lock:
         create temp.
         assign
             temp.t_so_domain    = so_domain
+            temp.t_so_site      = so_site
+            temp.t_so_ship      = so_ship
             temp.t_so_nbr       = so_nbr
             temp.t_so_line      = sod_line
             temp.t_so_part      = sod_part

@@ -188,10 +188,9 @@ class APIPurchaseOrderController extends Controller
         }
         $getAllItemLocation = $getAllItemLocation->get();
 
-
         // Ambil List Location di QAD untuk dibanding ke Web
         $wsaData = Cache::remember('wsaPenyimpanan', 60, function () use ($itemCode) {
-            return (new WSAServices())->wsaPenyimpanan($itemCode, '');
+            return (new WSAServices())->wsaPenyimpanan($itemCode, '01');
         });
         if ($wsaData[0] == 'false') {
             return response()->json([

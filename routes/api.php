@@ -4,11 +4,11 @@ use App\Http\Controllers\API\APIController;
 use App\Http\Controllers\API\APIPurchaseOrderApprovalController;
 use App\Http\Controllers\API\APIPurchaseOrderController;
 use App\Http\Controllers\API\APIQualityInfoController;
-use App\Http\Controllers\API\APIServiceRequestController;
 use App\Http\Controllers\API\ShipmentSchedule\APIShipmentScheduleController;
 use App\Http\Controllers\API\APITrasnferStockController;
 use App\Http\Controllers\API\APIWorkOrderController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\API\PackingReplenishment\APIPackingReplenishmentController;
+use App\Http\Controllers\API\ShipperConfirm\APIShipperConfirmController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -61,9 +61,16 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('editShipmentSchedule/{id}', [APIShipmentScheduleController::class, 'edit']);
     Route::put('updateShipmentSchedule/{id}', [APIShipmentScheduleController::class, 'update']);
     Route::get('getDefaultSampleLoc', [APITrasnferStockController::class, 'getDefaultSampleLoc']);
+
+    // Packing Replenishment
+    Route::get('getPackingReplenishment', [APIPackingReplenishmentController::class, 'index']);
+    Route::get('listShipmentSchedule', [APIPackingReplenishmentController::class, 'listShipmentSchedule']);
+    Route::post('savePackingReplenishment', [APIPackingReplenishmentController::class, 'store']);
+
+    // Shipper Confirm
+    Route::get('getShipperConfirmation', [APIShipperConfirmController::class, 'index']);
     Route::post('wsaDataWo', [APIWorkOrderController::class, 'wsaDataWo']);
 
-    
+
 });
-    // WSA Picklist 
-    
+    // WSA Picklist

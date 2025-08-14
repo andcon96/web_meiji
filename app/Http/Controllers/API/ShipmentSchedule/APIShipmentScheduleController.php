@@ -25,10 +25,9 @@ class APIShipmentScheduleController extends Controller
             $data->where('ssm_number', 'LIKE', '%' . $req->search . '%')
                 ->orWhere('ssm_cust_code', 'LIKE', '%' . $req->search . '%')
                 ->orWhere('ssm_cust_desc', 'LIKE', '%' . $req->search . '%');
-            ;
         }
 
-        $data = $data->orderBy('id', 'desc')->paginate(10);
+        $data = $data->orderBy('ssm_number', 'desc')->paginate(10);
 
 
         return GeneralResources::collection($data);
@@ -70,6 +69,8 @@ class APIShipmentScheduleController extends Controller
         foreach ($salesOrderData[1] as $data) {
             array_push($tempData, [
                 't_so_nbr' => (String)$data->t_so_nbr,
+                't_so_site' => (String)$data->t_so_site,
+                't_so_ship' => (String)$data->t_so_ship,
                 't_so_line' => (string)$data->t_so_line,
                 't_so_part' => (string)$data->t_so_part,
                 't_so_part_desc' => (string)$data->t_so_part_desc,
