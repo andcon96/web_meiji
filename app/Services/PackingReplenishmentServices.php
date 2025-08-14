@@ -25,7 +25,7 @@ class PackingReplenishmentServices
         try {
             // Buat Packing Replenishment Mstr + Det
             $packingReplenishmentMstr = new PackingReplenishmentMstr();
-            $packingReplenishmentMstr->created_by = 11;
+            $packingReplenishmentMstr->created_by = Auth::user()->id;
             $packingReplenishmentMstr->prm_status = 'Draft';
             $packingReplenishmentMstr->save();
 
