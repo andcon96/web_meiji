@@ -232,4 +232,49 @@ class APIPurchaseOrderController extends Controller
 
         return response()->json($dataQAD);
     }
+
+    public function wsaWarehouse(Request $req)
+    {
+        $wsaData = Cache::remember('wsaWarehouse', 60, function () {
+            return (new WSAServices())->wsaGenCode('mji_wrh');
+        });
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+
+        return response()->json($wsaData[1]);
+    }
+
+    public function wsaLevel(Request $req)
+    {
+        $wsaData = Cache::remember('wsaLevel', 60, function () {
+            return (new WSAServices())->wsaGenCode('mji_level');
+        });
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+
+        return response()->json($wsaData[1]);
+    }
+
+    public function wsaBin(Request $req)
+    {
+        $wsaData = Cache::remember('wsaBin', 60, function () {
+            return (new WSAServices())->wsaGenCode('mji_bin');
+        });
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+
+        return response()->json($wsaData[1]);
+    }
 }
