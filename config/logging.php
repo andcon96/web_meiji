@@ -302,6 +302,13 @@ return [
             'level' => 'info',
             'days' => '30',
             'permission' => 0775,
+        ],
+        'confirmShipment' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/confirmShipment.log'),
+            'level' => 'info',
+            'days' => '30',
+            'permission' => 0775,
         ]
     ]
 ];

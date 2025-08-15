@@ -639,4 +639,105 @@ class QxtendServices
 
         return $this->sendQdocRequest($qdocRequest, $activeConnection);
     }
+
+    public function qxShipperConfirm($confirmApproval, $activeConnection)
+    {
+        $receiver = 'QADERP';
+        $shipFrom = $confirmApproval['get_packing_replenishment_mstr']['get_packing_replenishment_det'][0]['get_shipment_schedule_location']['ssl_site'];
+        $absID = $confirmApproval['get_packing_replenishment_mstr']['prm_shipper_nbr'];
+        $vehicleRefID = $confirmApproval['prm_id'];
+
+        $qdocRequest = '<?xml version="1.0" encoding="UTF-8"?>
+                <soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services"
+                xmlns:qcom="urn:schemas-qad-com:xml-services:common"
+                xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsa="http://www.w3.org/2005/08/addressing">
+                <soapenv:Header>
+                    <wsa:Action/>
+                    <wsa:To>urn:services-qad-com:' . $receiver . '</wsa:To>
+                    <wsa:MessageID>urn:services-qad-com::' . $receiver . '</wsa:MessageID>
+                    <wsa:ReferenceParameters>
+                    <qcom:suppressResponseDetail>true</qcom:suppressResponseDetail>
+                    </wsa:ReferenceParameters>
+                    <wsa:ReplyTo>
+                    <wsa:Address>urn:services-qad-com:</wsa:Address>
+                    </wsa:ReplyTo>
+                </soapenv:Header>
+                <soapenv:Body>
+                    <confirmShipper>
+                    <qcom:dsSessionContext>
+                        <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>domain</qcom:propertyName>
+                        <qcom:propertyValue>10USA</qcom:propertyValue>
+                        </qcom:ttContext>
+                        <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>scopeTransaction</qcom:propertyName>
+                        <qcom:propertyValue>true</qcom:propertyValue>
+                        </qcom:ttContext>
+                        <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>version</qcom:propertyName>
+                        <qcom:propertyValue>ERP3_1</qcom:propertyValue>
+                        </qcom:ttContext>
+                        <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>mnemonicsRaw</qcom:propertyName>
+                        <qcom:propertyValue>false</qcom:propertyValue>
+                        </qcom:ttContext>
+                        <!--
+                        <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>username</qcom:propertyName>
+                        <qcom:propertyValue/>
+                        </qcom:ttContext>
+                        <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>password</qcom:propertyName>
+                        <qcom:propertyValue/>
+                        </qcom:ttContext>
+                        -->
+                        <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>action</qcom:propertyName>
+                        <qcom:propertyValue/>
+                        </qcom:ttContext>
+                        <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>entity</qcom:propertyName>
+                        <qcom:propertyValue/>
+                        </qcom:ttContext>
+                        <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>email</qcom:propertyName>
+                        <qcom:propertyValue/>
+                        </qcom:ttContext>
+                        <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>emailLevel</qcom:propertyName>
+                        <qcom:propertyValue/>
+                        </qcom:ttContext>
+                    </qcom:dsSessionContext>
+                    <dsShipperConfirm>
+                        <shipperConfirm>
+                            <absShipfrom>' . $shipFrom . '</absShipfrom>
+                            <confType>1</confType>
+                            <absId>' . $absID . '</absId>
+                            <shipDt>' . date('Y-m-d') . '</shipDt>
+                            <absVehRef>' . $vehicleRefID . '</absVehRef>
+                            <autoPost>true</autoPost>
+                            <lPrtinstbase>true</lPrtinstbase>
+                            <autoInv>true</autoInv>
+                            <consolidate>true</consolidate>
+                            <lCalcFreight>true</lCalcFreight>
+                            <pconfirm>true</pconfirm>
+                        </shipperConfirm>
+                    </dsShipperConfirm>
+                    </confirmShipper>
+                </soapenv:Body>
+                </soapenv:Envelope>
+        ';
+
+        return $this->sendQdocRequest($qdocRequest, $activeConnection);
+    }
 }
