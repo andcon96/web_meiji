@@ -80,7 +80,7 @@ class ShipmentScheduleServices
                     $shipmentScheduleHistory->ssh_bin = $shipmentScheduleLocation->ssl_bin;
                     $shipmentScheduleHistory->ssh_qty_to_pick = $shipmentScheduleLocation->ssl_qty_to_pick;
                     $shipmentScheduleHistory->ssh_action = 'Create';
-                    $shipmentScheduleHistory->created_by = Auth::user()->id;
+                    $shipmentScheduleHistory->created_by = Auth::user()->name;
                     $shipmentScheduleHistory->save();
                 }
             }
@@ -125,7 +125,7 @@ class ShipmentScheduleServices
                     $shipmentScheduleHistory->ssh_level = $locationDetail->ssl_level;
                     $shipmentScheduleHistory->ssh_bin = $locationDetail->ssl_bin;
                     $shipmentScheduleHistory->ssh_action = 'Delete';
-                    $shipmentScheduleHistory->created_by = Auth::user()->id;
+                    $shipmentScheduleHistory->created_by = Auth::user()->name;
                     $shipmentScheduleHistory->save();
 
                     $locationDetail->delete();
@@ -239,7 +239,7 @@ class ShipmentScheduleServices
                     $shipmentScheduleHistory->ssh_bin = $shipmentScheduleLocation->ssl_bin;
                     $shipmentScheduleHistory->ssh_qty_to_pick = $shipmentScheduleLocation->ssl_qty_to_pick;
                     $shipmentScheduleHistory->ssh_action = $action;
-                    $shipmentScheduleHistory->created_by = Auth::user()->id;
+                    $shipmentScheduleHistory->created_by = Auth::user()->name;
                     $shipmentScheduleHistory->save();
                 }
             }
@@ -278,7 +278,7 @@ class ShipmentScheduleServices
                         $shipmentScheduleHistory->ssh_bin = $locationDetail->ssl_bin;
                         $shipmentScheduleHistory->ssh_qty_to_pick = $locationDetail->ssl_qty_to_pick;
                         $shipmentScheduleHistory->ssh_action = 'Deleted';
-                        $shipmentScheduleHistory->created_by = Auth::user()->id;
+                        $shipmentScheduleHistory->created_by = Auth::user()->name;
                         $shipmentScheduleHistory->save();
 
                         $locationDetail->delete();

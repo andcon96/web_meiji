@@ -142,7 +142,7 @@ class PackingReplenishmentServices
                     $packingReplenishmentHist->prh_qty_pick = $locationDetail['qtyPick'];
                     $packingReplenishmentHist->prh_status_qad = 'Yes';
                     $packingReplenishmentHist->prh_status = $packingReplenishmentMstr->prm_status;
-                    $packingReplenishmentHist->created_by = Auth::user()->id;
+                    $packingReplenishmentHist->created_by = Auth::user()->name;
                     $packingReplenishmentHist->save();
                 }
             }

@@ -73,6 +73,9 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
 
     // Shipper Confirm
     Route::get('getShipperConfirmation', [APIShipperConfirmController::class, 'index']);
+    Route::post('confirmShipment', [APIShipperConfirmController::class, 'store']);
+
+
     Route::post('wsaDataWo', [APIWorkOrderController::class, 'wsaDataWo']);
 });
     // WSA Picklist
