@@ -14,7 +14,7 @@ class APIQualityInfoController extends Controller
     public function index(Request $req)
     {
         $data = ReceiptDetail::query()
-            ->with(['getMaster.getPurchaseOrderMaster'])
+            ->with(['getMaster.getPurchaseOrderMaster', 'getPurchaseOrderDetail'])
             ->withCount(['getUserSeenBy' => function ($query) {
                 $query->where('rdup_user', Auth::user()->id);
             }])

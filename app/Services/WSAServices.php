@@ -595,7 +595,7 @@ class WSAServices
         ];
     }
 
-    public function wsaPenyimpanan($itemCode, $bin)
+    public function wsaPenyimpanan($itemCode, $bin, $warehouse, $level)
     {
         $wsa = qxwsa::first();
 
@@ -618,6 +618,8 @@ class WSAServices
             '<inpdomain>' . $domainCode . '</inpdomain>' .
             '<inppart>' . $itemCode . '</inppart>' .
             '<inpbin>' . $bin . '</inpbin>' .
+            '<inpwrh>' . $warehouse . '</inpwrh>' .
+            '<inplevel>' . $level . '</inplevel>' .
             '</meiji_xxinv_det>' .
             '</Body>' .
             '</Envelope>';
@@ -785,6 +787,8 @@ class WSAServices
             '<inpdomain>10USA</inpdomain>' .
             '<inppart>' . $itemCode . '</inppart>' .
             '<inpbin></inpbin>' .
+            '<inpwrh></inpwrh>' .
+            '<inplevel></inplevel>' .
             '</meiji_xxinv_det>' .
             '</Body>' .
             '</Envelope>';
