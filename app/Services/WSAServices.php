@@ -595,7 +595,7 @@ class WSAServices
         ];
     }
 
-    public function wsaPenyimpanan($itemCode, $bin, $warehouse, $level)
+    public function wsaPenyimpanan($itemCode, $lot, $bin, $warehouse, $level)
     {
         $wsa = qxwsa::first();
 
@@ -617,7 +617,7 @@ class WSAServices
             '<meiji_xxinv_det xmlns="urn:imi.co.id:wsaweb">' .
             '<inpdomain>' . $domainCode . '</inpdomain>' .
             '<inppart>' . $itemCode . '</inppart>' .
-            '<inplot></inplot>' .
+            '<inplot>' . $lot . '</inplot>' .
             '<inpbin>' . $bin . '</inpbin>' .
             '<inpwrh>' . $warehouse . '</inpwrh>' .
             '<inplevel>' . $level . '</inplevel>' .
