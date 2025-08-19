@@ -617,6 +617,7 @@ class WSAServices
             '<meiji_xxinv_det xmlns="urn:imi.co.id:wsaweb">' .
             '<inpdomain>' . $domainCode . '</inpdomain>' .
             '<inppart>' . $itemCode . '</inppart>' .
+            '<inplot></inplot>' .
             '<inpbin>' . $bin . '</inpbin>' .
             '<inpwrh>' . $warehouse . '</inpwrh>' .
             '<inplevel>' . $level . '</inplevel>' .
@@ -778,7 +779,7 @@ class WSAServices
         return $this->sendQdocRequest($qdocRequest, $activeConnectionType);
     }
 
-    public function wsaInventoryDetail($itemCode, $activeConnectionType)
+    public function wsaInventoryDetail($itemCode, $lot, $activeConnectionType)
     {
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
@@ -786,6 +787,7 @@ class WSAServices
             '<meiji_xxinv_det xmlns="urn:imi.co.id:wsaweb">' .
             '<inpdomain>10USA</inpdomain>' .
             '<inppart>' . $itemCode . '</inppart>' .
+            '<inplot>' . $lot . '</inplot>' .
             '<inpbin></inpbin>' .
             '<inpwrh></inpwrh>' .
             '<inplevel></inplevel>' .
