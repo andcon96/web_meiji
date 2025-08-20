@@ -598,6 +598,7 @@ class QxtendServices
                         <salesOrderShipper>
                         <operation>A</operation>
                         <absShipfrom>' . $packingReplenishments[0]['sodSite'] . '</absShipfrom>
+                        <absId></absId>
                         <absShipto>' . $packingReplenishments[0]['sodShip'] . '</absShipto>
                         <vInvmov></vInvmov>
                         <vCont>true</vCont>
@@ -605,6 +606,7 @@ class QxtendServices
                         <multiEntry>false</multiEntry>
                         <absShipvia>UPS</absShipvia>
                         <absVehRef>' . $id . '</absVehRef>
+                        <vStatus></vStatus>
                         <cmmts>false</cmmts>
                         <vCmmts>false</vCmmts>
                         <vShipCmmts>true</vShipCmmts>
@@ -614,14 +616,14 @@ class QxtendServices
                         <lSoUm>false</lSoUm>
                         <compAddr>10-100</compAddr>
                         <lPrintLotserials>true</lPrintLotserials>
-                        <dev>text</dev>
+                        <dev>test1</dev>
                         <vOk>true</vOk>';
 
                         foreach ($packingReplenishments as $packingReplenishment) {
                             $lot = $packingReplenishment['locations'][0]['lot'];
 
-                            $qdocRequest .= '<schedOrderItemDetail>
-                                <operation>' . $operation .'</operation>
+                            $qdocRequest .= '
+                            <schedOrderItemDetail>
                                 <scxOrder>' . $packingReplenishment['sodNbr'] . '</scxOrder>
                                 <scxLine>' . $packingReplenishment['sodLine'] . '</scxLine>
                                 <srSite>' . $packingReplenishment['sodSite'] . '</srSite>
@@ -633,7 +635,20 @@ class QxtendServices
                                 <yn>true</yn>
                                 <answer>true</answer>
                                 <lAnswer>true</lAnswer>
-                            </schedOrderItemDetail>';
+                            </schedOrderItemDetail>
+                            <discreteOrderItemDetail>
+                                <scxOrder>' . $packingReplenishment['sodNbr'] . '</scxOrder>
+                                <scxLine>' . $packingReplenishment['sodLine'] . '</scxLine>
+                                <srSite>' . $packingReplenishment['sodSite'] . '</srSite>
+                                <srQty>' . $packingReplenishment['totalPickedQty'] . '</srQty>
+                                <srLoc>DOCK</srLoc>
+                                <srLotser>' . $lot . '</srLotser>
+                                <multiple>false</multiple>
+                                <vCmmts>false</vCmmts>
+                                <yn>true</yn>
+                                <answer>true</answer>
+                                <lAnswer>true</lAnswer>
+                            </discreteOrderItemDetail>';
                         }
 
                         $qdocRequest .= '
