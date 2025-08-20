@@ -618,12 +618,18 @@ class QxtendServices
                         <vOk>true</vOk>';
 
                         foreach ($packingReplenishments as $packingReplenishment) {
+                            $lot = $packingReplenishment['locations'][0]['lot'];
+
                             $qdocRequest .= '<schedOrderItemDetail>
                                 <operation>' . $operation .'</operation>
                                 <scxOrder>' . $packingReplenishment['sodNbr'] . '</scxOrder>
                                 <scxLine>' . $packingReplenishment['sodLine'] . '</scxLine>
+                                <srSite>' . $packingReplenishment['sodSite'] . '</srSite>
+                                <srQty>' . $packingReplenishment['totalPickedQty'] . '</srQty>
+                                <srLoc>DOCK</srLoc>
+                                <srLotser>' . $lot . '</srLotser>
                                 <multiple>false</multiple>
-                                <vCmmts>true</vCmmts>
+                                <vCmmts>false</vCmmts>
                                 <yn>true</yn>
                                 <answer>true</answer>
                                 <lAnswer>true</lAnswer>
@@ -721,14 +727,14 @@ class QxtendServices
                     <dsShipperConfirm>
                         <shipperConfirm>
                             <absShipfrom>' . $shipFrom . '</absShipfrom>
-                            <confType>1</confType>
+                            <confType>Shipper</confType>
                             <absId>' . $absID . '</absId>
                             <shipDt>' . date('Y-m-d') . '</shipDt>
                             <absVehRef>' . $vehicleRefID . '</absVehRef>
-                            <autoPost>true</autoPost>
+                            <autoPost>false</autoPost>
                             <lPrtinstbase>true</lPrtinstbase>
-                            <autoInv>true</autoInv>
-                            <consolidate>true</consolidate>
+                            <autoInv>false</autoInv>
+                            <consolidate>false</consolidate>
                             <lCalcFreight>true</lCalcFreight>
                             <pconfirm>true</pconfirm>
                         </shipperConfirm>

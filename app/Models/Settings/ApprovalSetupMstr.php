@@ -15,4 +15,9 @@ class ApprovalSetupMstr extends Model
     {
         return $this->hasMany(ApprovalSetupDet::class, 'asm_id', 'id');
     }
+
+    public function getMenu()
+    {
+        return $this->belongsTo(Menu::class, 'menu_id', 'id');
+    }
 }

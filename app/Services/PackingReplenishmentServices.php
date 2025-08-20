@@ -106,6 +106,8 @@ class PackingReplenishmentServices
                 return false;
             }
 
+            $shipperNumber = null;
+
             // Ambil nomor shipper, update ke packing replenishment master buat nomor shipper nya
             $getShipperNumber = (new WSAServices())->wsaGetShipperNumber($packingReplenishments[0]['sodSite'], $packingReplenishmentMstr->id, $activeConnection);
 

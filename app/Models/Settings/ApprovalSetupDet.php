@@ -9,10 +9,16 @@ class ApprovalSetupDet extends Model
 {
     use HasFactory;
 
-    protected $table = 'approval_setup_mstr';
+    protected $table = 'approval_setup_det';
 
     public function getApprovalSetupMstr()
     {
         return $this->belongsTo(ApprovalSetupMstr::class, 'asm_id', 'id');
+    }
+
+    public function getUsers()
+    {
+        $userIds = explode(';', $this->acd_approval_user);
+        return User::whereIn('id', $userIds)->get();
     }
 }

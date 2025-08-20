@@ -67,15 +67,19 @@ class APIShipmentScheduleController extends Controller
         $tempData = [];
 
         foreach ($salesOrderData[1] as $data) {
-            array_push($tempData, [
-                't_so_nbr' => (String)$data->t_so_nbr,
-                't_so_site' => (String)$data->t_so_site,
-                't_so_ship' => (String)$data->t_so_ship,
-                't_so_line' => (string)$data->t_so_line,
-                't_so_part' => (string)$data->t_so_part,
-                't_so_part_desc' => (string)$data->t_so_part_desc,
-                't_so_ord_qty' => (string)$data->t_so_ord_qty,
-            ]);
+            if ((string)$data->t_so_open_qty > 0) {
+                array_push($tempData, [
+                    't_so_nbr' => (String)$data->t_so_nbr,
+                    't_so_site' => (String)$data->t_so_site,
+                    't_so_ship' => (String)$data->t_so_ship,
+                    't_so_line' => (string)$data->t_so_line,
+                    't_so_part' => (string)$data->t_so_part,
+                    't_so_part_desc' => (string)$data->t_so_part_desc,
+                    't_so_ord_qty' => (string)$data->t_so_ord_qty,
+                    't_so_open_qty' => (string)$data->t_so_open_qty,
+                    't_so_serial' => (string)$data->t_so_serial,
+                ]);
+            }
         }
 
         return response()->json([
@@ -85,10 +89,17 @@ class APIShipmentScheduleController extends Controller
 
     public function wsaInventoryDetail(Request $request)
     {
-        $itemCode = $request->search;
+        $searchData = $request->search;
+
+        // split by "|"
+        $parts = explode('|', $searchData);
+
+        // make sure we always get both values
+        $itemCode = $parts[0] ?? null;
+        $lot      = $parts[1] ?? null;
 
         $activeConnection = qxwsa::first();
-        $wsaInventory = (new WSAServices())->wsaInventoryDetail($itemCode, $activeConnection);
+        $wsaInventory = (new WSAServices())->wsaInventoryDetail($itemCode, $lot, $activeConnection);
 
         if ($wsaInventory[0] == 'false') {
             return response()->json([

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Settings\ApprovalReceiptMasterController;
+use App\Http\Controllers\Settings\ApprovalSetupController;
 use App\Http\Controllers\Settings\ConnectionController;
 use App\Http\Controllers\Settings\IconController;
 use App\Http\Controllers\Settings\ItemController;
@@ -71,6 +72,8 @@ Route::group(['middleware' => ['auth']], function () {
 	Route::post('/loadItem', [ItemController::class, 'loadItem'])->name('loadItem');
 
 	Route::resource('appReceipts', ApprovalReceiptMasterController::class);
+
+    Route::resource('approvalSetup', ApprovalSetupController::class);
 
 	Route::resource('locations', LocationController::class);
 	Route::get('/uploadLocationDetail', [LocationController::class, 'uploadLocationDetail'])->name('uploadLocationDetail');
