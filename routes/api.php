@@ -4,11 +4,11 @@ use App\Http\Controllers\API\APIController;
 use App\Http\Controllers\API\APIPurchaseOrderApprovalController;
 use App\Http\Controllers\API\APIPurchaseOrderController;
 use App\Http\Controllers\API\APIQualityInfoController;
-use App\Http\Controllers\API\APIServiceRequestController;
 use App\Http\Controllers\API\ShipmentSchedule\APIShipmentScheduleController;
 use App\Http\Controllers\API\APITrasnferStockController;
 use App\Http\Controllers\API\APIWorkOrderController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\API\PackingReplenishment\APIPackingReplenishmentController;
+use App\Http\Controllers\API\ShipperConfirm\APIShipperConfirmController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -49,6 +49,10 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post('wsaDataPO', [APIPurchaseOrderController::class, 'wsaDataPO']);
     Route::post('wsaLotBatch', [APIPurchaseOrderController::class, 'wsaLotBatch']);
     Route::post('wsaPenyimpanan', [APIPurchaseOrderController::class, 'wsaPenyimpanan']);
+    Route::post('wsaWarehouse', [APIPurchaseOrderController::class, 'wsaWarehouse']);
+    Route::post('wsaLevel', [APIPurchaseOrderController::class, 'wsaLevel']);
+    Route::post('wsaBin', [APIPurchaseOrderController::class, 'wsaBin']);
+    Route::post('wsaLoc', [APIPurchaseOrderController::class, 'wsaLoc']);
 
 
     // Shipment Schedule
@@ -62,6 +66,17 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::put('updateShipmentSchedule/{id}', [APIShipmentScheduleController::class, 'update']);
     Route::get('getDefaultSampleLoc', [APITrasnferStockController::class, 'getDefaultSampleLoc']);
 
+    // Packing Replenishment
+    Route::get('getPackingReplenishment', [APIPackingReplenishmentController::class, 'index']);
+    Route::get('listShipmentSchedule', [APIPackingReplenishmentController::class, 'listShipmentSchedule']);
+    Route::post('savePackingReplenishment', [APIPackingReplenishmentController::class, 'store']);
+
+    // Shipper Confirm
+    Route::get('getShipperConfirmation', [APIShipperConfirmController::class, 'index']);
+    Route::post('confirmShipment', [APIShipperConfirmController::class, 'store']);
+
+
+
     // Picklist
     Route::get('getDataWo', [APIWorkOrderController::class, 'getDataWo']);
     Route::post('searchDataWo', [APIWorkOrderController::class, 'wsaDataWo']);
@@ -73,8 +88,5 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getDataPicklist', [APIWorkOrderController::class, 'getDataPicklist']);
     Route::get('getDataPicklistDetail', [APIWorkOrderController::class, 'getDataPicklistDetail']);
     
-
-    
 });
-    // WSA Picklist 
-    
+    // WSA Picklist

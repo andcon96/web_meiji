@@ -81,6 +81,82 @@ class WSAServices
         return [$qdocResult, $dataloop];
     }
 
+    public function wsaGenCode($fldname)
+    {
+        $wsa = qxwsa::first();
+
+        $qxUrl = $wsa->wsa_url;
+        $qxReceiver = '';
+        $qxSuppRes = 'false';
+        $qxScopeTrx = '';
+        $qdocName = '';
+        $qdocVersion = '';
+        $dsName = '';
+        $timeout = 0;
+
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+
+        $qdocRequest =
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
+            '<Body>' .
+            '<meiji_gen_code xmlns="' . $wsa->wsa_path . '">' .
+            '<inpdomain>' . $domainCode . '</inpdomain>' .
+            '<inpfldname>' . $fldname . '</inpfldname>' .
+            '</meiji_gen_code>' .
+            '</Body>' .
+            '</Envelope>';
+
+        $curlOptions = array(
+            CURLOPT_URL => $qxUrl,
+            CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
+            CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
+            CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false
+        );
+
+        $getInfo = '';
+        $httpCode = 0;
+        $curlErrno = 0;
+        $curlError = '';
+        $qdocResponse = '';
+
+        $curl = curl_init();
+        if ($curl) {
+            curl_setopt_array($curl, $curlOptions);
+            $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
+            $curlErrno    = curl_errno($curl);
+            $curlError    = curl_error($curl);
+            $first        = true;
+
+            foreach (curl_getinfo($curl) as $key => $value) {
+                if (gettype($value) != 'array') {
+                    if (!$first) $getInfo .= ", ";
+                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $first = false;
+                    if ($key == 'http_code') $httpCode = $value;
+                }
+            }
+            curl_close($curl);
+        }
+
+        $xmlResp = simplexml_load_string($qdocResponse);
+
+        $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
+
+        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
+
+        return [
+            $qdocResult,
+            json_decode(json_encode($dataloop), true),
+        ];
+    }
+
     public function wsaitem()
     {
         $wsa = qxwsa::first();
@@ -312,6 +388,8 @@ class WSAServices
         $dataMaster->po_due_date = (string)$dataloop[0]->t_poDueDate;
         $dataMaster->po_rmks = (string)$dataloop[0]->t_poRmks;
         $dataMaster->po_stat = (string)$dataloop[0]->t_poStat;
+        $dataMaster->po_site = (string)$dataloop[0]->t_poSite;
+        $dataMaster->po_loc_def = (string)$dataloop[0]->t_poLoc;
         $dataMaster->save();
 
         $dataHeader[] = [
@@ -322,6 +400,8 @@ class WSAServices
             'po_ord_date' => (string)$dataloop[0]->t_poOrdDate,
             'po_due_date' => (string)$dataloop[0]->t_poDueDate,
             'po_stat' => (string)$dataloop[0]->t_poStat,
+            'po_site' => (string)$dataloop[0]->t_poSite,
+            'po_loc_def' => (string)$dataloop[0]->t_poLoc,
         ];
 
         $dataDetail = [];
@@ -515,7 +595,7 @@ class WSAServices
         ];
     }
 
-    public function wsaPenyimpanan($itemCode, $bin)
+    public function wsaPenyimpanan($itemCode, $lot, $bin, $warehouse, $level)
     {
         $wsa = qxwsa::first();
 
@@ -537,7 +617,10 @@ class WSAServices
             '<meiji_xxinv_det xmlns="urn:imi.co.id:wsaweb">' .
             '<inpdomain>' . $domainCode . '</inpdomain>' .
             '<inppart>' . $itemCode . '</inppart>' .
+            '<inplot>' . $lot . '</inplot>' .
             '<inpbin>' . $bin . '</inpbin>' .
+            '<inpwrh>' . $warehouse . '</inpwrh>' .
+            '<inplevel>' . $level . '</inplevel>' .
             '</meiji_xxinv_det>' .
             '</Body>' .
             '</Envelope>';
@@ -696,7 +779,7 @@ class WSAServices
         return $this->sendQdocRequest($qdocRequest, $activeConnectionType);
     }
 
-    public function wsaInventoryDetail($itemCode, $activeConnectionType)
+    public function wsaInventoryDetail($itemCode, $lot, $activeConnectionType)
     {
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
@@ -704,7 +787,10 @@ class WSAServices
             '<meiji_xxinv_det xmlns="urn:imi.co.id:wsaweb">' .
             '<inpdomain>10USA</inpdomain>' .
             '<inppart>' . $itemCode . '</inppart>' .
+            '<inplot>' . $lot . '</inplot>' .
             '<inpbin></inpbin>' .
+            '<inpwrh></inpwrh>' .
+            '<inplevel></inplevel>' .
             '</meiji_xxinv_det>' .
             '</Body>' .
             '</Envelope>';
@@ -712,14 +798,30 @@ class WSAServices
         return $this->sendQdocRequest($qdocRequest, $activeConnectionType);
     }
 
+    public function wsaGetShipperNumber($site, $packingReplenishmentID, $activeConnectionType)
+    {
+        $qdocRequest =
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+                <Body>
+                    <meiji_get_shipper_number xmlns="urn:imi.co.id:wsaweb">
+                        <inpdomain>10USA</inpdomain>
+                        <inpship>' . $site . '</inpship>
+                        <inpidref>' . $packingReplenishmentID . '</inpidref>
+                    </meiji_get_shipper_number>
+                </Body>
+            </Envelope>';
+
+        return $this->sendQdocRequest($qdocRequest, $activeConnectionType);
+    }
+
     public function wsaGetWO($wonbr)
     {
-        
+
         $wsa = qxwsa::first();
-        
+
 
         $qxUrl = $wsa->wsa_url;
-        
+
         $qxReceiver = '';
         $qxSuppRes = 'false';
         $qxScopeTrx = '';

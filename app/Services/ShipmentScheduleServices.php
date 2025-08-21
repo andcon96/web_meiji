@@ -11,8 +11,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-use function PHPUnit\Framework\isEmpty;
-
 class ShipmentScheduleServices
 {
     public function saveShipmentSchedule($customerCode, $customerName, $salesOrders)
@@ -37,6 +35,8 @@ class ShipmentScheduleServices
                 $shipmentScheduleDet = new ShipmentScheduleDet();
                 $shipmentScheduleDet->ssm_id = $shipmentScheduleMstr->id;
                 $shipmentScheduleDet->ssd_sod_nbr = $order['so_id'];
+                $shipmentScheduleDet->ssd_sod_site = $order['site'];
+                $shipmentScheduleDet->ssd_sod_shipto = $order['ship'];
                 $shipmentScheduleDet->ssd_sod_line = $order['line'];
                 $shipmentScheduleDet->ssd_sod_part = $order['part'];
                 $shipmentScheduleDet->ssd_sod_desc = $order['desc'];
@@ -65,6 +65,8 @@ class ShipmentScheduleServices
                     $shipmentScheduleHistory->ssh_cust_desc = $shipmentScheduleMstr->ssm_cust_desc;
                     $shipmentScheduleHistory->ssh_status_mstr = $shipmentScheduleMstr->ssm_status;
                     $shipmentScheduleHistory->ssh_sod_nbr = $shipmentScheduleDet->ssd_sod_nbr;
+                    $shipmentScheduleHistory->ssh_sod_site = $shipmentScheduleDet->ssd_sod_site;
+                    $shipmentScheduleHistory->ssh_sod_shipto = $shipmentScheduleDet->ssd_sod_shipto;
                     $shipmentScheduleHistory->ssh_sod_line = $shipmentScheduleDet->ssd_sod_line;
                     $shipmentScheduleHistory->ssh_sod_part = $shipmentScheduleDet->ssd_sod_part;
                     $shipmentScheduleHistory->ssh_sod_desc = $shipmentScheduleDet->ssd_sod_desc;
@@ -78,7 +80,7 @@ class ShipmentScheduleServices
                     $shipmentScheduleHistory->ssh_bin = $shipmentScheduleLocation->ssl_bin;
                     $shipmentScheduleHistory->ssh_qty_to_pick = $shipmentScheduleLocation->ssl_qty_to_pick;
                     $shipmentScheduleHistory->ssh_action = 'Create';
-                    $shipmentScheduleHistory->created_by = Auth::user()->id;
+                    $shipmentScheduleHistory->created_by = Auth::user()->name;
                     $shipmentScheduleHistory->save();
                 }
             }
@@ -109,6 +111,8 @@ class ShipmentScheduleServices
                     $shipmentScheduleHistory->ssh_cust_desc = $shipmentScheduleMstr->ssm_cust_desc;
                     $shipmentScheduleHistory->ssh_status_mstr = $shipmentScheduleMstr->ssm_status;
                     $shipmentScheduleHistory->ssh_sod_nbr = $shipmentDetail->ssd_sod_nbr;
+                    $shipmentScheduleHistory->ssh_sod_site = $shipmentDetail->ssd_sod_site;
+                    $shipmentScheduleHistory->ssh_sod_shipto = $shipmentDetail->ssd_sod_shipto;
                     $shipmentScheduleHistory->ssh_sod_line = $shipmentDetail->ssd_sod_line;
                     $shipmentScheduleHistory->ssh_sod_part = $shipmentDetail->ssd_sod_part;
                     $shipmentScheduleHistory->ssh_sod_desc = $shipmentDetail->ssd_sod_desc;
@@ -121,7 +125,7 @@ class ShipmentScheduleServices
                     $shipmentScheduleHistory->ssh_level = $locationDetail->ssl_level;
                     $shipmentScheduleHistory->ssh_bin = $locationDetail->ssl_bin;
                     $shipmentScheduleHistory->ssh_action = 'Delete';
-                    $shipmentScheduleHistory->created_by = Auth::user()->id;
+                    $shipmentScheduleHistory->created_by = Auth::user()->name;
                     $shipmentScheduleHistory->save();
 
                     $locationDetail->delete();
@@ -161,6 +165,8 @@ class ShipmentScheduleServices
                 if ($shipmentScheduleDet) {
                     $shipmentScheduleDet->ssm_id = $idShipmentScheduleMstr;
                     $shipmentScheduleDet->ssd_sod_nbr = $salesOrder['so_id'];
+                    $shipmentScheduleDet->ssd_sod_site = $salesOrder['site'];
+                    $shipmentScheduleDet->ssd_sod_shipto = $salesOrder['ship'];
                     $shipmentScheduleDet->ssd_sod_line = $salesOrder['line'];
                     $shipmentScheduleDet->ssd_sod_part = $salesOrder['part'];
                     $shipmentScheduleDet->ssd_sod_desc = $salesOrder['desc'];
@@ -171,6 +177,8 @@ class ShipmentScheduleServices
                     $shipmentScheduleDet = new ShipmentScheduleDet();
                     $shipmentScheduleDet->ssm_id = $idShipmentScheduleMstr;
                     $shipmentScheduleDet->ssd_sod_nbr = $salesOrder['so_id'];
+                    $shipmentScheduleDet->ssd_sod_site = $salesOrder['site'];
+                    $shipmentScheduleDet->ssd_sod_shipto = $salesOrder['ship'];
                     $shipmentScheduleDet->ssd_sod_line = $salesOrder['line'];
                     $shipmentScheduleDet->ssd_sod_part = $salesOrder['part'];
                     $shipmentScheduleDet->ssd_sod_desc = $salesOrder['desc'];
@@ -216,6 +224,8 @@ class ShipmentScheduleServices
                     $shipmentScheduleHistory->ssh_cust_desc = $shipmentScheduleMstr->ssm_cust_desc;
                     $shipmentScheduleHistory->ssh_status_mstr = $shipmentScheduleMstr->ssm_status;
                     $shipmentScheduleHistory->ssh_sod_nbr = $shipmentScheduleDet->ssd_sod_nbr;
+                    $shipmentScheduleHistory->ssh_sod_site = $shipmentScheduleDet->ssd_sod_site;
+                    $shipmentScheduleHistory->ssh_sod_shipto = $shipmentScheduleDet->ssd_sod_shipto;
                     $shipmentScheduleHistory->ssh_sod_line = $shipmentScheduleDet->ssd_sod_line;
                     $shipmentScheduleHistory->ssh_sod_part = $shipmentScheduleDet->ssd_sod_part;
                     $shipmentScheduleHistory->ssh_sod_desc = $shipmentScheduleDet->ssd_sod_desc;
@@ -229,7 +239,7 @@ class ShipmentScheduleServices
                     $shipmentScheduleHistory->ssh_bin = $shipmentScheduleLocation->ssl_bin;
                     $shipmentScheduleHistory->ssh_qty_to_pick = $shipmentScheduleLocation->ssl_qty_to_pick;
                     $shipmentScheduleHistory->ssh_action = $action;
-                    $shipmentScheduleHistory->created_by = Auth::user()->id;
+                    $shipmentScheduleHistory->created_by = Auth::user()->name;
                     $shipmentScheduleHistory->save();
                 }
             }
@@ -253,6 +263,8 @@ class ShipmentScheduleServices
                         $shipmentScheduleHistory->ssh_cust_desc = $shipmentScheduleDet->getShipmentScheduleMaster->ssm_cust_desc;
                         $shipmentScheduleHistory->ssh_status_mstr = $shipmentScheduleDet->getShipmentScheduleMaster->ssm_status;
                         $shipmentScheduleHistory->ssh_sod_nbr = $shipmentScheduleDet->ssd_sod_nbr;
+                        $shipmentScheduleHistory->ssh_sod_site = $shipmentScheduleDet->ssd_sod_site;
+                        $shipmentScheduleHistory->ssh_sod_shipto = $shipmentScheduleDet->ssd_sod_shipto;
                         $shipmentScheduleHistory->ssh_sod_line = $shipmentScheduleDet->ssd_sod_line;
                         $shipmentScheduleHistory->ssh_sod_part = $shipmentScheduleDet->ssd_sod_part;
                         $shipmentScheduleHistory->ssh_sod_desc = $shipmentScheduleDet->ssd_sod_desc;
@@ -266,7 +278,7 @@ class ShipmentScheduleServices
                         $shipmentScheduleHistory->ssh_bin = $locationDetail->ssl_bin;
                         $shipmentScheduleHistory->ssh_qty_to_pick = $locationDetail->ssl_qty_to_pick;
                         $shipmentScheduleHistory->ssh_action = 'Deleted';
-                        $shipmentScheduleHistory->created_by = Auth::user()->id;
+                        $shipmentScheduleHistory->created_by = Auth::user()->name;
                         $shipmentScheduleHistory->save();
 
                         $locationDetail->delete();

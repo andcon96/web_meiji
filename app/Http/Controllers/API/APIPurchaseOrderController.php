@@ -188,10 +188,9 @@ class APIPurchaseOrderController extends Controller
         }
         $getAllItemLocation = $getAllItemLocation->get();
 
-
         // Ambil List Location di QAD untuk dibanding ke Web
         $wsaData = Cache::remember('wsaPenyimpanan', 60, function () use ($itemCode) {
-            return (new WSAServices())->wsaPenyimpanan($itemCode, '');
+            return (new WSAServices())->wsaPenyimpanan($itemCode, '', '', '', '');
         });
         if ($wsaData[0] == 'false') {
             return response()->json([
@@ -232,5 +231,65 @@ class APIPurchaseOrderController extends Controller
         $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
 
         return response()->json($dataQAD);
+    }
+
+    public function wsaWarehouse(Request $req)
+    {
+        $wsaData = Cache::remember('wsaWarehouse', 60, function () {
+            return (new WSAServices())->wsaGenCode('mji_wrh');
+        });
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+
+        return response()->json($wsaData[1]);
+    }
+
+    public function wsaLevel(Request $req)
+    {
+        $wsaData = Cache::remember('wsaLevel', 60, function () {
+            return (new WSAServices())->wsaGenCode('mji_level');
+        });
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+
+        return response()->json($wsaData[1]);
+    }
+
+    public function wsaBin(Request $req)
+    {
+        $wsaData = Cache::remember('wsaBin', 60, function () {
+            return (new WSAServices())->wsaGenCode('mji_bin');
+        });
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+
+        return response()->json($wsaData[1]);
+    }
+
+    public function wsaLoc(Request $req)
+    {
+        $wsaData = Cache::remember('wsaLoc', 60, function () {
+            return (new WSAServices())->wsaGenCode('mji_qc');
+        });
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+
+        return response()->json($wsaData[1]);
     }
 }

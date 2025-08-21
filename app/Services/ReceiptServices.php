@@ -71,7 +71,7 @@ class ReceiptServices
                 $newReceiptDetail->rd_status = 'Waiting'; // Langsung Approval
                 $newReceiptDetail->save();
 
-                // Create Approval 
+                // Create Approval
                 $currentApprover = ApprovalReceipt::get();
                 if ($currentApprover) {
                     foreach ($currentApprover as $dataApprover) {
@@ -84,7 +84,7 @@ class ReceiptServices
                         $approvalReceiptTemp->save();
                     }
                 } else {
-                    $newReceiptDetail->rd_status = 'Approved'; // Kalo ga ada data approval langsung Approved  
+                    $newReceiptDetail->rd_status = 'Approved'; // Kalo ga ada data approval langsung Approved
                     $newReceiptDetail->save();
                 }
 
@@ -250,7 +250,7 @@ class ReceiptServices
             $newReceiptDetailPenanda->rdp_suhu = $data->get_penanda->rdp_suhu;
             $newReceiptDetailPenanda->save();
 
-            // Create Approval 
+            // Create Approval
             $currentApprover = ApprovalReceipt::get();
             if ($currentApprover) {
                 foreach ($currentApprover as $dataApprover) {
@@ -263,7 +263,7 @@ class ReceiptServices
                     $approvalReceiptTemp->save();
                 }
             } else {
-                $findReceiptDetail->rd_status = 'Approved'; // Kalo ga ada data approval langsung Approved  
+                $findReceiptDetail->rd_status = 'Approved'; // Kalo ga ada data approval langsung Approved
                 $findReceiptDetail->save();
             }
 
