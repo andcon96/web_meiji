@@ -61,7 +61,18 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('editShipmentSchedule/{id}', [APIShipmentScheduleController::class, 'edit']);
     Route::put('updateShipmentSchedule/{id}', [APIShipmentScheduleController::class, 'update']);
     Route::get('getDefaultSampleLoc', [APITrasnferStockController::class, 'getDefaultSampleLoc']);
-    Route::post('wsaDataWo', [APIWorkOrderController::class, 'wsaDataWo']);
+
+    // Picklist
+    Route::get('getDataWo', [APIWorkOrderController::class, 'getDataWo']);
+    Route::post('searchDataWo', [APIWorkOrderController::class, 'wsaDataWo']);
+    Route::post('wsaDataInvWo', [APIWorkOrderController::class, 'wsaDataInvWo']);
+    Route::post('sendDataInvWo', [APIWorkOrderController::class, 'sendDataInvWo']);
+    Route::post('deleteDataWo', [APIWorkOrderController::class, 'deleteDataWo']);
+    Route::post('saveQtyWo', [APIWorkOrderController::class, 'saveQtyWo']);
+
+    Route::get('getDataPicklist', [APIWorkOrderController::class, 'getDataPicklist']);
+    Route::get('getDataPicklistDetail', [APIWorkOrderController::class, 'getDataPicklistDetail']);
+    
 
     
 });

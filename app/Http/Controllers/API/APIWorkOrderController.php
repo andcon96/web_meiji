@@ -8,7 +8,15 @@ use App\Models\API\PurchaseOrderDetail;
 use App\Models\API\PurchaseOrderMaster;
 use App\Models\Settings\ItemLocation;
 use App\Models\Settings\LocationDetail;
+use App\Models\API\workOrderMaster;
+use App\Models\API\workOrderDetail;
+use App\Models\API\picklistMstr;
+use App\Models\API\picklistWo;
+use App\Models\API\picklistWoDet;
+use App\Models\API\prefixWorkOrder;
+use App\Models\API\picklistHistory;
 use App\Services\WSAServices;
+use App\Services\QxtendServices;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,30 +26,20 @@ use Illuminate\Support\Facades\Cache;
 
 class APIWorkOrderController extends Controller
 {
-    public function getWO(Request $req)
+    public function getDataWo(Request $req)
     {
-        $data = PurchaseOrderMaster::query()->with([
-            'getDetail',
-            'getReceipt.getDetailReceipt',
-            'getReceipt.getDetailReceipt.getPurchaseOrderDetail',
-            'getReceipt.getDetailReceipt.getDokumen',
-            'getReceipt.getDetailReceipt.getKemasan',
-            'getReceipt.getDetailReceipt.getKendaraan',
-            'getReceipt.getDetailReceipt.getPenanda',
-        ]);
-
+        $data = workOrderMaster::query()->with(['getDetail' => function ($query) {
+            $query->orderBy('wod_part', 'asc')
+                ->orderBy('wod_site', 'asc');
+        }])->where('created_by', $req->user);
         if ($req->search) {
-            $data->where('po_nbr', 'LIKE', '%' . $req->search . '%')
-                ->orWhere('po_vend', 'LIKE', '%' . $req->search . '%')
-                ->orWhere('po_vend_desc', 'LIKE', '%' . $req->search . '%')
-                ->orWhereRelation('getReceipt', 'rm_rn_number', 'LIKE', '%' . $req->search . '%')
-                ->orWhereRelation('getReceipt.getDetailReceipt', 'rd_nomor_buku', 'LIKE', '%' . $req->search . '%')
-                ->orWhereRelation('getDetail', 'pod_part', 'LIKE', '%' . $req->search . '%')
-                ->orWhereRelation('getDetail', 'pod_part_desc', 'LIKE', '%' . $req->search . '%')
-            ;
+            $data->where('wo_nbr', 'LIKE', '%' . $req->search . '%')
+                ->orWhere('wo_id', 'LIKE', '%' . $req->search . '%')
+                ->orWhere('wo_part', 'LIKE', '%' . $req->search . '%')
+                ->orWhere('wo_part_desc', 'LIKE', '%' . $req->search . '%');
         }
 
-        $data = $data->orderBy('id', 'desc')->paginate(10);
+        $data = $data->orderBy('id', 'desc')->get();
 
 
         return GeneralResources::collection($data);
@@ -49,184 +47,414 @@ class APIWorkOrderController extends Controller
 
     public function wsaDataWo(Request $req)
     {
+        $woidnbr = '';
         $hasil = (new WSAServices())->wsaGetWO($req->search);
 
-        
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
                 'Message' => "Work Order : " . $req->search . " Not Found."
             ], 422);
+        } else {
+            $listData = $hasil[1];
+            try {
+                DB::beginTransaction();
+                foreach ($listData as $data) {
+                    if ($woidnbr != ((string)$data->t_wo_nbr . (string)$data->t_wo_id)) {
+                        $woidnbr = (string)$data->t_wo_nbr . (string)$data->t_wo_id;
+                        $dataMaster = workOrderMaster::firstOrNew(
+                            [
+                                'wo_nbr' => (string)$data->t_wo_nbr,
+                                'wo_id' => (string)$data->t_wo_id
+                            ]
+                        );
+                        $dataMaster->wo_site = (string)$data->t_wo_site;
+                        $dataMaster->wo_part = (string)$data->t_wo_part;
+                        $dataMaster->wo_part_desc = (string)$data->t_wo_part_desc;
+                        $dataMaster->wo_status = (string)$data->t_wo_status ?? '';
+                        $dataMaster->wo_qty_ord = (string)$data->t_wo_qty_ord ?? 0;
+                        $dataMaster->wo_qty_comp = (string)$data->t_wo_qty_comp ?? 0;
+                        $dataMaster->wo_qty_rjct = (string)$data->t_wo_qty_rjct ?? 0;
+                        $dataMaster->wo_order_date = (string)$data->t_wo_ord_date;
+                        $dataMaster->wo_release_date = (string)$data->t_wo_rel_date;
+                        $dataMaster->wo_due_date = (string)$data->t_wo_due_date;
+                        $dataMaster->created_by = $req->user;
+                        $dataMaster->save();
+                    }
+
+
+                    $dataDetail = new workOrderDetail();
+                    $dataDetail->wod_wo_id = $dataMaster->id;
+                    $dataDetail->wod_nbr = (string)$data->t_wod_nbr;
+                    $dataDetail->wod_op = (string)$data->t_wod_op;
+                    $dataDetail->wod_part = (string)$data->t_wod_part;
+                    $dataDetail->wod_part_desc = (string)$data->t_wod_part_desc;
+                    $dataDetail->wod_um = (string)$data->t_wod_um;
+                    $dataDetail->wod_site = (string)$data->t_wod_site;
+                    $dataDetail->wod_loc = (string)$data->t_wod_loc;
+                    $dataDetail->wod_qty_req = (string)$data->t_wod_qty_req ?? 0;
+                    $dataDetail->wod_qty_pick = (string)$data->t_wod_qty_pick ?? 0;
+                    $dataDetail->save();
+                }
+
+
+                DB::commit();
+                return response()->json(['success', 200]);
+            } catch (Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "Unable to Proccess Request: " . $e->getMessage()
+                ], 422);
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "Unable to Proccess Request"
+                ], 422);
+            }
         }
-
-        $listData = $hasil[1];
-        // try {
-        //     DB::beginTransaction();
-        //     $dataHeader = [];
-
-        //     $dataMaster = PurchaseOrderMaster::firstOrNew(
-        //         ['po_nbr' => (string)$listData[0]->t_poNbr]
-        //     );
-        //     $dataMaster->po_vend = (string)$listData[0]->t_poVend;
-        //     $dataMaster->po_vend_desc = (string)$listData[0]->t_poVendDesc;
-        //     $dataMaster->po_ord_date = (string)$listData[0]->t_poOrdDate;
-        //     $dataMaster->po_due_date = (string)$listData[0]->t_poDueDate;
-        //     $dataMaster->po_rmks = (string)$listData[0]->t_poRmks;
-        //     $dataMaster->po_stat = (string)$listData[0]->t_poStat;
-        //     $dataMaster->save();
-
-        //     $dataHeader[] = [
-        //         'id' => $dataMaster->id,
-        //         'po_nbr' => (string)$listData[0]->t_poNbr,
-        //         'po_vend' => (string)$listData[0]->t_poVend,
-        //         'po_vend_desc' => (string)$listData[0]->t_poVendDesc,
-        //         'po_ord_date' => (string)$listData[0]->t_poOrdDate,
-        //         'po_due_date' => (string)$listData[0]->t_poDueDate,
-        //         'po_stat' => (string)$listData[0]->t_poStat,
-        //     ];
-
-        //     $dataDetail = [];
-        //     foreach ($listData as $listDatas) {
-        //         $newDataDetail = PurchaseOrderDetail::firstOrNew(
-        //             [
-        //                 'pod_po_mstr_id' => $dataMaster->id,
-        //                 'pod_line' => (string)$listDatas->t_podLine
-        //             ]
-        //         );
-        //         $newDataDetail->pod_part = (string)$listDatas->t_podPart;
-        //         $newDataDetail->pod_part_desc = (string)$listDatas->t_podPartDesc;
-        //         $newDataDetail->pod_qty_ord = (string)$listDatas->t_podQtyOrd;
-        //         $newDataDetail->pod_qty_rcpt = (string)$listDatas->t_podQtyRcpt;
-        //         $newDataDetail->pod_um = (string)$listDatas->t_podUm;
-        //         $newDataDetail->save();
-
-        //         $dataDetail[] = [
-        //             'id' => $newDataDetail->id,
-        //             'po_mstr_id' => $dataMaster->id,
-        //             'pod_line' => (string)$listDatas->t_podLine,
-        //             'pod_part' => (string)$listDatas->t_podPart,
-        //             'pod_part_desc' => (string)$listDatas->t_podPartDesc,
-        //             'pod_qty_ord' => (string)$listDatas->t_podQtyOrd,
-        //             'pod_qty_rcpt' => (string)$listDatas->t_podQtyRcpt,
-        //             'pod_qty_ongoing' => '0',
-        //             'pod_um' => (string)$listDatas->t_podUm,
-        //             'is_selected' => false, // Buat Menu Android
-        //             'is_expandable' => false, // Buat Menu Android
-        //         ];
-        //     }
-
-        //     DB::commit();
-        //     return response()->json([
-        //         'DataHeader' => $dataHeader,
-        //         'DataWSA' => $dataDetail
-        //     ], 200);
-        // } catch (Exception $e) {
-        //     DB::rollBack();
-        //     return response()->json([
-        //         'Status' => 'Error',
-        //         'Message' => "Unable to Proccess Request"
-        //     ], 422);
-        // }
     }
 
-    public function saveReceipt(Request $req)
+    public function wsaDataInvWo(Request $req)
     {
-        $inputan = json_decode($req->data);
+        $wonbr = WorkOrderMaster::where('created_by', $req->search)->get();
 
-        $saveData = (new ReceiptServices())->saveDataReceiptPerLot($inputan);
+        try {
+            foreach ($wonbr as $data) {
+                $hasil = (new WSAServices())->wsaGetInvWo($data->wo_nbr);
+                
 
-        if ($saveData == false) {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "Failed To Save Receipt Data."
-            ], 422);
-        }
+                if ($hasil[0] == 'false') {
+                    continue;
+                    /*
+                    return response()->json([
+                        'Status' => 'Error',
+                        'Message' => "Work Order : " . $data->wo_nbr . " Not Found."
+                    ], 422);
+                    */
+                } else {
+                    $listData = $hasil[1];
+                    DB::beginTransaction();
+                    foreach ($listData as $data) {
+                        
+                        $workOrder = workOrderMaster::where('wo_nbr', (string)$data->t_wo_nbr)
+                            ->where('wo_id', (string)$data->t_wo_id)->first();
+                            
 
-        return response()->json([
-            'Status' => 'Success',
-            'Message' => 'Data Receipt Saved',
-            'ReceiptNumber' => 'RCPT00001'
-        ], 200);
-    }
-
-    public function saveEditReceipt(Request $req)
-    {
-        $inputan = json_decode($req->data);
-
-        $saveData = (new ReceiptServices())->editDataReceipt($inputan);
-        if ($saveData == false) {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "Failed To Save Receipt Data."
-            ], 422);
-        }
-
-        return response()->json([
-            'Status' => 'Success',
-            'Message' => 'Data Receipt Updated',
-        ], 200);
-    }
-
-    public function wsaLotBatch(Request $req)
-    {
-        $itemCode = $req->search;
-
-        $wsaData = Cache::remember('wsaLotSerial', 60, function () use ($itemCode) {
-            return (new WSAServices())->wsaLotSerialLdDetail($itemCode);
-        });
-
-        if ($wsaData[0] == 'false') {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "No Data Available"
-            ], 422);
-        }
-
-        return response()->json($wsaData[1]);
-    }
-
-    public function wsaPenyimpanan(Request $req)
-    {
-        $itemCode = $req->search;
-
-        // Ambil Relati Item ke Location di Web
-        $getAllItemLocation = LocationDetail::query()->with(['getListItem.getItem', 'getMaster']);
-        if ($itemCode) {
-            $getAllItemLocation->whereRelation('getListItem.getItem', 'im_item_part', '=', $itemCode);
-        }
-        $getAllItemLocation = $getAllItemLocation->get();
-
-
-        // Ambil List Location di QAD untuk dibanding ke Web
-        $wsaData = Cache::remember('wsaPenyimpanan', 60, function () use ($itemCode) {
-            return (new WSAServices())->wsaPenyimpanan($itemCode);
-        });
-        if ($wsaData[0] == 'false') {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "No Data Available"
-            ], 422);
-        }
-
-        // Prioritaskan Location yang ada di Web by order.
-        $dataQAD = collect($wsaData[1]);
-        $dataQAD = $dataQAD->map(function ($item) use ($getAllItemLocation) {
-            foreach ($getAllItemLocation as $datas) {
-                if (
-                    $item['t_inv_level'] == $datas->ld_rak &&
-                    $item['t_inv_wrh'] == $datas->ld_building &&
-                    $item['t_inv_bin'] == $datas->ld_bin &&
-                    $item['t_inv_loc'] == $datas->getMaster->location_code
-                ) {
-                    $item['t_is_prioritize'] = '1';
-                    break;
+                        $dataDetail = workOrderDetail::firstOrNew(
+                            [
+                                'wod_wo_id' => $workOrder->id,
+                                'wod_part' => (string)$data->t_wod_part,
+                               
+                            ]
+                        );
+                        
+                        $dataDetail->wod_nbr = (string)$data->t_wod_nbr;
+                        $dataDetail->wod_op = (string)$data->t_wod_op;
+                        $dataDetail->wod_part_desc = (string)$data->t_wod_part_desc;
+                        $dataDetail->wod_um = (string)$data->t_wod_um;
+                        $dataDetail->wod_site = (string)$data->t_wod_site;
+                        $dataDetail->wod_loc = (string)$data->t_wod_loc;
+                        $dataDetail->wod_qty_req = (string)$data->t_wod_qty_req ?? 0;
+                        $dataDetail->wod_qty_pick = (string)$data->t_wod_qty_pick ?? 0;
+                        $dataDetail->wod_qty_oh = (string)$data->t_xxinv_qtyoh ?? 0;
+                        $dataDetail->wod_qty_pick_inv = (string)$data->t_xxinv_qtypick ?? 0;
+                        $dataDetail->wod_lot = (string)$data->t_xxinv_lot ?? '';
+                        $dataDetail->wod_ref = (string)$data->t_xxinv_ref ?? '';
+                        $dataDetail->wod_warehouse = (string)$data->t_xxinv_wrh ?? '';
+                        $dataDetail->wod_bin = (string)$data->t_xxinv_bin ?? '';
+                        $dataDetail->wod_level = (string)$data->t_xxinv_level ?? '';
+                        $dataDetail->wod_entry_date = (string)$data->t_xxinv_entry_date ?? '';
+                        $dataDetail->wod_exp_date = (string)$data->t_xxinv_exp_date ?? '';
+                        $dataDetail->wod_picklist_type = (string)$data->t_picktype ?? '';
+                        $dataDetail->save();
+                    }
                 }
             }
-            return $item;
-        });
 
-        $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
-
-        return response()->json($dataQAD);
+            DB::commit();
+            return response()->json(['success', 200]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Unable to Proccess Request: " . $e->getMessage()
+            ], 422);
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Unable to Proccess Request"
+            ], 422);
+        }
     }
+
+
+
+    public function sendDataInvWo(Request $req)
+    {
+        $dataWo = workOrderMaster::with('getDetail')->where('created_by', $req->user)->get();
+
+        try {
+            DB::beginTransaction();
+            $prefix = prefixWorkOrder::first();
+            
+            $currentyear = date('Y');
+            $currentmonth = date('m');
+            $currentday = date('d');
+            
+            if ($prefix->prefix_year_wo != $currentyear){
+                $prefix->prefix_year_wo = $currentyear;
+            }
+            if($prefix->prefix_month_wo != $currentmonth){
+                $prefix->prefix_month_wo = $currentyear;
+            }
+            if($prefix->prefix_day_wo != $currentday){
+                $prefix->prefix_day_wo = $currentday;
+            }
+            $prefix->running_nbr_wo = $prefix->running_nbr_wo + 1;
+            $prefix->save(); 
+            
+            $picklistnbr = $prefix->prefix_wo . '/'. $prefix->prefix_year_wo . '/' . $prefix->prefix_month_wo . '/' . $prefix->prefix_day_wo .'-'. $prefix->running_nbr_wo; 
+            
+
+            $picklist = new picklistMstr();
+            $picklist->pl_nbr = $picklistnbr;
+            $picklist->pl_status = 'created';
+            $picklist->created_by = $req->user;
+            $picklist->save();
+
+            foreach ($dataWo as $WO) {
+
+                $picklistWo = new picklistWo();
+                $picklistWo->pl_id = $picklist->id;
+                $picklistWo->pl_wo_nbr = $WO->wo_nbr;
+                $picklistWo->pl_wo_id = $WO->wo_id;
+                $picklistWo->pl_wo_site = $WO->wo_site;
+                $picklistWo->pl_wo_status = $WO->wo_status;
+                $picklistWo->pl_wo_part = $WO->wo_part;
+                $picklistWo->pl_wo_part_desc = $WO->wo_part_desc;
+                $picklistWo->pl_wo_qty_ord = $WO->wo_qty_ord;
+                $picklistWo->pl_wo_qty_comp = $WO->wo_qty_comp;
+                $picklistWo->pl_wo_qty_rjct = $WO->wo_qty_rjct;
+                $picklistWo->pl_wo_order_date = $WO->wo_order_date;
+                $picklistWo->pl_wo_release_date = $WO->wo_release_date;
+                $picklistWo->pl_wo_due_date = $WO->wo_due_date;
+                $picklistWo->created_by = $req->user;
+                $picklistWo->save();
+
+                foreach ($WO->getDetail as $data) {
+                    //qxtend transfer single item
+                    $result = (new QxtendServices())->qxTransferSingleItemWo(
+                        $data->wod_part,
+                        $WO->wo_nbr,
+                        $data->wod_site,
+                        $data->wod_site,
+                        $data->wod_loc,
+                        'WO-PICK',
+                        $data->wod_qty_oh
+                    );
+                    if ($result[0] == 'false') {
+                        DB::rollBack();
+                        return response()->json([
+                            'Status' => 'Error',
+                            'Message' => "Transfer Item failed : " . $req->search . " Not Found."
+                        ], 422);
+                    }
+
+                    $resultBill = (new QxtendServices())->qxWorkOrderBill(
+                        $WO->wo_nbr,
+                        $WO->wo_id,
+                        $data->wod_part,
+                        $data->wod_op,
+                        $data->wod_qty_req,
+                        $data->wod_qty_oh,
+                        $data->wod_qty_pick,
+                        $data->wod_site,
+                        $data->wod_loc,
+                        $data->wod_ref
+                    );
+                    if ($resultBill[0] == 'false') {
+                        DB::rollBack();
+                        return response()->json([
+                            'Status' => 'Error',
+                            'Message' => "Work Order Bill : " . $req->search . " Failed."
+                        ], 422);
+                    }
+
+                    $picklistWoDet = new picklistWoDet();
+                    $picklistWoDet->pl_wod_wo_id = $picklistWo->id;
+                    $picklistWoDet->pl_wod_nbr = $data->wod_nbr;
+                    $picklistWoDet->pl_wod_op = $data->wod_op;
+                    $picklistWoDet->pl_wod_part = $data->wod_part;
+                    $picklistWoDet->pl_wod_part_desc = $data->wod_part_desc;
+                    $picklistWoDet->pl_wod_um = $data->wod_um;
+                    $picklistWoDet->pl_wod_site = $data->wod_site;
+                    $picklistWoDet->pl_wod_loc = $data->wod_loc;
+                    $picklistWoDet->pl_wod_lot = $data->wod_lot;
+                    $picklistWoDet->pl_wod_ref = $data->wod_ref;
+                    $picklistWoDet->pl_wod_warehouse = $data->wod_warehouse;
+                    $picklistWoDet->pl_wod_bin = $data->wod_bin;
+                    $picklistWoDet->pl_wod_level = $data->wod_level;
+                    $picklistWoDet->pl_wod_qty_req = $data->wod_qty_req;
+                    $picklistWoDet->pl_wod_qty_pick = $data->wod_qty_pick;
+                    $picklistWoDet->pl_wod_qty_oh = $data->wod_qty_oh;
+                    $picklistWoDet->pl_wod_qty_pick_inv = $data->wod_qty_pick_inv;
+                    $picklistWoDet->pl_wod_entry_date = $data->wod_entry_date;
+                    $picklistWoDet->pl_wod_exp_date = $data->wod_exp_date;
+                    $picklistWoDet->pl_wod_picklist_type = $data->wod_picklist_type;
+                    $picklistWoDet->save();
+
+                    $picklistHist = new PicklistHistory();
+                    
+                    $picklistHist->pl_nbr = $picklistnbr;
+                    $picklistHist->pl_status = 'created';
+                    $picklistHist->created_by = $req->user;
+
+                    $picklistHist->pl_wo_nbr = $WO->wo_nbr;
+                    $picklistHist->pl_wo_id = $WO->wo_id;
+                    $picklistHist->pl_wo_site = $WO->wo_site;
+                    $picklistHist->pl_wo_status = $WO->wo_status;
+                    $picklistHist->pl_wo_part = $WO->wo_part;
+                    $picklistHist->pl_wo_part_desc = $WO->wo_part_desc;
+                    $picklistHist->pl_wo_qty_ord = $WO->wo_qty_ord;
+                    $picklistHist->pl_wo_qty_comp = $WO->wo_qty_comp;
+                    $picklistHist->pl_wo_qty_rjct = $WO->wo_qty_rjct;
+                    $picklistHist->pl_wo_order_date = $WO->wo_order_date;
+                    $picklistHist->pl_wo_release_date = $WO->wo_release_date;
+                    $picklistHist->pl_wo_due_date = $WO->wo_due_date;
+                    $picklistHist->created_by = $req->user;
+
+                    $picklistHist->pl_wod_nbr = $data->wod_nbr;
+                    $picklistHist->pl_wod_op = $data->wod_op;
+                    $picklistHist->pl_wod_part = $data->wod_part;
+                    $picklistHist->pl_wod_part_desc = $data->wod_part_desc;
+                    $picklistHist->pl_wod_um = $data->wod_um;
+                    $picklistHist->pl_wod_site = $data->wod_site;
+                    $picklistHist->pl_wod_loc = $data->wod_loc;
+                    $picklistHist->pl_wod_lot = $data->wod_lot;
+                    $picklistHist->pl_wod_ref = $data->wod_ref;
+                    $picklistHist->pl_wod_warehouse = $data->wod_warehouse;
+                    $picklistHist->pl_wod_bin = $data->wod_bin;
+                    $picklistHist->pl_wod_level = $data->wod_level;
+                    $picklistHist->pl_wod_qty_req = $data->wod_qty_req;
+                    $picklistHist->pl_wod_qty_pick = $data->wod_qty_pick;
+                    $picklistHist->pl_wod_qty_oh = $data->wod_qty_oh;
+                    $picklistHist->pl_wod_qty_pick_inv = $data->wod_qty_pick_inv;
+                    $picklistHist->pl_wod_entry_date = $data->wod_entry_date;
+                    $picklistHist->pl_wod_exp_date = $data->wod_exp_date;
+                    $picklistHist->pl_wod_picklist_type = $data->wod_picklist_type;
+                    $picklistHist->save();
+                    
+                }
+            }
+
+            foreach ($dataWo as $wo) {
+                $wo->getDetail()->delete(); // delete related details
+                $wo->delete();              // delete master
+            }
+            DB::commit();
+            return response()->json(['success', 200]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Unable to Proccess Request: " . $e->getMessage()
+            ], 422);
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Unable to Proccess Request"
+            ], 422);
+        }
+    }
+
+    public function deleteDataWo(Request $req){
+        $dataWo = workOrderMaster::with('getDetail')->where('id',$req->search)->where('created_by', $req->user)->first();
+        if(!$dataWo){
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Work Order : " . $req->search . " Not Found."
+            ], 422);
+                    
+        }
+        try {
+                DB::beginTransaction();
+                $dataWo->getDetail()->delete();
+                $dataWo->delete();
+                DB::commit();
+                return response()->json(['success', 200]);
+
+
+             
+            } catch (Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "Unable to Proccess Request: " . $e->getMessage()
+                ], 422);
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "Unable to Proccess Request"
+                ], 422);
+            }
+    }
+
+    public function saveQtyWo(Request $req){
+       $woDetail = workOrderDetail::where('id',$req->id)->first();
+       
+        if(!$woDetail){
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Work Order : " . $req->search . " Not Found."
+            ], 422);
+                    
+        }
+        try {
+                DB::beginTransaction();
+                $woDetail->wod_qty_pick = $req->qtypick;
+                $woDetail->save();
+                
+                DB::commit();
+                return response()->json(['success', 200]);
+            } catch (Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "Unable to Proccess Request: " . $e->getMessage()
+                ], 422);
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "Unable to Proccess Request"
+                ], 422);
+            }
+    }
+
+    public function getDataPicklist(Request $req)
+    {
+        $data = picklistMstr::query()->with(['getWo','getWo.getDetail'])->where('created_by', $req->user);
+        if ($req->search) {
+            $data->where('pl_nbr', 'LIKE', '%' . $req->search . '%')
+                ->orWhere('pl_wo_nbr', 'LIKE', '%' . $req->search . '%')
+                ->orWhere('pl_wo_part', 'LIKE', '%' . $req->search . '%')
+                ->orWhere('pl_wo_part_desc', 'LIKE', '%' . $req->search . '%');
+        }
+
+        $data = $data->orderBy('id', 'desc')->get();
+
+
+        return GeneralResources::collection($data);
+    }
+    public function getDataPicklistDetail(Request $req)
+    {
+        $data = picklistMstr::query()->with(['getWo','getWo.getDetail'])->where('id', $req->id);
+        if ($req->search) {
+            $data->where('pl_nbr', 'LIKE', '%' . $req->search . '%')
+                ->orWhere('pl_wo_nbr', 'LIKE', '%' . $req->search . '%')
+                ->orWhere('pl_wo_part', 'LIKE', '%' . $req->search . '%')
+                ->orWhere('pl_wo_part_desc', 'LIKE', '%' . $req->search . '%');
+        }
+
+        $data = $data->orderBy('id', 'desc')->get();
+
+
+        return GeneralResources::collection($data);
+    }
+    
 }

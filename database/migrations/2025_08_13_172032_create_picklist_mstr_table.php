@@ -11,18 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
-
-        Schema::create('picklist_det', function (Blueprint $table) {
+        Schema::create('picklist_mstr', function (Blueprint $table) {
             $table->id();
-            $table->string('po_nbr', 8);
-            $table->string('po_vend', 8);
-            $table->string('po_vend_desc', 255);
-            $table->date('po_ord_date');
-            $table->date('po_due_date');
-            $table->string('po_rmks')->nullable();
+            $table->string('pl_nbr')->nullable();
+            $table->string('pl_status', 50)->nullable();
+            $table->string('created_by', 50)->nullable();
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->useCurrent();
+            
         });
     }
 
@@ -31,7 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
-        Schema::dropIfExists('picklist_det');
+        Schema::dropIfExists('picklist_mstr');
     }
 };

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('wo_id', 10);
             $table->string('wo_site',10);
             $table->string('wo_part',50);
-            $table->string('wo_line',50);
+            $table->string('wo_part_desc',50);
             $table->string('wo_status',50);   
             $table->decimal('wo_qty_ord',10);
             $table->decimal('wo_qty_comp',50);
@@ -26,6 +26,7 @@ return new class extends Migration
             $table->date('wo_release_date')->nullable();
             $table->date('wo_due_date');
             $table->string('created_by', 50); 
+            $table->string('wo_picklist_nbr')->nullable();
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->useCurrent();
         });
