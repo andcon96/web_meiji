@@ -65,7 +65,8 @@ class APIWorkOrderController extends Controller
                         $dataMaster = workOrderMaster::firstOrNew(
                             [
                                 'wo_nbr' => (string)$data->t_wo_nbr,
-                                'wo_id' => (string)$data->t_wo_id
+                                'wo_id' => (string)$data->t_wo_id,
+                                'created_by' => (string)$req->user
                             ]
                         );
                         $dataMaster->wo_site = (string)$data->t_wo_site;
@@ -82,19 +83,22 @@ class APIWorkOrderController extends Controller
                         $dataMaster->save();
                     }
 
-
-                    $dataDetail = new workOrderDetail();
-                    $dataDetail->wod_wo_id = $dataMaster->id;
-                    $dataDetail->wod_nbr = (string)$data->t_wod_nbr;
-                    $dataDetail->wod_op = (string)$data->t_wod_op;
-                    $dataDetail->wod_part = (string)$data->t_wod_part;
-                    $dataDetail->wod_part_desc = (string)$data->t_wod_part_desc;
-                    $dataDetail->wod_um = (string)$data->t_wod_um;
-                    $dataDetail->wod_site = (string)$data->t_wod_site;
-                    $dataDetail->wod_loc = (string)$data->t_wod_loc;
-                    $dataDetail->wod_qty_req = (string)$data->t_wod_qty_req ?? 0;
-                    $dataDetail->wod_qty_pick = (string)$data->t_wod_qty_pick ?? 0;
-                    $dataDetail->save();
+                    $checkDetail = workOrderDetail::where('wod_wo_id',$dataMaster->id)->where('wod_part',(string)$data->t_wod_part)->first();
+                    if(!$checkDetail){
+                        $dataDetail = new workOrderDetail();
+                        $dataDetail->wod_wo_id = $dataMaster->id;
+                        $dataDetail->wod_nbr = (string)$data->t_wod_nbr;
+                        $dataDetail->wod_op = (string)$data->t_wod_op;
+                        $dataDetail->wod_part = (string)$data->t_wod_part;
+                        $dataDetail->wod_part_desc = (string)$data->t_wod_part_desc;
+                        $dataDetail->wod_um = (string)$data->t_wod_um;
+                        $dataDetail->wod_site = (string)$data->t_wod_site;
+                        $dataDetail->wod_loc = (string)$data->t_wod_loc;
+                        $dataDetail->wod_qty_req = (string)$data->t_wod_qty_req ?? 0;
+                        $dataDetail->wod_qty_pick = (string)$data->t_wod_qty_pick ?? 0;
+                        $dataDetail->save();
+                    }
+                    
                 }
 
 
@@ -117,24 +121,22 @@ class APIWorkOrderController extends Controller
     public function wsaDataInvWo(Request $req)
     {
         $wonbr = WorkOrderMaster::where('created_by', $req->search)->get();
-
+        
         try {
-            foreach ($wonbr as $data) {
-                $hasil = (new WSAServices())->wsaGetInvWo($data->wo_nbr);
+            DB::beginTransaction();
+            foreach ($wonbr as $wonbr) {
+                
+                $hasil = (new WSAServices())->wsaGetInvWo($wonbr->wo_nbr);
                 
 
                 if ($hasil[0] == 'false') {
+                    
                     continue;
-                    /*
-                    return response()->json([
-                        'Status' => 'Error',
-                        'Message' => "Work Order : " . $data->wo_nbr . " Not Found."
-                    ], 422);
-                    */
+                    
                 } else {
                     $listData = $hasil[1];
-                    DB::beginTransaction();
-                    foreach ($listData as $data) {
+                    
+                    foreach ($listData as $key => $data) {
                         
                         $workOrder = workOrderMaster::where('wo_nbr', (string)$data->t_wo_nbr)
                             ->where('wo_id', (string)$data->t_wo_id)->first();
@@ -148,30 +150,48 @@ class APIWorkOrderController extends Controller
                             ]
                         );
                         
-                        $dataDetail->wod_nbr = (string)$data->t_wod_nbr;
-                        $dataDetail->wod_op = (string)$data->t_wod_op;
-                        $dataDetail->wod_part_desc = (string)$data->t_wod_part_desc;
-                        $dataDetail->wod_um = (string)$data->t_wod_um;
-                        $dataDetail->wod_site = (string)$data->t_wod_site;
-                        $dataDetail->wod_loc = (string)$data->t_wod_loc;
-                        $dataDetail->wod_qty_req = (string)$data->t_wod_qty_req ?? 0;
-                        $dataDetail->wod_qty_pick = (string)$data->t_wod_qty_pick ?? 0;
-                        $dataDetail->wod_qty_oh = (string)$data->t_xxinv_qtyoh ?? 0;
-                        $dataDetail->wod_qty_pick_inv = (string)$data->t_xxinv_qtypick ?? 0;
-                        $dataDetail->wod_lot = (string)$data->t_xxinv_lot ?? '';
-                        $dataDetail->wod_ref = (string)$data->t_xxinv_ref ?? '';
-                        $dataDetail->wod_warehouse = (string)$data->t_xxinv_wrh ?? '';
-                        $dataDetail->wod_bin = (string)$data->t_xxinv_bin ?? '';
-                        $dataDetail->wod_level = (string)$data->t_xxinv_level ?? '';
-                        $dataDetail->wod_entry_date = (string)$data->t_xxinv_entry_date ?? '';
-                        $dataDetail->wod_exp_date = (string)$data->t_xxinv_exp_date ?? '';
-                        $dataDetail->wod_picklist_type = (string)$data->t_picktype ?? '';
+                        if ($dataDetail->exists) {
+                            $dataDetail->wod_qty_pick = (string)$data->t_wod_qty_pick ?? 0;
+                            $dataDetail->wod_qty_oh = (string)$data->t_xxinv_qtyoh ?? 0;
+                            $dataDetail->wod_qty_pick_inv = (string)$data->t_xxinv_qtypick ?? 0;
+                            $dataDetail->wod_lot = (string)$data->t_xxinv_lot ?? '';
+                            $dataDetail->wod_ref = (string)$data->t_xxinv_ref ?? '';
+                            $dataDetail->wod_warehouse = (string)$data->t_xxinv_wrh ?? '';
+                            $dataDetail->wod_bin = (string)$data->t_xxinv_bin ?? '';
+                            $dataDetail->wod_level = (string)$data->t_xxinv_level ?? '';
+                            $dataDetail->wod_entry_date = (string)$data->t_xxinv_entry_date ?? '';
+                            $dataDetail->wod_exp_date = (string)$data->t_xxinv_exp_date ?? '';
+                            $dataDetail->wod_picklist_type = (string)$data->t_picktype ?? '';
+                           
+                        }
+                        else{
+                            $dataDetail->wod_nbr = (string)$data->t_wod_nbr;
+                            $dataDetail->wod_op = (string)$data->t_wod_op;
+                            $dataDetail->wod_part_desc = (string)$data->t_wod_part_desc;
+                            $dataDetail->wod_um = (string)$data->t_wod_um;
+                            $dataDetail->wod_site = (string)$data->t_wod_site;
+                            $dataDetail->wod_loc = (string)$data->t_wod_loc;
+                            $dataDetail->wod_qty_req = (string)$data->t_wod_qty_req ?? 0;
+                            $dataDetail->wod_qty_pick = (string)$data->t_wod_qty_pick ?? 0;
+                            $dataDetail->wod_qty_oh = (string)$data->t_xxinv_qtyoh ?? 0;
+                            $dataDetail->wod_qty_pick_inv = (string)$data->t_xxinv_qtypick ?? 0;
+                            $dataDetail->wod_lot = (string)$data->t_xxinv_lot ?? '';
+                            $dataDetail->wod_ref = (string)$data->t_xxinv_ref ?? '';
+                            $dataDetail->wod_warehouse = (string)$data->t_xxinv_wrh ?? '';
+                            $dataDetail->wod_bin = (string)$data->t_xxinv_bin ?? '';
+                            $dataDetail->wod_level = (string)$data->t_xxinv_level ?? '';
+                            $dataDetail->wod_entry_date = (string)$data->t_xxinv_entry_date ?? '';
+                            $dataDetail->wod_exp_date = (string)$data->t_xxinv_exp_date ?? '';
+                            $dataDetail->wod_picklist_type = (string)$data->t_picktype ?? '';
+                        }
+                        
                         $dataDetail->save();
                     }
                 }
             }
 
             DB::commit();
+
             return response()->json(['success', 200]);
         } catch (Exception $e) {
             DB::rollBack();
