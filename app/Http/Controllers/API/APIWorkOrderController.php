@@ -47,9 +47,10 @@ class APIWorkOrderController extends Controller
 
     public function wsaDataWo(Request $req)
     {
+        
         $woidnbr = '';
         $hasil = (new WSAServices())->wsaGetWO($req->search);
-
+        
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
@@ -475,6 +476,22 @@ class APIWorkOrderController extends Controller
 
 
         return GeneralResources::collection($data);
+    }
+
+    public function getDataItemWo(){
+        
+        $hasil = (new WSAServices())->wsaGetItemMstrWo();
+
+        if ($hasil[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Item Found On QAD."
+            ], 422);
+        } else {
+            $collectionarr = collect($hasil[1]);
+            
+            return GeneralResources::collection($collectionarr);
+        }
     }
     //comment
 }
