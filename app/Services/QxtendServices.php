@@ -495,7 +495,7 @@ class QxtendServices
 
 									<part>'.$part.'</part>
 									<itemDetail>
-									
+
 									<lotserialQty>'.$qty.'</lotserialQty>
 									<effDate/>
 									<nbr>'.$wonbr.'</nbr>
@@ -509,7 +509,7 @@ class QxtendServices
 									<yn>true</yn>
 									<yn1>true</yn1>
 									<yn2>true</yn2>
-									
+
 									</itemDetail>
 									</item>
 							</dsItem>
@@ -586,7 +586,7 @@ class QxtendServices
 	}
 	public function qxWorkOrderBill($wonbr, $lot, $wodpart, $wodop, $qtyreq, $qtyall, $qtypick,$site, $loc, $ref)
 	{
-							
+
 		$domain = Domain::first();
 		$domainCode = $domain->domain ?? '';
 		$qxwsa = Qxwsa::firstOrFail();
@@ -659,7 +659,7 @@ class QxtendServices
                             </qcom:dsSessionContext>
                             <dsWorkOrder>';
 		$qdocbody = '<WorkOrder>
-						
+
 						<woNbr>'.$wonbr.'</woNbr>
 						<woLot>'.$lot.'</woLot>
 						<CompItem>
@@ -669,11 +669,11 @@ class QxtendServices
 						<wodQtyAll>'.$qtyall.'</wodQtyAll>
 						<wodQtyPick>'.$qtypick.'</wodQtyPick>
 						<detailAll>true</detailAll>
-						
+
 						<wodSite>'.$site.'</wodSite>
 						<wodLoc>'.$loc.'</wodLoc>
 						<AllocDetail>
-							
+
 							<ladLoc>'.$loc.'</ladLoc>
 							<ladLot>'.$lot.'</ladLot>
 							<ladRef>'.$ref.'</ladRef>
@@ -761,7 +761,7 @@ class QxtendServices
 
 
 
-    public function qxTransferSingleItemPackingReplenishment($packingReplenishment, $locationDetail, $activeConnection)
+    public function qxTransferSingleItemPackingReplenishment($packingReplenishment, $locationDetail, $location, $activeConnection)
     {
         $receiver = 'QADERP';
 
@@ -833,7 +833,7 @@ class QxtendServices
 									<vLevelFrom>' . $locationDetail['level'] . '</vLevelFrom>
 									<vBinFrom>' . $locationDetail['bin'] . '</vBinFrom>
 									<vSiteTo>' . $locationDetail['site'] . '</vSiteTo>
-									<vLocTo>DOCK</vLocTo>
+									<vLocTo>' . $location . '</vLocTo>
 									<vWhTo></vWhTo>
 									<vLevelTo></vLevelTo>
 									<vBinTo></vBinTo>
@@ -872,7 +872,7 @@ class QxtendServices
                     <wsa:To>urn:services-qad-com:' . $receiver . '</wsa:To>
                     <wsa:MessageID>urn:services-qad-com::' . $receiver . '</wsa:MessageID>
                     <wsa:ReferenceParameters>
-                    <qcom:suppressResponseDetail>true</qcom:suppressResponseDetail>
+                    <qcom:suppressResponseDetail>false</qcom:suppressResponseDetail>
                     </wsa:ReferenceParameters>
                     <wsa:ReplyTo>
                     <wsa:Address>urn:services-qad-com:</wsa:Address>

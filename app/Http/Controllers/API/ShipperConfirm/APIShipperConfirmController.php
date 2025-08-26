@@ -28,7 +28,9 @@ class APIShipperConfirmController extends Controller
             });
         }
 
-        $data = $data->where('pra_status', 'Waiting for confirmation')->paginate(10);
+        $data = $data->where('pra_status', 'Waiting for confirmation')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
 
         return GeneralResources::collection($data);

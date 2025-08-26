@@ -30,10 +30,11 @@ class APIPackingReplenishmentController extends Controller
 
     public function listShipmentSchedule()
     {
-        $listShipmentSchedule = ShipmentScheduleMstr::with(['getShipmentScheduleDetail.getShipmentScheduleLocation'])
-        ->where('ssm_status', '!=', 'Fully Scheduled')
-        ->orderBy('ssm_number', 'desc')
-        ->get();
+        $listShipmentSchedule = ShipmentScheduleMstr::whereDoesntHave('getShipmentScheduleDetail.getShipmentScheduleLocation.getPackingReplenishmentDet')
+            ->with(['getShipmentScheduleDetail.getShipmentScheduleLocation'])
+            ->orderBy('ssm_number', 'desc')
+            ->get();
+
 
         if ($listShipmentSchedule->count() == 0) {
             return response()->json([

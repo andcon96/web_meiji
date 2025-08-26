@@ -1,4 +1,5 @@
 define input parameter inpdomain as character no-undo.
+define input parameter inpsite as character no-undo.
 define input parameter inppart as character no-undo.
 define input parameter inplot like xxinv_lot no-undo.
 define input parameter inpbin as character no-undo.
@@ -28,6 +29,7 @@ field t_is_prioritize as char /* Untuk Diisi di Web, dibandingkan untuk priorita
 define output parameter table for temp.
 
 for each xxinv_det where xxinv_domain = inpdomain and
+                        (if inpsite = "" then true else xxinv_site = inpsite) and
 						(if inppart = "" then true else xxinv_part = inppart) and
                         (if inplot = "" then true else xxinv_lot = inplot) and
 						(if inpbin = "" then true else xxinv_bin = inpbin) and

@@ -595,7 +595,7 @@ class WSAServices
         ];
     }
 
-    public function wsaPenyimpanan($itemCode, $lot, $bin, $warehouse, $level)
+    public function wsaPenyimpanan($site, $itemCode, $lot, $bin, $warehouse, $level)
     {
         $wsa = qxwsa::first();
 
@@ -616,6 +616,7 @@ class WSAServices
             '<Body>' .
             '<meiji_xxinv_det xmlns="urn:imi.co.id:wsaweb">' .
             '<inpdomain>' . $domainCode . '</inpdomain>' .
+            '<inpsite>' . $site . '</site>' .
             '<inppart>' . $itemCode . '</inppart>' .
             '<inplot>' . $lot . '</inplot>' .
             '<inpbin>' . $bin . '</inpbin>' .
@@ -779,13 +780,14 @@ class WSAServices
         return $this->sendQdocRequest($qdocRequest, $activeConnectionType);
     }
 
-    public function wsaInventoryDetail($itemCode, $lot, $activeConnectionType)
+    public function wsaInventoryDetail($site, $itemCode, $lot, $activeConnectionType)
     {
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
             '<Body>' .
             '<meiji_xxinv_det xmlns="urn:imi.co.id:wsaweb">' .
             '<inpdomain>10USA</inpdomain>' .
+            '<inpsite>' . $site . '</inpsite>' .
             '<inppart>' . $itemCode . '</inppart>' .
             '<inplot>' . $lot . '</inplot>' .
             '<inpbin></inpbin>' .
@@ -842,7 +844,7 @@ class WSAServices
             '</meiji_get_wo>' .
             '</Body>' .
             '</Envelope>';
-        
+
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
@@ -895,12 +897,12 @@ class WSAServices
 
     public function wsaGetInvWo($wonbr)
     {
-        
+
         $wsa = qxwsa::first();
-        
+
 
         $qxUrl = $wsa->wsa_url;
-        
+
         $qxReceiver = '';
         $qxSuppRes = 'false';
         $qxScopeTrx = '';
@@ -921,7 +923,7 @@ class WSAServices
             '</meiji_get_picklist_detail>' .
             '</Body>' .
             '</Envelope>';
-        
+
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
@@ -970,5 +972,34 @@ class WSAServices
             $qdocResult,
             $dataloop,
         ];
+    }
+
+    public function wsaUpdateQtyOHCustom($data, $activeConnectionType)
+    {
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+
+        $site = $data['site'];
+        $item = $data['item'];
+        $lot = $data['lot'];
+        $qty = $data['pick'];
+
+        $qdocRequest = '
+        <Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+            <Body>
+                <meiji_update_xxinv_det xmlns="urn:imi.co.id:wsaweb">
+                    <inpdomain>' . $domainCode . '</inpdomain>
+                    <inpsite>' . $site . '</inpsite>
+                    <inpitem>' . $item . '</inpitem>
+                    <inplot>' . $lot . '</inplot>
+                    <inppick>' . $qty . '</inppick>
+                </meiji_update_xxinv_det>
+            </Body>
+        </Envelope>
+        ';
+
+        Log::channel('confirmShipment')->info($qdocRequest);
+
+        return $this->sendQdocRequest($qdocRequest, $activeConnectionType);
     }
 }
