@@ -161,6 +161,7 @@ class APIPurchaseOrderApprovalController extends Controller
                             ], 422);
                         }
                         if ($submitReceiptQxtend[0] == false) {
+                            DB::rollback();
                             return response()->json([
                                 'Status' => 'Error',
                                 'Message' => 'Qxtend Error : ' . $submitReceiptQxtend[1]
@@ -184,6 +185,7 @@ class APIPurchaseOrderApprovalController extends Controller
                             );
 
                             if ($updateDataQAD == false) {
+                                DB::rollback();
                                 return response()->json([
                                     'Status' => 'Error',
                                     'Message' => "Gagal update data stock WSA"

@@ -7,6 +7,7 @@ use App\Http\Controllers\API\APIQualityInfoController;
 use App\Http\Controllers\API\ShipmentSchedule\APIShipmentScheduleController;
 use App\Http\Controllers\API\APITrasnferStockController;
 use App\Http\Controllers\API\APIWorkOrderController;
+use App\Http\Controllers\API\APIZebraPrinterController;
 use App\Http\Controllers\API\PackingReplenishment\APIPackingReplenishmentController;
 use App\Http\Controllers\API\ShipperConfirm\APIShipperConfirmController;
 use Illuminate\Support\Facades\Route;
@@ -44,6 +45,10 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getTransferList', [APITrasnferStockController::class, 'index']);
     Route::get('getStockItemBin', [APITrasnferStockController::class, 'getStockItemBin']);
     Route::post('saveTransfer', [APITrasnferStockController::class, 'saveTransfer']);
+
+    // Print QR
+    Route::get('getDataPrintQR', [APIZebraPrinterController::class, 'getDataPrintQR']);
+    Route::post('printQRItem', [APIZebraPrinterController::class, 'printQRItem']);
 
     // WSA PO
     Route::post('wsaDataPO', [APIPurchaseOrderController::class, 'wsaDataPO']);
@@ -88,6 +93,5 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getDataPicklist', [APIWorkOrderController::class, 'getDataPicklist']);
     Route::get('getDataPicklistDetail', [APIWorkOrderController::class, 'getDataPicklistDetail']);
     Route::get('getDataItemWo', [APIWorkOrderController::class, 'getDataItemWo']);
-    
 });
     // WSA Picklist
