@@ -87,6 +87,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
 
     Route::get('getDataPicklist', [APIWorkOrderController::class, 'getDataPicklist']);
     Route::get('getDataPicklistDetail', [APIWorkOrderController::class, 'getDataPicklistDetail']);
+    Route::get('getDataItemWo', [APIWorkOrderController::class, 'getDataItemWo']);
     
 });
     // WSA Picklist
