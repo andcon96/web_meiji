@@ -109,7 +109,7 @@ class PackingReplenishmentServices
             }
 
             // Qxtend buat sales order shipper maintenance
-            $qxtend = (new QxtendServices())->qxSalesOrderShipper('create', $packingReplenishments, $packingReplenishmentMstr->id, $activeConnection);
+            $qxtend = (new QxtendServices())->qxSalesOrderShipper('create', $location, $packingReplenishments, $packingReplenishmentMstr->id, $activeConnection);
 
             if ($qxtend[0] == false) {
                 DB::commit();

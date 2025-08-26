@@ -22,6 +22,7 @@ if avail xxinv_det then do:
     xxinv_qtyoh = xxinv_qtyoh - inppick.
 end.
 
+outOK = true.
 
 catch eSysError as Progress.Lang.SysError:
     outMsg = eSysError:GetMessage(1).

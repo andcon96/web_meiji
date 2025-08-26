@@ -373,68 +373,68 @@ class QxtendServices
         $curlError = '';
 
 
-		$qdocResponse = '';
+        $qdocResponse = '';
 
-		$curl = curl_init();
-		if ($curl) {
-			curl_setopt_array($curl, $curlOptions);
-			$qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-			//
-			$curlErrno = curl_errno($curl);
-			$curlError = curl_error($curl);
-			$first = true;
-			foreach (curl_getinfo($curl) as $key => $value) {
-				if (gettype($value) != 'array') {
-					if (!$first) $getInfo .= ", ";
-					$getInfo = $getInfo . $key . '=>' . $value;
-					$first = false;
-					if ($key == 'http_code') $httpCode = $value;
-				}
-			}
-			curl_close($curl);
-		}
+        $curl = curl_init();
+        if ($curl) {
+            curl_setopt_array($curl, $curlOptions);
+            $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
+            //
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
+            foreach (curl_getinfo($curl) as $key => $value) {
+                if (gettype($value) != 'array') {
+                    if (!$first) $getInfo .= ", ";
+                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $first = false;
+                    if ($key == 'http_code') $httpCode = $value;
+                }
+            }
+            curl_close($curl);
+        }
 
-		if (is_bool($qdocResponse)) {
-			return false;
-		}
+        if (is_bool($qdocResponse)) {
+            return false;
+        }
 
-		$xmlResp = simplexml_load_string($qdocResponse);
+        $xmlResp = simplexml_load_string($qdocResponse);
 
-		$xmlResp->registerXPathNamespace('ns1', 'urn:schemas-qad-com:xml-services');
+        $xmlResp->registerXPathNamespace('ns1', 'urn:schemas-qad-com:xml-services');
 
-		$qdocResult = (string) $xmlResp->xpath('//ns1:result')[0];
+        $qdocResult = (string) $xmlResp->xpath('//ns1:result')[0];
 
-		if ($qdocResult == "success" or $qdocResult == "warning") {
-			return [true, ''];
-		} else {
-			$xmlResp->registerXPathNamespace('ns3', 'urn:schemas-qad-com:xml-services:common');
-			$qdocMsgDesc = $xmlResp->xpath('//ns3:tt_msg_desc');
-			$output = '';
-			foreach ($qdocMsgDesc as $datas) {
-				if (str_contains($datas, 'ERROR:')) {
-					$output .= $datas . ' - ';
-				}
-			}
-			$output = substr($output, 0, -3);
+        if ($qdocResult == "success" or $qdocResult == "warning") {
+            return [true, ''];
+        } else {
+            $xmlResp->registerXPathNamespace('ns3', 'urn:schemas-qad-com:xml-services:common');
+            $qdocMsgDesc = $xmlResp->xpath('//ns3:tt_msg_desc');
+            $output = '';
+            foreach ($qdocMsgDesc as $datas) {
+                if (str_contains($datas, 'ERROR:')) {
+                    $output .= $datas . ' - ';
+                }
+            }
+            $output = substr($output, 0, -3);
 
-			return [false, $output];
-		}
-	}
+            return [false, $output];
+        }
+    }
 
-	public function qxTransferSingleItemWo($part, $wonbr, $sitefrom, $siteto, $locfrom, $locto, $qty)
-	{
-		$domain = Domain::first();
-		$domainCode = $domain->domain ?? '';
-		$qxwsa = Qxwsa::firstOrFail();
+    public function qxTransferSingleItemWo($part, $wonbr, $sitefrom, $siteto, $locfrom, $locto, $qty)
+    {
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+        $qxwsa = Qxwsa::firstOrFail();
 
-		// Var Qxtend
-		$qxUrl          = $qxwsa->qx_url;
-		$receiver 		= 'QADERP';
+        // Var Qxtend
+        $qxUrl          = $qxwsa->qx_url;
+        $receiver         = 'QADERP';
 
-		$timeout        = 0;
+        $timeout        = 0;
 
-		// XML Qextend
-		$qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qcom="urn:schemas-qad-com:xml-services:common" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsa="http://www.w3.org/2005/08/addressing">
+        // XML Qextend
+        $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qcom="urn:schemas-qad-com:xml-services:common" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsa="http://www.w3.org/2005/08/addressing">
 						<soapenv:Header>
 							<wsa:Action/>
 							<wsa:To>urn:services-qad-com:' . $receiver . '</wsa:To>
@@ -493,19 +493,19 @@ class QxtendServices
 							<dsItem>
 								<item>
 
-									<part>'.$part.'</part>
+									<part>' . $part . '</part>
 									<itemDetail>
 
-									<lotserialQty>'.$qty.'</lotserialQty>
+									<lotserialQty>' . $qty . '</lotserialQty>
 									<effDate/>
-									<nbr>'.$wonbr.'</nbr>
+									<nbr>' . $wonbr . '</nbr>
 
-									<siteFrom>'.$sitefrom.'</siteFrom>
-									<locFrom>'.$locfrom.'</locFrom>
+									<siteFrom>' . $sitefrom . '</siteFrom>
+									<locFrom>' . $locfrom . '</locFrom>
 									<lotserFrom/>
 									<lotrefFrom/>
-									<siteTo>'.$siteto.'</siteTo>
-									<locTo>'.$locto.'</locTo>
+									<siteTo>' . $siteto . '</siteTo>
+									<locTo>' . $locto . '</locTo>
 									<yn>true</yn>
 									<yn1>true</yn1>
 									<yn2>true</yn2>
@@ -517,88 +517,88 @@ class QxtendServices
 					</soapenv:Body>
 					</soapenv:Envelope>';
 
-		$qdocRequest = $qdocHead;
+        $qdocRequest = $qdocHead;
 
-		$curlOptions = array(
-			CURLOPT_URL => $qxUrl,
-			CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
-			CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
-			CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-			CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
-			CURLOPT_POST => true,
-			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_SSL_VERIFYPEER => false,
-			CURLOPT_SSL_VERIFYHOST => false
-		);
+        $curlOptions = array(
+            CURLOPT_URL => $qxUrl,
+            CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
+            CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
+            CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false
+        );
 
-		$getInfo = '';
-		$httpCode = 0;
-		$curlErrno = 0;
-		$curlError = '';
+        $getInfo = '';
+        $httpCode = 0;
+        $curlErrno = 0;
+        $curlError = '';
 
 
-		$qdocResponse = '';
+        $qdocResponse = '';
 
-		$curl = curl_init();
-		if ($curl) {
-			curl_setopt_array($curl, $curlOptions);
-			$qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-			//
-			$curlErrno = curl_errno($curl);
-			$curlError = curl_error($curl);
-			$first = true;
-			foreach (curl_getinfo($curl) as $key => $value) {
-				if (gettype($value) != 'array') {
-					if (!$first) $getInfo .= ", ";
-					$getInfo = $getInfo . $key . '=>' . $value;
-					$first = false;
-					if ($key == 'http_code') $httpCode = $value;
-				}
-			}
-			curl_close($curl);
-		}
+        $curl = curl_init();
+        if ($curl) {
+            curl_setopt_array($curl, $curlOptions);
+            $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
+            //
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
+            foreach (curl_getinfo($curl) as $key => $value) {
+                if (gettype($value) != 'array') {
+                    if (!$first) $getInfo .= ", ";
+                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $first = false;
+                    if ($key == 'http_code') $httpCode = $value;
+                }
+            }
+            curl_close($curl);
+        }
 
-		if (is_bool($qdocResponse)) {
-			return false;
-		}
+        if (is_bool($qdocResponse)) {
+            return false;
+        }
 
-		$xmlResp = simplexml_load_string($qdocResponse);
+        $xmlResp = simplexml_load_string($qdocResponse);
 
-		$xmlResp->registerXPathNamespace('ns1', 'urn:schemas-qad-com:xml-services');
+        $xmlResp->registerXPathNamespace('ns1', 'urn:schemas-qad-com:xml-services');
 
-		$qdocResult = (string) $xmlResp->xpath('//ns1:result')[0];
+        $qdocResult = (string) $xmlResp->xpath('//ns1:result')[0];
 
-		if ($qdocResult == "success" or $qdocResult == "warning") {
-			return [true, ''];
-		} else {
-			$xmlResp->registerXPathNamespace('ns3', 'urn:schemas-qad-com:xml-services:common');
-			$qdocMsgDesc = $xmlResp->xpath('//ns3:tt_msg_desc');
-			$output = '';
-			foreach ($qdocMsgDesc as $datas) {
-				if (str_contains($datas, 'ERROR:')) {
-					$output .= $datas . ' - ';
-				}
-			}
-			$output = substr($output, 0, -3);
+        if ($qdocResult == "success" or $qdocResult == "warning") {
+            return [true, ''];
+        } else {
+            $xmlResp->registerXPathNamespace('ns3', 'urn:schemas-qad-com:xml-services:common');
+            $qdocMsgDesc = $xmlResp->xpath('//ns3:tt_msg_desc');
+            $output = '';
+            foreach ($qdocMsgDesc as $datas) {
+                if (str_contains($datas, 'ERROR:')) {
+                    $output .= $datas . ' - ';
+                }
+            }
+            $output = substr($output, 0, -3);
 
-			return [false, $output];
-		}
-	}
-	public function qxWorkOrderBill($wonbr, $lot, $wodpart, $wodop, $qtyreq, $qtyall, $qtypick,$site, $loc, $ref)
-	{
+            return [false, $output];
+        }
+    }
+    public function qxWorkOrderBill($wonbr, $lot, $wodpart, $wodop, $qtyreq, $qtyall, $qtypick, $site, $loc, $ref)
+    {
 
-		$domain = Domain::first();
-		$domainCode = $domain->domain ?? '';
-		$qxwsa = Qxwsa::firstOrFail();
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+        $qxwsa = Qxwsa::firstOrFail();
 
-		// Var Qxtend
-		$qxUrl          = $qxwsa->qx_url;
-		$receiver 		= 'QADERP';
+        // Var Qxtend
+        $qxUrl          = $qxwsa->qx_url;
+        $receiver         = 'QADERP';
 
-		$timeout        = 0;
+        $timeout        = 0;
 
-		// XML Qextend
-		$qdocHead = '<?xml version="1.0" encoding="UTF-8"?>
+        // XML Qextend
+        $qdocHead = '<?xml version="1.0" encoding="UTF-8"?>
                         <soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services"
                         xmlns:qcom="urn:schemas-qad-com:xml-services:common"
                         xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsa="http://www.w3.org/2005/08/addressing">
@@ -658,60 +658,60 @@ class QxtendServices
                                 </qcom:ttContext>
                             </qcom:dsSessionContext>
                             <dsWorkOrder>';
-		$qdocbody = '<WorkOrder>
+        $qdocbody = '<WorkOrder>
 
-						<woNbr>'.$wonbr.'</woNbr>
-						<woLot>'.$lot.'</woLot>
+						<woNbr>' . $wonbr . '</woNbr>
+						<woLot>' . $lot . '</woLot>
 						<CompItem>
-						<wodPart>'.$wodpart.'</wodPart>
-						<wodOp>'.$wodop.'</wodOp>
-						<wodQtyReq>'.$qtyreq.'</wodQtyReq>
-						<wodQtyAll>'.$qtyall.'</wodQtyAll>
-						<wodQtyPick>'.$qtypick.'</wodQtyPick>
+						<wodPart>' . $wodpart . '</wodPart>
+						<wodOp>' . $wodop . '</wodOp>
+						<wodQtyReq>' . $qtyreq . '</wodQtyReq>
+						<wodQtyAll>' . $qtyall . '</wodQtyAll>
+						<wodQtyPick>' . $qtypick . '</wodQtyPick>
 						<detailAll>true</detailAll>
 
-						<wodSite>'.$site.'</wodSite>
-						<wodLoc>'.$loc.'</wodLoc>
+						<wodSite>' . $site . '</wodSite>
+						<wodLoc>' . $loc . '</wodLoc>
 						<AllocDetail>
 
-							<ladLoc>'.$loc.'</ladLoc>
-							<ladLot>'.$lot.'</ladLot>
-							<ladRef>'.$ref.'</ladRef>
-							<ladQtyAll>'.$qtyall.'</ladQtyAll>
-							<ladQtyPick>'.$qtypick.'</ladQtyPick>
+							<ladLoc>' . $loc . '</ladLoc>
+							<ladLot>' . $lot . '</ladLot>
+							<ladRef>' . $ref . '</ladRef>
+							<ladQtyAll>' . $qtyall . '</ladQtyAll>
+							<ladQtyPick>' . $qtypick . '</ladQtyPick>
 						</AllocDetail>
 						</CompItem>
 						</WorkOrder>
 		';
 
 
-		$qdocfoot = '
+        $qdocfoot = '
         </dsWorkOrder>
         </maintainWorkOrderBill>
                         </soapenv:Body>
                     </soapenv:Envelope>';
 
-		$qdocRequest = $qdocHead . $qdocbody . $qdocfoot;
+        $qdocRequest = $qdocHead . $qdocbody . $qdocfoot;
 
-		$curlOptions = array(
-			CURLOPT_URL => $qxUrl,
-			CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
-			CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
-			CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-			CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
-			CURLOPT_POST => true,
-			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_SSL_VERIFYPEER => false,
-			CURLOPT_SSL_VERIFYHOST => false
-		);
+        $curlOptions = array(
+            CURLOPT_URL => $qxUrl,
+            CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
+            CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
+            CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false
+        );
 
-		$getInfo = '';
-		$httpCode = 0;
-		$curlErrno = 0;
-		$curlError = '';
+        $getInfo = '';
+        $httpCode = 0;
+        $curlErrno = 0;
+        $curlError = '';
 
 
-		$qdocResponse = '';
+        $qdocResponse = '';
 
         $curl = curl_init();
         if ($curl) {
@@ -755,9 +755,9 @@ class QxtendServices
             }
             $output = substr($output, 0, -3);
 
-			return [false, $output];
-		}
-	}
+            return [false, $output];
+        }
+    }
 
 
 
@@ -847,7 +847,7 @@ class QxtendServices
         return $this->sendQdocRequest($qdocRequest, $activeConnection);
     }
 
-    public function qxSalesOrderShipper($action, $packingReplenishments, $id, $activeConnection)
+    public function qxSalesOrderShipper($action, $location, $packingReplenishments, $id, $activeConnection)
     {
         $receiver = 'QADERP';
         $operation = '';
@@ -855,11 +855,11 @@ class QxtendServices
         switch ($action) {
             case 'delete':
                 $operation = 'D';
-            break;
+                break;
 
             default:
                 $operation = 'A';
-            break;
+                break;
         }
 
         $qdocRequest =
@@ -959,39 +959,71 @@ class QxtendServices
                         <dev>test1</dev>
                         <vOk>true</vOk>';
 
-                        foreach ($packingReplenishments as $packingReplenishment) {
-                            $lot = $packingReplenishment['locations'][0]['lot'];
+        foreach ($packingReplenishments as $packingReplenishment) {
+            $soNumber = $packingReplenishment['sodNbr'];
+            $soLine = $packingReplenishment['sodLine'];
+            $soSite = $packingReplenishment['sodSite'];
+            $qdocRequest .= '
+                                    <schedOrderItemDetail>
+                                        <scxOrder>' . $soNumber . '</scxOrder>
+                                        <scxLine>' . $soLine . '</scxLine>
+                                        <srSite>' . $soSite . '</srSite>
+                                        <srQty>0</srQty>
+                                        <srLoc></srLoc>
+                                        <srLotser></srLotser>
+                                        <multiple>true</multiple>
+                                        <vCmmts>false</vCmmts>
+                                        <yn>true</yn>
+                                        <answer>true</answer>
+                                        <lAnswer>true</lAnswer>';
 
-                            $qdocRequest .= '
-                            <schedOrderItemDetail>
-                                <scxOrder>' . $packingReplenishment['sodNbr'] . '</scxOrder>
-                                <scxLine>' . $packingReplenishment['sodLine'] . '</scxLine>
-                                <srSite>' . $packingReplenishment['sodSite'] . '</srSite>
-                                <srQty>' . $packingReplenishment['totalPickedQty'] . '</srQty>
-                                <srLoc>DOCK</srLoc>
-                                <srLotser>' . $lot . '</srLotser>
-                                <multiple>false</multiple>
-                                <vCmmts>false</vCmmts>
-                                <yn>true</yn>
-                                <answer>true</answer>
-                                <lAnswer>true</lAnswer>
-                            </schedOrderItemDetail>
-                            <discreteOrderItemDetail>
-                                <scxOrder>' . $packingReplenishment['sodNbr'] . '</scxOrder>
-                                <scxLine>' . $packingReplenishment['sodLine'] . '</scxLine>
-                                <srSite>' . $packingReplenishment['sodSite'] . '</srSite>
-                                <srQty>' . $packingReplenishment['totalPickedQty'] . '</srQty>
-                                <srLoc>DOCK</srLoc>
-                                <srLotser>' . $lot . '</srLotser>
-                                <multiple>false</multiple>
-                                <vCmmts>false</vCmmts>
-                                <yn>true</yn>
-                                <answer>true</answer>
-                                <lAnswer>true</lAnswer>
-                            </discreteOrderItemDetail>';
-                        }
+            foreach ($packingReplenishment['locations'] as $locationDetail) {
+                $lot = $locationDetail['lot'];
+                $pickedQty = $locationDetail['qtyPick'];
 
-                        $qdocRequest .= '
+                $qdocRequest .= '<schedOrderIssueDetail>
+                                            <site>' . $soSite . '</site>
+                                            <location>' . $location . '</location>
+                                            <lotserial>' . $lot . '</lotserial>
+                                            <lotref></lotref>
+                                            <lotserialQty>' . $pickedQty . '</lotserialQty>
+                                            <lContinue>true</lContinue>
+                                            <yn>true</yn>
+                                        </schedOrderIssueDetail>';
+            }
+
+            $qdocRequest .= '
+                                    </schedOrderItemDetail>
+                                    <discreteOrderItemDetail>
+                                        <scxOrder>' . $soNumber . '</scxOrder>
+                                        <scxLine>' . $soLine . '</scxLine>
+                                        <srSite>' . $soSite . '</srSite>
+                                        <srQty>0</srQty>
+                                        <srLoc></srLoc>
+                                        <srLotser></srLotser>
+                                        <multiple>true</multiple>
+                                        <vCmmts>false</vCmmts>
+                                        <yn>true</yn>
+                                        <answer>true</answer>
+                                        <lAnswer>true</lAnswer>';
+
+            foreach ($packingReplenishment['locations'] as $locationDetail) {
+                $lot = $locationDetail['lot'];
+                $pickedQty = $locationDetail['qtyPick'];
+
+                $qdocRequest .= '<discreteOrderIssueDetail>
+                                            <site>' . $soSite . '</site>
+                                            <location>' . $location . '</location>
+                                            <lotserial>' . $lot . '</lotserial>
+                                            <lotref></lotref>
+                                            <lotserialQty>' . $pickedQty . '</lotserialQty>
+                                            <yn>true</yn>
+                                        </discreteOrderIssueDetail>';
+            }
+            $qdocRequest .= '</discreteOrderItemDetail>';
+        }
+
+        $qdocRequest .= '
                         </salesOrderShipper>
                         </dsSalesOrderShipper>
                     </maintainSalesOrderShipper>
@@ -1087,7 +1119,7 @@ class QxtendServices
                             <shipDt>' . date('Y-m-d') . '</shipDt>
                             <absVehRef>' . $vehicleRefID . '</absVehRef>
                             <autoPost>false</autoPost>
-                            <lPrtinstbase>true</lPrtinstbase>
+                            <lPrtinstbase>false</lPrtinstbase>
                             <autoInv>false</autoInv>
                             <consolidate>false</consolidate>
                             <lCalcFreight>true</lCalcFreight>
@@ -1101,5 +1133,4 @@ class QxtendServices
 
         return $this->sendQdocRequest($qdocRequest, $activeConnection);
     }
-
 }

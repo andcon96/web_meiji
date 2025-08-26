@@ -139,7 +139,7 @@ class ConfirmShipmentServices
 
             foreach ($dataArray as $data) {
                 // Tembak qty oh di xxinv_det
-                (new WSAServices())->wsaUpdateQtyOHCustom($data, $activeConnection);
+                (new WSAServices())->wsaUpdateQtyOHCustom($data);
             }
 
             DB::commit();
