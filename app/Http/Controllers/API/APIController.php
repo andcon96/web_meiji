@@ -29,7 +29,7 @@ class APIController extends Controller
 
     public function login(Request $request)
     {
-        $usercheck = User::where('username', request('username'))->where('is_super_user', 'Yes')->first();
+        $usercheck = User::where('username', request('username'))->first();
 
         if ($usercheck) {
             if (Auth::attempt(['username' => request('username'), 'password' => request('password')])) {
