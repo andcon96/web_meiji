@@ -44,8 +44,8 @@ class APIWorkOrderController extends Controller
         $data = $data->orderBy('id', 'desc')->get();
 
         
-        $data2= GeneralResources::collection($data);
-        dd($data2);
+        return GeneralResources::collection($data);
+        
     }
 
     public function wsaDataWo(Request $req)
