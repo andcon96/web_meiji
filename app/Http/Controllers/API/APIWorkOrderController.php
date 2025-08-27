@@ -23,6 +23,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\ReceiptServices;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 
 class APIWorkOrderController extends Controller
 {
@@ -41,8 +43,9 @@ class APIWorkOrderController extends Controller
 
         $data = $data->orderBy('id', 'desc')->get();
 
-
+        
         return GeneralResources::collection($data);
+        
     }
 
     public function wsaDataWo(Request $req)
@@ -96,7 +99,7 @@ class APIWorkOrderController extends Controller
                         $dataDetail->wod_site = (string)$data->t_wod_site;
                         $dataDetail->wod_loc = (string)$data->t_wod_loc;
                         $dataDetail->wod_qty_req = (string)$data->t_wod_qty_req ?? 0;
-                        $dataDetail->wod_qty_pick = (string)$data->t_wod_qty_pick ?? 0;
+                        $dataDetail->wod_qty_pick = 0;
                         $dataDetail->save();
                     }
                     
@@ -122,7 +125,11 @@ class APIWorkOrderController extends Controller
     public function wsaDataInvWo(Request $req)
     {
         $wonbr = WorkOrderMaster::where('created_by', $req->search)->get();
-        
+        $currentitem = '';
+        $currentid = '';
+        $currentqtypick = 0;
+        $currentqtydiff = 0;
+        $currentqtyreq = 0;
         try {
             DB::beginTransaction();
             foreach ($wonbr as $wonbr) {
@@ -139,20 +146,27 @@ class APIWorkOrderController extends Controller
                     
                     foreach ($listData as $key => $data) {
                         
+                        
                         $workOrder = workOrderMaster::where('wo_nbr', (string)$data->t_wo_nbr)
                             ->where('wo_id', (string)$data->t_wo_id)->first();
-                            
-
-                        $dataDetail = workOrderDetail::firstOrNew(
-                            [
-                                'wod_wo_id' => $workOrder->id,
-                                'wod_part' => (string)$data->t_wod_part,
-                               
-                            ]
-                        );
                         
-                        if ($dataDetail->exists) {
-                            $dataDetail->wod_qty_pick = (string)$data->t_wod_qty_pick ?? 0;
+
+                        $dataDetail = workOrderDetail::where('wod_wo_id',$workOrder->id)->where('wod_part',(string)$data->t_wod_part)->first();
+                        
+                        if($dataDetail->wod_lot == null){
+                            $currentid = $workOrder->id;
+                            $currentitem = (string)$data->t_wod_part;
+                            $currentqtyreq = $dataDetail->wod_qty_req;
+                            $currentqtydiff = $currentqtyreq - $data->t_xxinv_qtyoh;
+                            if($currentqtydiff >= 0){
+                                $currentqtypick = $data->t_xxinv_qtyoh;
+                            }
+                            else{
+                                $currentqtypick =  $currentqtyreq;
+                            }
+                            
+                            $dataDetail->wod_qty_req = $currentqtyreq;
+                            $dataDetail->wod_qty_pick = $currentqtypick ?? 0;
                             $dataDetail->wod_qty_oh = (string)$data->t_xxinv_qtyoh ?? 0;
                             $dataDetail->wod_qty_pick_inv = (string)$data->t_xxinv_qtypick ?? 0;
                             $dataDetail->wod_lot = (string)$data->t_xxinv_lot ?? '';
@@ -163,17 +177,29 @@ class APIWorkOrderController extends Controller
                             $dataDetail->wod_entry_date = (string)$data->t_xxinv_entry_date ?? '';
                             $dataDetail->wod_exp_date = (string)$data->t_xxinv_exp_date ?? '';
                             $dataDetail->wod_picklist_type = (string)$data->t_picktype ?? '';
-                           
+                            
                         }
                         else{
+                            $currentqtyreq = $dataDetail->wod_qty_req - $currentqtypick;
+                            $currentqtydiff = $currentqtyreq - $data->t_xxinv_qtyoh;
+                            if($currentqtydiff >= 0){
+                                $currentqtypick = $data->t_xxinv_qtyoh;
+                            }
+                            else{
+                                $currentqtypick = $currentqtyreq;
+                            }
+                            
+                            $dataDetail = new workOrderDetail();
+                            $dataDetail->wod_wo_id = $workOrder->id;
                             $dataDetail->wod_nbr = (string)$data->t_wod_nbr;
                             $dataDetail->wod_op = (string)$data->t_wod_op;
+                            $dataDetail->wod_part = (string)$data->t_wod_part;
                             $dataDetail->wod_part_desc = (string)$data->t_wod_part_desc;
                             $dataDetail->wod_um = (string)$data->t_wod_um;
                             $dataDetail->wod_site = (string)$data->t_wod_site;
                             $dataDetail->wod_loc = (string)$data->t_wod_loc;
-                            $dataDetail->wod_qty_req = (string)$data->t_wod_qty_req ?? 0;
-                            $dataDetail->wod_qty_pick = (string)$data->t_wod_qty_pick ?? 0;
+                            $dataDetail->wod_qty_req = $currentqtyreq ?? 0;
+                            $dataDetail->wod_qty_pick = $currentqtypick ?? 0;
                             $dataDetail->wod_qty_oh = (string)$data->t_xxinv_qtyoh ?? 0;
                             $dataDetail->wod_qty_pick_inv = (string)$data->t_xxinv_qtypick ?? 0;
                             $dataDetail->wod_lot = (string)$data->t_xxinv_lot ?? '';
@@ -184,8 +210,9 @@ class APIWorkOrderController extends Controller
                             $dataDetail->wod_entry_date = (string)$data->t_xxinv_entry_date ?? '';
                             $dataDetail->wod_exp_date = (string)$data->t_xxinv_exp_date ?? '';
                             $dataDetail->wod_picklist_type = (string)$data->t_picktype ?? '';
-                        }
+                        }    
                         
+                       
                         $dataDetail->save();
                     }
                 }
@@ -196,6 +223,7 @@ class APIWorkOrderController extends Controller
             return response()->json(['success', 200]);
         } catch (Exception $e) {
             DB::rollBack();
+            
             return response()->json([
                 'Status' => 'Error',
                 'Message' => "Unable to Proccess Request: " . $e->getMessage()
@@ -488,9 +516,41 @@ class APIWorkOrderController extends Controller
                 'Message' => "No Item Found On QAD."
             ], 422);
         } else {
-            $collectionarr = collect($hasil[1]);
+           
+
+            Schema::create('temp_item', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('part')->nullable();
+            $table->string('desc')->nullable();
+            $table->string('um')->nullable();
+            $table->string('qty_required')->nullable();
+            $table->string('site')->nullable();
+            $table->string('location')->nullable();
+
+            $table->temporary();
+        });
+        foreach($hasil[1] as $key => $data){
+            DB::table('temp_item')->insert([
+            'part' => $data->t_part,
+            'desc' => $data->t_part_desc,
+            'um' => $data->t_um,
+            'qty_required' => 0,
+            'site' => $data->t_site,
+            'location' => $data->t_loc,
             
-            return GeneralResources::collection($collectionarr);
+            ]);
+        }
+ 
+
+        $data = DB::table('temp_item')->get();
+        $data3 = collect($data);
+        $data2 = GeneralResources::collection($data3);
+        dd($data2);
+    
+        Schema::drop('temp_item');
+        return GeneralResources::collection($data);
+        
+
         }
     }
     //comment
