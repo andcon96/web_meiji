@@ -223,7 +223,7 @@ class APIWorkOrderController extends Controller
             return response()->json(['success', 200]);
         } catch (Exception $e) {
             DB::rollBack();
-            dd($e,$dataDetail,$workOrder,$data);
+            
             return response()->json([
                 'Status' => 'Error',
                 'Message' => "Unable to Proccess Request: " . $e->getMessage()
