@@ -8,6 +8,7 @@ use App\Models\API\PackingReplenishment\PackingReplenishmentApproval;
 use App\Models\Settings\qxwsa;
 use App\Services\ConfirmShipmentServices;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class APIShipperConfirmController extends Controller
@@ -17,14 +18,13 @@ class APIShipperConfirmController extends Controller
         $data = PackingReplenishmentApproval::query()->with([
             'getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster',
             'getCreatedBy:id,name,username'
-        ]);
+        ])->where('pra_user_approver', 'LIKE', '%' . Auth::user()->id . '%');
 
         if ($request->search) {
             $filter = $request->search;
             $data->whereHas('getPackingReplenishmentMstr', function ($q) use ($filter) {
                 $q->where('prm_shipper_nbr', 'LIKE', '%' . $filter . '%')
-                    ->where('prm_status', 'Shipper Created')
-                    ->orderBy('prm_shipper_nbr', 'desc');
+                    ->where('prm_status', 'Shipper Created');
             });
         }
 
