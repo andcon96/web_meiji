@@ -32,6 +32,19 @@ class PackingReplenishmentServices
             $totalMatch = 0;
             $totalData = count($packingReplenishments);
 
+            $fieldName = 'mji_pack_dock';
+
+            $locationWSA = (new WSAServices())->wsaGenCode($fieldName);
+            if ($locationWSA[0] == 'false') {
+                DB::rollBack();
+
+                Log::channel('packingReplenishment')->info('Gen code not found');
+
+                return false;
+            }
+
+            $location = $locationWSA[1][0]['t_value'];
+
             foreach ($packingReplenishments as $key => $packingReplenishment) {
                 // Update total picked qty
                 $shipmentScheduleDet = ShipmentScheduleDet::with(['getShipmentScheduleMaster'])->where('ssd_sent_to_qad', 'No')->find($packingReplenishment['id']);
@@ -45,7 +58,7 @@ class PackingReplenishmentServices
                     $shipmentScheduleDet->ssd_sod_qty_pick += $packingReplenishment['totalPickedQty'];
                     foreach ($packingReplenishment['locations'] as $locationDetail) {
                         // Qxtend Transfer single item
-                        $qxtend = (new QxtendServices())->qxTransferSingleItemPackingReplenishment($packingReplenishment, $locationDetail, $activeConnection);
+                        $qxtend = (new QxtendServices())->qxTransferSingleItemPackingReplenishment($packingReplenishment, $locationDetail, $location, $activeConnection);
 
                         if ($qxtend[0] == false) {
                             DB::commit();
@@ -54,6 +67,36 @@ class PackingReplenishmentServices
 
                             return false;
                         }
+
+                        // Update shipment schedule location
+                        $shipmentScheduleLocation = ShipmentScheduleLoc::where('id', $locationDetail['id'])->first();
+                        $shipmentScheduleLocation->ssl_qty_pick = $locationDetail['qtyPick'];
+                        $shipmentScheduleLocation->updated_by = Auth::user()->id;
+                        $shipmentScheduleLocation->save();
+
+
+                        // Insert ke history
+                        $shipmentScheduleHistory = new ShipmentScheduleHist();
+                        $shipmentScheduleHistory->ssh_number = $shipmentScheduleDet->getShipmentScheduleMaster->ssm_number;
+                        $shipmentScheduleHistory->ssh_cust_code = $shipmentScheduleDet->getShipmentScheduleMaster->ssm_cust_code;
+                        $shipmentScheduleHistory->ssh_cust_desc = $shipmentScheduleDet->getShipmentScheduleMaster->ssm_cust_desc;
+                        $shipmentScheduleHistory->ssh_status_mstr = $shipmentScheduleDet->getShipmentScheduleMaster->ssm_status;
+                        $shipmentScheduleHistory->ssh_sod_nbr = $shipmentScheduleDet->ssd_sod_nbr;
+                        $shipmentScheduleHistory->ssh_sod_line = $shipmentScheduleDet->ssd_sod_line;
+                        $shipmentScheduleHistory->ssh_sod_part = $shipmentScheduleDet->ssd_sod_part;
+                        $shipmentScheduleHistory->ssh_sod_desc = $shipmentScheduleDet->ssd_sod_desc;
+                        $shipmentScheduleHistory->ssh_sod_qty_ord = $shipmentScheduleDet->ssd_sod_qty_ord;
+                        $shipmentScheduleHistory->ssh_status_det = $shipmentScheduleDet->ssd_status;
+                        $shipmentScheduleHistory->ssh_site = $shipmentScheduleLocation->ssl_site;
+                        $shipmentScheduleHistory->ssh_warehouse = $shipmentScheduleLocation->ssl_warehouse;
+                        $shipmentScheduleHistory->ssh_location = $shipmentScheduleLocation->ssl_location;
+                        $shipmentScheduleHistory->ssh_lotserial = $shipmentScheduleLocation->ssl_lotserial;
+                        $shipmentScheduleHistory->ssh_level = $shipmentScheduleLocation->ssl_level;
+                        $shipmentScheduleHistory->ssh_bin = $shipmentScheduleLocation->ssl_bin;
+                        $shipmentScheduleHistory->ssh_qty_to_pick = $shipmentScheduleLocation->ssl_qty_to_pick;
+                        $shipmentScheduleHistory->ssh_action = 'Create';
+                        $shipmentScheduleHistory->created_by = Auth::user()->id;
+                        $shipmentScheduleHistory->save();
                     }
 
                     $shipmentScheduleDet->ssd_sent_to_qad = 'Yes';
@@ -62,41 +105,11 @@ class PackingReplenishmentServices
                     if ($shipmentScheduleDet->ssd_sod_qty_ord == $shipmentScheduleDet->ssd_sod_qty_pick) {
                         $totalMatch += 1;
                     }
-
-                    // Update shipment schedule location
-                    $shipmentScheduleLocation = ShipmentScheduleLoc::where('id', $locationDetail['id'])->first();
-                    $shipmentScheduleLocation->ssl_qty_pick = $locationDetail['qtyPick'];
-                    $shipmentScheduleLocation->updated_by = Auth::user()->id;
-                    $shipmentScheduleLocation->save();
-
-
-                    // Insert ke history
-                    $shipmentScheduleHistory = new ShipmentScheduleHist();
-                    $shipmentScheduleHistory->ssh_number = $shipmentScheduleDet->getShipmentScheduleMaster->ssm_number;
-                    $shipmentScheduleHistory->ssh_cust_code = $shipmentScheduleDet->getShipmentScheduleMaster->ssm_cust_code;
-                    $shipmentScheduleHistory->ssh_cust_desc = $shipmentScheduleDet->getShipmentScheduleMaster->ssm_cust_desc;
-                    $shipmentScheduleHistory->ssh_status_mstr = $shipmentScheduleDet->getShipmentScheduleMaster->ssm_status;
-                    $shipmentScheduleHistory->ssh_sod_nbr = $shipmentScheduleDet->ssd_sod_nbr;
-                    $shipmentScheduleHistory->ssh_sod_line = $shipmentScheduleDet->ssd_sod_line;
-                    $shipmentScheduleHistory->ssh_sod_part = $shipmentScheduleDet->ssd_sod_part;
-                    $shipmentScheduleHistory->ssh_sod_desc = $shipmentScheduleDet->ssd_sod_desc;
-                    $shipmentScheduleHistory->ssh_sod_qty_ord = $shipmentScheduleDet->ssd_sod_qty_ord;
-                    $shipmentScheduleHistory->ssh_status_det = $shipmentScheduleDet->ssd_status;
-                    $shipmentScheduleHistory->ssh_site = $shipmentScheduleLocation->ssl_site;
-                    $shipmentScheduleHistory->ssh_warehouse = $shipmentScheduleLocation->ssl_warehouse;
-                    $shipmentScheduleHistory->ssh_location = $shipmentScheduleLocation->ssl_location;
-                    $shipmentScheduleHistory->ssh_lotserial = $shipmentScheduleLocation->ssl_lotserial;
-                    $shipmentScheduleHistory->ssh_level = $shipmentScheduleLocation->ssl_level;
-                    $shipmentScheduleHistory->ssh_bin = $shipmentScheduleLocation->ssl_bin;
-                    $shipmentScheduleHistory->ssh_qty_to_pick = $shipmentScheduleLocation->ssl_qty_to_pick;
-                    $shipmentScheduleHistory->ssh_action = 'Create';
-                    $shipmentScheduleHistory->created_by = Auth::user()->id;
-                    $shipmentScheduleHistory->save();
                 }
             }
 
             // Qxtend buat sales order shipper maintenance
-            $qxtend = (new QxtendServices())->qxSalesOrderShipper('create', $packingReplenishments, $packingReplenishmentMstr->id, $activeConnection);
+            $qxtend = (new QxtendServices())->qxSalesOrderShipper('create', $location, $packingReplenishments, $packingReplenishmentMstr->id, $activeConnection);
 
             if ($qxtend[0] == false) {
                 DB::commit();

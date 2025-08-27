@@ -146,11 +146,24 @@ class APIPurchaseOrderApprovalController extends Controller
                         $dataPurchaseOrderDetail = PurchaseOrderDetail::with('getMaster')->find($dataReceipt->rd_pod_det_id);
                         $poNbr = $dataPurchaseOrderDetail->getMaster->po_nbr ?? '';
                         $line = $dataPurchaseOrderDetail->pod_line ?? '';
-                        $lotserialQty = $totalReceipt;
+                        // $lotserialQty = $totalReceipt; Dirubah Receipt sesuai UM PO
+                        $lotserialQty = $dataReceipt->rd_qty_terima;
                         $receiptUm = $dataPurchaseOrderDetail->pod_pt_um ?? '';
                         $site = $dataReceipt->rd_site_penyimpanan ?? '';
                         $location = $dataReceipt->rd_location_penyimpanan ?? '';
                         $lotserial = $dataReceipt->rd_batch ?? '';
+                        $qtyPotensi = $dataReceipt->rd_qty_potensi ?? 1;
+
+                        // Assign pod_um_conv sebelum receipt -> request bang dany
+                        $changeUmConv = (new WSAServices())->wsaChangeUmConv($poNbr, $line, $qtyPotensi);
+                        if ($changeUmConv == false) {
+                            DB::rollback();
+                            return response()->json([
+                                'Status' => 'Error',
+                                'Message' => "Failed to Update UM Conv Purchase Order"
+                            ], 422);
+                        }
+
 
                         $submitReceiptQxtend = (new QxtendServices())->qxPurchaseOrderReceipt($poNbr, $line, $lotserialQty, $receiptUm, $site, $location, $lotserial);
                         if ($submitReceiptQxtend == false) {
@@ -161,6 +174,7 @@ class APIPurchaseOrderApprovalController extends Controller
                             ], 422);
                         }
                         if ($submitReceiptQxtend[0] == false) {
+                            DB::rollback();
                             return response()->json([
                                 'Status' => 'Error',
                                 'Message' => 'Qxtend Error : ' . $submitReceiptQxtend[1]
@@ -184,6 +198,7 @@ class APIPurchaseOrderApprovalController extends Controller
                             );
 
                             if ($updateDataQAD == false) {
+                                DB::rollback();
                                 return response()->json([
                                     'Status' => 'Error',
                                     'Message' => "Gagal update data stock WSA"

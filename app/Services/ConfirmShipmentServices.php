@@ -17,9 +17,22 @@ class ConfirmShipmentServices
 {
     public function confirmShipment($confirmApproval, $reason, $activeConnection)
     {
+        $dataArray = [];
         DB::beginTransaction();
 
         try {
+            // Cek approval, masih perlu approval atau tidak
+
+            // Qxtend ke QAD Pre-shipper/shipper confirm
+            $qxtend = (new QxtendServices())->qxShipperConfirm($confirmApproval, $activeConnection);
+            if ($qxtend[0] == false) {
+                DB::commit();
+
+                Log::channel('confirmShipment')->info($qxtend[1]);
+
+                return false;
+            }
+
             // Update status + catat ke history
             $packingReplenishmentApproval = PackingReplenishmentApproval::find($confirmApproval['id']);
             $packingReplenishmentApproval->pra_status = 'Approved';
@@ -37,18 +50,6 @@ class ConfirmShipmentServices
             $packingReplenishmentApprovalHist->created_by = Auth::user()->name;
             $packingReplenishmentApprovalHist->save();
 
-            // Cek approval, masih perlu approval atau tidak
-
-            // Qxtend ke QAD Pre-shipper/shipper confirm
-            $qxtend = (new QxtendServices())->qxShipperConfirm($confirmApproval, $activeConnection);
-            if ($qxtend[0] == false) {
-                DB::commit();
-
-                Log::channel('confirmShipment')->info($qxtend[1]);
-
-                return false;
-            }
-
             // Update packing replenishment jadi shipped + catat ke history
             $dataPRM = $confirmApproval['get_packing_replenishment_mstr'];
 
@@ -56,7 +57,29 @@ class ConfirmShipmentServices
             $packingReplenishmentMstr->prm_status = 'Shipped';
             $packingReplenishmentMstr->save();
 
+            $packingReplenishmentMstr->getPackingReplenishmentDet[0]->getShipmentScheduleLocation->getShipmentScheduleDet->getShipmentScheduleMaster->ssm_status = 'Shipped';
+            $packingReplenishmentMstr->getPackingReplenishmentDet[0]->getShipmentScheduleLocation->getShipmentScheduleDet->getShipmentScheduleMaster->save();
+
             foreach ($packingReplenishmentMstr->getPackingReplenishmentDet as $packingReplenishmentDet) {
+                $currentSite = strtoupper($packingReplenishmentDet->getShipmentScheduleLocation->ssl_site);
+                $currentItem = strtoupper($packingReplenishmentDet->getShipmentScheduleLocation->getShipmentScheduleDet->ssd_sod_part);
+                $currentLot = strtoupper($packingReplenishmentDet->getShipmentScheduleLocation->ssl_lotserial);
+                $picked = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_qty_pick;
+
+                // use item+lot as a key
+                $key = $currentSite . '|' . $currentItem . '|' . $currentLot;
+
+                if (!isset($dataArray[$key])) {
+                    $dataArray[$key] = [
+                        'site' => $currentSite,
+                        'item' => $currentItem,
+                        'lot'  => $currentLot,
+                        'pick' => 0,
+                    ];
+                }
+
+                $dataArray[$key]['pick'] += $picked;
+
                 $packingReplenishmentHist = new PackingReplenishmentHist();
                 $packingReplenishmentHist->prh_shipper_nbr = $packingReplenishmentMstr->prm_shipper_nbr;
                 $packingReplenishmentHist->prh_so_nbr = $packingReplenishmentDet->getShipmentScheduleLocation->getShipmentScheduleDet->ssd_sod_nbr;
@@ -110,6 +133,13 @@ class ConfirmShipmentServices
                 $shipmentScheduleHistory->ssh_action = 'Confirm shipment';
                 $shipmentScheduleHistory->created_by = Auth::user()->name;
                 $shipmentScheduleHistory->save();
+            }
+
+            $dataArray = array_values($dataArray);
+
+            foreach ($dataArray as $data) {
+                // Tembak qty oh di xxinv_det
+                (new WSAServices())->wsaUpdateQtyOHCustom($data);
             }
 
             DB::commit();

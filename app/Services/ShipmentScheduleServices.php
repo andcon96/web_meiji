@@ -153,6 +153,13 @@ class ShipmentScheduleServices
         DB::beginTransaction();
 
         $shipmentScheduleMstr = ShipmentScheduleMstr::find($idShipmentScheduleMstr);
+        $tempSSD_ID = [];
+        $tempSite = [];
+        $tempLocation = [];
+        $tempLot = [];
+        $tempWhs = [];
+        $tempLevel = [];
+        $tempBin = [];
 
         try {
             // Cek ke tiap so + line, kalau ada update, kalau engga create new line
@@ -188,6 +195,9 @@ class ShipmentScheduleServices
                     $shipmentScheduleDet->save();
                 }
 
+                array_push($tempSSD_ID, $shipmentScheduleDet->id);
+                array_push($tempSite, $shipmentScheduleDet->ssd_sod_site);
+
                 // Tiap SO line bisa punya banyak location detail, disini cek lagi ada lokasi baru atau engga.
                 foreach ($salesOrder['selected_locations'] as $detailLocation) {
                     $action = 'Create';
@@ -208,6 +218,12 @@ class ShipmentScheduleServices
                         $action = 'Update';
                         $shipmentScheduleLocation->updated_by = Auth::user()->id;
                     }
+
+                    array_push($tempLocation, $detailLocation['location']);
+                    array_push($tempLot, $detailLocation['lot']);
+                    array_push($tempWhs, $detailLocation['warehouse']);
+                    array_push($tempLevel, $detailLocation['level']);
+                    array_push($tempBin, $detailLocation['bin']);
 
                     $shipmentScheduleLocation->ssl_site = $detailLocation['site'];
                     $shipmentScheduleLocation->ssl_warehouse = $detailLocation['warehouse'];
@@ -245,7 +261,7 @@ class ShipmentScheduleServices
             }
 
             // Check for the deleted lines
-            $allShipmentScheduleDet = ShipmentScheduleDet::with(['getShipmentScheduleMaster', 'getShipmentScheduleLocation'])->where('ssm_id', $idShipmentScheduleMstr)->get();
+            $allShipmentScheduleDet = ShipmentScheduleDet::with(['getShipmentScheduleMaster', 'getShipmentScheduleLocation'])->where('ssm_id', $idShipmentScheduleMstr)->orderBy('ssd_sod_nbr')->get();
 
             foreach ($allShipmentScheduleDet as $key => $shipmentScheduleDet) {
                 $soNbrCollection = $shipmentScheduleDet->ssd_sod_nbr;
@@ -253,7 +269,6 @@ class ShipmentScheduleServices
                 $exists = array_filter($salesOrders, function ($item) use ($soNbrCollection, $soLineCollection) {
                     return $item['so_id'] === $soNbrCollection && $item['line'] === $soLineCollection;
                 });
-
                 // Kalau gaada catat ke history kalau dihapus, terus delete dari schedule det
                 if (empty($exists)) {
                     foreach ($shipmentScheduleDet->getShipmentScheduleLocation as $locationDetail) {
@@ -285,6 +300,48 @@ class ShipmentScheduleServices
                     }
 
                     $shipmentScheduleDet->delete();
+                }
+            }
+
+            // Buat ngehapus unselected
+            $uncheckedLocation = ShipmentScheduleLoc::whereIn('ssd_id', $tempSSD_ID)
+                ->where(function ($q) use ($tempLocation, $tempLot, $tempWhs, $tempLevel, $tempBin) {
+                    $q->whereNotIn('ssl_location', $tempLocation)
+                        ->orWhereNotIn('ssl_lotserial', $tempLot)
+                        ->orWhereNotIn('ssl_level', $tempLevel)
+                        ->orWhereNotIn('ssl_warehouse', $tempWhs)
+                        ->orWhereNotIn('ssl_bin', $tempBin);
+                })
+                ->get();
+
+            if ($uncheckedLocation->count() > 0) {
+                foreach ($uncheckedLocation as $unchecked) {
+                    $action = 'Deleted';
+                    $shipmentScheduleHistory = new ShipmentScheduleHist();
+                    $shipmentScheduleHistory->ssh_number = $shipmentScheduleMstr->ssm_number;
+                    $shipmentScheduleHistory->ssh_cust_code = $shipmentScheduleMstr->ssm_cust_code;
+                    $shipmentScheduleHistory->ssh_cust_desc = $shipmentScheduleMstr->ssm_cust_desc;
+                    $shipmentScheduleHistory->ssh_status_mstr = $shipmentScheduleMstr->ssm_status;
+                    $shipmentScheduleHistory->ssh_sod_nbr = $shipmentScheduleDet->ssd_sod_nbr;
+                    $shipmentScheduleHistory->ssh_sod_site = $shipmentScheduleDet->ssd_sod_site;
+                    $shipmentScheduleHistory->ssh_sod_shipto = $shipmentScheduleDet->ssd_sod_shipto;
+                    $shipmentScheduleHistory->ssh_sod_line = $shipmentScheduleDet->ssd_sod_line;
+                    $shipmentScheduleHistory->ssh_sod_part = $shipmentScheduleDet->ssd_sod_part;
+                    $shipmentScheduleHistory->ssh_sod_desc = $shipmentScheduleDet->ssd_sod_desc;
+                    $shipmentScheduleHistory->ssh_sod_qty_ord = $shipmentScheduleDet->ssd_sod_qty_ord;
+                    $shipmentScheduleHistory->ssh_status_det = $shipmentScheduleDet->ssd_status;
+                    $shipmentScheduleHistory->ssh_site = $unchecked->ssl_site;
+                    $shipmentScheduleHistory->ssh_warehouse = $unchecked->ssl_warehouse;
+                    $shipmentScheduleHistory->ssh_location = $unchecked->ssl_location;
+                    $shipmentScheduleHistory->ssh_lotserial = $unchecked->ssl_lotserial;
+                    $shipmentScheduleHistory->ssh_level = $unchecked->ssl_level;
+                    $shipmentScheduleHistory->ssh_bin = $unchecked->ssl_bin;
+                    $shipmentScheduleHistory->ssh_qty_to_pick = $unchecked->ssl_qty_to_pick;
+                    $shipmentScheduleHistory->ssh_action = $action;
+                    $shipmentScheduleHistory->created_by = Auth::user()->name;
+                    $shipmentScheduleHistory->save();
+
+                    $unchecked->delete();
                 }
             }
 

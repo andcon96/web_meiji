@@ -167,12 +167,12 @@ class ReceiptServices
 
 
             DB::commit();
-            return true;
+            return [true, $getRunningNumber];
         } catch (Exception $e) {
             Log::info($e);
             DB::rollBack();
 
-            return false;
+            return [false, ''];
         }
     }
 

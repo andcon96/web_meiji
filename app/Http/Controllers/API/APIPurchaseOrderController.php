@@ -106,7 +106,7 @@ class APIPurchaseOrderController extends Controller
         $saveData = (new ReceiptServices())->saveDataReceiptPerLot($inputan, $arrayKoneksiImage);
 
 
-        if ($saveData == false) {
+        if ($saveData[0] == false) {
             return response()->json([
                 'Status' => 'Error',
                 'Message' => "Failed To Save Receipt Data."
@@ -115,7 +115,7 @@ class APIPurchaseOrderController extends Controller
 
         return response()->json([
             'Status' => 'Success',
-            'Message' => 'Data Receipt Saved',
+            'Message' => 'Data Receipt Saved, Receipt Number : ' . $saveData[1],
             'ReceiptNumber' => 'RCPT00001'
         ], 200);
     }
@@ -190,7 +190,7 @@ class APIPurchaseOrderController extends Controller
 
         // Ambil List Location di QAD untuk dibanding ke Web
         $wsaData = Cache::remember('wsaPenyimpanan', 60, function () use ($itemCode) {
-            return (new WSAServices())->wsaPenyimpanan($itemCode, '', '', '', '');
+            return (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', '', '');
         });
         if ($wsaData[0] == 'false') {
             return response()->json([

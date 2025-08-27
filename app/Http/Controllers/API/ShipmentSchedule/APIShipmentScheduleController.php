@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\ShipmentSchedule;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\GeneralResources;
+use App\Models\API\ShipmentSchedule\ShipmentScheduleDet;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleMstr;
 use App\Models\Settings\qxwsa;
 use App\Services\ShipmentScheduleServices;
@@ -68,6 +69,17 @@ class APIShipmentScheduleController extends Controller
 
         foreach ($salesOrderData[1] as $data) {
             if ((string)$data->t_so_open_qty > 0) {
+                // Ambil qty pick
+                $pickedQty = 0;
+                $salesOrderDetail = ShipmentScheduleDet::where('ssd_sod_site', (String)$data->t_so_site)
+                ->where('ssd_sod_nbr', (String)$data->t_so_nbr)
+                ->where('ssd_sod_line', (String)$data->t_so_line)
+                ->first();
+
+                if ($salesOrderDetail) {
+                    $pickedQty = $salesOrderDetail->ssd_sod_qty_pick;
+                }
+
                 array_push($tempData, [
                     't_so_nbr' => (String)$data->t_so_nbr,
                     't_so_site' => (String)$data->t_so_site,
@@ -77,6 +89,7 @@ class APIShipmentScheduleController extends Controller
                     't_so_part_desc' => (string)$data->t_so_part_desc,
                     't_so_ord_qty' => (string)$data->t_so_ord_qty,
                     't_so_open_qty' => (string)$data->t_so_open_qty,
+                    't_so_pick_qty' => (String)$pickedQty,
                     't_so_serial' => (string)$data->t_so_serial,
                 ]);
             }
@@ -95,11 +108,12 @@ class APIShipmentScheduleController extends Controller
         $parts = explode('|', $searchData);
 
         // make sure we always get both values
-        $itemCode = $parts[0] ?? null;
-        $lot      = $parts[1] ?? null;
+        $site = $parts[0] ?? null;
+        $itemCode = $parts[1] ?? null;
+        $lot      = $parts[2] ?? null;
 
         $activeConnection = qxwsa::first();
-        $wsaInventory = (new WSAServices())->wsaInventoryDetail($itemCode, $lot, $activeConnection);
+        $wsaInventory = (new WSAServices())->wsaInventoryDetail($site, $itemCode, $lot, $activeConnection);
 
         if ($wsaInventory[0] == 'false') {
             return response()->json([
