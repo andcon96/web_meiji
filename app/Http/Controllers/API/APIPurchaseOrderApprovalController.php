@@ -148,7 +148,7 @@ class APIPurchaseOrderApprovalController extends Controller
                         $line = $dataPurchaseOrderDetail->pod_line ?? '';
                         // $lotserialQty = $totalReceipt; Dirubah Receipt sesuai UM PO
                         $lotserialQty = $dataReceipt->rd_qty_terima;
-                        $receiptUm = $dataPurchaseOrderDetail->pod_pt_um ?? '';
+                        $receiptUm = $dataPurchaseOrderDetail->pod_um ?? '';
                         $site = $dataReceipt->rd_site_penyimpanan ?? '';
                         $location = $dataReceipt->rd_location_penyimpanan ?? '';
                         $lotserial = $dataReceipt->rd_batch ?? '';
