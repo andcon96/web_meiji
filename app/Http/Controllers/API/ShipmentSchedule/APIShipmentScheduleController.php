@@ -25,7 +25,8 @@ class APIShipmentScheduleController extends Controller
         if ($req->search) {
             $data->where('ssm_number', 'LIKE', '%' . $req->search . '%')
                 ->orWhere('ssm_cust_code', 'LIKE', '%' . $req->search . '%')
-                ->orWhere('ssm_cust_desc', 'LIKE', '%' . $req->search . '%');
+                ->orWhere('ssm_cust_desc', 'LIKE', '%' . $req->search . '%')
+                ->orWhere('ssm_status', 'LIKE', '%' . $req->search . '%');
         }
 
         $data = $data->orderBy('ssm_number', 'desc')->paginate(10);
