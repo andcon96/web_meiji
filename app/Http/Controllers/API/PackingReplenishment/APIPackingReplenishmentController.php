@@ -16,17 +16,37 @@ class APIPackingReplenishmentController extends Controller
 {
     public function index(Request $request)
     {
-        $data = PackingReplenishmentMstr::query()->with(['getCreatedBy:id,name,username']);
+        $data = PackingReplenishmentMstr::query()->with([
+            'getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster',
+            'getCreatedBy:id,name,username'
+        ]);
 
         if ($request->search) {
-            $data->where('prm_shipper_nbr', 'LIKE', '%' . $request->search . '%');
+            $search = $request->search;
+
+            $data->where(function ($q) use ($search) {
+                // cari customer
+                $q->where('prm_shipper_nbr', 'LIKE', '%' . $search . '%')
+
+                    // cari customer
+                    ->orWhereHas('getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster', function ($query) use ($search) {
+                        $query->where('ssm_cust_code', 'LIKE', '%' . $search . '%')
+                            ->orWhere('ssm_cust_desc', 'LIKE', '%' . $search . '%');
+                    })
+
+                    // cari SO + item code
+                    ->orWhereHas('getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet', function ($query) use ($search) {
+                        $query->where('ssd_sod_nbr', 'LIKE', '%' . $search . '%')
+                            ->orWhere('ssd_sod_part', 'LIKE', '%' . $search . '%');
+                    });
+            });
         }
 
         $data = $data->orderBy('id', 'desc')->paginate(10);
 
-
         return GeneralResources::collection($data);
     }
+
 
     public function listShipmentSchedule()
     {
