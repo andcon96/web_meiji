@@ -43,17 +43,16 @@ class APIWorkOrderController extends Controller
 
         $data = $data->orderBy('id', 'desc')->get();
 
-        
+
         return GeneralResources::collection($data);
-        
     }
 
     public function wsaDataWo(Request $req)
     {
-        
+
         $woidnbr = '';
-        $hasil = (new WSAServices())->wsaGetWO($req->search);
-        
+        $hasil = (new WSAServices())->wsaGetWOMstr();
+
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
@@ -61,6 +60,10 @@ class APIWorkOrderController extends Controller
             ], 422);
         } else {
             $listData = $hasil[1];
+            return response()->json([
+                'DataWSA' => $hasil[1]
+            ], 200);
+            /*
             try {
                 DB::beginTransaction();
                 foreach ($listData as $data) {
@@ -119,6 +122,7 @@ class APIWorkOrderController extends Controller
                     'Message' => "Unable to Proccess Request"
                 ], 422);
             }
+                */
         }
     }
 
@@ -133,38 +137,36 @@ class APIWorkOrderController extends Controller
         try {
             DB::beginTransaction();
             foreach ($wonbr as $wonbr) {
-                
+
                 $hasil = (new WSAServices())->wsaGetInvWo($wonbr->wo_nbr);
-                
+
 
                 if ($hasil[0] == 'false') {
-                    
+
                     continue;
-                    
                 } else {
                     $listData = $hasil[1];
-                    
+
                     foreach ($listData as $key => $data) {
-                        
-                        
+
+
                         $workOrder = workOrderMaster::where('wo_nbr', (string)$data->t_wo_nbr)
                             ->where('wo_id', (string)$data->t_wo_id)->first();
-                        
 
-                        $dataDetail = workOrderDetail::where('wod_wo_id',$workOrder->id)->where('wod_part',(string)$data->t_wod_part)->first();
-                        
-                        if($dataDetail->wod_lot == null){
+
+                        $dataDetail = workOrderDetail::where('wod_wo_id', $workOrder->id)->where('wod_part', (string)$data->t_wod_part)->first();
+
+                        if ($dataDetail->wod_lot == null) {
                             $currentid = $workOrder->id;
                             $currentitem = (string)$data->t_wod_part;
                             $currentqtyreq = $dataDetail->wod_qty_req;
                             $currentqtydiff = $currentqtyreq - $data->t_xxinv_qtyoh;
-                            if($currentqtydiff >= 0){
+                            if ($currentqtydiff >= 0) {
                                 $currentqtypick = $data->t_xxinv_qtyoh;
-                            }
-                            else{
+                            } else {
                                 $currentqtypick =  $currentqtyreq;
                             }
-                            
+
                             $dataDetail->wod_qty_req = $currentqtyreq;
                             $dataDetail->wod_qty_pick = $currentqtypick ?? 0;
                             $dataDetail->wod_qty_oh = (string)$data->t_xxinv_qtyoh ?? 0;
@@ -177,18 +179,15 @@ class APIWorkOrderController extends Controller
                             $dataDetail->wod_entry_date = (string)$data->t_xxinv_entry_date ?? '';
                             $dataDetail->wod_exp_date = (string)$data->t_xxinv_exp_date ?? '';
                             $dataDetail->wod_picklist_type = (string)$data->t_picktype ?? '';
-                            
-                        }
-                        else{
+                        } else {
                             $currentqtyreq = $dataDetail->wod_qty_req - $currentqtypick;
                             $currentqtydiff = $currentqtyreq - $data->t_xxinv_qtyoh;
-                            if($currentqtydiff >= 0){
+                            if ($currentqtydiff >= 0) {
                                 $currentqtypick = $data->t_xxinv_qtyoh;
-                            }
-                            else{
+                            } else {
                                 $currentqtypick = $currentqtyreq;
                             }
-                            
+
                             $dataDetail = new workOrderDetail();
                             $dataDetail->wod_wo_id = $workOrder->id;
                             $dataDetail->wod_nbr = (string)$data->t_wod_nbr;
@@ -210,9 +209,9 @@ class APIWorkOrderController extends Controller
                             $dataDetail->wod_entry_date = (string)$data->t_xxinv_entry_date ?? '';
                             $dataDetail->wod_exp_date = (string)$data->t_xxinv_exp_date ?? '';
                             $dataDetail->wod_picklist_type = (string)$data->t_picktype ?? '';
-                        }    
-                        
-                       
+                        }
+
+
                         $dataDetail->save();
                     }
                 }
@@ -223,7 +222,7 @@ class APIWorkOrderController extends Controller
             return response()->json(['success', 200]);
         } catch (Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'Status' => 'Error',
                 'Message' => "Unable to Proccess Request: " . $e->getMessage()
@@ -244,25 +243,25 @@ class APIWorkOrderController extends Controller
         try {
             DB::beginTransaction();
             $prefix = prefixWorkOrder::first();
-            
+
             $currentyear = date('Y');
             $currentmonth = date('m');
             $currentday = date('d');
-            
-            if ($prefix->prefix_year_wo != $currentyear){
+
+            if ($prefix->prefix_year_wo != $currentyear) {
                 $prefix->prefix_year_wo = $currentyear;
             }
-            if($prefix->prefix_month_wo != $currentmonth){
+            if ($prefix->prefix_month_wo != $currentmonth) {
                 $prefix->prefix_month_wo = $currentyear;
             }
-            if($prefix->prefix_day_wo != $currentday){
+            if ($prefix->prefix_day_wo != $currentday) {
                 $prefix->prefix_day_wo = $currentday;
             }
             $prefix->running_nbr_wo = $prefix->running_nbr_wo + 1;
-            $prefix->save(); 
-            
-            $picklistnbr = $prefix->prefix_wo . '/'. $prefix->prefix_year_wo . '/' . $prefix->prefix_month_wo . '/' . $prefix->prefix_day_wo .'-'. $prefix->running_nbr_wo; 
-            
+            $prefix->save();
+
+            $picklistnbr = $prefix->prefix_wo . '/' . $prefix->prefix_year_wo . '/' . $prefix->prefix_month_wo . '/' . $prefix->prefix_day_wo . '-' . $prefix->running_nbr_wo;
+
 
             $picklist = new picklistMstr();
             $picklist->pl_nbr = $picklistnbr;
@@ -352,7 +351,7 @@ class APIWorkOrderController extends Controller
                     $picklistWoDet->save();
 
                     $picklistHist = new PicklistHistory();
-                    
+
                     $picklistHist->pl_nbr = $picklistnbr;
                     $picklistHist->pl_status = 'created';
                     $picklistHist->created_by = $req->user;
@@ -391,7 +390,6 @@ class APIWorkOrderController extends Controller
                     $picklistHist->pl_wod_exp_date = $data->wod_exp_date;
                     $picklistHist->pl_wod_picklist_type = $data->wod_picklist_type;
                     $picklistHist->save();
-                    
                 }
             }
 
@@ -414,70 +412,67 @@ class APIWorkOrderController extends Controller
         }
     }
 
-    public function deleteDataWo(Request $req){
-        $dataWo = workOrderMaster::with('getDetail')->where('id',$req->search)->where('created_by', $req->user)->first();
-        if(!$dataWo){
+    public function deleteDataWo(Request $req)
+    {
+        $dataWo = workOrderMaster::with('getDetail')->where('id', $req->search)->where('created_by', $req->user)->first();
+        if (!$dataWo) {
             return response()->json([
                 'Status' => 'Error',
                 'Message' => "Work Order : " . $req->search . " Not Found."
             ], 422);
-                    
         }
         try {
-                DB::beginTransaction();
-                $dataWo->getDetail()->delete();
-                $dataWo->delete();
-                DB::commit();
-                return response()->json(['success', 200]);
-
-
-             
-            } catch (Exception $e) {
-                DB::rollBack();
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "Unable to Proccess Request: " . $e->getMessage()
-                ], 422);
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "Unable to Proccess Request"
-                ], 422);
-            }
+            DB::beginTransaction();
+            $dataWo->getDetail()->delete();
+            $dataWo->delete();
+            DB::commit();
+            return response()->json(['success', 200]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Unable to Proccess Request: " . $e->getMessage()
+            ], 422);
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Unable to Proccess Request"
+            ], 422);
+        }
     }
 
-    public function saveQtyWo(Request $req){
-       $woDetail = workOrderDetail::where('id',$req->id)->first();
-       
-        if(!$woDetail){
+    public function saveQtyWo(Request $req)
+    {
+        $woDetail = workOrderDetail::where('id', $req->id)->first();
+
+        if (!$woDetail) {
             return response()->json([
                 'Status' => 'Error',
                 'Message' => "Work Order : " . $req->search . " Not Found."
             ], 422);
-                    
         }
         try {
-                DB::beginTransaction();
-                $woDetail->wod_qty_pick = $req->qtypick;
-                $woDetail->save();
-                
-                DB::commit();
-                return response()->json(['success', 200]);
-            } catch (Exception $e) {
-                DB::rollBack();
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "Unable to Proccess Request: " . $e->getMessage()
-                ], 422);
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "Unable to Proccess Request"
-                ], 422);
-            }
+            DB::beginTransaction();
+            $woDetail->wod_qty_pick = $req->qtypick;
+            $woDetail->save();
+
+            DB::commit();
+            return response()->json(['success', 200]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Unable to Proccess Request: " . $e->getMessage()
+            ], 422);
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Unable to Proccess Request"
+            ], 422);
+        }
     }
 
     public function getDataPicklist(Request $req)
     {
-        $data = picklistMstr::query()->with(['getWo','getWo.getDetail'])->where('created_by', $req->user);
+        $data = picklistMstr::query()->with(['getWo', 'getWo.getDetail'])->where('created_by', $req->user);
         if ($req->search) {
             $data->where('pl_nbr', 'LIKE', '%' . $req->search . '%')
                 ->orWhere('pl_wo_nbr', 'LIKE', '%' . $req->search . '%')
@@ -492,7 +487,7 @@ class APIWorkOrderController extends Controller
     }
     public function getDataPicklistDetail(Request $req)
     {
-        $data = picklistMstr::query()->with(['getWo','getWo.getDetail'])->where('id', $req->id);
+        $data = picklistMstr::query()->with(['getWo', 'getWo.getDetail'])->where('id', $req->id);
         if ($req->search) {
             $data->where('pl_nbr', 'LIKE', '%' . $req->search . '%')
                 ->orWhere('pl_wo_nbr', 'LIKE', '%' . $req->search . '%')
@@ -506,52 +501,130 @@ class APIWorkOrderController extends Controller
         return GeneralResources::collection($data);
     }
 
-    public function getDataItemWo(){
-        
-        $hasil = (new WSAServices())->wsaGetItemMstrWo();
+    public function insertDataWoMstr(Request $req)
+    {
+
+        $woidnbr = '';
+
+        $hasil = (new WSAServices())->wsaGetWODetail($req->search);
 
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "No Item Found On QAD."
+                'Message' => "Work Order : " . $req->search . " Not Found."
             ], 422);
         } else {
-           
+            $listData = $hasil[1];
+            try {
+                DB::beginTransaction();
+                foreach ($listData as $data) {
+                    if ($woidnbr != ((string)$data->t_wo_nbr . (string)$data->t_wo_id)) {
+                        $woidnbr = (string)$data->t_wo_nbr . (string)$data->t_wo_id;
+                        $dataMaster = workOrderMaster::firstOrNew(
+                            [
+                                'wo_nbr' => (string)$data->t_wo_nbr,
+                                'wo_id' => (string)$data->t_wo_id,
+                                'created_by' => (string)$req->user
+                            ]
+                        );
+                        $dataMaster->wo_site = (string)$data->t_wo_site;
+                        $dataMaster->wo_part = (string)$data->t_wo_part;
+                        $dataMaster->wo_part_desc = (string)$data->t_wo_part_desc;
+                        $dataMaster->wo_status = (string)$data->t_wo_status ?? '';
+                        $dataMaster->wo_qty_ord = (string)$data->t_wo_qty_ord ?? 0;
+                        $dataMaster->wo_qty_comp = (string)$data->t_wo_qty_comp ?? 0;
+                        $dataMaster->wo_qty_rjct = (string)$data->t_wo_qty_rjct ?? 0;
+                        $dataMaster->wo_order_date = (string)$data->t_wo_ord_date;
+                        $dataMaster->wo_release_date = (string)$data->t_wo_rel_date;
+                        $dataMaster->wo_due_date = (string)$data->t_wo_due_date;
+                        $dataMaster->created_by = $req->user;
+                        $dataMaster->save();
+                    }
+                    /*
+                    $checkDetail = workOrderDetail::where('wod_wo_id', $dataMaster->id)->where('wod_part', (string)$data->t_wod_part)->first();
+                    if (!$checkDetail) {
+                        $dataDetail = new workOrderDetail();
+                        $dataDetail->wod_wo_id = $dataMaster->id;
+                        $dataDetail->wod_nbr = (string)$data->t_wod_nbr;
+                        $dataDetail->wod_op = (string)$data->t_wod_op;
+                        $dataDetail->wod_part = (string)$data->t_wod_part;
+                        $dataDetail->wod_part_desc = (string)$data->t_wod_part_desc;
+                        $dataDetail->wod_um = (string)$data->t_wod_um;
+                        $dataDetail->wod_site = (string)$data->t_wod_site;
+                        $dataDetail->wod_loc = (string)$data->t_wod_loc;
+                        $dataDetail->wod_qty_req = (string)$data->t_wod_qty_req ?? 0;
+                        $dataDetail->wod_qty_pick = 0;
+                        $dataDetail->save();
+                    }
+                    */
+                }
 
-            Schema::create('temp_item', function (Blueprint $table) {
-            $table->increments('id');
-            $table->string('part')->nullable();
-            $table->string('desc')->nullable();
-            $table->string('um')->nullable();
-            $table->string('qty_required')->nullable();
-            $table->string('site')->nullable();
-            $table->string('location')->nullable();
 
-            $table->temporary();
-        });
-        foreach($hasil[1] as $key => $data){
-            DB::table('temp_item')->insert([
-            'part' => $data->t_part,
-            'desc' => $data->t_part_desc,
-            'um' => $data->t_um,
-            'qty_required' => 0,
-            'site' => $data->t_site,
-            'location' => $data->t_loc,
-            
-            ]);
-        }
- 
-
-        $data = DB::table('temp_item')->get();
-        $data3 = collect($data);
-        $data2 = GeneralResources::collection($data3);
-        dd($data2);
-    
-        Schema::drop('temp_item');
-        return GeneralResources::collection($data);
-        
-
+                DB::commit();
+                return response()->json(['success', 200]);
+            } catch (Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "Unable to Proccess Request: " . $e->getMessage()
+                ], 422);
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "Unable to Proccess Request"
+                ], 422);
+            }
         }
     }
-    //comment
+
+    public function insertDataWoDetail(Request $req)
+    {
+
+        $woidnbr = '';
+        $workOrder = workOrderMaster::where('created_by', $req->user)->get();
+        foreach ($workOrder as $dataMaster) {
+            $hasil = (new WSAServices())->wsaGetWODetail($dataMaster->wo_nbr);
+            if ($hasil[0] == 'false') {
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "Work Order : " . $req->search . " Not Found."
+                ], 422);
+            } else {
+                $listData = $hasil[1];
+                try {
+                    DB::beginTransaction();
+                    foreach ($listData as $data){
+                        $deleteDetail = workOrderDetail::where('wod_wo_id', $dataMaster->id)->where('wod_part', (string)$data->t_wod_part)->delete();
+                        $checkDetail = workOrderDetail::where('wod_wo_id', $dataMaster->id)->where('wod_part', (string)$data->t_wod_part)->first();
+                        if (!$checkDetail) {
+                            $dataDetail = new workOrderDetail();
+                            $dataDetail->wod_wo_id = $dataMaster->id;
+                            $dataDetail->wod_nbr = (string)$data->t_wod_nbr;
+                            $dataDetail->wod_op = (string)$data->t_wod_op;
+                            $dataDetail->wod_part = (string)$data->t_wod_part;
+                            $dataDetail->wod_part_desc = (string)$data->t_wod_part_desc;
+                            $dataDetail->wod_um = (string)$data->t_wod_um;
+                            $dataDetail->wod_site = (string)$data->t_wod_site;
+                            $dataDetail->wod_loc = (string)$data->t_wod_loc;
+                            $dataDetail->wod_qty_req = (string)$data->t_wod_qty_req ?? 0;
+                            $dataDetail->wod_qty_pick = 0;
+                            $dataDetail->save();
+                        }
+                    }
+                   
+                    DB::commit();
+                    return response()->json(['success', 200]);
+                } catch (Exception $e) {
+                    DB::rollBack();
+                    return response()->json([
+                        'Status' => 'Error',
+                        'Message' => "Unable to Proccess Request: " . $e->getMessage()
+                    ], 422);
+                    return response()->json([
+                        'Status' => 'Error',
+                        'Message' => "Unable to Proccess Request"
+                    ], 422);
+                }
+            }
+        }
+    }
 }

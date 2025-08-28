@@ -891,7 +891,7 @@ class WSAServices
         return $this->sendQdocRequest($qdocRequest, $activeConnectionType);
     }
 
-    public function wsaGetWO($wonbr)
+    public function wsaGetWOMstr()
     {
 
         $wsa = qxwsa::first();
@@ -913,10 +913,10 @@ class WSAServices
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
             '<Body>' .
-            '<meiji_get_wo xmlns="urn:imi.co.id:wsaweb">' .
+            '<meiji_get_wo_mstr xmlns="urn:imi.co.id:wsaweb">' .
             '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpwo>' . $wonbr . '</inpwo>' .
-            '</meiji_get_wo>' .
+            
+            '</meiji_get_wo_mstr>' .
             '</Body>' .
             '</Envelope>';
 
@@ -962,6 +962,102 @@ class WSAServices
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
         $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
+        $dataWO = [];
+        foreach ($dataloop as $listDatas) {
+            
+
+            $dataWO[] = [
+                
+                'id' => (string)$listDatas->t_wo_id,
+                'wonbr' => (string)$listDatas->t_wo_nbr,
+                'site' => (string)$listDatas->t_wo_site,
+                'part' => (string)$listDatas->t_wo_part,
+                'part_desc' => (string)$listDatas->t_wo_part_desc ?? '',
+                'um' => (string)$listDatas->t_wo_um,
+                'qty_ord' => (string)$listDatas->t_wo_qty_ord,
+                
+            ];
+        }
+
+        return [
+            $qdocResult,
+            $dataWO,
+        ];
+    }
+    public function wsaGetWODetail($wonbr)
+    {
+
+        $wsa = qxwsa::first();
+
+
+        $qxUrl = $wsa->wsa_url;
+
+        $qxReceiver = '';
+        $qxSuppRes = 'false';
+        $qxScopeTrx = '';
+        $qdocName = '';
+        $qdocVersion = '';
+        $dsName = '';
+        $timeout = 0;
+
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+
+        $qdocRequest =
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
+            '<Body>' .
+            '<meiji_get_wo_det xmlns="urn:imi.co.id:wsaweb">' .
+            '<inpdomain>' . $domainCode . '</inpdomain>' .
+            '<inpwo>' . $wonbr . '</inpwo>' .
+            '</meiji_get_wo_det>' .
+            '</Body>' .
+            '</Envelope>';
+            
+
+        $curlOptions = array(
+            CURLOPT_URL => $qxUrl,
+            CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
+            CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
+            CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false
+        );
+
+        $getInfo = '';
+        $httpCode = 0;
+        $curlErrno = 0;
+        $curlError = '';
+        $qdocResponse = '';
+
+        $curl = curl_init();
+        if ($curl) {
+            curl_setopt_array($curl, $curlOptions);
+            $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
+            $curlErrno    = curl_errno($curl);
+            $curlError    = curl_error($curl);
+            $first        = true;
+
+            foreach (curl_getinfo($curl) as $key => $value) {
+                if (gettype($value) != 'array') {
+                    if (!$first) $getInfo .= ", ";
+                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $first = false;
+                    if ($key == 'http_code') $httpCode = $value;
+                }
+            }
+            curl_close($curl);
+        }
+        
+        $xmlResp = simplexml_load_string($qdocResponse);
+
+        $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
+
+        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -1198,7 +1294,38 @@ class WSAServices
 
         $dataloop    = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
+/*
+        foreach ($dataloop as $listDatas) {
+            $newDataDetail = PurchaseOrderDetail::firstOrNew(
+                [
+                    'pod_po_mstr_id' => $dataMaster->id,
+                    'pod_line' => (string)$listDatas->t_podLine
+                ]
+            );
+            $newDataDetail->pod_part = (string)$listDatas->t_podPart;
+            $newDataDetail->pod_part_desc = (string)$listDatas->t_podPartDesc;
+            $newDataDetail->pod_qty_ord = (string)$listDatas->t_podQtyOrd;
+            $newDataDetail->pod_qty_rcpt = (string)$listDatas->t_podQtyRcpt;
+            $newDataDetail->pod_um = (string)$listDatas->t_podUm;
+            $newDataDetail->pod_pt_um = (string)$listDatas->t_ptUm;
+            $newDataDetail->save();
 
+            $dataDetail[] = [
+                'id' => $newDataDetail->id,
+                'po_mstr_id' => $dataMaster->id,
+                'pod_line' => (string)$listDatas->t_podLine,
+                'pod_part' => (string)$listDatas->t_podPart,
+                'pod_part_desc' => (string)$listDatas->t_podPartDesc,
+                'pod_qty_ord' => (string)$listDatas->t_podQtyOrd,
+                'pod_qty_rcpt' => (string)$listDatas->t_podQtyRcpt,
+                'pod_qty_ongoing' => '0',
+                'pod_um' => (string)$listDatas->t_podUm,
+                'pt_um' => (string)$listDatas->t_ptUm,
+                'is_selected' => false, // Buat Menu Android
+                'is_expandable' => false, // Buat Menu Android
+            ];
+        }
+*/
         return [
             $qdocResult,
             $dataloop,

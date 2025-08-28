@@ -85,6 +85,9 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     // Picklist
     Route::get('getDataWo', [APIWorkOrderController::class, 'getDataWo']);
     Route::post('searchDataWo', [APIWorkOrderController::class, 'wsaDataWo']);
+    Route::post('insertDataWoMstr', [APIWorkOrderController::class, 'insertDataWoMstr']);
+    Route::post('insertDataWoDetail', [APIWorkOrderController::class, 'insertDataWoDetail']);
+    Route::post('deleteDataWoDetail', [APIWorkOrderController::class, 'deleteDataWoDetail']);
     Route::post('wsaDataInvWo', [APIWorkOrderController::class, 'wsaDataInvWo']);
     Route::post('sendDataInvWo', [APIWorkOrderController::class, 'sendDataInvWo']);
     Route::post('deleteDataWo', [APIWorkOrderController::class, 'deleteDataWo']);
