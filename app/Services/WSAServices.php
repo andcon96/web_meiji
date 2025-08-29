@@ -1294,41 +1294,12 @@ class WSAServices
 
         $dataloop    = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-/*
-        foreach ($dataloop as $listDatas) {
-            $newDataDetail = PurchaseOrderDetail::firstOrNew(
-                [
-                    'pod_po_mstr_id' => $dataMaster->id,
-                    'pod_line' => (string)$listDatas->t_podLine
-                ]
-            );
-            $newDataDetail->pod_part = (string)$listDatas->t_podPart;
-            $newDataDetail->pod_part_desc = (string)$listDatas->t_podPartDesc;
-            $newDataDetail->pod_qty_ord = (string)$listDatas->t_podQtyOrd;
-            $newDataDetail->pod_qty_rcpt = (string)$listDatas->t_podQtyRcpt;
-            $newDataDetail->pod_um = (string)$listDatas->t_podUm;
-            $newDataDetail->pod_pt_um = (string)$listDatas->t_ptUm;
-            $newDataDetail->save();
+        
 
-            $dataDetail[] = [
-                'id' => $newDataDetail->id,
-                'po_mstr_id' => $dataMaster->id,
-                'pod_line' => (string)$listDatas->t_podLine,
-                'pod_part' => (string)$listDatas->t_podPart,
-                'pod_part_desc' => (string)$listDatas->t_podPartDesc,
-                'pod_qty_ord' => (string)$listDatas->t_podQtyOrd,
-                'pod_qty_rcpt' => (string)$listDatas->t_podQtyRcpt,
-                'pod_qty_ongoing' => '0',
-                'pod_um' => (string)$listDatas->t_podUm,
-                'pt_um' => (string)$listDatas->t_ptUm,
-                'is_selected' => false, // Buat Menu Android
-                'is_expandable' => false, // Buat Menu Android
-            ];
-        }
-*/
         return [
             $qdocResult,
             $dataloop,
         ];
+
     }
 }
