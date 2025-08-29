@@ -24,5 +24,6 @@ class UserSeeder extends Seeder
         $user->created_by = 'System';
         $user->updated_by = 'System';
         $user->password = Hash::make('password');
+        $user->save();
     }
 }
