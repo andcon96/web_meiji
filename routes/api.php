@@ -26,6 +26,9 @@ use Illuminate\Support\Facades\Route;
 Route::post('login', [APIController::class, 'login']);
 Route::post('changepass', [APIController::class, 'resetPass']);
 
+// Outbound WO
+Route::post('getWorkOrderQad', [APIController::class, 'getWorkOrderQad']);
+
 Route::middleware(['auth:api', 'token.api'])->group(function () {
     // PO
     Route::get('getDataPO', [APIPurchaseOrderController::class, 'index']);
@@ -58,6 +61,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post('wsaLevel', [APIPurchaseOrderController::class, 'wsaLevel']);
     Route::post('wsaBin', [APIPurchaseOrderController::class, 'wsaBin']);
     Route::post('wsaLoc', [APIPurchaseOrderController::class, 'wsaLoc']);
+
 
 
     // Shipment Schedule
