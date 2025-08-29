@@ -22,9 +22,24 @@ class APIShipperConfirmController extends Controller
 
         if ($request->search) {
             $filter = $request->search;
-            $data->whereHas('getPackingReplenishmentMstr', function ($q) use ($filter) {
-                $q->where('prm_shipper_nbr', 'LIKE', '%' . $filter . '%')
-                    ->where('prm_status', 'Shipper Created');
+
+            $data->where(function($q) use ($filter) {
+                // Cari shipper number
+                $q->whereHas('getPackingReplenishmentMstr', function ($subq) use ($filter) {
+                    $subq->where('prm_shipper_nbr', 'LIKE', '%' . $filter . '%')
+                        ->where('prm_status', 'Shipper Created');
+                })
+
+                // Cari customer
+                ->orWhereHas('getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster', function ($q) use ($filter) {
+                        $q->where('ssm_cust_code', 'LIKE', '%' . $filter . '%')
+                            ->orWhere('ssm_cust_desc', 'LIKE', '%' . $filter . '%');
+                    })
+
+                // cari SO + item code
+                ->orWhereHas('getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet', function ($q) use ($filter) {
+                    $q->where('ssd_sod_part', 'LIKE', '%' . $filter . '%');
+                });
             });
         }
 
