@@ -34,9 +34,6 @@ class APIZebraPrinterController extends Controller
         $data = $data->get();
 
         return GeneralResources::collection($data);
-        // return response()->json(
-        //     $data
-        // );
     }
 
     public function printQRItem(Request $request)

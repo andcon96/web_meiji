@@ -21,6 +21,7 @@ use App\Jobs\API\EmailPOS;
 use App\Jobs\API\PendingInvoiceEpointJob;
 use App\Models\API\SummaryDetailEpoint;
 use App\Models\API\SummaryEpoint;
+use App\Models\API\WorkOrderQAD;
 use Carbon\Carbon;
 
 class APIController extends Controller
@@ -93,5 +94,63 @@ class APIController extends Controller
         } else {
             return response()->json(['message' => 'Error', 'error' => 'Old Pass is wrong'], 401);
         }
+    }
+
+    public function getWorkOrderQad(Request $request)
+    {
+        // Ambil Data Outbound
+        $xml = simplexml_load_string($request->getContent());
+
+        $data = $xml->children('soapenv', true)->Body->children('qdoc', true)->meiji_wo->dsWo_mstr->wo_mstr;
+
+        $dataArray = [];
+        $dataDetail = [];
+
+        foreach ($data as $datas) {
+            foreach ($datas->wod_det as $detailData) {
+                $dataDetail[] = [
+                    'wodPart' => (string)$detailData->wodPart,
+                    'wodQtyReq' => (string)$detailData->wodQtyReq,
+                ];
+            }
+
+            $dataArray[] = [
+                'operation' => (string)$datas->operation,
+                'woDomain' => (string)$datas->woDomain,
+                'woNbr' => (string)$datas->woNbr,
+                'woLot' => (string)$datas->woLot,
+                'woOrdDate' => (string)$datas->woOrdDate,
+                'woDueDate' => (string)$datas->woDueDate,
+                'woPart' => (string)$datas->woPart,
+                'woQtyOrd' => (string)$datas->woQtyOrd,
+                'woStatus' => (string)$datas->woStatus,
+                'detail' => $dataDetail
+            ];
+        }
+
+
+        $flagKirimData = 1;
+        // Check Existing ato ga 
+        $checkData = WorkOrderQAD::where('wo_nbr', (string)$datas->woNbr)->where('wo_lot', (string)$datas->woLot)->orderBy('id', 'DESC')->first();
+        if ($checkData) {
+            if ($checkData->wo_status == 'R') {
+                $flagKirimData = 0;
+            }
+        }
+
+        // Save Data ke DB
+        $newdata = new WorkOrderQAD();
+        $newdata->wo_nbr = (string)$datas->woNbr;
+        $newdata->wo_lot = (string)$datas->woLot;
+        $newdata->wo_status = (string)$datas->woStatus;
+        $newdata->wo_qad_data = json_encode($dataArray);
+        $newdata->save();
+
+        // Kirim ke Luar
+        if ($flagKirimData == 1) {
+        }
+
+
+        return response($request->getContent(), 200)->header('Content-Type', 'text/xml;charset="utf-8"')->header('Accept', 'text/xml')->header('SOAPAction', '""');
     }
 }

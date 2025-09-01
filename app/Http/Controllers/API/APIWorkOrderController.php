@@ -234,8 +234,6 @@ class APIWorkOrderController extends Controller
         }
     }
 
-
-
     public function sendDataInvWo(Request $req)
     {
         $dataWo = workOrderMaster::with('getDetail')->where('created_by', $req->user)->get();
@@ -285,6 +283,7 @@ class APIWorkOrderController extends Controller
                 $picklistWo->pl_wo_order_date = $WO->wo_order_date;
                 $picklistWo->pl_wo_release_date = $WO->wo_release_date;
                 $picklistWo->pl_wo_due_date = $WO->wo_due_date;
+                $picklistWo->pl_wo_um   =  $WO->wo_um;
                 $picklistWo->created_by = $req->user;
                 $picklistWo->save();
 
@@ -348,6 +347,7 @@ class APIWorkOrderController extends Controller
                     $picklistWoDet->pl_wod_entry_date = $data->wod_entry_date;
                     $picklistWoDet->pl_wod_exp_date = $data->wod_exp_date;
                     $picklistWoDet->pl_wod_picklist_type = $data->wod_picklist_type;
+                    $picklistWoDet->pl_wo_id = $picklist->id;
                     $picklistWoDet->save();
 
                     $picklistHist = new PicklistHistory();
@@ -515,6 +515,7 @@ class APIWorkOrderController extends Controller
             ], 422);
         } else {
             $listData = $hasil[1];
+            
             try {
                 DB::beginTransaction();
                 foreach ($listData as $data) {
@@ -537,6 +538,7 @@ class APIWorkOrderController extends Controller
                         $dataMaster->wo_order_date = (string)$data->t_wo_ord_date;
                         $dataMaster->wo_release_date = (string)$data->t_wo_rel_date;
                         $dataMaster->wo_due_date = (string)$data->t_wo_due_date;
+                        $dataMaster->wo_um = (string)$data->t_wo_um ?? '';
                         $dataMaster->created_by = $req->user;
                         $dataMaster->save();
                     }
@@ -607,6 +609,7 @@ class APIWorkOrderController extends Controller
                             $dataDetail->wod_loc = (string)$data->t_wod_loc;
                             $dataDetail->wod_qty_req = (string)$data->t_wod_qty_req ?? 0;
                             $dataDetail->wod_qty_pick = 0;
+                            
                             $dataDetail->save();
                         }
                     }
@@ -625,6 +628,40 @@ class APIWorkOrderController extends Controller
                     ], 422);
                 }
             }
+        }
+    }
+
+        public function getDataItemWo(Request $req)
+    {
+
+        
+        $hasil = (new WSAServices())->wsaGetItemMstrWo();
+
+        if ($hasil[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Work Order : " . $req->search . " Not Found."
+            ], 422);
+        } else {
+            $listData = $hasil[1];
+            $dataWO = [];
+            foreach ($listData as $listDatas) {
+                
+
+                $dataItem[] = [
+
+                    
+                    'part' => (string)$listDatas->t_part,
+                    //'partdesc' => (string)$listDatas->t_part_desc,
+                    //'site' => (string)$listDatas->t_site,
+                    //'um' => (string)$listDatas->t_um ,
+                    //'loc' => (string)$listDatas->t_loc,
+                ];
+            }
+            return response()->json([
+                'DataWSA' => $hasil[1]
+            ], 200);
+           
         }
     }
 }
