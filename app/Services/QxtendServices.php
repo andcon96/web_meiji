@@ -6,6 +6,7 @@ use App\Models\PurchaseOrder\POMstr;
 use App\Models\SalesOrder\SOMstr;
 use App\Models\Settings\Domain;
 use App\Models\Settings\qxwsa;
+use App\Models\API\workOrderMaster;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -421,7 +422,7 @@ class QxtendServices
         }
     }
 
-    public function qxTransferSingleItemWo($part, $wonbr, $sitefrom, $siteto, $locfrom, $locto, $qty)
+    public function qxTransferSingleItemWo($part, $wonbr, $sitefrom, $siteto, $locfrom, $locto, $qty, $bin, $level, $wh, $lot)
     {
         $domain = Domain::first();
         $domainCode = $domain->domain ?? '';
@@ -432,7 +433,7 @@ class QxtendServices
         $receiver         = 'QADERP';
 
         $timeout        = 0;
-
+/*
         // XML Qextend
         $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qcom="urn:schemas-qad-com:xml-services:common" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsa="http://www.w3.org/2005/08/addressing">
 						<soapenv:Header>
@@ -516,8 +517,87 @@ class QxtendServices
 						</transferInvSingleItem>
 					</soapenv:Body>
 					</soapenv:Envelope>';
-
+*/
+$qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qcom="urn:schemas-qad-com:xml-services:common" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsa="http://www.w3.org/2005/08/addressing">
+						<soapenv:Header>
+							<wsa:Action/>
+							<wsa:To>urn:services-qad-com:' . $receiver . '</wsa:To>
+							<wsa:MessageID>urn:services-qad-com::' . $receiver . '</wsa:MessageID>
+							<wsa:ReferenceParameters>
+								<qcom:suppressResponseDetail>true</qcom:suppressResponseDetail>
+							</wsa:ReferenceParameters>
+							<wsa:ReplyTo>
+								<wsa:Address>urn:services-qad-com:</wsa:Address>
+							</wsa:ReplyTo>
+						</soapenv:Header>
+						<soapenv:Body>
+							<transferSingleItemWMS>
+								<qcom:dsSessionContext>
+									<qcom:ttContext>
+										<qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+										<qcom:propertyName>domain</qcom:propertyName>
+										<qcom:propertyValue>' . $domainCode . '</qcom:propertyValue>
+									</qcom:ttContext>
+									<qcom:ttContext>
+										<qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+										<qcom:propertyName>scopeTransaction</qcom:propertyName>
+										<qcom:propertyValue>true</qcom:propertyValue>
+									</qcom:ttContext>
+									<qcom:ttContext>
+										<qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+										<qcom:propertyName>version</qcom:propertyName>
+										<qcom:propertyValue>CUST_1</qcom:propertyValue>
+									</qcom:ttContext>
+									<qcom:ttContext>
+										<qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+										<qcom:propertyName>mnemonicsRaw</qcom:propertyName>
+										<qcom:propertyValue>false</qcom:propertyValue>
+									</qcom:ttContext>
+								<qcom:ttContext>
+									<qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+									<qcom:propertyName>action</qcom:propertyName>
+									<qcom:propertyValue/>
+								</qcom:ttContext>
+								<qcom:ttContext>
+									<qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+									<qcom:propertyName>entity</qcom:propertyName>
+									<qcom:propertyValue/>
+								</qcom:ttContext>
+								<qcom:ttContext>
+									<qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+									<qcom:propertyName>email</qcom:propertyName>
+									<qcom:propertyValue/>
+								</qcom:ttContext>
+								<qcom:ttContext>
+									<qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+									<qcom:propertyName>emailLevel</qcom:propertyName>
+									<qcom:propertyValue/>
+								</qcom:ttContext>
+							</qcom:dsSessionContext>
+							<dsTransWms>
+								<transWms>
+									<operation>A</operation>
+									<vPart>' . $part . '</vPart>
+									<vQty>' . $qty . '</vQty>
+									<vSiteFrom>' . $sitefrom . '</vSiteFrom>
+									<vLocFrom>' . $locfrom . '</vLocFrom>
+									<vLotFrom>' . $lot . '</vLotFrom>
+									<vWhFrom>' . $wh . '</vWhFrom>
+									<vLevelFrom>' . $level . '</vLevelFrom>
+									<vBinFrom>' . $bin . '</vBinFrom>
+									<vSiteTo>' . $siteto . '</vSiteTo>
+									<vLocTo>' . $locto . '</vLocTo>
+									<vWhTo/>
+									<vLevelTo/>
+									<vBinTo/>
+									<vYn>true</vYn>
+								</transWms>
+							</dsTransWms>
+						</transferSingleItemWMS>
+					</soapenv:Body>
+					</soapenv:Envelope>';
         $qdocRequest = $qdocHead;
+
 
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
@@ -584,7 +664,7 @@ class QxtendServices
             return [false, $output];
         }
     }
-    public function qxWorkOrderBill($wonbr, $lot, $wodpart, $wodop, $qtyreq, $qtyall, $qtypick, $site, $loc, $ref)
+    public function qxWorkOrderBill($wonbr, $lot, $user)
     {
 
         $domain = Domain::first();
@@ -596,6 +676,8 @@ class QxtendServices
         $receiver         = 'QADERP';
 
         $timeout        = 0;
+        
+        $dataWo = workOrderMaster::with('getDetail')->where('created_by', $user)->where('wo_nbr',$wonbr)->where('wo_id',$lot)->first();
 
         // XML Qextend
         $qdocHead = '<?xml version="1.0" encoding="UTF-8"?>
@@ -661,27 +743,31 @@ class QxtendServices
         $qdocbody = '<WorkOrder>
 
 						<woNbr>' . $wonbr . '</woNbr>
-						<woLot>' . $lot . '</woLot>
-						<CompItem>
-						<wodPart>' . $wodpart . '</wodPart>
-						<wodOp>' . $wodop . '</wodOp>
-						<wodQtyReq>' . $qtyreq . '</wodQtyReq>
-						<wodQtyAll>' . $qtyall . '</wodQtyAll>
-						<wodQtyPick>' . $qtypick . '</wodQtyPick>
+						<woLot>' . $lot . '</woLot>';
+        foreach($dataWo->getDetail as $wodet){
+            $qdocbody = $qdocbody . 
+                '<CompItem>
+                        <wodPart>' . $wodet->wod_part . '</wodPart>
+						<wodOp>' . $wodet->wod_op . '</wodOp>
+						<wodQtyReq>' . $wodet->wod_qty_req . '</wodQtyReq>
+						<wodQtyAll>' . $wodet->wod_qty_oh. '</wodQtyAll>
+						<wodQtyPick>' . $wodet->wod_qty_pick . '</wodQtyPick>
 						<detailAll>true</detailAll>
 
-						<wodSite>' . $site . '</wodSite>
-						<wodLoc>' . $loc . '</wodLoc>
+						<wodSite>' . $wodet->wod_site . '</wodSite>
+						<wodLoc>' . $wodet->wod_loc . '</wodLoc>
 						<AllocDetail>
 
-							<ladLoc>' . $loc . '</ladLoc>
-							<ladLot>' . $lot . '</ladLot>
-							<ladRef>' . $ref . '</ladRef>
-							<ladQtyAll>' . $qtyall . '</ladQtyAll>
-							<ladQtyPick>' . $qtypick . '</ladQtyPick>
+							<ladLoc>' . $wodet->wod_loc . '</ladLoc>
+							<ladLot>' . $dataWo->wo_id . '</ladLot>
+							<ladRef>' . $wodet->wod_ref . '</ladRef>
+							<ladQtyAll>' . $wodet->wod_qty_oh . '</ladQtyAll>
+							<ladQtyPick>' . $wodet->wod_qty_pick . '</ladQtyPick>
 						</AllocDetail>
-						</CompItem>
-						</WorkOrder>
+						</CompItem>';
+        }
+        $qdocbody = $qdocbody . '
+        </WorkOrder>
 		';
 
 

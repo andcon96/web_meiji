@@ -296,7 +296,12 @@ class APIWorkOrderController extends Controller
                         $data->wod_site,
                         $data->wod_loc,
                         'WO-PICK',
-                        $data->wod_qty_oh
+                        $data->wod_qty_oh,
+                        $data->wod_bin,
+                        $data->wod_level,
+                        $data->wod_warehouse,
+                        $data->wod_lot
+
                     );
                     if ($result[0] == 'false') {
                         DB::rollBack();
@@ -305,18 +310,13 @@ class APIWorkOrderController extends Controller
                             'Message' => "Transfer Item failed : " . $req->search . " Not Found."
                         ], 422);
                     }
+                }
 
                     $resultBill = (new QxtendServices())->qxWorkOrderBill(
                         $WO->wo_nbr,
                         $WO->wo_id,
-                        $data->wod_part,
-                        $data->wod_op,
-                        $data->wod_qty_req,
-                        $data->wod_qty_oh,
-                        $data->wod_qty_pick,
-                        $data->wod_site,
-                        $data->wod_loc,
-                        $data->wod_ref
+                        $req->user
+                       
                     );
                     if ($resultBill[0] == 'false') {
                         DB::rollBack();
@@ -325,6 +325,7 @@ class APIWorkOrderController extends Controller
                             'Message' => "Work Order Bill : " . $req->search . " Failed."
                         ], 422);
                     }
+                    
 
                     $picklistWoDet = new picklistWoDet();
                     $picklistWoDet->pl_wod_wo_id = $picklistWo->id;
@@ -390,7 +391,7 @@ class APIWorkOrderController extends Controller
                     $picklistHist->pl_wod_exp_date = $data->wod_exp_date;
                     $picklistHist->pl_wod_picklist_type = $data->wod_picklist_type;
                     $picklistHist->save();
-                }
+                
             }
 
             foreach ($dataWo as $wo) {
