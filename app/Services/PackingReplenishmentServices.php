@@ -196,41 +196,43 @@ class PackingReplenishmentServices
             }
 
             // Bandingin order qty & qty pick nya kalau sama ganti status biar gabisa buat shipment lagi
-            if ($totalData == $totalMatch) {
-                $shipmentScheduleMstr = ShipmentScheduleMstr::with([
-                    'getShipmentScheduleDetail.getShipmentScheduleLocation'
-                ])->find($idShipmentScheduleMstr);
+            // if ($totalData == $totalMatch) {
 
-                $shipmentScheduleMstr->ssm_status = 'Full Scheduled';
-                $shipmentScheduleMstr->updated_by = Auth::user()->id;
-                $shipmentScheduleMstr->save();
+            // }
 
-                foreach ($shipmentScheduleMstr->getShipmentScheduleDetail as $shipmentScheduleDet) {
-                    foreach ($shipmentScheduleDet->getShipmentScheduleLocation as $shipmentScheduleLocation) {
-                        $shipmentScheduleHistory = new ShipmentScheduleHist();
-                        $shipmentScheduleHistory->ssh_number = $shipmentScheduleMstr->ssm_number;
-                        $shipmentScheduleHistory->ssh_cust_code = $shipmentScheduleMstr->ssm_cust_code;
-                        $shipmentScheduleHistory->ssh_cust_desc = $shipmentScheduleMstr->ssm_cust_desc;
-                        $shipmentScheduleHistory->ssh_status_mstr = $shipmentScheduleMstr->ssm_status;
-                        $shipmentScheduleHistory->ssh_sod_nbr = $shipmentScheduleDet->ssd_sod_nbr;
-                        $shipmentScheduleHistory->ssh_sod_site = $shipmentScheduleDet->ssd_sod_site;
-                        $shipmentScheduleHistory->ssh_sod_shipto = $shipmentScheduleDet->ssd_sod_shipto;
-                        $shipmentScheduleHistory->ssh_sod_line = $shipmentScheduleDet->ssd_sod_line;
-                        $shipmentScheduleHistory->ssh_sod_part = $shipmentScheduleDet->ssd_sod_part;
-                        $shipmentScheduleHistory->ssh_sod_desc = $shipmentScheduleDet->ssd_sod_desc;
-                        $shipmentScheduleHistory->ssh_sod_qty_ord = $shipmentScheduleDet->ssd_sod_qty_ord;
-                        $shipmentScheduleHistory->ssh_status_det = $shipmentScheduleDet->ssd_status;
-                        $shipmentScheduleHistory->ssh_site = $shipmentScheduleLocation->ssl_site;
-                        $shipmentScheduleHistory->ssh_warehouse = $shipmentScheduleLocation->ssl_warehouse;
-                        $shipmentScheduleHistory->ssh_location = $shipmentScheduleLocation->ssl_location;
-                        $shipmentScheduleHistory->ssh_lotserial = $shipmentScheduleLocation->ssl_lotserial;
-                        $shipmentScheduleHistory->ssh_level = $shipmentScheduleLocation->ssl_level;
-                        $shipmentScheduleHistory->ssh_bin = $shipmentScheduleLocation->ssl_bin;
-                        $shipmentScheduleHistory->ssh_qty_to_pick = $shipmentScheduleLocation->ssl_qty_to_pick;
-                        $shipmentScheduleHistory->ssh_action = 'Shipper Create';
-                        $shipmentScheduleHistory->created_by = Auth::user()->id;
-                        $shipmentScheduleHistory->save();
-                    }
+            $shipmentScheduleMstr = ShipmentScheduleMstr::with([
+                'getShipmentScheduleDetail.getShipmentScheduleLocation'
+            ])->find($idShipmentScheduleMstr);
+
+            $shipmentScheduleMstr->ssm_status = 'Scheduled';
+            $shipmentScheduleMstr->updated_by = Auth::user()->id;
+            $shipmentScheduleMstr->save();
+
+            foreach ($shipmentScheduleMstr->getShipmentScheduleDetail as $shipmentScheduleDet) {
+                foreach ($shipmentScheduleDet->getShipmentScheduleLocation as $shipmentScheduleLocation) {
+                    $shipmentScheduleHistory = new ShipmentScheduleHist();
+                    $shipmentScheduleHistory->ssh_number = $shipmentScheduleMstr->ssm_number;
+                    $shipmentScheduleHistory->ssh_cust_code = $shipmentScheduleMstr->ssm_cust_code;
+                    $shipmentScheduleHistory->ssh_cust_desc = $shipmentScheduleMstr->ssm_cust_desc;
+                    $shipmentScheduleHistory->ssh_status_mstr = $shipmentScheduleMstr->ssm_status;
+                    $shipmentScheduleHistory->ssh_sod_nbr = $shipmentScheduleDet->ssd_sod_nbr;
+                    $shipmentScheduleHistory->ssh_sod_site = $shipmentScheduleDet->ssd_sod_site;
+                    $shipmentScheduleHistory->ssh_sod_shipto = $shipmentScheduleDet->ssd_sod_shipto;
+                    $shipmentScheduleHistory->ssh_sod_line = $shipmentScheduleDet->ssd_sod_line;
+                    $shipmentScheduleHistory->ssh_sod_part = $shipmentScheduleDet->ssd_sod_part;
+                    $shipmentScheduleHistory->ssh_sod_desc = $shipmentScheduleDet->ssd_sod_desc;
+                    $shipmentScheduleHistory->ssh_sod_qty_ord = $shipmentScheduleDet->ssd_sod_qty_ord;
+                    $shipmentScheduleHistory->ssh_status_det = $shipmentScheduleDet->ssd_status;
+                    $shipmentScheduleHistory->ssh_site = $shipmentScheduleLocation->ssl_site;
+                    $shipmentScheduleHistory->ssh_warehouse = $shipmentScheduleLocation->ssl_warehouse;
+                    $shipmentScheduleHistory->ssh_location = $shipmentScheduleLocation->ssl_location;
+                    $shipmentScheduleHistory->ssh_lotserial = $shipmentScheduleLocation->ssl_lotserial;
+                    $shipmentScheduleHistory->ssh_level = $shipmentScheduleLocation->ssl_level;
+                    $shipmentScheduleHistory->ssh_bin = $shipmentScheduleLocation->ssl_bin;
+                    $shipmentScheduleHistory->ssh_qty_to_pick = $shipmentScheduleLocation->ssl_qty_to_pick;
+                    $shipmentScheduleHistory->ssh_action = 'Shipper Create';
+                    $shipmentScheduleHistory->created_by = Auth::user()->id;
+                    $shipmentScheduleHistory->save();
                 }
             }
 

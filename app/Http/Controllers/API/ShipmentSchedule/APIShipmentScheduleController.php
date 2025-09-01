@@ -20,17 +20,19 @@ class APIShipmentScheduleController extends Controller
      */
     public function index(Request $req)
     {
-        $data = ShipmentScheduleMstr::query();
+        $data = ShipmentScheduleMstr::withCount('packingReplenishmentDet')
+            ->with(['packingReplenishmentDet']);
 
         if ($req->search) {
-            $data->where('ssm_number', 'LIKE', '%' . $req->search . '%')
-                ->orWhere('ssm_cust_code', 'LIKE', '%' . $req->search . '%')
-                ->orWhere('ssm_cust_desc', 'LIKE', '%' . $req->search . '%')
-                ->orWhere('ssm_status', 'LIKE', '%' . $req->search . '%');
+            $data->where(function ($query) use ($req) {
+                $query->where('ssm_number', 'LIKE', '%' . $req->search . '%')
+                    ->orWhere('ssm_cust_code', 'LIKE', '%' . $req->search . '%')
+                    ->orWhere('ssm_cust_desc', 'LIKE', '%' . $req->search . '%')
+                    ->orWhere('ssm_status', 'LIKE', '%' . $req->search . '%');
+            });
         }
 
         $data = $data->orderBy('ssm_number', 'desc')->paginate(10);
-
 
         return GeneralResources::collection($data);
     }
