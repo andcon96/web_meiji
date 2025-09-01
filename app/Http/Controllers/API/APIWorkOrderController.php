@@ -237,7 +237,7 @@ class APIWorkOrderController extends Controller
     public function sendDataInvWo(Request $req)
     {
         $dataWo = workOrderMaster::with('getDetail')->where('created_by', $req->user)->get();
-
+        
         try {
             DB::beginTransaction();
             $prefix = prefixWorkOrder::first();
@@ -303,11 +303,12 @@ class APIWorkOrderController extends Controller
                         $data->wod_lot
 
                     );
-                    if ($result[0] == 'false') {
+                    if ($result[0] === false) {
                         DB::rollBack();
+                        
                         return response()->json([
                             'Status' => 'Error',
-                            'Message' => "Transfer Item failed : " . $req->search . " Not Found."
+                            'Message' => "Transfer Item failed : " . $data->wod_part . " Not Found."
                         ], 422);
                     }
                 }
@@ -348,7 +349,7 @@ class APIWorkOrderController extends Controller
                     $picklistWoDet->pl_wod_entry_date = $data->wod_entry_date;
                     $picklistWoDet->pl_wod_exp_date = $data->wod_exp_date;
                     $picklistWoDet->pl_wod_picklist_type = $data->wod_picklist_type;
-                    $picklistWoDet->pl_wo_id = $picklist->id;
+                    $picklistWoDet->wod_pl_id = $picklist->id;
                     $picklistWoDet->save();
 
                     $picklistHist = new PicklistHistory();

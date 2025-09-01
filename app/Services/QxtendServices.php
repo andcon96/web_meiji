@@ -639,6 +639,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
         }
 
         if (is_bool($qdocResponse)) {
+            
             return false;
         }
 
@@ -651,6 +652,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
         if ($qdocResult == "success" or $qdocResult == "warning") {
             return [true, ''];
         } else {
+            
             $xmlResp->registerXPathNamespace('ns3', 'urn:schemas-qad-com:xml-services:common');
             $qdocMsgDesc = $xmlResp->xpath('//ns3:tt_msg_desc');
             $output = '';
@@ -778,6 +780,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                     </soapenv:Envelope>';
 
         $qdocRequest = $qdocHead . $qdocbody . $qdocfoot;
+        
 
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
