@@ -414,6 +414,8 @@ class WSAServices
             );
             $newDataDetail->pod_part = (string)$listDatas->t_podPart;
             $newDataDetail->pod_part_desc = (string)$listDatas->t_podPartDesc;
+            $newDataDetail->pod_part_desc1 = (string)$listDatas->t_partDesc1;
+            $newDataDetail->pod_part_desc2 = (string)$listDatas->t_partDesc2;
             $newDataDetail->pod_qty_ord = (string)$listDatas->t_podQtyOrd;
             $newDataDetail->pod_qty_rcpt = (string)$listDatas->t_podQtyRcpt;
             $newDataDetail->pod_um = (string)$listDatas->t_podUm;
@@ -426,6 +428,8 @@ class WSAServices
                 'pod_line' => (string)$listDatas->t_podLine,
                 'pod_part' => (string)$listDatas->t_podPart,
                 'pod_part_desc' => (string)$listDatas->t_podPartDesc,
+                'pod_part_desc1' => (string)$listDatas->t_partDesc1,
+                'pod_part_desc2' => (string)$listDatas->t_partDesc2,
                 'pod_qty_ord' => (string)$listDatas->t_podQtyOrd,
                 'pod_qty_rcpt' => (string)$listDatas->t_podQtyRcpt,
                 'pod_qty_ongoing' => '0',
@@ -915,7 +919,7 @@ class WSAServices
             '<Body>' .
             '<meiji_get_wo_mstr xmlns="urn:imi.co.id:wsaweb">' .
             '<inpdomain>' . $domainCode . '</inpdomain>' .
-            
+
             '</meiji_get_wo_mstr>' .
             '</Body>' .
             '</Envelope>';
@@ -965,10 +969,10 @@ class WSAServices
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
         $dataWO = [];
         foreach ($dataloop as $listDatas) {
-            
+
 
             $dataWO[] = [
-                
+
                 'id' => (string)$listDatas->t_wo_id,
                 'wonbr' => (string)$listDatas->t_wo_nbr,
                 'site' => (string)$listDatas->t_wo_site,
@@ -976,7 +980,7 @@ class WSAServices
                 'part_desc' => (string)$listDatas->t_wo_part_desc ?? '',
                 'um' => (string)$listDatas->t_wo_um,
                 'qty_ord' => (string)$listDatas->t_wo_qty_ord,
-                
+
             ];
         }
 
@@ -1013,7 +1017,7 @@ class WSAServices
             '</meiji_get_wo_det>' .
             '</Body>' .
             '</Envelope>';
-            
+
 
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
@@ -1051,13 +1055,13 @@ class WSAServices
             }
             curl_close($curl);
         }
-        
+
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
         $dataloop    = $xmlResp->xpath('//ns1:tempRow');
-        
+
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -1294,12 +1298,11 @@ class WSAServices
 
         $dataloop    = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-        
+
 
         return [
             $qdocResult,
             $dataloop,
         ];
-
     }
 }
