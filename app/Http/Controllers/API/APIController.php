@@ -30,12 +30,12 @@ class APIController extends Controller
 
     public function login(Request $request)
     {
-        $usercheck = User::where('username', request('username'))->first();
+        $usercheck = User::with('getRole')->where('username', request('username'))->first();
 
         if ($usercheck) {
             if (Auth::attempt(['username' => request('username'), 'password' => request('password')])) {
                 if ($usercheck->android_acc_user != null && $usercheck->android_acc_user != '') {
-                    $menuaccess = $usercheck->android_acc_user;
+                    $menuaccess = $usercheck->getRole->role_android_acc;
                 } else {
                     $menuaccess = [];
                 }
@@ -98,6 +98,7 @@ class APIController extends Controller
 
     public function getWorkOrderQad(Request $request)
     {
+        Log::info($request->getContent());
         // Ambil Data Outbound
         $xml = simplexml_load_string($request->getContent());
 
