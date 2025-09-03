@@ -15,7 +15,7 @@ class ItemController extends Controller
     public function index(Request $request)
     {
         $menuMaster = (new ServerURL())->currentURL($request);
-        $items = Item::orderBy('im_item_part')->get();
+        $items = Item::with(['getLoadedBy', 'getUpdatedBy'])->orderBy('im_item_part')->get();
 
         return view('setting.items.index', compact('menuMaster', 'items'));
     }
