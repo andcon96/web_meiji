@@ -34,11 +34,11 @@ class APIController extends Controller
 
         if ($usercheck) {
             if (Auth::attempt(['username' => request('username'), 'password' => request('password')])) {
-                if ($usercheck->android_acc_user != null || $usercheck->android_acc_user != '') {
-                    $menuaccess = $usercheck->getRole->role_android_acc;
-                } else {
-                    $menuaccess = [];
-                }
+                // if ($usercheck->android_acc_user != null || $usercheck->android_acc_user != '') {
+                $menuaccess = $usercheck->getRole->role_android_acc;
+                // } else {
+                //     $menuaccess = [];
+                // }
 
                 $objToken = $usercheck->createToken('nApp');
                 $strToken = $objToken->accessToken;
