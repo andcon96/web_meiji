@@ -99,10 +99,21 @@
                                 <center><strong>Shipment</strong></center>
                             </h4>
                             <div class="form-check d-flex form-switch mt-3 mb-4">
-                                <label for="level" class="form-check-label col-8">Shipment Menu</label>
+                                <label for="level" class="form-check-label col-8">Shipment Schedule</label>
 
                                 <input type="checkbox" class="custom-control-input form-check-input" id="cbShipment"
-                                    name="data[]" value="S001" />
+                                    name="data[]" value="SH01" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Packing Replenishment</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPackingReplenishment" name="data[]" value="SH02" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Shipment Confirmation</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbShipmentConfirmation" name="data[]"
+                                    value="SH03" />
                             </div>
                         </div>
                     </div>
@@ -148,10 +159,15 @@
                 if (parts.includes("TS01")) {
                     $('#cbTransferItem01').prop('checked', 'true');
                 }
-                if (parts.includes("S001")) {
+                if (parts.includes("SH01")) {
                     $('#cbShipment').prop('checked', 'true');
                 }
-
+                if (parts.includes("SH02")) {
+                    $('#cbPackingReplenishment').prop('checked', 'true');
+                }
+                if (parts.includes("SH03")) {
+                    $('#cbShipmentConfirmation').prop('checked', 'true');
+                }
 
                 $('#roleId').val(roleId);
                 $('#roleName').val(roleName);
