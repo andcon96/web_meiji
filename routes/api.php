@@ -7,6 +7,7 @@ use App\Http\Controllers\API\APIQualityInfoController;
 use App\Http\Controllers\API\ShipmentSchedule\APIShipmentScheduleController;
 use App\Http\Controllers\API\APITrasnferStockController;
 use App\Http\Controllers\API\APIWorkOrderController;
+use App\Http\Controllers\API\APIPicklistShopping;
 use App\Http\Controllers\API\APIZebraPrinterController;
 use App\Http\Controllers\API\PackingReplenishment\APIPackingReplenishmentController;
 use App\Http\Controllers\API\ShipperConfirm\APIShipperConfirmController;
@@ -100,5 +101,11 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getDataPicklist', [APIWorkOrderController::class, 'getDataPicklist']);
     Route::get('getDataPicklistDetail', [APIWorkOrderController::class, 'getDataPicklistDetail']);
     Route::get('getDataItemWo', [APIWorkOrderController::class, 'getDataItemWo']);
+    Route::post('wsaDataItem', [APIWorkOrderController::class, 'wsaDataItem']);
+
+    // Picklist Shopping
+    Route::get('getPicklistMstr', [APIPicklistShopping::class, 'getPicklistMstr']);
+    Route::get('getPicklistDet', [APIPicklistShopping::class, 'getPicklistDet']);
+
 });
     // WSA Picklist

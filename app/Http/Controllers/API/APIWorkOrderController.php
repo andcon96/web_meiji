@@ -128,12 +128,14 @@ class APIWorkOrderController extends Controller
 
     public function wsaDataInvWo(Request $req)
     {
+
         $wonbr = WorkOrderMaster::where('created_by', $req->search)->get();
         $currentitem = '';
         $currentid = '';
         $currentqtypick = 0;
         $currentqtydiff = 0;
         $currentqtyreq = 0;
+
         try {
             DB::beginTransaction();
             foreach ($wonbr as $wonbr) {
@@ -157,6 +159,7 @@ class APIWorkOrderController extends Controller
                         $dataDetail = workOrderDetail::where('wod_wo_id', $workOrder->id)->where('wod_part', (string)$data->t_wod_part)->first();
 
                         if ($dataDetail->wod_lot == null) {
+
                             $currentid = $workOrder->id;
                             $currentitem = (string)$data->t_wod_part;
                             $currentqtyreq = $dataDetail->wod_qty_req;
@@ -180,7 +183,10 @@ class APIWorkOrderController extends Controller
                             $dataDetail->wod_exp_date = (string)$data->t_xxinv_exp_date ?? '';
                             $dataDetail->wod_picklist_type = (string)$data->t_picktype ?? '';
                         } else {
-                            $currentqtyreq = $dataDetail->wod_qty_req - $currentqtypick;
+                            $currentqtyreq = $currentqtyreq - $currentqtypick;
+
+
+
                             $currentqtydiff = $currentqtyreq - $data->t_xxinv_qtyoh;
                             if ($currentqtydiff >= 0) {
                                 $currentqtypick = $data->t_xxinv_qtyoh;
@@ -219,6 +225,14 @@ class APIWorkOrderController extends Controller
 
             DB::commit();
 
+            $wonbr = WorkOrderMaster::with('getDetail')->where('created_by', $req->search)->get();
+            foreach ($wonbr as $wonbr2) {
+                foreach ($wonbr2->getDetail as $checkdetail) {
+                    if ($checkdetail->wod_qty_oh == null) {
+                        return response()->json([$checkdetail->wod_part . ' No Qty OH', 204]);
+                    }
+                }
+            }
             return response()->json(['success', 200]);
         } catch (Exception $e) {
             DB::rollBack();
@@ -237,8 +251,59 @@ class APIWorkOrderController extends Controller
     public function sendDataInvWo(Request $req)
     {
         $dataWo = workOrderMaster::with('getDetail')->where('created_by', $req->user)->get();
-        
+
         try {
+            /*insert into QAD */
+
+            foreach ($dataWo as $WO) {
+
+                foreach ($WO->getDetail as $data) {
+                    if ($data->status_transfer == 0) {
+                        //qxtend transfer single item
+                        $result = (new QxtendServices())->qxTransferSingleItemWo(
+                            $data->wod_part,
+                            $WO->wo_nbr,
+                            $data->wod_site,
+                            $data->wod_site,
+                            $data->wod_loc,
+                            'WO-PICK',
+                            $data->wod_qty_pick,
+                            $data->wod_bin,
+                            $data->wod_level,
+                            $data->wod_warehouse,
+                            $data->wod_lot
+
+                        );
+                        if ($result[0] === false) {
+
+
+                            return response()->json([
+                                'Status' => 'Error',
+                                'Message' => "Transfer Item failed : " . $data->wod_part . " Not Found."
+                            ], 422);
+                        } else {
+                            $data->status_transfer = 1;
+                            $data->save();
+                        }
+                    }
+                }
+
+                $resultBill = (new QxtendServices())->qxWorkOrderBill(
+                    $WO->wo_nbr,
+                    $WO->wo_id,
+                    $req->user
+
+                );
+                if ($resultBill[0] === false) {
+                    DB::rollBack();
+                    return response()->json([
+                        'Status' => 'Error',
+                        'Message' => "Work Order Bill : " . $req->search . " Failed."
+                    ], 422);
+                }
+            }
+
+            /*insert into database*/
             DB::beginTransaction();
             $prefix = prefixWorkOrder::first();
 
@@ -267,6 +332,7 @@ class APIWorkOrderController extends Controller
             $picklist->created_by = $req->user;
             $picklist->save();
 
+
             foreach ($dataWo as $WO) {
 
                 $picklistWo = new picklistWo();
@@ -288,46 +354,6 @@ class APIWorkOrderController extends Controller
                 $picklistWo->save();
 
                 foreach ($WO->getDetail as $data) {
-                    //qxtend transfer single item
-                    $result = (new QxtendServices())->qxTransferSingleItemWo(
-                        $data->wod_part,
-                        $WO->wo_nbr,
-                        $data->wod_site,
-                        $data->wod_site,
-                        $data->wod_loc,
-                        'WO-PICK',
-                        $data->wod_qty_oh,
-                        $data->wod_bin,
-                        $data->wod_level,
-                        $data->wod_warehouse,
-                        $data->wod_lot
-
-                    );
-                    if ($result[0] === false) {
-                        DB::rollBack();
-                        
-                        return response()->json([
-                            'Status' => 'Error',
-                            'Message' => "Transfer Item failed : " . $data->wod_part . " Not Found."
-                        ], 422);
-                    }
-                }
-
-                    $resultBill = (new QxtendServices())->qxWorkOrderBill(
-                        $WO->wo_nbr,
-                        $WO->wo_id,
-                        $req->user
-                       
-                    );
-                    if ($resultBill[0] == 'false') {
-                        DB::rollBack();
-                        return response()->json([
-                            'Status' => 'Error',
-                            'Message' => "Work Order Bill : " . $req->search . " Failed."
-                        ], 422);
-                    }
-                    
-
                     $picklistWoDet = new picklistWoDet();
                     $picklistWoDet->pl_wod_wo_id = $picklistWo->id;
                     $picklistWoDet->pl_wod_nbr = $data->wod_nbr;
@@ -392,13 +418,11 @@ class APIWorkOrderController extends Controller
                     $picklistHist->pl_wod_exp_date = $data->wod_exp_date;
                     $picklistHist->pl_wod_picklist_type = $data->wod_picklist_type;
                     $picklistHist->save();
-                
+                }
+                $WO->getDetail()->delete(); // delete related details
+                $WO->delete();              // delete master
             }
 
-            foreach ($dataWo as $wo) {
-                $wo->getDetail()->delete(); // delete related details
-                $wo->delete();              // delete master
-            }
             DB::commit();
             return response()->json(['success', 200]);
         } catch (Exception $e) {
@@ -517,7 +541,7 @@ class APIWorkOrderController extends Controller
             ], 422);
         } else {
             $listData = $hasil[1];
-            
+
             try {
                 DB::beginTransaction();
                 foreach ($listData as $data) {
@@ -596,7 +620,7 @@ class APIWorkOrderController extends Controller
                 $listData = $hasil[1];
                 try {
                     DB::beginTransaction();
-                    foreach ($listData as $data){
+                    foreach ($listData as $data) {
                         $deleteDetail = workOrderDetail::where('wod_wo_id', $dataMaster->id)->where('wod_part', (string)$data->t_wod_part)->delete();
                         $checkDetail = workOrderDetail::where('wod_wo_id', $dataMaster->id)->where('wod_part', (string)$data->t_wod_part)->first();
                         if (!$checkDetail) {
@@ -611,11 +635,11 @@ class APIWorkOrderController extends Controller
                             $dataDetail->wod_loc = (string)$data->t_wod_loc;
                             $dataDetail->wod_qty_req = (string)$data->t_wod_qty_req ?? 0;
                             $dataDetail->wod_qty_pick = 0;
-                            
+
                             $dataDetail->save();
                         }
                     }
-                   
+
                     DB::commit();
                     return response()->json(['success', 200]);
                 } catch (Exception $e) {
@@ -633,10 +657,8 @@ class APIWorkOrderController extends Controller
         }
     }
 
-        public function getDataItemWo(Request $req)
+    public function getDataItemWo(Request $req)
     {
-
-        
         $hasil = (new WSAServices())->wsaGetItemMstrWo();
 
         if ($hasil[0] == 'false') {
@@ -648,22 +670,65 @@ class APIWorkOrderController extends Controller
             $listData = $hasil[1];
             $dataWO = [];
             foreach ($listData as $listDatas) {
-                
+
 
                 $dataItem[] = [
 
-                    
+
                     'part' => (string)$listDatas->t_part,
-                    //'partdesc' => (string)$listDatas->t_part_desc,
-                    //'site' => (string)$listDatas->t_site,
-                    //'um' => (string)$listDatas->t_um ,
-                    //'loc' => (string)$listDatas->t_loc,
+                    'desc' => (string)$listDatas->t_part_desc,
+                    'site' => (string)$listDatas->t_site,
+                    'um' => (string)$listDatas->t_um,
+                    'loc' => (string)$listDatas->t_loc,
                 ];
             }
             return response()->json([
-                'DataWSA' => $hasil[1]
+                'DataWSA' => $dataItem
             ], 200);
-           
+        }
+    }
+
+    public function InsertItemDet(Request $req) {}
+    public function wsaDataItem(Request $req)
+    {
+        
+        try {
+            DB::beginTransaction();
+            $arrayresult = [];
+            foreach ($req->data as $data) {
+                $wsaDetail = (new WSAServices())->wsaGetInvItem($data['part'], $data['site'], $data['location']);
+                
+                if ($wsaDetail[0] == 'false') {
+                    continue;
+                } else {
+                    $listData = $wsaDetail[1];
+                    foreach ($listData as $ld) {
+                        $arrayresult[] = [
+                            'id'    => $data['id'],
+                            'lot'   => (string)$ld->t_xxinv_lot,
+                            'bin'   => (string)$ld->t_xxinv_bin,
+                            'level'   => (string)$ld->t_xxinv_level,
+                            'ref'   => (string)$ld->t_xxinv_ref,
+                            'warehouse' =>  (string)$ld->t_xxinv_wrh,
+                            'expdate'   =>  (string)$ld->t_xxinv_exp_date,
+                            'entrydate' =>  (string)$ld->t_xxinv_entry_date,
+
+                        ];
+                    }
+                }
+            }
+            return response()->json($arrayresult);
+        } catch (Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Unable to Proccess Request: " . $e->getMessage()
+            ], 422);
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Unable to Proccess Request"
+            ], 422);
         }
     }
 }
