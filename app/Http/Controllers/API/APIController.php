@@ -46,6 +46,7 @@ class APIController extends Controller
 
                 $success['token'] =  $strToken;
                 $success['expirationDate'] = $expiration;
+                
                 return response()->json(
                     [
                         'message' => 'Sukses',
