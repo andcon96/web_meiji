@@ -11,6 +11,7 @@ use App\Http\Controllers\Settings\LocationController;
 use App\Http\Controllers\Settings\MenuController;
 use App\Http\Controllers\Settings\MenuStructureController;
 use App\Http\Controllers\Settings\PrefixController;
+use App\Http\Controllers\Settings\RoleAndroidMenuController;
 use App\Http\Controllers\Settings\RoleController;
 use App\Http\Controllers\Settings\ShipmentSchedulePrefixController;
 use App\Http\Controllers\Settings\ShipperPrefixController;
@@ -59,6 +60,9 @@ Route::group(['middleware' => ['auth']], function () {
 	Route::resource('roles', RoleController::class);
 	Route::post('/deleteRole', [RoleController::class, 'delete'])->name('deleteRole');
 
+	Route::resource('rolesAndroid', RoleAndroidMenuController::class);
+	Route::post('/updateRoleAccess', [RoleAndroidMenuController::class, 'updateRoleAccess'])->name('updateRoleAccess');
+
 	Route::resource('icons', IconController::class);
 	Route::post('/deleteIcon', [IconController::class, 'delete'])->name('deleteIcon');
 
@@ -73,7 +77,7 @@ Route::group(['middleware' => ['auth']], function () {
 
 	Route::resource('appReceipts', ApprovalReceiptMasterController::class);
 
-    Route::resource('approvalSetup', ApprovalSetupController::class);
+	Route::resource('approvalSetup', ApprovalSetupController::class);
 
 	Route::resource('locations', LocationController::class);
 	Route::get('/uploadLocationDetail', [LocationController::class, 'uploadLocationDetail'])->name('uploadLocationDetail');
@@ -90,12 +94,12 @@ Route::group(['middleware' => ['auth']], function () {
 	Route::get('createitemlocationdetail/{id}', [ItemLocationController::class, 'createItemLocationDetail'])->name('createItemLocationDetail');
 	Route::get('/downloadTemplateLoadItemLocation', [ItemLocationController::class, 'downloadTemplateLoadItemLocation'])->name('downloadTemplateLoadItemLocation');
 
-    // Shipment Schedule Prefix
-    Route::resource('shipmentSchedulePrefix', ShipmentSchedulePrefixController::class);
-    Route::post('deleteShipmentScedulePrefix', [ShipmentSchedulePrefixController::class, 'delete'])->name('deleteShipmentScedulePrefix');
+	// Shipment Schedule Prefix
+	Route::resource('shipmentSchedulePrefix', ShipmentSchedulePrefixController::class);
+	Route::post('deleteShipmentScedulePrefix', [ShipmentSchedulePrefixController::class, 'delete'])->name('deleteShipmentScedulePrefix');
 
-    Route::resource('shipperPrefix', ShipperPrefixController::class);
-    Route::post('deleteShipperPrefix', [ShipperPrefixController::class, 'delete'])->name('deleteShipperPrefix');
+	Route::resource('shipperPrefix', ShipperPrefixController::class);
+	Route::post('deleteShipperPrefix', [ShipperPrefixController::class, 'delete'])->name('deleteShipperPrefix');
 });
 
 Auth::routes();

@@ -34,7 +34,6 @@ class RoleController extends Controller
 
     public function store(Request $request)
     {
-        $domain_id = $request->domain_id;
         $roleCode = $request->roleCode;
         $roleDesc = $request->roleDesc;
 
@@ -44,7 +43,6 @@ class RoleController extends Controller
 
         try {
             $role = new Role();
-            $role->domain_id = $domain_id;
             $role->role_code = $roleCode;
             $role->role_desc = $roleDesc;
             $role->created_by = $currentUser;
@@ -64,7 +62,7 @@ class RoleController extends Controller
 
     public function update(Request $request)
     {
-        $domain_id = $request->domain_id;
+        // $domain_id = $request->domain_id;
         $id = $request->u_id;
         $roleDesc = $request->roleDesc;
 
@@ -73,7 +71,7 @@ class RoleController extends Controller
         DB::beginTransaction();
 
         try {
-            $role->domain_id = $domain_id;
+            // $role->domain_id = $domain_id;
             $role->role_desc = $roleDesc;
             if ($role->isDirty()) {
                 $role->save();
