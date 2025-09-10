@@ -679,8 +679,128 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
 
         $timeout        = 0;
         
-        $dataWo = workOrderMaster::with('getDetail')->where('created_by', $user)->where('wo_nbr',$wonbr)->where('wo_id',$lot)->first();
+        $dataWo = workOrderMaster::with(['getDetail' => function($query) {
+            $query->orderBy('wod_part', 'desc');}])
+            ->where('created_by', $user)
+            ->where('wo_nbr',$wonbr)
+            ->where('wo_id',$lot)
+            ->first();
+            
+        $currentpart = '';
+        $stringdetail = '';
+        $stringalloc = '';
+        $qtypick = 0;
+        $qtyorder = 0;
+        $lastIndex = count($dataWo->getDetail) - 1;
+        $qtyreq = 0;
 
+        foreach($dataWo->getDetail as $index => $detail){
+            if($currentpart <> $detail->wod_part && $currentpart == ''){
+                $qtypick = $detail->wod_qty_pick;
+                $currentpart = $detail->wod_part;
+                $qtyreq = $detail->wod_qty_req;
+                
+                $stringalloc = $stringalloc . 
+                '<AllocDetail>
+                    <ladLoc>' . $detail->wod_loc . '</ladLoc>
+                    <ladLot>' . $detail->wod_lot . '</ladLot>
+                    <ladRef>' . $detail->wod_ref . '</ladRef>
+                    <ladQtyAll/>
+                    <ladQtyPick>' . $detail->wod_qty_pick . '</ladQtyPick>
+                </AllocDetail>';
+
+                if ($index == $lastIndex){
+                    $stringdetail = $stringdetail . 
+                    '<CompItem>
+                        <wodPart>' . $detail->wod_part . '</wodPart>
+                        <wodOp>' . $detail->wod_op . '</wodOp>
+                        <wodQtyReq>' . $qtyreq . '</wodQtyReq>
+                        <wodQtyAll/>
+                        <wodQtyPick>' . $qtypick . '</wodQtyPick>
+                        <detailAll>true</detailAll>
+
+                        <wodSite>' . $detail->wod_site . '</wodSite>
+                        <wodLoc>' . $detail->wod_loc . '</wodLoc>' . 
+                        $stringalloc . 
+                    '</CompItem>';
+
+                }
+            }
+            else if ($currentpart <> $detail->wod_part && $currentpart <> ''){
+                $stringdetail = $stringdetail . 
+                    '<CompItem>
+                        <wodPart>' . $detail->wod_part . '</wodPart>
+                        <wodOp>' . $detail->wod_op . '</wodOp>
+                        <wodQtyReq>' . $qtyreq . '</wodQtyReq>
+                        <wodQtyAll/>
+                        <wodQtyPick>' . $qtypick . '</wodQtyPick>
+                        <detailAll>true</detailAll>
+
+                        <wodSite>' . $detail->wod_site . '</wodSite>
+                        <wodLoc>' . $detail->wod_loc . '</wodLoc>' . 
+                        $stringalloc . 
+                    '</CompItem>';
+
+                    //reset current part & qty pick
+                    $qtyreq = $detail->wod_qty_req;
+                    $qtypick = $detail->wod_qty_pick;
+                    $currentpart = $detail->wod_part;
+
+                    $stringalloc =
+                    '<AllocDetail>
+                        <ladLoc>' . $detail->wod_loc . '</ladLoc>
+                        <ladLot>' . $detail->wod_lot . '</ladLot>
+                        <ladRef>' . $detail->wod_ref . '</ladRef>
+                        <ladQtyAll/>
+                        <ladQtyPick>' . $detail->wod_qty_pick . '</ladQtyPick>
+                    </AllocDetail>';
+
+                if ($index == $lastIndex){
+                    $stringdetail = $stringdetail . 
+                    '<CompItem>
+                        <wodPart>' . $detail->wod_part . '</wodPart>
+                        <wodOp>' . $detail->wod_op . '</wodOp>
+                        <wodQtyReq>' . $qtyreq . '</wodQtyReq>
+                        <wodQtyAll/>
+                        <wodQtyPick>' . $qtypick . '</wodQtyPick>
+                        <detailAll>true</detailAll>
+
+                        <wodSite>' . $detail->wod_site . '</wodSite>
+                        <wodLoc>' . $detail->wod_loc . '</wodLoc>' . 
+                        $stringalloc . 
+                    '</CompItem>';
+
+                }
+            }
+            else{
+                $qtypick = $qtypick + $detail->wod_qty_pick;
+
+                $stringalloc = $stringalloc . '<AllocDetail>
+                    <ladLoc>' . $detail->wod_loc . '</ladLoc>
+                    <ladLot>' . $detail->wod_lot . '</ladLot>
+                    <ladRef>' . $detail->wod_ref . '</ladRef>
+                    <ladQtyAll/>
+                    <ladQtyPick>' . $detail->wod_qty_pick . '</ladQtyPick>
+                </AllocDetail>';
+
+                if ($index == $lastIndex){
+                    $stringdetail =  $stringdetail . 
+                    '<CompItem>
+                        <wodPart>' . $detail->wod_part . '</wodPart>
+                        <wodOp>' . $detail->wod_op . '</wodOp>
+                        <wodQtyReq>' . $qtyreq . '</wodQtyReq>
+                        <wodQtyAll/>
+                        <wodQtyPick>' . $qtypick . '</wodQtyPick>
+                        <detailAll>true</detailAll>
+
+                        <wodSite>' . $detail->wod_site . '</wodSite>
+                        <wodLoc>' . $detail->wod_loc . '</wodLoc>' . 
+                        $stringalloc . 
+                    '</CompItem>';
+
+                }
+            }
+        }
         // XML Qextend
         $qdocHead = '<?xml version="1.0" encoding="UTF-8"?>
                         <soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services"
@@ -713,7 +833,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                                 <qcom:ttContext>
                                 <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
                                 <qcom:propertyName>version</qcom:propertyName>
-                                <qcom:propertyValue>eB_2</qcom:propertyValue>
+                                <qcom:propertyValue>ERP3_1</qcom:propertyValue>
                                 </qcom:ttContext>
                                 <qcom:ttContext>
                                 <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
@@ -746,32 +866,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
 
 						<woNbr>' . $wonbr . '</woNbr>
 						<woLot>' . $lot . '</woLot>';
-        foreach($dataWo->getDetail as $wodet){
-            $qdocbody = $qdocbody . 
-                '<CompItem>
-                        <wodPart>' . $wodet->wod_part . '</wodPart>
-						<wodOp>' . $wodet->wod_op . '</wodOp>
-						<wodQtyReq>' . $wodet->wod_qty_req . '</wodQtyReq>
-						<wodQtyAll>' . $wodet->wod_qty_oh. '</wodQtyAll>
-						<wodQtyPick>' . $wodet->wod_qty_pick . '</wodQtyPick>
-						<detailAll>true</detailAll>
-
-						<wodSite>' . $wodet->wod_site . '</wodSite>
-						<wodLoc>' . $wodet->wod_loc . '</wodLoc>
-						<AllocDetail>
-
-							<ladLoc>' . $wodet->wod_loc . '</ladLoc>
-							<ladLot>' . $dataWo->wo_id . '</ladLot>
-							<ladRef>' . $wodet->wod_ref . '</ladRef>
-							<ladQtyAll>' . $wodet->wod_qty_oh . '</ladQtyAll>
-							<ladQtyPick>' . $wodet->wod_qty_pick . '</ladQtyPick>
-						</AllocDetail>
-						</CompItem>';
-        }
-        $qdocbody = $qdocbody . '
-        </WorkOrder>
-		';
-
+        $qdocbody = $qdocbody . $stringdetail . '</WorkOrder>';
 
         $qdocfoot = '
         </dsWorkOrder>
