@@ -833,11 +833,13 @@ class WSAServices
     public function wsaCustomer($activeConnectionType)
     {
         $wsa = qxwsa::first();
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
                 <Body>
                     <meiji_cust_mstr xmlns="' . $wsa->wsa_path . '">
-                        <inpdomain>10USA</inpdomain>
+                        <inpdomain>' . $domainCode . '</inpdomain>
                     </meiji_cust_mstr>
                 </Body>
             </Envelope>';
@@ -848,11 +850,13 @@ class WSAServices
     public function wsaSalesOrder($customer, $activeConnectionType)
     {
         $wsa = qxwsa::first();
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
                 <Body>
                     <meiji_get_SO xmlns="' . $wsa->wsa_path . '">
-                        <inpdomain>10USA</inpdomain>
+                        <inpdomain>' . $domainCode . '</inpdomain>
                         <inpcust>' . $customer . '</inpcust>
                     </meiji_get_SO>
                 </Body>
@@ -864,11 +868,13 @@ class WSAServices
     public function wsaInventoryDetail($site, $itemCode, $lot, $activeConnectionType)
     {
         $wsa = qxwsa::first();
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
             '<Body>' .
             '<meiji_xxinv_det xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>10USA</inpdomain>' .
+            '<inpdomain>' . $domainCode . '</inpdomain>' .
             '<inpsite>' . $site . '</inpsite>' .
             '<inppart>' . $itemCode . '</inppart>' .
             '<inplot>' . $lot . '</inplot>' .
@@ -885,11 +891,13 @@ class WSAServices
     public function wsaGetShipperNumber($site, $packingReplenishmentID, $activeConnectionType)
     {
         $wsa = qxwsa::first();
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
                 <Body>
                     <meiji_get_shipper_number xmlns="' . $wsa->wsa_path . '">
-                        <inpdomain>10USA</inpdomain>
+                        <inpdomain>' . $domainCode . '</inpdomain>
                         <inpship>' . $site . '</inpship>
                         <inpidref>' . $packingReplenishmentID . '</inpidref>
                     </meiji_get_shipper_number>
