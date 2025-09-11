@@ -100,6 +100,11 @@ Route::group(['middleware' => ['auth']], function () {
 
 	Route::resource('shipperPrefix', ShipperPrefixController::class);
 	Route::post('deleteShipperPrefix', [ShipperPrefixController::class, 'delete'])->name('deleteShipperPrefix');
+
+	// Picklist Prefix
+	
+	Route::resource('shipperPrefix', ShipperPrefixController::class);
+	Route::post('deleteShipperPrefix', [ShipperPrefixController::class, 'delete'])->name('deleteShipperPrefix');
 });
 
 Auth::routes();

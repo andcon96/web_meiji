@@ -104,8 +104,20 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post('wsaDataItem', [APIWorkOrderController::class, 'wsaDataItem']);
 
     // Picklist Shopping
-    Route::get('getPicklistMstr', [APIPicklistShopping::class, 'getPicklistMstr']);
     Route::get('getPicklistDet', [APIPicklistShopping::class, 'getPicklistDet']);
+    Route::post('wsaSendQtyPick', [APIPicklistShopping::class, 'wsaSendQtyPick']);
 
+    // Picklist Approval
+    Route::get('getPicklistDetAppr', [APIPicklistShopping::class, 'getPicklistDetAppr']);
+    Route::post('wsaUpdateStatusPick', [APIPicklistShopping::class, 'wsaUpdateStatusPick']);
+
+    // Picklist Transfer
+    Route::get('getPicklistDetTrans', [APIPicklistShopping::class, 'getPicklistDetAppr']);
+    Route::post('wsaTransferPick', [APIPicklistShopping::class, 'wsaUpdateStatusPick']);
+
+    // Picklist Receipt
+    Route::get('getPicklistDetRcpt', [APIPicklistShopping::class, 'getPicklistDetAppr']);
+    Route::post('wsaReceiptPick', [APIPicklistShopping::class, 'wsaUpdateStatusPick']);
+    
 });
     // WSA Picklist
