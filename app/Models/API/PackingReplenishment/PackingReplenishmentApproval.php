@@ -12,6 +12,11 @@ class PackingReplenishmentApproval extends Model
 
     protected $table = 'packing_replenishment_approval';
 
+    public function previousApprover()
+    {
+        return $this->hasMany(PackingReplenishmentApproval::class, 'prm_id', 'id')->whereColumn('pra_sequence', '<', 'pra_sequence');
+    }
+
     public function getPackingReplenishmentMstr()
     {
         return $this->belongsTo(PackingReplenishmentMstr::class, 'prm_id', 'id');

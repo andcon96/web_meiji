@@ -18,7 +18,8 @@ class APIShipperConfirmController extends Controller
         $data = PackingReplenishmentApproval::query()->with([
             'getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster',
             'getCreatedBy:id,name,username'
-        ])->where('pra_user_approver', 'LIKE', '%' . Auth::user()->id . '%');
+        ])->where('pra_user_approver', 'LIKE', '%' . Auth::user()->id . '%')
+        ->orWhere('pra_user_approver_alt', 'LIKE', '%' . Auth::user()->id . '%');
 
         if ($request->search) {
             $filter = $request->search;
@@ -44,6 +45,9 @@ class APIShipperConfirmController extends Controller
         }
 
         $data = $data->where('pra_status', 'Waiting for confirmation')
+            ->whereDoesntHave('previousApprover', function ($q) {
+            $q->where('pra_status', '!=', 'Approved');
+            })
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
