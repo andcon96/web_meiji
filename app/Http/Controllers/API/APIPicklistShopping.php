@@ -219,8 +219,8 @@ class APIPicklistShopping extends Controller
     public function wsaUpdateStatusPick(Request $req)
     {
         $data = $req->all();
-        $picknbr = $req->picknbr;
-        $status = $req->status;
+        $picknbr = $req->query('picknbr');
+        $status = $req->query('status');
 
         $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $status);
         if ($hasil[0] == 'false') {
