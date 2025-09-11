@@ -639,7 +639,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
         }
 
         if (is_bool($qdocResponse)) {
-            
+
             return false;
         }
 
@@ -652,7 +652,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
         if ($qdocResult == "success" or $qdocResult == "warning") {
             return [true, ''];
         } else {
-            
+
             $xmlResp->registerXPathNamespace('ns3', 'urn:schemas-qad-com:xml-services:common');
             $qdocMsgDesc = $xmlResp->xpath('//ns3:tt_msg_desc');
             $output = '';
@@ -678,14 +678,14 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
         $receiver         = 'QADERP';
 
         $timeout        = 0;
-        
+
         $dataWo = workOrderMaster::with(['getDetail' => function($query) {
             $query->orderBy('wod_part', 'desc');}])
             ->where('created_by', $user)
             ->where('wo_nbr',$wonbr)
             ->where('wo_id',$lot)
             ->first();
-            
+
         $currentpart = '';
         $stringdetail = '';
         $stringalloc = '';
@@ -699,8 +699,8 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                 $qtypick = $detail->wod_qty_pick;
                 $currentpart = $detail->wod_part;
                 $qtyreq = $detail->wod_qty_req;
-                
-                $stringalloc = $stringalloc . 
+
+                $stringalloc = $stringalloc .
                 '<AllocDetail>
                     <ladLoc>' . $detail->wod_loc . '</ladLoc>
                     <ladLot>' . $detail->wod_lot . '</ladLot>
@@ -710,7 +710,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                 </AllocDetail>';
 
                 if ($index == $lastIndex){
-                    $stringdetail = $stringdetail . 
+                    $stringdetail = $stringdetail .
                     '<CompItem>
                         <wodPart>' . $detail->wod_part . '</wodPart>
                         <wodOp>' . $detail->wod_op . '</wodOp>
@@ -720,14 +720,14 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                         <detailAll>true</detailAll>
 
                         <wodSite>' . $detail->wod_site . '</wodSite>
-                        <wodLoc>' . $detail->wod_loc . '</wodLoc>' . 
-                        $stringalloc . 
+                        <wodLoc>' . $detail->wod_loc . '</wodLoc>' .
+                        $stringalloc .
                     '</CompItem>';
 
                 }
             }
             else if ($currentpart <> $detail->wod_part && $currentpart <> ''){
-                $stringdetail = $stringdetail . 
+                $stringdetail = $stringdetail .
                     '<CompItem>
                         <wodPart>' . $detail->wod_part . '</wodPart>
                         <wodOp>' . $detail->wod_op . '</wodOp>
@@ -737,8 +737,8 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                         <detailAll>true</detailAll>
 
                         <wodSite>' . $detail->wod_site . '</wodSite>
-                        <wodLoc>' . $detail->wod_loc . '</wodLoc>' . 
-                        $stringalloc . 
+                        <wodLoc>' . $detail->wod_loc . '</wodLoc>' .
+                        $stringalloc .
                     '</CompItem>';
 
                     //reset current part & qty pick
@@ -756,7 +756,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                     </AllocDetail>';
 
                 if ($index == $lastIndex){
-                    $stringdetail = $stringdetail . 
+                    $stringdetail = $stringdetail .
                     '<CompItem>
                         <wodPart>' . $detail->wod_part . '</wodPart>
                         <wodOp>' . $detail->wod_op . '</wodOp>
@@ -766,8 +766,8 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                         <detailAll>true</detailAll>
 
                         <wodSite>' . $detail->wod_site . '</wodSite>
-                        <wodLoc>' . $detail->wod_loc . '</wodLoc>' . 
-                        $stringalloc . 
+                        <wodLoc>' . $detail->wod_loc . '</wodLoc>' .
+                        $stringalloc .
                     '</CompItem>';
 
                 }
@@ -784,7 +784,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                 </AllocDetail>';
 
                 if ($index == $lastIndex){
-                    $stringdetail =  $stringdetail . 
+                    $stringdetail =  $stringdetail .
                     '<CompItem>
                         <wodPart>' . $detail->wod_part . '</wodPart>
                         <wodOp>' . $detail->wod_op . '</wodOp>
@@ -794,8 +794,8 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                         <detailAll>true</detailAll>
 
                         <wodSite>' . $detail->wod_site . '</wodSite>
-                        <wodLoc>' . $detail->wod_loc . '</wodLoc>' . 
-                        $stringalloc . 
+                        <wodLoc>' . $detail->wod_loc . '</wodLoc>' .
+                        $stringalloc .
                     '</CompItem>';
 
                 }
@@ -875,7 +875,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                     </soapenv:Envelope>';
 
         $qdocRequest = $qdocHead . $qdocbody . $qdocfoot;
-        
+
 
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
@@ -1046,6 +1046,9 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                 break;
         }
 
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+
         $qdocRequest =
             '<?xml version="1.0" encoding="UTF-8"?>
                 <soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services"
@@ -1068,7 +1071,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                         <qcom:ttContext>
                         <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
                         <qcom:propertyName>domain</qcom:propertyName>
-                        <qcom:propertyValue>10USA</qcom:propertyValue>
+                        <qcom:propertyValue>' . $domainCode . '</qcom:propertyValue>
                         </qcom:ttContext>
                         <qcom:ttContext>
                         <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
@@ -1224,6 +1227,9 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
         $absID = $confirmApproval['get_packing_replenishment_mstr']['prm_shipper_nbr'];
         $vehicleRefID = $confirmApproval['prm_id'];
 
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+
         $qdocRequest = '<?xml version="1.0" encoding="UTF-8"?>
                 <soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services"
                 xmlns:qcom="urn:schemas-qad-com:xml-services:common"
@@ -1245,7 +1251,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                         <qcom:ttContext>
                         <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
                         <qcom:propertyName>domain</qcom:propertyName>
-                        <qcom:propertyValue>10USA</qcom:propertyValue>
+                        <qcom:propertyValue>' . $domainCode . '</qcom:propertyValue>
                         </qcom:ttContext>
                         <qcom:ttContext>
                         <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
