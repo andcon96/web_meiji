@@ -12,6 +12,7 @@ use App\Models\API\ReceiptKendaraan;
 use App\Models\API\ReceiptMaster;
 use App\Models\API\ReceiptPenanda;
 use App\Models\Settings\ApprovalReceipt;
+use App\Models\Settings\User;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -39,6 +40,9 @@ class ReceiptServices
 
             // Create Receipt Detail
             foreach ($data as $dataDetail) {
+                if (empty($dataDetail->list_user)) {
+                    return [false, 'Approval Cannot Be Empty'];
+                }
                 // Generate Running Number Buku
                 $getRunningNumberBuku = (new RunningNumberServices())->getRunningNumberBuku();
 
@@ -73,21 +77,33 @@ class ReceiptServices
                 $newReceiptDetail->save();
 
                 // Create Approval
-                $currentApprover = ApprovalReceipt::get();
-                if ($currentApprover) {
-                    foreach ($currentApprover as $dataApprover) {
-                        $approvalReceiptTemp = new ApprovalReceiptTemp();
-                        $approvalReceiptTemp->art_receipt_det_id = $newReceiptDetail->id;
-                        $approvalReceiptTemp->art_user_approve = $dataApprover->ar_user_approve;
-                        $approvalReceiptTemp->art_user_approve_alt = $dataApprover->ar_user_approve_alt;
-                        $approvalReceiptTemp->art_sequence = $dataApprover->ar_sequence;
-                        $approvalReceiptTemp->art_status = 'Waiting';
-                        $approvalReceiptTemp->save();
-                    }
-                } else {
-                    $newReceiptDetail->rd_status = 'Approved'; // Kalo ga ada data approval langsung Approved
-                    $newReceiptDetail->save();
+                // $currentApprover = ApprovalReceipt::get();
+                // if ($currentApprover) {
+                //     foreach ($currentApprover as $dataApprover) {
+                //         $approvalReceiptTemp = new ApprovalReceiptTemp();
+                //         $approvalReceiptTemp->art_receipt_det_id = $newReceiptDetail->id;
+                //         $approvalReceiptTemp->art_user_approve = $dataApprover->ar_user_approve;
+                //         $approvalReceiptTemp->art_user_approve_alt = $dataApprover->ar_user_approve_alt;
+                //         $approvalReceiptTemp->art_sequence = $dataApprover->ar_sequence;
+                //         $approvalReceiptTemp->art_status = 'Waiting';
+                //         $approvalReceiptTemp->save();
+                //     }
+                // } else {
+                //     $newReceiptDetail->rd_status = 'Approved'; // Kalo ga ada data approval langsung Approved
+                //     $newReceiptDetail->save();
+                // }
+                foreach ($dataDetail->list_user as $key => $datas) {
+                    $user = User::where('username', $datas)->firstOrFail();
+
+                    $approvalReceiptTemp = new ApprovalReceiptTemp();
+                    $approvalReceiptTemp->art_receipt_det_id = $newReceiptDetail->id;
+                    $approvalReceiptTemp->art_user_approve = $user->id;
+                    $approvalReceiptTemp->art_user_approve_alt = $user->id;
+                    $approvalReceiptTemp->art_sequence = $key + 1;
+                    $approvalReceiptTemp->art_status = 'Waiting';
+                    $approvalReceiptTemp->save();
                 }
+
 
 
                 // Update Qty Ongoing PO Detail
@@ -177,7 +193,7 @@ class ReceiptServices
         }
     }
 
-    public function editDataReceipt($data)
+    public function editDataReceipt($data, $approval)
     {
         try {
             DB::beginTransaction();
@@ -252,20 +268,31 @@ class ReceiptServices
             $newReceiptDetailPenanda->save();
 
             // Create Approval
-            $currentApprover = ApprovalReceipt::get();
-            if ($currentApprover) {
-                foreach ($currentApprover as $dataApprover) {
-                    $approvalReceiptTemp = new ApprovalReceiptTemp();
-                    $approvalReceiptTemp->art_receipt_det_id = $findReceiptDetail->id;
-                    $approvalReceiptTemp->art_user_approve = $dataApprover->ar_user_approve;
-                    $approvalReceiptTemp->art_user_approve_alt = $dataApprover->ar_user_approve_alt;
-                    $approvalReceiptTemp->art_sequence = $dataApprover->ar_sequence;
-                    $approvalReceiptTemp->art_status = 'Waiting';
-                    $approvalReceiptTemp->save();
-                }
-            } else {
-                $findReceiptDetail->rd_status = 'Approved'; // Kalo ga ada data approval langsung Approved
-                $findReceiptDetail->save();
+            // $currentApprover = ApprovalReceipt::get();
+            // if ($currentApprover) {
+            //     foreach ($currentApprover as $dataApprover) {
+            //         $approvalReceiptTemp = new ApprovalReceiptTemp();
+            //         $approvalReceiptTemp->art_receipt_det_id = $findReceiptDetail->id;
+            //         $approvalReceiptTemp->art_user_approve = $dataApprover->ar_user_approve;
+            //         $approvalReceiptTemp->art_user_approve_alt = $dataApprover->ar_user_approve_alt;
+            //         $approvalReceiptTemp->art_sequence = $dataApprover->ar_sequence;
+            //         $approvalReceiptTemp->art_status = 'Waiting';
+            //         $approvalReceiptTemp->save();
+            //     }
+            // } else {
+            //     $findReceiptDetail->rd_status = 'Approved'; // Kalo ga ada data approval langsung Approved
+            //     $findReceiptDetail->save();
+            // }
+            foreach ($approval as $key => $datas) {
+                $user = User::where('username', $datas)->firstOrFail();
+
+                $approvalReceiptTemp = new ApprovalReceiptTemp();
+                $approvalReceiptTemp->art_receipt_det_id = $data->id;
+                $approvalReceiptTemp->art_user_approve = $user->id;
+                $approvalReceiptTemp->art_user_approve_alt = $user->id;
+                $approvalReceiptTemp->art_sequence = $key + 1;
+                $approvalReceiptTemp->art_status = 'Waiting';
+                $approvalReceiptTemp->save();
             }
 
             DB::commit();
