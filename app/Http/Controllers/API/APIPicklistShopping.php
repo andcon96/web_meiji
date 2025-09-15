@@ -532,7 +532,8 @@ class APIPicklistShopping extends Controller
                 $bin = $det['bin'];
                 $qtypick = $det['qtypick'];
                 $qxtendsingleitem = (new QxtendServices())->qxTransferSingleItemWo($wodpart, $wonbr, $site, $site, $loc, 'Shopping', $qtypick, $bin, $level, $wrh, $lot);
-                if ($qxtendsingleitem[0] == 'false') {
+                if ($qxtendsingleitem == 'false') {
+                       Log::channel('Picklist')->info("Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart);
                     return response()->json([
                         'Status' => 'Error',
                         'Message' => "Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
@@ -541,6 +542,7 @@ class APIPicklistShopping extends Controller
                 } else {
                     $hasil = (new WSAServices())->wsaUpdateQtyPick($picknbr, $qtypick, $wonbr, $wodpart, $site, $loc, $lot, $wrh, $level, $bin);
                     if ($hasil == 'false') {
+                        Log::channel('Picklist')->info("Update Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart);
                         return response()->json([
                             'Status' => 'Error',
                             'Message' => "Update Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
@@ -773,7 +775,7 @@ class APIPicklistShopping extends Controller
                 );
             } catch (\Exception $e) {
                 DB::rollBack();
-                Log::channel('customlog')->info($e);
+                Log::channel('Picklist')->info($e);
                 return response()->json([
                     'Status' => 'Error',
                     'Message' => "Picklist Transfer Input Error"
@@ -818,8 +820,8 @@ class APIPicklistShopping extends Controller
                     $level = $det['level'];
                     $bin = $det['bin'];
                     $qtypick = $det['qtypick'];
-                    $qxtendsingleitem = (new QxtendServices())->qxTransferSingleItemWo($wodpart, $wonbr, $site, $site, $loc, $picklocto, $qtypick, $bin, $level, $wrh, $lot);
-                    if ($qxtendsingleitem[0] == 'false') {
+                    $qxtendsingleitem = (new QxtendServices())->qxTransferSingleItemWo($wodpart, $wonbr, $site, $site, $loc, $picklocto, $qtypick, '', '', '', $lot);
+                    if ($qxtendsingleitem == 'false') {
                         return response()->json([
                             'Status' => 'Error',
                             'Message' => "Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
