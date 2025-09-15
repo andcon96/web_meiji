@@ -295,9 +295,11 @@ class APIPurchaseOrderController extends Controller
 
     public function wsaLastBatch(Request $req)
     {
-        $wsaData = Cache::remember('wsaLastBatch', 60, function () use ($req) {
-            return (new WSAServices())->wsaLastBatch($req->search);
-        });
+        // $wsaData = Cache::remember('wsaLastBatch', 60, function () use ($req) {
+        //     return (new WSAServices())->wsaLastBatch($req->search);
+        // });
+
+        $wsaData = (new WSAServices())->wsaLastBatch($req->search);
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
