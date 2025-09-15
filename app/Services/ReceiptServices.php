@@ -69,6 +69,7 @@ class ReceiptServices
                 $newReceiptDetail->rd_bin_penyimpanan = $dataDetail->bin_penyimpanan;
                 $newReceiptDetail->rd_building_penyimpanan = $dataDetail->building_penyimpanan;
                 $newReceiptDetail->rd_status = 'Waiting'; // Langsung Approval
+                $newReceiptDetail->rd_keterangan_tambahan = $dataDetail->keterangan_tambahan;
                 $newReceiptDetail->save();
 
                 // Create Approval
