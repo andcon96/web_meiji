@@ -15,6 +15,7 @@ use App\Http\Controllers\Settings\RoleAndroidMenuController;
 use App\Http\Controllers\Settings\RoleController;
 use App\Http\Controllers\Settings\ShipmentSchedulePrefixController;
 use App\Http\Controllers\Settings\ShipperPrefixController;
+use App\Http\Controllers\Settings\PicklistPrefixController;
 use App\Http\Controllers\Settings\UserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -105,6 +106,9 @@ Route::group(['middleware' => ['auth']], function () {
 	
 	Route::resource('shipperPrefix', ShipperPrefixController::class);
 	Route::post('deleteShipperPrefix', [ShipperPrefixController::class, 'delete'])->name('deleteShipperPrefix');
+
+	Route::resource('PicklistPrefix', PicklistPrefixController::class);
+	Route::post('deletePicklistPrefix', [PicklistPrefixController::class, 'delete'])->name('deletePicklistPrefix');
 });
 
 Auth::routes();

@@ -309,6 +309,14 @@ return [
             'level' => 'info',
             'days' => '30',
             'permission' => 0775,
+        ],
+        'Picklist' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/picklist.log'),
+            'level' => 'info',
+            'days' => '30',
+            'permission' => 0775,
         ]
+        
     ]
 ];

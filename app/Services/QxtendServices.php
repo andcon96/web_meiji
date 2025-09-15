@@ -1141,7 +1141,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                         <vFeatures>false</vFeatures>
                         <vPrintSodet>false</vPrintSodet>
                         <lSoUm>false</lSoUm>
-                        <compAddr>10-100</compAddr>
+                        <compAddr>' . $packingReplenishments[0]['sodSite'] . '</compAddr>
                         <lPrintLotserials>true</lPrintLotserials>
                         <dev>test1</dev>
                         <vOk>true</vOk>';
