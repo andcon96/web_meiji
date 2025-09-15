@@ -81,6 +81,82 @@ class WSAServices
         return [$qdocResult, $dataloop];
     }
 
+    public function wsaLastBatch($batch)
+    {
+        $wsa = qxwsa::first();
+
+        $qxUrl = $wsa->wsa_url;
+        $qxReceiver = '';
+        $qxSuppRes = 'false';
+        $qxScopeTrx = '';
+        $qdocName = '';
+        $qdocVersion = '';
+        $dsName = '';
+        $timeout = 0;
+
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+
+        $qdocRequest =
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
+            '<Body>' .
+            '<meiji_last_batch xmlns="' . $wsa->wsa_path . '">' .
+            '<inpdomain>' . $domainCode . '</inpdomain>' .
+            '<inpbatch>' . $batch . '</inpbatch>' .
+            '</meiji_last_batch>' .
+            '</Body>' .
+            '</Envelope>';
+
+        $curlOptions = array(
+            CURLOPT_URL => $qxUrl,
+            CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
+            CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
+            CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false
+        );
+
+        $getInfo = '';
+        $httpCode = 0;
+        $curlErrno = 0;
+        $curlError = '';
+        $qdocResponse = '';
+
+        $curl = curl_init();
+        if ($curl) {
+            curl_setopt_array($curl, $curlOptions);
+            $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
+            $curlErrno    = curl_errno($curl);
+            $curlError    = curl_error($curl);
+            $first        = true;
+
+            foreach (curl_getinfo($curl) as $key => $value) {
+                if (gettype($value) != 'array') {
+                    if (!$first) $getInfo .= ", ";
+                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $first = false;
+                    if ($key == 'http_code') $httpCode = $value;
+                }
+            }
+            curl_close($curl);
+        }
+
+        $xmlResp = simplexml_load_string($qdocResponse);
+
+        $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
+
+        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
+
+        return [
+            $qdocResult,
+            json_decode(json_encode($dataloop), true),
+        ];
+    }
+
     public function wsaGenCode($fldname)
     {
         $wsa = qxwsa::first();
@@ -420,6 +496,7 @@ class WSAServices
             $newDataDetail->pod_qty_rcpt = (string)$listDatas->t_podQtyRcpt;
             $newDataDetail->pod_um = (string)$listDatas->t_podUm;
             $newDataDetail->pod_pt_um = (string)$listDatas->t_ptUm;
+            $newDataDetail->pod_pallete = (string)$listDatas->t_ptPallete;
             $newDataDetail->save();
 
             $dataDetail[] = [
@@ -435,6 +512,7 @@ class WSAServices
                 'pod_qty_ongoing' => '0',
                 'pod_um' => (string)$listDatas->t_podUm,
                 'pt_um' => (string)$listDatas->t_ptUm,
+                'pt_pallete' => (string)$listDatas->t_ptPallete,
                 'is_selected' => false, // Buat Menu Android
                 'is_expandable' => false, // Buat Menu Android
             ];
@@ -1318,7 +1396,7 @@ class WSAServices
         ];
     }
 
-        public function wsaGetInvItem($item,$site,$loc)
+    public function wsaGetInvItem($item, $site, $loc)
     {
 
         $wsa = qxwsa::first();
@@ -1348,7 +1426,7 @@ class WSAServices
             '</meiji_get_picklist_detail_item>' .
             '</Body>' .
             '</Envelope>';
-        
+
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
@@ -1385,7 +1463,7 @@ class WSAServices
             }
             curl_close($curl);
         }
-        
+
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
@@ -1426,7 +1504,7 @@ class WSAServices
             '</meiji_get_xxpick_mstr>' .
             '</Body>' .
             '</Envelope>';
-        
+
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
@@ -1463,7 +1541,7 @@ class WSAServices
             }
             curl_close($curl);
         }
-        
+
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
@@ -1505,7 +1583,7 @@ class WSAServices
             '</meiji_get_xxpick_det>' .
             '</Body>' .
             '</Envelope>';
-        
+
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
@@ -1542,7 +1620,7 @@ class WSAServices
             }
             curl_close($curl);
         }
-        
+
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
@@ -1581,13 +1659,13 @@ class WSAServices
             '<meiji_update_status_xxpick xmlns="' . $wsa->wsa_path . '">' .
             '<inpdomain>' . $domainCode . '</inpdomain>
             <inppick>' . $picknbr . '</inppick>
-            <inpstatus>' . $status . '</inpstatus>'.
-            
-            
+            <inpstatus>' . $status . '</inpstatus>' .
+
+
             '</meiji_update_status_xxpick>' .
             '</Body>' .
             '</Envelope>';
-        
+
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
@@ -1624,9 +1702,9 @@ class WSAServices
             }
             curl_close($curl);
         }
-        
+
         $xmlResp = simplexml_load_string($qdocResponse);
-        
+
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
         $dataloop    = $xmlResp->xpath('//ns1:tempRow');
@@ -1638,7 +1716,7 @@ class WSAServices
         ];
     }
 
-    public function wsaUpdateQtyPick($picknbr, $qtypick, $wonbr, $wodpart,$site,$loc,$lot,$wrh,$level,$bin)
+    public function wsaUpdateQtyPick($picknbr, $qtypick, $wonbr, $wodpart, $site, $loc, $lot, $wrh, $level, $bin)
     {
 
         $wsa = qxwsa::first();
@@ -1671,13 +1749,13 @@ class WSAServices
             <inpwrh>' . $wrh . '</inpwrh>
             <inplevel>' . $level . '</inplevel>
             <inpbin>' . $bin . '</inpbin>
-            <inpqtypick>' . $qtypick . '</inpqtypick>'.
-            
-            
+            <inpqtypick>' . $qtypick . '</inpqtypick>' .
+
+
             '</meiji_send_qtypick_xxpick>' .
             '</Body>' .
             '</Envelope>';
-        
+
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
@@ -1714,7 +1792,7 @@ class WSAServices
             }
             curl_close($curl);
         }
-        
+
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
@@ -1722,11 +1800,7 @@ class WSAServices
         $dataloop    = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
-        return 
+        return
             $qdocResult;
     }
-    
-
-
-    
 }
