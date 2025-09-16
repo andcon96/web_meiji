@@ -190,7 +190,9 @@ class APIPurchaseOrderController extends Controller
 
     public function wsaPenyimpanan(Request $req)
     {
-        $itemCode = $req->search;
+        // $itemCode = $req->search; 
+        // Request Xena 1609
+        $itemCode = '';
 
         // Ambil Relati Item ke Location di Web
         $getAllItemLocation = LocationDetail::query()->with(['getListItem.getItem', 'getMaster']);
@@ -200,9 +202,11 @@ class APIPurchaseOrderController extends Controller
         $getAllItemLocation = $getAllItemLocation->get();
 
         // Ambil List Location di QAD untuk dibanding ke Web
-        $wsaData = Cache::remember('wsaPenyimpanan', 60, function () use ($itemCode) {
-            return (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', '', '');
-        });
+        // $wsaData = Cache::remember('wsaPenyimpanan', 60, function () use ($itemCode) {
+        //     return (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', '', '');
+        // });
+
+        $wsaData = (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', '', '');
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
@@ -210,10 +214,18 @@ class APIPurchaseOrderController extends Controller
             ], 422);
         }
 
+
         // Prioritaskan Location yang ada di Web by order.
         $getDataQAD = collect($wsaData[1]);
         $grouped = $getDataQAD->groupBy(function ($item) {
-            return $item['t_inv_site'] . '-' . $item['t_inv_loc'] . '-' . $item['t_inv_bin'] . '-' . $item['t_inv_wrh'] . '-' . $item['t_inv_level'];
+            $site  = (string) ($item['t_inv_site'] ?? '');
+            $loc   = (string) ($item['t_inv_loc'] ?? '');
+            $bin   = is_array($item['t_inv_bin']) ? '' : (string) ($item['t_inv_bin'] ?? '');
+            $wrh   = is_array($item['t_inv_wrh']) ? '' : (string) ($item['t_inv_wrh'] ?? '');
+            $level = is_array($item['t_inv_level']) ? '' : (string) ($item['t_inv_level'] ?? '');
+
+            return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
+            // return $item['t_inv_site'] . '-' . $item['t_inv_loc'] . '-' . $item['t_inv_bin'] . '-' . $item['t_inv_wrh'] . '-' . $item['t_inv_level'];
         });
 
         $merged = $grouped->map(function ($items) {
@@ -222,7 +234,11 @@ class APIPurchaseOrderController extends Controller
                 return (int)$i['t_inv_qtyoh'];
             });
             return $first;
-        })->values();
+        })
+            ->filter(function ($item) {
+                return (int) $item['t_inv_qtyoh'] <= 0;
+            })
+            ->values();
 
         $dataQAD = $merged->map(function ($item) use ($getAllItemLocation) {
             foreach ($getAllItemLocation as $datas) {
