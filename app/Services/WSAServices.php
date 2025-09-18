@@ -83,7 +83,7 @@ class WSAServices
         return [$qdocResult, $dataloop];
     }
 
-    public function wsaLastBatch($batch)
+    public function wsaLastBatch($batch, $item)
     {
         $wsa = qxwsa::first();
 
@@ -105,6 +105,7 @@ class WSAServices
             '<meiji_last_batch xmlns="' . $wsa->wsa_path . '">' .
             '<inpdomain>' . $domainCode . '</inpdomain>' .
             '<inpbatch>' . $batch . '</inpbatch>' .
+            '<inpitem>' . $item . '</inpitem>' .
             '</meiji_last_batch>' .
             '</Body>' .
             '</Envelope>';

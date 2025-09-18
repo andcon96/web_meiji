@@ -326,7 +326,7 @@ class APIPurchaseOrderController extends Controller
         //     return (new WSAServices())->wsaLastBatch($req->search);
         // });
 
-        $wsaData = (new WSAServices())->wsaLastBatch($req->search);
+        $wsaData = (new WSAServices())->wsaLastBatch($req->search, $req->search2);
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
@@ -349,5 +349,17 @@ class APIPurchaseOrderController extends Controller
         $data = $data->select('id', 'username', 'name')->get();
 
         return response()->json($data);
+    }
+
+    public function wsaCheckBatch(Request $req)
+    {
+        $wsaData = (new WSAServices())->wsaLastBatch($req->search, $req->search2);
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'No Data'
+            ], 200);
+        }
+
+        return response()->json($wsaData[0], 422);
     }
 }

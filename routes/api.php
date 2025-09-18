@@ -64,6 +64,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post('wsaLoc', [APIPurchaseOrderController::class, 'wsaLoc']);
     Route::post('wsaLastBatch', [APIPurchaseOrderController::class, 'wsaLastBatch']);
     Route::post('getListUser', [APIPurchaseOrderController::class, 'getListUser']);
+    Route::post('wsaCheckBatch', [APIPurchaseOrderController::class, 'wsaCheckBatch']);
 
 
 
