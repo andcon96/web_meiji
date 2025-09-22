@@ -968,7 +968,7 @@ class WSAServices
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
             '<Body>' .
-            '<meiji_xxinv_det xmlns="' . $wsa->wsa_path . '">' .
+            '<meiji_xxinv_det_fefo xmlns="' . $wsa->wsa_path . '">' .
             '<inpdomain>' . $domainCode . '</inpdomain>' .
             '<inpsite>' . $site . '</inpsite>' .
             '<inppart>' . $itemCode . '</inppart>' .
@@ -976,7 +976,7 @@ class WSAServices
             '<inpbin></inpbin>' .
             '<inpwrh></inpwrh>' .
             '<inplevel></inplevel>' .
-            '</meiji_xxinv_det>' .
+            '</meiji_xxinv_det_fefo>' .
             '</Body>' .
             '</Envelope>';
 
