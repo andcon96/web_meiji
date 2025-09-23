@@ -63,6 +63,8 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post('wsaBin', [APIPurchaseOrderController::class, 'wsaBin']);
     Route::post('wsaLoc', [APIPurchaseOrderController::class, 'wsaLoc']);
     Route::post('wsaLastBatch', [APIPurchaseOrderController::class, 'wsaLastBatch']);
+    Route::post('getListUser', [APIPurchaseOrderController::class, 'getListUser']);
+    Route::post('wsaCheckBatch', [APIPurchaseOrderController::class, 'wsaCheckBatch']);
 
 
 
@@ -107,7 +109,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
 
     //picklist browse 
     Route::get('getDataPicklist', [APIPicklistShopping::class, 'getPicklistMstr']);
-    
+
     // Picklist Shopping
     Route::get('getPicklistDet', [APIPicklistShopping::class, 'getPicklistDet']);
     Route::post('wsaSendQtyPick', [APIPicklistShopping::class, 'wsaSendQtyPick']);

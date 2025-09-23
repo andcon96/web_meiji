@@ -9,6 +9,7 @@ use App\Models\API\PurchaseOrderMaster;
 use App\Models\API\ReceiptAttachment;
 use App\Models\Settings\ItemLocation;
 use App\Models\Settings\LocationDetail;
+use App\Models\Settings\User;
 use App\Services\WSAServices;
 use Exception;
 use Illuminate\Http\Request;
@@ -110,9 +111,13 @@ class APIPurchaseOrderController extends Controller
 
         
         if ($saveData[0] == false) {
+            $msg = "Failed To Save Receipt Data.";
+            if ($saveData[1] != '') {
+                $msg = $saveData[1];
+            }
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Failed To Save Receipt Data."
+                'Message' => $msg
             ], 422);
         }
 
@@ -127,6 +132,14 @@ class APIPurchaseOrderController extends Controller
     {
         $data = $req->all();
         $inputan = json_decode($req->data);
+        $approval = json_decode($req->userApprove);
+
+        if (empty($approval)) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => 'No Approval'
+            ], 422);
+        }
 
         if (array_key_exists('images', $data)) {
             foreach ($data['images'] as $key => $dataImage) {
@@ -148,7 +161,7 @@ class APIPurchaseOrderController extends Controller
             }
         }
 
-        $saveData = (new ReceiptServices())->editDataReceipt($inputan);
+        $saveData = (new ReceiptServices())->editDataReceipt($inputan, $approval);
         if ($saveData == false) {
             return response()->json([
                 'Status' => 'Error',
@@ -182,7 +195,9 @@ class APIPurchaseOrderController extends Controller
 
     public function wsaPenyimpanan(Request $req)
     {
-        $itemCode = $req->search;
+        // $itemCode = $req->search; 
+        // Request Xena 1609
+        $itemCode = '';
 
         // Ambil Relati Item ke Location di Web
         $getAllItemLocation = LocationDetail::query()->with(['getListItem.getItem', 'getMaster']);
@@ -192,9 +207,11 @@ class APIPurchaseOrderController extends Controller
         $getAllItemLocation = $getAllItemLocation->get();
 
         // Ambil List Location di QAD untuk dibanding ke Web
-        $wsaData = Cache::remember('wsaPenyimpanan', 60, function () use ($itemCode) {
-            return (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', '', '');
-        });
+        // $wsaData = Cache::remember('wsaPenyimpanan', 60, function () use ($itemCode) {
+        //     return (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', '', '');
+        // });
+
+        $wsaData = (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', '', '');
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
@@ -202,10 +219,18 @@ class APIPurchaseOrderController extends Controller
             ], 422);
         }
 
+
         // Prioritaskan Location yang ada di Web by order.
         $getDataQAD = collect($wsaData[1]);
         $grouped = $getDataQAD->groupBy(function ($item) {
-            return $item['t_inv_site'] . '-' . $item['t_inv_loc'] . '-' . $item['t_inv_bin'] . '-' . $item['t_inv_wrh'] . '-' . $item['t_inv_level'];
+            $site  = (string) ($item['t_inv_site'] ?? '');
+            $loc   = (string) ($item['t_inv_loc'] ?? '');
+            $bin   = is_array($item['t_inv_bin']) ? '' : (string) ($item['t_inv_bin'] ?? '');
+            $wrh   = is_array($item['t_inv_wrh']) ? '' : (string) ($item['t_inv_wrh'] ?? '');
+            $level = is_array($item['t_inv_level']) ? '' : (string) ($item['t_inv_level'] ?? '');
+
+            return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
+            // return $item['t_inv_site'] . '-' . $item['t_inv_loc'] . '-' . $item['t_inv_bin'] . '-' . $item['t_inv_wrh'] . '-' . $item['t_inv_level'];
         });
 
         $merged = $grouped->map(function ($items) {
@@ -214,7 +239,11 @@ class APIPurchaseOrderController extends Controller
                 return (int)$i['t_inv_qtyoh'];
             });
             return $first;
-        })->values();
+        })
+            ->filter(function ($item) {
+                return (int) $item['t_inv_qtyoh'] <= 0;
+            })
+            ->values();
 
         $dataQAD = $merged->map(function ($item) use ($getAllItemLocation) {
             foreach ($getAllItemLocation as $datas) {
@@ -302,7 +331,7 @@ class APIPurchaseOrderController extends Controller
         //     return (new WSAServices())->wsaLastBatch($req->search);
         // });
 
-        $wsaData = (new WSAServices())->wsaLastBatch($req->search);
+        $wsaData = (new WSAServices())->wsaLastBatch($req->search, $req->search2);
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
@@ -311,5 +340,31 @@ class APIPurchaseOrderController extends Controller
         }
 
         return response()->json($wsaData[1]);
+    }
+
+    public function getListUser(Request $req)
+    {
+        $data = User::query();
+
+        if ($req->search) {
+            $data->where('username', $req->search)
+                ->orWhere('name', $req->search);
+        }
+
+        $data = $data->select('id', 'username', 'name')->get();
+
+        return response()->json($data);
+    }
+
+    public function wsaCheckBatch(Request $req)
+    {
+        $wsaData = (new WSAServices())->wsaLastBatch($req->search, $req->search2);
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'No Data'
+            ], 200);
+        }
+
+        return response()->json($wsaData[0], 422);
     }
 }

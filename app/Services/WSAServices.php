@@ -4,10 +4,12 @@ namespace App\Services;
 
 use App\Models\API\PurchaseOrderDetail;
 use App\Models\API\PurchaseOrderMaster;
+use App\Models\API\ReceiptDetail;
 use App\Models\PurchaseOrder\POMstr;
 use App\Models\Settings\Domain;
 use App\Models\Settings\qxwsa;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class WSAServices
 {
@@ -81,7 +83,7 @@ class WSAServices
         return [$qdocResult, $dataloop];
     }
 
-    public function wsaLastBatch($batch)
+    public function wsaLastBatch($batch, $item)
     {
         $wsa = qxwsa::first();
 
@@ -103,6 +105,7 @@ class WSAServices
             '<meiji_last_batch xmlns="' . $wsa->wsa_path . '">' .
             '<inpdomain>' . $domainCode . '</inpdomain>' .
             '<inpbatch>' . $batch . '</inpbatch>' .
+            '<inpitem>' . $item . '</inpitem>' .
             '</meiji_last_batch>' .
             '</Body>' .
             '</Envelope>';
@@ -150,7 +153,21 @@ class WSAServices
 
         $dataloop    = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
+        $dataBatchWeb = ReceiptDetail::where('rd_status', '!=', 'Approved')->get();
 
+        foreach ($dataBatchWeb as $datas) {
+            if ($batch === '' || Str::contains(Str::lower($datas->rd_batch), Str::lower($batch))) {
+                $dataloop[] = (object) [
+                    't_domain'    => $domainCode,
+                    't_site'      => $datas->rd_site_penyimpanan,
+                    't_loc'       => $datas->rd_location_penyimpanan,
+                    't_warehouse' => $datas->rd_building_penyimpanan,
+                    't_level'     => $datas->rd_level_penyimpanan,
+                    't_bin'       => $datas->rd_bin_penyimpanan,
+                    't_lot'       => $datas->rd_batch,
+                ];
+            }
+        }
         return [
             $qdocResult,
             json_decode(json_encode($dataloop), true),
@@ -951,7 +968,7 @@ class WSAServices
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
             '<Body>' .
-            '<meiji_xxinv_det xmlns="' . $wsa->wsa_path . '">' .
+            '<meiji_xxinv_det_fefo xmlns="' . $wsa->wsa_path . '">' .
             '<inpdomain>' . $domainCode . '</inpdomain>' .
             '<inpsite>' . $site . '</inpsite>' .
             '<inppart>' . $itemCode . '</inppart>' .
@@ -959,7 +976,7 @@ class WSAServices
             '<inpbin></inpbin>' .
             '<inpwrh></inpwrh>' .
             '<inplevel></inplevel>' .
-            '</meiji_xxinv_det>' .
+            '</meiji_xxinv_det_fefo>' .
             '</Body>' .
             '</Envelope>';
 
@@ -1835,7 +1852,7 @@ class WSAServices
             '</meiji_get_loc_xxpick>' .
             '</Body>' .
             '</Envelope>';
-        
+
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
@@ -1872,7 +1889,7 @@ class WSAServices
             }
             curl_close($curl);
         }
-        
+
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);

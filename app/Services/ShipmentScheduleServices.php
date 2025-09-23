@@ -39,6 +39,7 @@ class ShipmentScheduleServices
                 $shipmentScheduleDet->ssd_sod_shipto = $order['ship'];
                 $shipmentScheduleDet->ssd_sod_line = $order['line'];
                 $shipmentScheduleDet->ssd_sod_part = $order['part'];
+                $shipmentScheduleDet->ssd_uom = $order['uom'];
                 $shipmentScheduleDet->ssd_sod_desc = $order['desc'];
                 $shipmentScheduleDet->ssd_sod_qty_ord = $order['qty'];
                 $shipmentScheduleDet->ssd_status = 'New';
@@ -70,6 +71,7 @@ class ShipmentScheduleServices
                     $shipmentScheduleHistory->ssh_sod_line = $shipmentScheduleDet->ssd_sod_line;
                     $shipmentScheduleHistory->ssh_sod_part = $shipmentScheduleDet->ssd_sod_part;
                     $shipmentScheduleHistory->ssh_sod_desc = $shipmentScheduleDet->ssd_sod_desc;
+                    $shipmentScheduleHistory->ssh_uom = $shipmentScheduleDet->ssd_uom;
                     $shipmentScheduleHistory->ssh_sod_qty_ord = $shipmentScheduleDet->ssd_sod_qty_ord;
                     $shipmentScheduleHistory->ssh_status_det = $shipmentScheduleDet->ssd_status;
                     $shipmentScheduleHistory->ssh_site = $shipmentScheduleLocation->ssl_site;
@@ -116,6 +118,7 @@ class ShipmentScheduleServices
                     $shipmentScheduleHistory->ssh_sod_line = $shipmentDetail->ssd_sod_line;
                     $shipmentScheduleHistory->ssh_sod_part = $shipmentDetail->ssd_sod_part;
                     $shipmentScheduleHistory->ssh_sod_desc = $shipmentDetail->ssd_sod_desc;
+                    $shipmentScheduleHistory->ssh_uom = $shipmentDetail->ssd_uom;
                     $shipmentScheduleHistory->ssh_sod_qty_ord = $shipmentDetail->ssd_sod_qty_ord;
                     $shipmentScheduleHistory->ssh_status_det = $shipmentDetail->ssd_status;
                     $shipmentScheduleHistory->ssh_site = $locationDetail->ssl_site;
@@ -177,6 +180,7 @@ class ShipmentScheduleServices
                     $shipmentScheduleDet->ssd_sod_line = $salesOrder['line'];
                     $shipmentScheduleDet->ssd_sod_part = $salesOrder['part'];
                     $shipmentScheduleDet->ssd_sod_desc = $salesOrder['desc'];
+                    $shipmentScheduleDet->ssd_uom = $salesOrder['uom'];
                     $shipmentScheduleDet->ssd_sod_qty_ord = $salesOrder['qty'];
                     $shipmentScheduleDet->updated_by  = Auth::user()->id;
                     $shipmentScheduleDet->save();
@@ -189,6 +193,7 @@ class ShipmentScheduleServices
                     $shipmentScheduleDet->ssd_sod_line = $salesOrder['line'];
                     $shipmentScheduleDet->ssd_sod_part = $salesOrder['part'];
                     $shipmentScheduleDet->ssd_sod_desc = $salesOrder['desc'];
+                    $shipmentScheduleDet->ssd_uom = $salesOrder['uom'];
                     $shipmentScheduleDet->ssd_sod_qty_ord = $salesOrder['qty'];
                     $shipmentScheduleDet->ssd_status = 'New';
                     $shipmentScheduleDet->created_by  = Auth::user()->id;
@@ -245,6 +250,7 @@ class ShipmentScheduleServices
                     $shipmentScheduleHistory->ssh_sod_line = $shipmentScheduleDet->ssd_sod_line;
                     $shipmentScheduleHistory->ssh_sod_part = $shipmentScheduleDet->ssd_sod_part;
                     $shipmentScheduleHistory->ssh_sod_desc = $shipmentScheduleDet->ssd_sod_desc;
+                    $shipmentScheduleHistory->ssh_uom = $shipmentScheduleDet->ssd_uom;
                     $shipmentScheduleHistory->ssh_sod_qty_ord = $shipmentScheduleDet->ssd_sod_qty_ord;
                     $shipmentScheduleHistory->ssh_status_det = $shipmentScheduleDet->ssd_status;
                     $shipmentScheduleHistory->ssh_site = $shipmentScheduleLocation->ssl_site;
@@ -283,6 +289,7 @@ class ShipmentScheduleServices
                         $shipmentScheduleHistory->ssh_sod_line = $shipmentScheduleDet->ssd_sod_line;
                         $shipmentScheduleHistory->ssh_sod_part = $shipmentScheduleDet->ssd_sod_part;
                         $shipmentScheduleHistory->ssh_sod_desc = $shipmentScheduleDet->ssd_sod_desc;
+                        $shipmentScheduleHistory->ssh_uom = $shipmentScheduleDet->ssd_uom;
                         $shipmentScheduleHistory->ssh_sod_qty_ord = $shipmentScheduleDet->ssd_sod_qty_ord;
                         $shipmentScheduleHistory->ssh_status_det = $shipmentScheduleDet->ssd_status;
                         $shipmentScheduleHistory->ssh_site = $locationDetail->ssl_site;
@@ -328,6 +335,7 @@ class ShipmentScheduleServices
                     $shipmentScheduleHistory->ssh_sod_line = $shipmentScheduleDet->ssd_sod_line;
                     $shipmentScheduleHistory->ssh_sod_part = $shipmentScheduleDet->ssd_sod_part;
                     $shipmentScheduleHistory->ssh_sod_desc = $shipmentScheduleDet->ssd_sod_desc;
+                    $shipmentScheduleHistory->ssh_uom = $shipmentScheduleDet->ssd_uom;
                     $shipmentScheduleHistory->ssh_sod_qty_ord = $shipmentScheduleDet->ssd_sod_qty_ord;
                     $shipmentScheduleHistory->ssh_status_det = $shipmentScheduleDet->ssd_status;
                     $shipmentScheduleHistory->ssh_site = $unchecked->ssl_site;

@@ -90,6 +90,7 @@ class APIShipmentScheduleController extends Controller
                     't_so_line' => (string)$data->t_so_line,
                     't_so_part' => (string)$data->t_so_part,
                     't_so_part_desc' => (string)$data->t_so_part_desc,
+                    't_so_um' => (string)$data->t_so_um,
                     't_so_ord_qty' => (string)$data->t_so_ord_qty,
                     't_so_open_qty' => (string)$data->t_so_open_qty,
                     't_so_pick_qty' => (String)$pickedQty,

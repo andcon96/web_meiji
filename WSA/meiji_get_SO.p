@@ -15,6 +15,7 @@ field t_so_nbr          like so_nbr
 field t_so_line         like sod_line
 field t_so_part         like sod_part
 field t_so_part_desc    as char format "x(50)"
+field t_so_um           like sod_um
 field t_so_ord_qty      like sod_qty_ord
 field t_so_open_qty     like sod_qty_ord
 field t_so_serial       like sod_serial
@@ -45,6 +46,7 @@ for each so_mstr where so_domain = inpdomain and so_cust = inpcust no-lock:
             temp.t_so_nbr       = so_nbr
             temp.t_so_line      = sod_line
             temp.t_so_part      = sod_part
+            temp.t_so_um        = sod_um
             temp.t_so_part_desc = itemDescription
             temp.t_so_ord_qty   = sod_qty_ord
             temp.t_so_open_qty  = openQty
