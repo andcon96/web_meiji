@@ -29,7 +29,8 @@ class APIPurchaseOrderApprovalController extends Controller
             'getReceiptDetail.getKemasan',
             'getReceiptDetail.getKendaraan',
             'getReceiptDetail.getPenanda',
-            'getReceiptDetail.getPurchaseOrderDetail'
+            'getReceiptDetail.getPurchaseOrderDetail',
+            'getReceiptDetail.getPallet'
         ]);
 
         if ($req->search) {
@@ -165,6 +166,7 @@ class APIPurchaseOrderApprovalController extends Controller
                         }
 
 
+
                         $submitReceiptQxtend = (new QxtendServices())->qxPurchaseOrderReceipt($poNbr, $line, $lotserialQty, $receiptUm, $site, $location, $lotserial);
                         if ($submitReceiptQxtend == false) {
                             DB::rollback();
@@ -183,26 +185,31 @@ class APIPurchaseOrderApprovalController extends Controller
                             // Update Data PO di web
                             (new WSAServices())->wsaPurchaseOrder($poNbr);
 
-                            // Update Data xxinv_det pake WSA
-                            $updateDataQAD = (new WSAServices())->wsaUpdateStockTableCustom(
-                                $dataPurchaseOrderDetail->pod_part,
-                                $location,
-                                $lotserial,
-                                $dataReceipt->rd_bin_penyimpanan,
-                                $dataReceipt->rd_level_penyimpanan,
-                                $site,
-                                $dataReceipt->rd_building_penyimpanan,
-                                $lotserialQty,
-                                $dataReceipt->rd_tanggal_datang,
-                                $dataReceipt->rd_tgl_expire
-                            );
 
-                            if ($updateDataQAD == false) {
-                                DB::rollback();
-                                return response()->json([
-                                    'Status' => 'Error',
-                                    'Message' => "Gagal update data stock WSA"
-                                ], 422);
+                            $dataReceiptPallet = ReceiptDetail::with('getPallet')->find($tempApprove->art_receipt_det_id);
+                            foreach ($dataReceiptPallet->getPallet as $dataPallet) {
+
+                                // Update Data xxinv_det pake WSA
+                                $updateDataQAD = (new WSAServices())->wsaUpdateStockTableCustom(
+                                    $dataPurchaseOrderDetail->pod_part,
+                                    $location,
+                                    $lotserial,
+                                    $dataPallet->rdp_bin_penyimpanan,
+                                    $dataPallet->rdp_level_penyimpanan,
+                                    $site,
+                                    $dataReceipt->rd_building_penyimpanan,
+                                    $dataPallet->rdp_qty_penyimpanan,
+                                    $dataReceipt->rd_tanggal_datang,
+                                    $dataReceipt->rd_tgl_expire
+                                );
+
+                                if ($updateDataQAD == false) {
+                                    DB::rollback();
+                                    return response()->json([
+                                        'Status' => 'Error',
+                                        'Message' => "Gagal update data stock WSA"
+                                    ], 422);
+                                }
                             }
                         }
                     }

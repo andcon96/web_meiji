@@ -60,4 +60,8 @@ class ReceiptDetail extends Model
     {
         return $this->hasOne(ReceiptDetailUserSeenBy::class, 'rdup_rd_id', 'id');
     }
+    public function getPallet()
+    {
+        return $this->hasMany(ReceiptPallet::class, 'rdp_rd_det_id', 'id');
+    }
 }
