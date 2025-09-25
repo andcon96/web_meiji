@@ -42,6 +42,7 @@ class ShipmentScheduleServices
                 $shipmentScheduleDet->ssd_uom = $order['uom'];
                 $shipmentScheduleDet->ssd_sod_desc = $order['desc'];
                 $shipmentScheduleDet->ssd_sod_qty_ord = $order['qty'];
+                $shipmentScheduleDet->ssd_sod_lot = $order['lot'];
                 $shipmentScheduleDet->ssd_status = 'New';
                 $shipmentScheduleDet->created_by = Auth::user()->id;
                 $shipmentScheduleDet->save();
@@ -73,6 +74,7 @@ class ShipmentScheduleServices
                     $shipmentScheduleHistory->ssh_sod_desc = $shipmentScheduleDet->ssd_sod_desc;
                     $shipmentScheduleHistory->ssh_uom = $shipmentScheduleDet->ssd_uom;
                     $shipmentScheduleHistory->ssh_sod_qty_ord = $shipmentScheduleDet->ssd_sod_qty_ord;
+                    $shipmentScheduleHistory->ssh_sod_lot = $shipmentScheduleDet->ssd_sod_lot;
                     $shipmentScheduleHistory->ssh_status_det = $shipmentScheduleDet->ssd_status;
                     $shipmentScheduleHistory->ssh_site = $shipmentScheduleLocation->ssl_site;
                     $shipmentScheduleHistory->ssh_warehouse = $shipmentScheduleLocation->ssl_warehouse;

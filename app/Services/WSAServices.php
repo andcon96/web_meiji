@@ -968,7 +968,7 @@ class WSAServices
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
             '<Body>' .
-            '<meiji_xxinv_det_fefo xmlns="' . $wsa->wsa_path . '">' .
+            '<meiji_xxinv_det_fifo xmlns="' . $wsa->wsa_path . '">' .
             '<inpdomain>' . $domainCode . '</inpdomain>' .
             '<inpsite>' . $site . '</inpsite>' .
             '<inppart>' . $itemCode . '</inppart>' .
@@ -976,7 +976,7 @@ class WSAServices
             '<inpbin></inpbin>' .
             '<inpwrh></inpwrh>' .
             '<inplevel></inplevel>' .
-            '</meiji_xxinv_det_fefo>' .
+            '</meiji_xxinv_det_fifo>' .
             '</Body>' .
             '</Envelope>';
 
@@ -1272,16 +1272,16 @@ class WSAServices
 
         $qdocRequest = '
         <Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
-        <Body>
-            <meiji_update_xxinv_qtyoh xmlns="' . $wsa->wsa_path . '">
-                <inpdomain>' . $domainCode . '</inpdomain>
-                <inpsite>' . $site . '</inpsite>
-                <inpitem>' . $item . '</inpitem>
-                <inplot>' . $lot . '</inplot>
-                <inppick>' . $qty . '</inppick>
-            </meiji_update_xxinv_qtyoh>
-        </Body>
-    </Envelope>
+            <Body>
+                <meiji_update_xxinv_qtyoh xmlns="' . $wsa->wsa_path . '">
+                    <inpdomain>' . $domainCode . '</inpdomain>
+                    <inpsite>' . $site . '</inpsite>
+                    <inpitem>' . $item . '</inpitem>
+                    <inplot>' . $lot . '</inplot>
+                    <inppick>' . $qty . '</inppick>
+                </meiji_update_xxinv_qtyoh>
+            </Body>
+        </Envelope>
         ';
 
         Log::channel('confirmShipment')->info($qdocRequest);
@@ -1901,5 +1901,26 @@ class WSAServices
             $qdocResult,
             $dataloop,
         ];
+    }
+
+    public function wsaQtyConversion($packingReplenishment, $activeConnectionType)
+    {
+        $wsa = qxwsa::first();
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+        $sodNbr = $packingReplenishment['sodNbr'];
+        $sodLine = $packingReplenishment['sodLine'];
+        $qdocRequest =
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+                <Body>
+                    <meiji_uom_conversion xmlns="' . $wsa->wsa_path . '">
+                        <inpdomain>' . $domainCode . '</inpdomain>
+                        <inpnbr>' . $sodNbr . '</inpnbr>
+                        <inpline>' . $sodLine . '</inpline>
+                    </meiji_uom_conversion>
+                </Body>
+            </Envelope>';
+
+        return $this->sendQdocRequest($qdocRequest, $activeConnectionType);
     }
 }
