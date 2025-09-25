@@ -31,6 +31,7 @@ class APIPurchaseOrderController extends Controller
             'getReceipt.getDetailReceipt.getKendaraan',
             'getReceipt.getDetailReceipt.getPenanda',
             'getReceipt.getDetailReceipt.getAttachment',
+            'getReceipt.getDetailReceipt.getPallet',
             'getReceipt.getDetailReceipt.getApprovalTemp.getUserApprove:id,username,name',
             'getReceipt.getDetailReceipt.getApprovalTemp.getUserApproveAlt:id,username,name',
             'getReceipt.getDetailReceipt.getApprovalTemp.getUserApproveBy:id,username,name',
@@ -75,7 +76,9 @@ class APIPurchaseOrderController extends Controller
 
     public function saveReceipt(Request $req)
     {
+        
         $inputan = json_decode($req->data);
+
         $images = $req->input('images', []); // Gets indexTabPod values
         $files = $req->file('images');       // Gets UploadedFile objects
 
@@ -105,6 +108,8 @@ class APIPurchaseOrderController extends Controller
         }
 
         $saveData = (new ReceiptServices())->saveDataReceiptPerLot($inputan, $arrayKoneksiImage);
+
+        
         if ($saveData[0] == false) {
             $msg = "Failed To Save Receipt Data.";
             if ($saveData[1] != '') {

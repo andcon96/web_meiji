@@ -126,5 +126,12 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     // Picklist Receipt
     Route::get('getPicklistDetRcpt', [APIPicklistShopping::class, 'getPicklistDetAppr']);
     Route::post('wsaReceiptPick', [APIPicklistShopping::class, 'submitPicklistReceipt']);
+
+    // Single Transfer
+    Route::get('getLocationData', [APIPicklistShopping::class, 'getLocationData']);
+    Route::get('wsaWarehousePick', [APIPicklistShopping::class, 'wsaWarehouse']);
+    Route::get('getSearchLocation', [APIPicklistShopping::class, 'wsainvdet']);
+    Route::post('sendTransferItem', [APIPicklistShopping::class, 'sendTransferItem']);
+    
 });
     // WSA Picklist

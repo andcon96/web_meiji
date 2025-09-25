@@ -11,6 +11,7 @@ use App\Models\API\ReceiptKemasan;
 use App\Models\API\ReceiptKendaraan;
 use App\Models\API\ReceiptMaster;
 use App\Models\API\ReceiptPenanda;
+use App\Models\API\ReceiptPallet;
 use App\Models\Settings\ApprovalReceipt;
 use App\Models\Settings\User;
 use Exception;
@@ -69,8 +70,8 @@ class ReceiptServices
                 $newReceiptDetail->rd_qty_pallete = $dataDetail->qty_pallete;
                 $newReceiptDetail->rd_site_penyimpanan = $dataDetail->site_penyimpanan;
                 $newReceiptDetail->rd_location_penyimpanan = $dataDetail->loc_penyimpanan;
-                $newReceiptDetail->rd_level_penyimpanan = $dataDetail->level_penyimpanan;
-                $newReceiptDetail->rd_bin_penyimpanan = $dataDetail->bin_penyimpanan;
+                //$newReceiptDetail->rd_level_penyimpanan = $dataDetail->level_penyimpanan;
+                //$newReceiptDetail->rd_bin_penyimpanan = $dataDetail->bin_penyimpanan;
                 $newReceiptDetail->rd_building_penyimpanan = $dataDetail->building_penyimpanan;
                 $newReceiptDetail->rd_status = 'Waiting'; // Langsung Approval
                 $newReceiptDetail->rd_keterangan_tambahan = $dataDetail->keterangan_tambahan;
@@ -104,8 +105,17 @@ class ReceiptServices
                     $approvalReceiptTemp->save();
                 }
 
-
-
+                // Pallet
+                foreach($dataDetail->pallet_list as $pallet){ 
+                    $newReceiptPallet = new ReceiptPallet();
+                    $newReceiptPallet->rdp_rd_det_id = $newReceiptDetail->id;
+                    $newReceiptPallet->rdp_level_penyimpanan = $pallet->level_penyimpanan;
+                    $newReceiptPallet->rdp_bin_penyimpanan = $pallet->bin_penyimpanan;
+                    $newReceiptPallet->rdp_qty_penyimpanan = $pallet->qty_pallet;
+                    $newReceiptPallet->save();
+                    
+                }
+               
                 // Update Qty Ongoing PO Detail
                 // $dataPodDetail = PurchaseOrderDetail::find($dataDetail->id_pod_det);
                 // $dataPodDetail->pod_qty_ongoing = $dataPodDetail->pod_qty_ongoing + $dataDetail->total;
