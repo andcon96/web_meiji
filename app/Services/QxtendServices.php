@@ -945,7 +945,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
 
 
 
-    public function qxTransferSingleItemPackingReplenishment($packingReplenishment, $locationDetail, $location, $activeConnection)
+    public function qxTransferSingleItemPackingReplenishment($packingReplenishment, $qtyTransfer, $locationDetail, $location, $activeConnection)
     {
         $receiver = 'QADERP';
 
@@ -1009,7 +1009,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
 								<transWms>
 									<operation>A</operation>
 									<vPart>' . $packingReplenishment['sodPart'] . '</vPart>
-									<vQty>' . $locationDetail['qtyPick'] . '</vQty>
+									<vQty>' . $qtyTransfer . '</vQty>
 									<vSiteFrom>' . $locationDetail['site'] . '</vSiteFrom>
 									<vLocFrom>' . $locationDetail['loc'] . '</vLocFrom>
 									<vLotFrom>' . $locationDetail['lot'] . '</vLotFrom>

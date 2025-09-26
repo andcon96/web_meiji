@@ -59,8 +59,17 @@ class PackingReplenishmentServices
 
                     $shipmentScheduleDet->ssd_sod_qty_pick += $packingReplenishment['totalPickedQty'];
                     foreach ($packingReplenishment['locations'] as $locationDetail) {
+                        // Baca conversion nya dulu
+                        $wsaConversion = (new WSAServices())->wsaQtyConversion($packingReplenishment, $activeConnection);
+                        if ($wsaConversion[0] == 'true') {
+                            $qtyTransfer = $locationDetail['qtyPick'] * $wsaConversion[1][0]->t_so_qty_conversion;
+                        } else {
+                            $qtyTransfer = $locationDetail['qtyPick'];
+                        }
+
+
                         // Qxtend Transfer single item
-                        $qxtend = (new QxtendServices())->qxTransferSingleItemPackingReplenishment($packingReplenishment, $locationDetail, $location, $activeConnection);
+                        $qxtend = (new QxtendServices())->qxTransferSingleItemPackingReplenishment($packingReplenishment, $qtyTransfer, $locationDetail, $location, $activeConnection);
 
                         if ($qxtend[0] == false) {
                             DB::commit();
