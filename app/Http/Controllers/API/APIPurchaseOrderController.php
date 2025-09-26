@@ -134,6 +134,8 @@ class APIPurchaseOrderController extends Controller
         $inputan = json_decode($req->data);
         $approval = json_decode($req->userApprove);
 
+         // Cek Approval
+
         if (empty($approval)) {
             return response()->json([
                 'Status' => 'Error',
@@ -198,11 +200,18 @@ class APIPurchaseOrderController extends Controller
         // $itemCode = $req->search; 
         // Request Xena 1609
         $itemCode = '';
+        $warehouse = '';
+        if ($req->wh){
+            $warehouse = $req->wh;
+        }
 
         // Ambil Relati Item ke Location di Web
         $getAllItemLocation = LocationDetail::query()->with(['getListItem.getItem', 'getMaster']);
         if ($itemCode) {
             $getAllItemLocation->whereRelation('getListItem.getItem', 'im_item_part', '=', $itemCode);
+        }
+        if($req->wh){
+            $getAllItemLocation->where('ld_building', $warehouse);
         }
         $getAllItemLocation = $getAllItemLocation->get();
 
@@ -211,7 +220,7 @@ class APIPurchaseOrderController extends Controller
         //     return (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', '', '');
         // });
 
-        $wsaData = (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', '', '');
+        $wsaData = (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', $warehouse, '');
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
