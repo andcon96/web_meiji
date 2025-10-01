@@ -8,6 +8,8 @@ use App\Models\API\PackingReplenishment\PackingReplenishmentMstr;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleDet;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleMstr;
 use App\Models\Settings\qxwsa;
+use App\Models\Settings\Role;
+use App\Models\Settings\User;
 use App\Services\PackingReplenishmentServices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -72,11 +74,12 @@ class APIPackingReplenishmentController extends Controller
     {
         // Log::channel('packingReplenishment')->info(json_encode($request->all()));
 
+        $approver = $request->approver;
         $packingReplenishments = $request->scheduleDetail;
 
         $activeConnection = qxwsa::first();
 
-        $saveData = (new PackingReplenishmentServices())->savePackingReplenishment($packingReplenishments, $activeConnection);
+        $saveData = (new PackingReplenishmentServices())->savePackingReplenishment($approver, $packingReplenishments, $activeConnection);
 
         if ($saveData == false) {
             return response()->json([
@@ -89,5 +92,25 @@ class APIPackingReplenishmentController extends Controller
             'status' => 'success',
             'message' => 'Packing Replenishment has been created',
         ], 200, ['Content-Type' => 'application/json'], JSON_UNESCAPED_UNICODE);
+    }
+
+    public function approverList()
+    {
+        $role = Role::where('role_code', 'SH')->first();
+        $users = User::where('role_id', $role->id)
+            ->where('is_active', 'Active')
+            ->get(['id', 'name']);
+
+
+        if ($users->count() == 0) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No users found."
+            ], 422);
+        }
+
+        return response()->json([
+            'users' => $users,
+        ], 200);
     }
 }

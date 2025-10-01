@@ -58,7 +58,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post('wsaDataPO', [APIPurchaseOrderController::class, 'wsaDataPO']);
     Route::post('wsaLotBatch', [APIPurchaseOrderController::class, 'wsaLotBatch']);
     Route::post('wsaPenyimpanan', [APIPurchaseOrderController::class, 'wsaPenyimpanan']);
-    
+
     Route::post('wsaWarehouse', [APIPurchaseOrderController::class, 'wsaWarehouse']);
     Route::post('wsaLevel', [APIPurchaseOrderController::class, 'wsaLevel']);
     Route::post('wsaBin', [APIPurchaseOrderController::class, 'wsaBin']);
@@ -84,6 +84,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getPackingReplenishment', [APIPackingReplenishmentController::class, 'index']);
     Route::get('listShipmentSchedule', [APIPackingReplenishmentController::class, 'listShipmentSchedule']);
     Route::post('savePackingReplenishment', [APIPackingReplenishmentController::class, 'store']);
+    Route::get('approverList', [APIPackingReplenishmentController::class, 'approverList']);
 
     // Shipper Confirm
     Route::get('getShipperConfirmation', [APIShipperConfirmController::class, 'index']);
@@ -108,7 +109,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post('wsaDataItem', [APIWorkOrderController::class, 'wsaDataItem']);
 
 
-    //picklist browse 
+    //picklist browse
     Route::get('getDataPicklist', [APIPicklistShopping::class, 'getPicklistMstr']);
 
     // Picklist Shopping
@@ -133,6 +134,6 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('wsaWarehousePick', [APIPicklistShopping::class, 'wsaWarehouse']);
     Route::get('getSearchLocation', [APIPicklistShopping::class, 'wsainvdet']);
     Route::post('sendTransferItem', [APIPicklistShopping::class, 'sendTransferItem']);
-    
+
 });
     // WSA Picklist

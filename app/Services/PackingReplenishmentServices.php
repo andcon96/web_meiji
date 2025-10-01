@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Log;
 
 class PackingReplenishmentServices
 {
-    public function savePackingReplenishment($packingReplenishments, $activeConnection)
+    public function savePackingReplenishment($approver, $packingReplenishments, $activeConnection)
     {
         DB::beginTransaction();
 
@@ -177,37 +177,42 @@ class PackingReplenishmentServices
             $menu = Menu::where('menu_route', 'shipperApproval')->first();
 
             // Cari approval
-            $packingReplenishmentApprovals = ApprovalSetupMstr::with(['getApprovalSetupDet'])
-                ->where('menu_id', $menu->id)->first();
+            // $packingReplenishmentApprovals = ApprovalSetupMstr::with(['getApprovalSetupDet'])
+            //     ->where('menu_id', $menu->id)->first();
 
-            if ($packingReplenishmentApprovals && $packingReplenishmentApprovals->getApprovalSetupDet->count() > 0) {
-                foreach ($packingReplenishmentApprovals->getApprovalSetupDet as $key => $approverDetail) {
-                    // Buat approval
-                    $packingReplenishmentApproval = new PackingReplenishmentApproval();
-                    $packingReplenishmentApproval->prm_id = $packingReplenishmentMstr->id;
-                    $packingReplenishmentApproval->pra_sequence = $key + 1;
-                    $packingReplenishmentApproval->pra_user_approver = $approverDetail->asd_approval_user;
-                    $packingReplenishmentApproval->pra_status = 'Waiting for confirmation';
-                    $packingReplenishmentApproval->created_by = Auth::user()->id;
-                    $packingReplenishmentApproval->updated_by = Auth::user()->id;
-                    $packingReplenishmentApproval->save();
-                }
-            } else {
-                // Buat approval
-                $packingReplenishmentApproval = new PackingReplenishmentApproval();
-                $packingReplenishmentApproval->prm_id = $packingReplenishmentMstr->id;
-                $packingReplenishmentApproval->pra_sequence = 1;
-                $packingReplenishmentApproval->pra_user_approver = Auth::user()->id;
-                $packingReplenishmentApproval->pra_status = 'Waiting for confirmation';
-                $packingReplenishmentApproval->created_by = Auth::user()->id;
-                $packingReplenishmentApproval->updated_by = Auth::user()->id;
-                $packingReplenishmentApproval->save();
-            }
-
-            // Bandingin order qty & qty pick nya kalau sama ganti status biar gabisa buat shipment lagi
-            // if ($totalData == $totalMatch) {
-
+            // if ($packingReplenishmentApprovals && $packingReplenishmentApprovals->getApprovalSetupDet->count() > 0) {
+            //     foreach ($packingReplenishmentApprovals->getApprovalSetupDet as $key => $approverDetail) {
+            //         // Buat approval
+            //         $packingReplenishmentApproval = new PackingReplenishmentApproval();
+            //         $packingReplenishmentApproval->prm_id = $packingReplenishmentMstr->id;
+            //         $packingReplenishmentApproval->pra_sequence = $key + 1;
+            //         $packingReplenishmentApproval->pra_user_approver = $approverDetail->asd_approval_user;
+            //         $packingReplenishmentApproval->pra_status = 'Waiting for confirmation';
+            //         $packingReplenishmentApproval->created_by = Auth::user()->id;
+            //         $packingReplenishmentApproval->updated_by = Auth::user()->id;
+            //         $packingReplenishmentApproval->save();
+            //     }
+            // } else {
+            //     // Buat approval
+            //     $packingReplenishmentApproval = new PackingReplenishmentApproval();
+            //     $packingReplenishmentApproval->prm_id = $packingReplenishmentMstr->id;
+            //     $packingReplenishmentApproval->pra_sequence = 1;
+            //     $packingReplenishmentApproval->pra_user_approver = Auth::user()->id;
+            //     $packingReplenishmentApproval->pra_status = 'Waiting for confirmation';
+            //     $packingReplenishmentApproval->created_by = Auth::user()->id;
+            //     $packingReplenishmentApproval->updated_by = Auth::user()->id;
+            //     $packingReplenishmentApproval->save();
             // }
+
+            // Approver langsung saat create packing replenishment
+            $packingReplenishmentApproval = new PackingReplenishmentApproval();
+            $packingReplenishmentApproval->prm_id = $packingReplenishmentMstr->id;
+            $packingReplenishmentApproval->pra_sequence = 1;
+            $packingReplenishmentApproval->pra_user_approver = $approver;
+            $packingReplenishmentApproval->pra_status = 'Waiting for confirmation';
+            $packingReplenishmentApproval->created_by = Auth::user()->id;
+            $packingReplenishmentApproval->updated_by = Auth::user()->id;
+            $packingReplenishmentApproval->save();
 
             $shipmentScheduleMstr = ShipmentScheduleMstr::with([
                 'getShipmentScheduleDetail.getShipmentScheduleLocation'
