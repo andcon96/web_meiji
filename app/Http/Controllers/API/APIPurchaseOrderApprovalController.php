@@ -30,7 +30,8 @@ class APIPurchaseOrderApprovalController extends Controller
             'getReceiptDetail.getKendaraan',
             'getReceiptDetail.getPenanda',
             'getReceiptDetail.getPurchaseOrderDetail',
-            'getReceiptDetail.getPallet'
+            'getReceiptDetail.getPallet',
+            'getReceiptDetail.getAttachment',
         ]);
 
         if ($req->search) {
@@ -59,7 +60,7 @@ class APIPurchaseOrderApprovalController extends Controller
             ->orderBy('id', 'desc')
             ->paginate(10);
 
-
+            
         return GeneralResources::collection($data);
     }
 
@@ -154,7 +155,7 @@ class APIPurchaseOrderApprovalController extends Controller
                         $location = $dataReceipt->rd_location_penyimpanan ?? '';
                         $lotserial = $dataReceipt->rd_batch ?? '';
                         $qtyPotensi = $dataReceipt->rd_qty_potensi ?? 1;
-
+                        $expireddate = date('Y-m-d', strtotime($dataReceipt->rd_tgl_expire)) ;
                         // Assign pod_um_conv sebelum receipt -> request bang dany
                         $changeUmConv = (new WSAServices())->wsaChangeUmConv($poNbr, $line, $qtyPotensi);
                         if ($changeUmConv == false) {
@@ -166,8 +167,8 @@ class APIPurchaseOrderApprovalController extends Controller
                         }
 
 
-
-                        $submitReceiptQxtend = (new QxtendServices())->qxPurchaseOrderReceipt($poNbr, $line, $lotserialQty, $receiptUm, $site, $location, $lotserial);
+                        
+                        $submitReceiptQxtend = (new QxtendServices())->qxPurchaseOrderReceipt($poNbr, $line, $lotserialQty, $receiptUm, $site, $location, $lotserial,$expireddate);
                         if ($submitReceiptQxtend == false) {
                             DB::rollback();
                             return response()->json([
