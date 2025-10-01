@@ -258,7 +258,7 @@ class QxtendServices
         }
     }
 
-    public function qxPurchaseOrderReceipt($ponbr, $line, $lotSerialQty, $um, $site, $location, $lotserial)
+    public function qxPurchaseOrderReceipt($ponbr, $line, $lotSerialQty, $um, $site, $location, $lotserial,$expireddate)
     {
         $domain = Domain::first();
         $domainCode = $domain->domain ?? '';
@@ -343,6 +343,8 @@ class QxtendServices
                                     <location>' . $location . '</location>
                                     <lotserial>' . $lotserial . '</lotserial>
                                     <multiEntry>false</multiEntry>
+                                    <chgAttr>true</chgAttr>
+                                    <chgExpire>'.$expireddate.'</chgExpire>
                                     <serialsYn>true</serialsYn>
 							</lineDetail>
 							</purchaseOrderReceive>';
