@@ -74,26 +74,26 @@ class APIShipmentScheduleController extends Controller
             if ((string)$data->t_so_open_qty > 0) {
                 // Ambil qty pick
                 $pickedQty = 0;
-                $salesOrderDetail = ShipmentScheduleDet::where('ssd_sod_site', (String)$data->t_so_site)
-                ->where('ssd_sod_nbr', (String)$data->t_so_nbr)
-                ->where('ssd_sod_line', (String)$data->t_so_line)
-                ->first();
+                $salesOrderDetail = ShipmentScheduleDet::where('ssd_sod_site', (string)$data->t_so_site)
+                    ->where('ssd_sod_nbr', (string)$data->t_so_nbr)
+                    ->where('ssd_sod_line', (string)$data->t_so_line)
+                    ->first();
 
                 if ($salesOrderDetail) {
                     $pickedQty = $salesOrderDetail->ssd_sod_qty_pick;
                 }
 
                 array_push($tempData, [
-                    't_so_nbr' => (String)$data->t_so_nbr,
-                    't_so_site' => (String)$data->t_so_site,
-                    't_so_ship' => (String)$data->t_so_ship,
+                    't_so_nbr' => (string)$data->t_so_nbr,
+                    't_so_site' => (string)$data->t_so_site,
+                    't_so_ship' => (string)$data->t_so_ship,
                     't_so_line' => (string)$data->t_so_line,
                     't_so_part' => (string)$data->t_so_part,
                     't_so_part_desc' => (string)$data->t_so_part_desc,
                     't_so_um' => (string)$data->t_so_um,
                     't_so_ord_qty' => (string)$data->t_so_ord_qty,
                     't_so_open_qty' => (string)$data->t_so_open_qty,
-                    't_so_pick_qty' => (String)$pickedQty,
+                    't_so_pick_qty' => (string)$pickedQty,
                     't_so_serial' => (string)$data->t_so_serial,
                 ]);
             }
@@ -107,14 +107,17 @@ class APIShipmentScheduleController extends Controller
     public function wsaInventoryDetail(Request $request)
     {
         $searchData = $request->search;
+        // return response()->json(['data' => $searchData, 200, ['Content-Type' => 'application/json']], JSON_UNESCAPED_UNICODE);
 
         // split by "|"
         $parts = explode('|', $searchData);
+        Log::channel('shipmentSchedule')->info(json_encode($parts));
 
         // make sure we always get both values
-        $site = $parts[0] ?? null;
-        $itemCode = $parts[1] ?? null;
-        $lot      = $parts[2] ?? null;
+        $site = $parts[0] ?? '';
+        $itemCode = $parts[1] ?? '';
+        $lot = $parts[2] == null || $parts[2] == 'null' ? '' : $parts[2];
+
 
         $activeConnection = qxwsa::first();
         $wsaInventory = (new WSAServices())->wsaInventoryDetail($site, $itemCode, $lot, $activeConnection);

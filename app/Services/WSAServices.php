@@ -980,6 +980,8 @@ class WSAServices
             '</Body>' .
             '</Envelope>';
 
+        Log::channel('shipmentSchedule')->info($qdocRequest);
+
         return $this->sendQdocRequest($qdocRequest, $activeConnectionType);
     }
 
