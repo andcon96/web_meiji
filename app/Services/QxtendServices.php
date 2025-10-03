@@ -1158,7 +1158,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                                         <scxLine>' . $soLine . '</scxLine>
                                         <srSite>' . $soSite . '</srSite>
                                         <srQty>0</srQty>
-                                        <srLoc></srLoc>
+                                        <srLoc>' . $location . '</srLoc>
                                         <srLotser></srLotser>
                                         <multiple>true</multiple>
                                         <vCmmts>false</vCmmts>
