@@ -138,6 +138,7 @@ class APIShipmentScheduleController extends Controller
                 't_inv_site' => (string)$data->t_inv_site,
                 't_inv_wrh' => (string)$data->t_inv_wrh,
                 't_inv_qtyoh' => (string)$data->t_inv_qtyoh,
+                't_inv_uom' => (string)$data->t_inv_uom,
             ]);
         }
 
