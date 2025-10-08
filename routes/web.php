@@ -17,6 +17,7 @@ use App\Http\Controllers\Settings\ShipmentSchedulePrefixController;
 use App\Http\Controllers\Settings\ShipperPrefixController;
 use App\Http\Controllers\Settings\PicklistPrefixController;
 use App\Http\Controllers\Settings\UserController;
+use App\Http\Controllers\ShipmentReportController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
@@ -109,6 +110,11 @@ Route::group(['middleware' => ['auth']], function () {
 
 	Route::resource('PicklistPrefix', PicklistPrefixController::class);
 	Route::post('deletePicklistPrefix', [PicklistPrefixController::class, 'delete'])->name('deletePicklistPrefix');
+
+	// Shipment Schedule Report
+	Route::get('/ShipmentScheduleReport', [ShipmentReportController::class, 'index']);
+	Route::get('/getAllSSD', [ShipmentReportController::class, 'getAllSSD']);
+	Route::post('/SSDExport', [ShipmentReportController::class, 'SSDExport'])->name('SSDExport');
 });
 
 Auth::routes();

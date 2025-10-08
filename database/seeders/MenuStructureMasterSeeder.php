@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Settings\MenuStructure;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class MenuStructureMasterSeeder extends Seeder
@@ -27,6 +26,9 @@ class MenuStructureMasterSeeder extends Seeder
             ['menu_id' => 10, 'menu_icon_id' => NULL, 'menu_parent_id' => 9, 'menu_sequence' => 9],
             ['menu_id' => 11, 'menu_icon_id' => NULL, 'menu_parent_id' => 9, 'menu_sequence' => 10],
             ['menu_id' => 12, 'menu_icon_id' => NULL, 'menu_parent_id' => 9, 'menu_sequence' => 11],
+
+            ['menu_id' => 13, 'menu_icon_id' => 6, 'menu_parent_id' => Null, 'menu_sequence' => 12],
+            ['menu_id' => 14, 'menu_icon_id' => Null, 'menu_parent_id' => 13, 'menu_sequence' => 13],
         ];
 
         MenuStructure::insert($data);
