@@ -36,7 +36,7 @@ class ReceiptServices
             $newReceiptMaster = new ReceiptMaster();
             $newReceiptMaster->rm_po_mstr_id = $poMasterID;
             $newReceiptMaster->rm_rn_number = $getRunningNumber;
-            $newReceiptMaster->rm_status = 'Waiting For Approval';
+            $newReceiptMaster->rm_status = 'Waiting For Recheck';
             $newReceiptMaster->save();
 
             // Create Receipt Detail

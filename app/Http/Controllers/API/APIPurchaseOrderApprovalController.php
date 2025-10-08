@@ -42,7 +42,7 @@ class APIPurchaseOrderApprovalController extends Controller
         }
 
         $data = $data
-            ->where('art_status', '=', 'Waiting')
+            ->where('art_status', '=', 'Checked')
             ->where(function ($query) {
                 $query->where('art_user_approve', '=', Auth::user()->id)
                     ->orWhere('art_user_approve_alt', '=', Auth::user()->id);

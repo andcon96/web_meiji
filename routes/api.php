@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\APIController;
 use App\Http\Controllers\API\APIPurchaseOrderApprovalController;
 use App\Http\Controllers\API\APIPurchaseOrderController;
+use App\Http\Controllers\API\APIPurchaseOrderRecheckController;
 use App\Http\Controllers\API\APIQualityInfoController;
 use App\Http\Controllers\API\ShipmentSchedule\APIShipmentScheduleController;
 use App\Http\Controllers\API\APITrasnferStockController;
@@ -36,6 +37,10 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post('saveReceipt', [APIPurchaseOrderController::class, 'saveReceipt']);
     Route::post('saveEditReceipt', [APIPurchaseOrderController::class, 'saveEditReceipt']);
     Route::get('getPoApproval', [APIPurchaseOrderApprovalController::class, 'getPoApproval']);
+
+    // PO Recheck
+    Route::get('getDataPORecheck', [APIPurchaseOrderRecheckController::class, 'index']);
+    Route::post('submitRecheckReceipt', [APIPurchaseOrderRecheckController::class, 'saveReceiptRecheck']);
 
     // PO Approval
     Route::get('getDataApprovalPO', [APIPurchaseOrderApprovalController::class, 'index']);
