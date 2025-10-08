@@ -104,7 +104,7 @@
             <td>{{ $row['ssd_sod_lot'] }}</td> --}}
 
             <td>{{ $row->ssd_sod_nbr }}</td>
-            <td>{{ $row->ssd_sod_shipto }}</td>
+            <td>{{ $row->sold_to }}</td>
             <td>{{ $row->ssd_sod_part }}</td>
             <td>{{ $row->ssd_uom }}</td>
             <td>{{ $row->ssd_sod_qty_ord }}</td>
