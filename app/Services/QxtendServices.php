@@ -1033,7 +1033,7 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
         return $this->sendQdocRequest($qdocRequest, $activeConnection);
     }
 
-    public function qxSalesOrderShipper($action, $location, $packingReplenishments, $id, $activeConnection)
+    public function qxSalesOrderShipper($action, $location, $shipmentScheduleDetails, $id, $activeConnection)
     {
         $receiver = 'QADERP';
         $operation = '';
@@ -1126,9 +1126,9 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                     <dsSalesOrderShipper>
                         <salesOrderShipper>
                         <operation>A</operation>
-                        <absShipfrom>' . $packingReplenishments[0]['sodSite'] . '</absShipfrom>
+                        <absShipfrom>' . $shipmentScheduleDetails[0]->ssd_sod_site . '</absShipfrom>
                         <absId></absId>
-                        <absShipto>' . $packingReplenishments[0]['sodShip'] . '</absShipto>
+                        <absShipto>' . $shipmentScheduleDetails[0]->ssd_sod_shipto . '</absShipto>
                         <vInvmov></vInvmov>
                         <vCont>true</vCont>
                         <vCont1>true</vCont1>
@@ -1143,15 +1143,15 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                         <vFeatures>false</vFeatures>
                         <vPrintSodet>false</vPrintSodet>
                         <lSoUm>false</lSoUm>
-                        <compAddr>' . $packingReplenishments[0]['sodSite'] . '</compAddr>
+                        <compAddr>' . $shipmentScheduleDetails[0]->ssd_sod_site . '</compAddr>
                         <lPrintLotserials>true</lPrintLotserials>
                         <dev>test1</dev>
                         <vOk>true</vOk>';
 
-        foreach ($packingReplenishments as $packingReplenishment) {
-            $soNumber = $packingReplenishment['sodNbr'];
-            $soLine = $packingReplenishment['sodLine'];
-            $soSite = $packingReplenishment['sodSite'];
+        foreach ($shipmentScheduleDetails as $shipmentScheduleDetail) {
+            $soNumber = $shipmentScheduleDetail->ssd_sod_nbr;
+            $soLine = $shipmentScheduleDetail->ssd_sod_line;
+            $soSite = $shipmentScheduleDetail->ssd_sod_site;
             $qdocRequest .= '
                                     <schedOrderItemDetail>
                                         <scxOrder>' . $soNumber . '</scxOrder>
@@ -1166,9 +1166,9 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                                         <answer>true</answer>
                                         <lAnswer>true</lAnswer>';
 
-            foreach ($packingReplenishment['locations'] as $locationDetail) {
-                $lot = $locationDetail['lot'];
-                $pickedQty = $locationDetail['qtyPick'];
+            foreach ($shipmentScheduleDetail->getShipmentScheduleLocation as $locationDetail) {
+                $lot = $locationDetail->ssl_lotserial;
+                $pickedQty = $locationDetail->ssl_qty_pick;
 
                 $qdocRequest .= '<schedOrderIssueDetail>
                                             <site>' . $soSite . '</site>
@@ -1196,9 +1196,9 @@ $qdocHead = '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qc
                                         <answer>true</answer>
                                         <lAnswer>true</lAnswer>';
 
-            foreach ($packingReplenishment['locations'] as $locationDetail) {
-                $lot = $locationDetail['lot'];
-                $pickedQty = $locationDetail['qtyPick'];
+            foreach ($shipmentScheduleDetail->getShipmentScheduleLocation as $locationDetail) {
+                $lot = $locationDetail->ssl_lotserial;
+                $pickedQty = $locationDetail->ssl_qty_pick;
 
                 $qdocRequest .= '<discreteOrderIssueDetail>
                                             <site>' . $soSite . '</site>

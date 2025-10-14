@@ -84,15 +84,16 @@ class APIPackingReplenishmentController extends Controller
 
     public function store(Request $request)
     {
-        // Log::channel('packingReplenishment')->info(json_encode($request->all()));
+        // Log::channel("packingReplenishment")->info(json_encode($request->all()));
 
         $approver = $request->approver;
+        $idPrm = $request->prm_id;
         $packingReplenishments = $request->scheduleDetail;
 
         $activeConnection = qxwsa::first();
 
         $packingReplenishmentService = new PackingReplenishmentServices();
-        $saveData = $packingReplenishmentService->savePackingReplenishment($approver, $packingReplenishments, $activeConnection);
+        $saveData = $packingReplenishmentService->savePackingReplenishment($approver, $idPrm, $packingReplenishments, $activeConnection);
 
         if ($saveData == false) {
             return response()->json(
@@ -176,7 +177,39 @@ class APIPackingReplenishmentController extends Controller
 
     public function approvePackingReplenishment(Request $request)
     {
-        Log::channel("packingReplenishment")->info(json_encode($request->all()));
+        // Log::channel("packingReplenishment")->info(json_encode($request->all()));
+        $packingReplenishment = $request->shipperPayload;
+        $reason = $request->reason;
+        $shipmentScheduleNumber = $request->shipmentScheduleNumber;
+        $activeConnection = qxwsa::first();
+
+        $packingReplenishmentService = new PackingReplenishmentServices();
+        $approvePackingReplenishment = $packingReplenishmentService->approvePackingReplenishment(
+            $packingReplenishment,
+            $reason,
+            $shipmentScheduleNumber,
+            $activeConnection,
+        );
+
+        if ($approvePackingReplenishment == false) {
+            return response()->json(
+                [
+                    "Status" => "Error",
+                    "Message" => "Failed to approve shipment preparation.",
+                ],
+                422,
+            );
+        }
+
+        return response()->json(
+            [
+                "status" => "success",
+                "message" => "Shipment preparation has been approved",
+            ],
+            200,
+            ["Content-Type" => "application/json"],
+            JSON_UNESCAPED_UNICODE,
+        );
     }
 
     public function editPackingReplenishment($id)

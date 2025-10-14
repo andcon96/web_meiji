@@ -20,19 +20,19 @@ class APIShipmentScheduleController extends Controller
      */
     public function index(Request $req)
     {
-        $data = ShipmentScheduleMstr::withCount('packingReplenishmentDet')
-            ->with(['packingReplenishmentDet']);
+        $data = ShipmentScheduleMstr::withCount("packingReplenishmentDet")->with(["packingReplenishmentDet"]);
 
         if ($req->search) {
             $data->where(function ($query) use ($req) {
-                $query->where('ssm_number', 'LIKE', '%' . $req->search . '%')
-                    ->orWhere('ssm_cust_code', 'LIKE', '%' . $req->search . '%')
-                    ->orWhere('ssm_cust_desc', 'LIKE', '%' . $req->search . '%')
-                    ->orWhere('ssm_status', 'LIKE', '%' . $req->search . '%');
+                $query
+                    ->where("ssm_number", "LIKE", "%" . $req->search . "%")
+                    ->orWhere("ssm_cust_code", "LIKE", "%" . $req->search . "%")
+                    ->orWhere("ssm_cust_desc", "LIKE", "%" . $req->search . "%")
+                    ->orWhere("ssm_status", "LIKE", "%" . $req->search . "%");
             });
         }
 
-        $data = $data->orderBy('ssm_number', 'desc')->paginate(10);
+        $data = $data->orderBy("ssm_number", "desc")->paginate(10);
 
         return GeneralResources::collection($data);
     }
@@ -40,18 +40,25 @@ class APIShipmentScheduleController extends Controller
     public function wsaCustomer()
     {
         $activeConnection = qxwsa::first();
-        $customerData = (new WSAServices())->wsaCustomer($activeConnection);
+        $wsaServices = new WSAServices();
+        $customerData = $wsaServices->wsaCustomer($activeConnection);
 
-        if ($customerData[0] == 'false') {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "No customer data found."
-            ], 422);
+        if ($customerData[0] == "false") {
+            return response()->json(
+                [
+                    "Status" => "Error",
+                    "Message" => "No customer data found.",
+                ],
+                422,
+            );
         }
 
-        return response()->json([
-            'customerData' => $customerData[1],
-        ], 200);
+        return response()->json(
+            [
+                "customerData" => $customerData[1],
+            ],
+            200,
+        );
     }
 
     public function wsaSalesOrder(Request $request)
@@ -59,24 +66,28 @@ class APIShipmentScheduleController extends Controller
         $customer = $request->search;
 
         $activeConnection = qxwsa::first();
-        $salesOrderData = (new WSAServices())->wsaSalesOrder($customer, $activeConnection);
+        $wsaServices = new WSAServices();
+        $salesOrderData = $wsaServices->wsaSalesOrder($customer, $activeConnection);
 
-        if ($salesOrderData[0] == 'false') {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => 'No sales order data found.'
-            ], 422);
+        if ($salesOrderData[0] == "false") {
+            return response()->json(
+                [
+                    "Status" => "Error",
+                    "Message" => "No sales order data found.",
+                ],
+                422,
+            );
         }
 
         $tempData = [];
 
         foreach ($salesOrderData[1] as $data) {
-            if ((string)$data->t_so_open_qty > 0) {
+            if ((string) $data->t_so_open_qty > 0) {
                 // Ambil qty pick
                 $pickedQty = 0;
-                $salesOrderDetail = ShipmentScheduleDet::where('ssd_sod_site', (string)$data->t_so_site)
-                    ->where('ssd_sod_nbr', (string)$data->t_so_nbr)
-                    ->where('ssd_sod_line', (string)$data->t_so_line)
+                $salesOrderDetail = ShipmentScheduleDet::where("ssd_sod_site", (string) $data->t_so_site)
+                    ->where("ssd_sod_nbr", (string) $data->t_so_nbr)
+                    ->where("ssd_sod_line", (string) $data->t_so_line)
                     ->first();
 
                 if ($salesOrderDetail) {
@@ -84,24 +95,29 @@ class APIShipmentScheduleController extends Controller
                 }
 
                 array_push($tempData, [
-                    't_so_nbr' => (string)$data->t_so_nbr,
-                    't_so_site' => (string)$data->t_so_site,
-                    't_so_ship' => (string)$data->t_so_ship,
-                    't_so_line' => (string)$data->t_so_line,
-                    't_so_part' => (string)$data->t_so_part,
-                    't_so_part_desc' => (string)$data->t_so_part_desc,
-                    't_so_um' => (string)$data->t_so_um,
-                    't_so_ord_qty' => (string)$data->t_so_ord_qty,
-                    't_so_open_qty' => (string)$data->t_so_open_qty,
-                    't_so_pick_qty' => (string)$pickedQty,
-                    't_so_serial' => (string)$data->t_so_serial,
+                    "t_so_nbr" => (string) $data->t_so_nbr,
+                    "t_so_site" => (string) $data->t_so_site,
+                    "t_so_ship" => (string) $data->t_so_ship,
+                    "t_so_line" => (string) $data->t_so_line,
+                    "t_so_part" => (string) $data->t_so_part,
+                    "t_so_part_desc" => (string) $data->t_so_part_desc,
+                    "t_so_um" => (string) $data->t_so_um,
+                    "t_so_ord_qty" => (string) $data->t_so_ord_qty,
+                    "t_so_open_qty" => (string) $data->t_so_open_qty,
+                    "t_so_pick_qty" => (string) $pickedQty,
+                    "t_so_serial" => (string) $data->t_so_serial,
                 ]);
             }
         }
 
-        return response()->json([
-            'salesOrderData' => $tempData,
-        ], 200, ['Content-Type' => 'application/json'], JSON_UNESCAPED_UNICODE);
+        return response()->json(
+            [
+                "salesOrderData" => $tempData,
+            ],
+            200,
+            ["Content-Type" => "application/json"],
+            JSON_UNESCAPED_UNICODE,
+        );
     }
 
     public function wsaInventoryDetail(Request $request)
@@ -110,44 +126,52 @@ class APIShipmentScheduleController extends Controller
         // return response()->json(['data' => $searchData, 200, ['Content-Type' => 'application/json']], JSON_UNESCAPED_UNICODE);
 
         // split by "|"
-        $parts = explode('|', $searchData);
-        Log::channel('shipmentSchedule')->info(json_encode($parts));
+        $parts = explode("|", $searchData);
+        Log::channel("shipmentSchedule")->info(json_encode($parts));
 
         // make sure we always get both values
-        $site = $parts[0] ?? '';
-        $itemCode = $parts[1] ?? '';
-        $lot = $parts[2] == null || $parts[2] == 'null' ? '' : $parts[2];
-
+        $site = $parts[0] ?? "";
+        $itemCode = $parts[1] ?? "";
+        $lot = $parts[2] == null || $parts[2] == "null" ? "" : $parts[2];
 
         $activeConnection = qxwsa::first();
-        $wsaInventory = (new WSAServices())->wsaInventoryDetail($site, $itemCode, $lot, $activeConnection);
+        $wsaServices = new WSAServices();
+        $wsaInventory = $wsaServices->wsaInventoryDetail($site, $itemCode, $lot, $activeConnection);
 
-        if ($wsaInventory[0] == 'false') {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => 'No inventory data found.'
-            ], 422);
+        if ($wsaInventory[0] == "false") {
+            return response()->json(
+                [
+                    "Status" => "Error",
+                    "Message" => "No inventory data found.",
+                ],
+                422,
+            );
         }
 
         $tempData = [];
 
         foreach ($wsaInventory[1] as $data) {
             array_push($tempData, [
-                't_inv_part' => (string)$data->t_inv_part,
-                't_inv_loc' => (string)$data->t_inv_loc,
-                't_inv_lot' => (string)$data->t_inv_lot,
-                't_inv_bin' => (string)$data->t_inv_bin,
-                't_inv_level' => (string)$data->t_inv_level,
-                't_inv_site' => (string)$data->t_inv_site,
-                't_inv_wrh' => (string)$data->t_inv_wrh,
-                't_inv_qtyoh' => (string)$data->t_inv_qtyoh,
-                't_inv_uom' => (string)$data->t_inv_uom,
+                "t_inv_part" => (string) $data->t_inv_part,
+                "t_inv_loc" => (string) $data->t_inv_loc,
+                "t_inv_lot" => (string) $data->t_inv_lot,
+                "t_inv_bin" => (string) $data->t_inv_bin,
+                "t_inv_level" => (string) $data->t_inv_level,
+                "t_inv_site" => (string) $data->t_inv_site,
+                "t_inv_wrh" => (string) $data->t_inv_wrh,
+                "t_inv_qtyoh" => (string) $data->t_inv_qtyoh,
+                "t_inv_uom" => (string) $data->t_inv_uom,
             ]);
         }
 
-        return response()->json([
-            'inventoryData' => $tempData,
-        ], 200, ['Content-Type' => 'application/json'], JSON_UNESCAPED_UNICODE);
+        return response()->json(
+            [
+                "inventoryData" => $tempData,
+            ],
+            200,
+            ["Content-Type" => "application/json"],
+            JSON_UNESCAPED_UNICODE,
+        );
     }
 
     public function store(Request $request)
@@ -158,23 +182,28 @@ class APIShipmentScheduleController extends Controller
         $customerName = $request->customer_desc;
         $salesOrders = $request->sales_orders;
 
-        $saveData = (new ShipmentScheduleServices())->saveShipmentSchedule(
-            $customerCode,
-            $customerName,
-            $salesOrders
-        );
+        $shipmentScheduleServices = new ShipmentScheduleServices();
+        $saveData = $shipmentScheduleServices->saveShipmentSchedule($customerCode, $customerName, $salesOrders);
 
         if ($saveData == false) {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "Failed To Save Shipment Schedule."
-            ], 422);
+            return response()->json(
+                [
+                    "Status" => "Error",
+                    "Message" => "Failed To Save Shipment Schedule.",
+                ],
+                422,
+            );
         }
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Shipment schedule has been created',
-        ], 200, ['Content-Type' => 'application/json'], JSON_UNESCAPED_UNICODE);
+        return response()->json(
+            [
+                "status" => "success",
+                "message" => "Shipment schedule has been created",
+            ],
+            200,
+            ["Content-Type" => "application/json"],
+            JSON_UNESCAPED_UNICODE,
+        );
     }
 
     public function delete(Request $request)
@@ -182,69 +211,101 @@ class APIShipmentScheduleController extends Controller
         $id = $request->id;
 
         // Ambil data master, loop ke detail, loop ke lokasi, sebelum hapus masukin ke history, terakhir delete
-        $shipmentScheduleMstr = ShipmentScheduleMstr::with(['getShipmentScheduleDetail.getShipmentScheduleLocation'])->find($id);
+        $shipmentScheduleMstr = ShipmentScheduleMstr::with(["getShipmentScheduleDetail.getShipmentScheduleLocation"])->find($id);
 
         if (!$shipmentScheduleMstr) {
-            return response()->json([
-                'status' => 'Error',
-                'message' => 'Data not found',
-            ], 422, ['Content-Type' => 'application/json'], JSON_UNESCAPED_UNICODE);
+            return response()->json(
+                [
+                    "status" => "Error",
+                    "message" => "Data not found",
+                ],
+                422,
+                ["Content-Type" => "application/json"],
+                JSON_UNESCAPED_UNICODE,
+            );
         }
 
-        $deleteData = (new ShipmentScheduleServices())->deleteShipmentSchedule($shipmentScheduleMstr);
+        $shipmentScheduleServices = new ShipmentScheduleServices();
+        $deleteData = $shipmentScheduleServices->deleteShipmentSchedule($shipmentScheduleMstr);
 
         if ($deleteData == false) {
-            return response()->json([
-                'status' => 'Error',
-                'message' => 'Failed to delete shipment schedule',
-            ], 422, ['Content-Type' => 'application/json'], JSON_UNESCAPED_UNICODE);
+            return response()->json(
+                [
+                    "status" => "Error",
+                    "message" => "Failed to delete shipment schedule",
+                ],
+                422,
+                ["Content-Type" => "application/json"],
+                JSON_UNESCAPED_UNICODE,
+            );
         }
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Shipment schedule has been deleted',
-        ], 200, ['Content-Type' => 'application/json'], JSON_UNESCAPED_UNICODE);
+        return response()->json(
+            [
+                "status" => "success",
+                "message" => "Shipment schedule has been deleted",
+            ],
+            200,
+            ["Content-Type" => "application/json"],
+            JSON_UNESCAPED_UNICODE,
+        );
     }
 
     public function edit($id)
     {
-        $shipmentSchedule = ShipmentScheduleMstr::with(['getShipmentScheduleDetail.getShipmentScheduleLocation'])->find($id);
+        $shipmentSchedule = ShipmentScheduleMstr::with(["getShipmentScheduleDetail.getShipmentScheduleLocation"])->find($id);
 
         if (!$shipmentSchedule) {
-            return response()->json([
-                'status' => 'Error',
-                'message' => 'Failed to fetch shipment schedule data',
-            ], 422, ['Content-Type' => 'application/json'], JSON_UNESCAPED_UNICODE);
+            return response()->json(
+                [
+                    "status" => "Error",
+                    "message" => "Failed to fetch shipment schedule data",
+                ],
+                422,
+                ["Content-Type" => "application/json"],
+                JSON_UNESCAPED_UNICODE,
+            );
         }
 
-        return response()->json([
-            'status' => 'success',
-            'shipmentScheduleData' => $shipmentSchedule
-        ], 200, ['Content-Type' => 'application/json'], JSON_UNESCAPED_UNICODE);
+        return response()->json(
+            [
+                "status" => "success",
+                "shipmentScheduleData" => $shipmentSchedule,
+            ],
+            200,
+            ["Content-Type" => "application/json"],
+            JSON_UNESCAPED_UNICODE,
+        );
     }
 
     public function update(Request $request, $id)
     {
-        // Log::channel('shipmentSchedule')->info(json_encode($request->all()));
+        // Log::channel("shipmentSchedule")->info(json_encode($request->all()));
 
         $idShipmentScheduleMstr = $id;
         $salesOrders = $request->sales_orders;
 
-        $updateData = (new ShipmentScheduleServices())->updateShipmentSchedule(
-            $idShipmentScheduleMstr,
-            $salesOrders
-        );
+        $shipmentScheduleServices = new ShipmentScheduleServices();
+        $updateData = $shipmentScheduleServices->updateShipmentSchedule($idShipmentScheduleMstr, $salesOrders);
 
         if ($updateData == false) {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "Failed To Update Shipment Schedule."
-            ], 422);
+            return response()->json(
+                [
+                    "Status" => "Error",
+                    "Message" => "Failed To Update Shipment Schedule.",
+                ],
+                422,
+            );
         }
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Shipment schedule has been created',
-        ], 200, ['Content-Type' => 'application/json'], JSON_UNESCAPED_UNICODE);
+        return response()->json(
+            [
+                "status" => "success",
+                "message" => "Shipment schedule has been created",
+            ],
+            200,
+            ["Content-Type" => "application/json"],
+            JSON_UNESCAPED_UNICODE,
+        );
     }
 }

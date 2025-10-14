@@ -10,10 +10,15 @@ class PackingReplenishmentDet extends Model
 {
     use HasFactory;
 
-    protected $table = 'packing_replenishment_det';
+    protected $table = "packing_replenishment_det";
 
     public function getShipmentScheduleLocation()
     {
-        return $this->belongsTo(ShipmentScheduleLoc::class, 'ssl_id', 'id');
+        return $this->belongsTo(ShipmentScheduleLoc::class, "ssl_id", "id");
+    }
+
+    public function getPackingReplenishmentMaster()
+    {
+        return $this->belongsTo(PackingReplenishmentMstr::class, "prm_id", "id");
     }
 }

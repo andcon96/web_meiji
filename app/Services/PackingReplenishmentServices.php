@@ -11,6 +11,7 @@ use App\Models\API\ShipmentSchedule\ShipmentScheduleDet;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleHist;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleLoc;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleMstr;
+use App\Models\API\ShipperConfirm\ShipperConfirm;
 use App\Models\Settings\ApprovalSetupMstr;
 use App\Models\Settings\Menu;
 use Exception;
@@ -20,13 +21,16 @@ use Illuminate\Support\Facades\Log;
 
 class PackingReplenishmentServices
 {
-    public function savePackingReplenishment($approver, $packingReplenishments, $activeConnection)
+    public function savePackingReplenishment($approver, $idPrm, $packingReplenishments, $activeConnection)
     {
         DB::beginTransaction();
 
         try {
             // Buat Packing Replenishment Mstr + Det
-            $packingReplenishmentMstr = new PackingReplenishmentMstr();
+            $packingReplenishmentMstr = PackingReplenishmentMstr::find($idPrm);
+            if (!$packingReplenishmentMstr) {
+                $packingReplenishmentMstr = new PackingReplenishmentMstr();
+            }
             $packingReplenishmentMstr->created_by = Auth::user()->id;
             $packingReplenishmentMstr->prm_status = "Draft";
             $packingReplenishmentMstr->save();
@@ -156,13 +160,18 @@ class PackingReplenishmentServices
             // Buat packing replenishment detail + Buat packing replenishment history
             foreach ($packingReplenishments as $packingReplenishment) {
                 foreach ($packingReplenishment["locations"] as $locationDetail) {
+                    $packingReplenishmentDet = PackingReplenishmentDet::where("prm_id", $packingReplenishmentMstr->id)
+                        ->where("ssl_id", $locationDetail["id"])
+                        ->first();
                     // Buat packing replenishment detail
-                    $packingReplenishmentDet = new PackingReplenishmentDet();
-                    $packingReplenishmentDet->prm_id = $packingReplenishmentMstr->id;
-                    $packingReplenishmentDet->ssl_id = $locationDetail["id"];
-                    $packingReplenishmentDet->prd_status_qad = "Yes";
-                    $packingReplenishmentDet->prd_created_by = Auth::user()->id;
-                    $packingReplenishmentDet->save();
+                    if ($packingReplenishmentDet == null) {
+                        $packingReplenishmentDet = new PackingReplenishmentDet();
+                        $packingReplenishmentDet->prm_id = $packingReplenishmentMstr->id;
+                        $packingReplenishmentDet->ssl_id = $locationDetail["id"];
+                        $packingReplenishmentDet->prd_status_qad = "Yes";
+                        $packingReplenishmentDet->prd_created_by = Auth::user()->id;
+                        $packingReplenishmentDet->save();
+                    }
 
                     $packingReplenishmentHist = new PackingReplenishmentHist();
                     $packingReplenishmentHist->prh_shipper_nbr = $shipperNumber;
@@ -305,6 +314,115 @@ class PackingReplenishmentServices
             $packingReplenishmentMaster->prm_status = "Rejected";
             $packingReplenishmentMaster->save();
 
+            DB::commit();
+
+            return true;
+        } catch (Exception $err) {
+            DB::rollBack();
+
+            Log::channel("packingReplenishment")->info($err);
+
+            return false;
+        }
+    }
+
+    public function approvePackingReplenishment($packingReplenishment, $reason, $shipmentScheduleNumber, $activeConnection)
+    {
+        DB::beginTransaction();
+
+        try {
+            $packingReplenishmentApprovalData = PackingReplenishmentApproval::where("id", $packingReplenishment["id"])->first();
+            $packingReplenishmentApprovalData->pra_status = "Approved";
+            $packingReplenishmentApprovalData->pra_reason = $reason;
+            $packingReplenishmentApprovalData->updated_by = Auth::user()->id;
+            $packingReplenishmentApprovalData->save();
+
+            $packingReplenishmentApprovalHist = new PackingReplenishmentApprovalHist();
+            $packingReplenishmentApprovalHist->prah_shipper_number =
+                $packingReplenishment["get_packing_replenishment_mstr"]["prm_shipper_nbr"];
+            $packingReplenishmentApprovalHist->prah_sequence = $packingReplenishmentApprovalData->pra_sequence;
+            $packingReplenishmentApprovalHist->prah_user_approver = $packingReplenishmentApprovalData->pra_user_approver;
+            $packingReplenishmentApprovalHist->prah_alt_user_approver = $packingReplenishmentApprovalData->pra_alt_user_approver;
+            $packingReplenishmentApprovalHist->prah_status = $packingReplenishmentApprovalData->pra_status;
+            $packingReplenishmentApprovalHist->prah_reason = $packingReplenishmentApprovalData->prah_reason;
+            $packingReplenishmentApprovalHist->created_by = Auth::user()->name;
+            $packingReplenishmentApprovalHist->save();
+
+            $shipmentScheduleMaster = ShipmentScheduleMstr::with(["getShipmentScheduleDetail.getShipmentScheduleLocation"])
+                ->where("ssm_number", $shipmentScheduleNumber)
+                ->first();
+            $shipmentScheduleMaster->ssm_status = "Scheduled";
+            $shipmentScheduleMaster->updated_by = Auth::user()->id;
+            $shipmentScheduleMaster->save();
+
+            $packingReplenishmentMaster = PackingReplenishmentMstr::with(["getPackingReplenishmentDet"])
+                ->where("id", $packingReplenishment["get_packing_replenishment_mstr"]["id"])
+                ->first();
+            $packingReplenishmentMaster->prm_status = "Shipper Created";
+            $packingReplenishmentMaster->save();
+
+            // dd("stop");
+
+            // Insert data ke shipper confirm table
+            $shipperConfirm = new ShipperConfirm();
+            $shipperConfirm->prm_id = $packingReplenishmentMaster->id;
+            $shipperConfirm->sc_sequence = 1;
+            $shipperConfirm->sc_user_approver = Auth::user()->id;
+            $shipperConfirm->sc_status = "Waiting for approval";
+            $shipperConfirm->created_by = Auth::user()->id;
+            $shipperConfirm->save();
+
+            $fieldName = "mji_pack_dock";
+
+            $wsaServices = new WSAServices();
+            $locationWSA = $wsaServices->wsaGenCode($fieldName);
+            if ($locationWSA[0] == "false") {
+                DB::rollBack();
+
+                Log::channel("packingReplenishment")->info("Gen code not found");
+
+                return false;
+            }
+
+            $location = $locationWSA[1][0]["t_value"];
+            $shipmentScheduleDetails = $shipmentScheduleMaster->getShipmentScheduleDetail;
+
+            // Qxtend buat sales order shipper maintenance
+            $qxtendServices = new QxtendServices();
+            $qxtend = $qxtendServices->qxSalesOrderShipper(
+                "create",
+                $location,
+                $shipmentScheduleDetails,
+                $packingReplenishmentMaster->id,
+                $activeConnection,
+            );
+
+            if ($qxtend[0] == false) {
+                DB::commit();
+
+                Log::channel("packingReplenishment")->info($qxtend[1]);
+
+                return false;
+            }
+
+            $shipperNumber = null;
+
+            // Ambil nomor shipper, update ke packing replenishment master buat nomor shipper nya
+            $getShipperNumber = $wsaServices->wsaGetShipperNumber(
+                $shipmentScheduleDetails[0]->ssd_sod_site,
+                $packingReplenishmentMaster->id,
+                $activeConnection,
+            );
+
+            if ($getShipperNumber[0] == "false") {
+                Log::channel("packingReplenishment")->info(
+                    "Gagal mengambil data untuk packing replenishment: " . $packingReplenishmentMaster->id,
+                );
+            }
+
+            $shipperNumber = substr($getShipperNumber[1][0]->t_shipper_nbr, 1);
+            $packingReplenishmentMaster->prm_shipper_nbr = $shipperNumber;
+            $packingReplenishmentMaster->save();
             DB::commit();
 
             return true;
