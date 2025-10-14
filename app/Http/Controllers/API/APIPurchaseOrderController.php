@@ -228,12 +228,12 @@ class APIPurchaseOrderController extends Controller
             ], 422);
         }
 
-
         // Prioritaskan Location yang ada di Web by order.
         $getDataQAD = collect($wsaData[1]);
+      
         $grouped = $getDataQAD->groupBy(function ($item) {
-            $site  = (string) ($item['t_inv_site'] ?? '');
-            $loc   = (string) ($item['t_inv_loc'] ?? '');
+            $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
+            $loc   = is_array($item['t_inv_loc']) ? '' : (string)($item['t_inv_loc'] ?? '');
             $bin   = is_array($item['t_inv_bin']) ? '' : (string) ($item['t_inv_bin'] ?? '');
             $wrh   = is_array($item['t_inv_wrh']) ? '' : (string) ($item['t_inv_wrh'] ?? '');
             $level = is_array($item['t_inv_level']) ? '' : (string) ($item['t_inv_level'] ?? '');

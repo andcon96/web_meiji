@@ -18,8 +18,9 @@ class DatabaseSeeder extends Seeder
         // $this->call(RoleSeeder::class);
         // User::factory(10)->create();
         // $this->call(IconMasterSeeder::class);
+        $this->call(MenuMasterSeeder::class);
+        $this->call(MenuStructureMasterSeeder::class);
+        // $this->call(UserSeeder::class);
         // $this->call(MenuMasterSeeder::class);
-        // $this->call(MenuStructureMasterSeeder::class);
-        $this->call(UserSeeder::class);
     }
 }

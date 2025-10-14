@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\SSDExport;
 use App\Http\Controllers\Controller;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleDet;
+use App\Models\API\ShipmentSchedule\ShipmentScheduleMstr;
 use App\Services\ServerURL;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -18,7 +19,7 @@ class ShipmentReportController extends Controller
         return view('shipmentScheduleReport.index', compact('menuMaster'));
     }
 
-    public function getAllSSD()
+    /* public function getAllSSD()
     {
         $rows = ShipmentScheduleDet::with(['getShipmentScheduleMaster'])->get()
         ->map(function($row){
@@ -33,6 +34,21 @@ class ShipmentReportController extends Controller
                 'ssd_sod_qty_ord',
                 'ssd_sod_lot',
             ]);
+        });
+
+        return DataTables::of($rows)->make(true);
+    } */
+
+    public function getAllSSM()
+    {
+        $rows = ShipmentScheduleMstr::with(['getShipmentScheduleDetail'])->get()
+        ->map(function($row){
+            $row->getShipmentScheduleDetail->map(function($det) use ($row){
+                $det->setAttribute('sold_to', $row->ssm_cust_code);
+                return $det;
+            });
+
+            return $row;
         });
 
         return DataTables::of($rows)->make(true);

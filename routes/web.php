@@ -113,7 +113,8 @@ Route::group(['middleware' => ['auth']], function () {
 
 	// Shipment Schedule Report
 	Route::get('/ShipmentScheduleReport', [ShipmentReportController::class, 'index']);
-	Route::get('/getAllSSD', [ShipmentReportController::class, 'getAllSSD']);
+	/* Route::get('/getAllSSD', [ShipmentReportController::class, 'getAllSSD']); */
+	Route::get('/getAllSSM', [ShipmentReportController::class, 'getAllSSM']);
 	Route::post('/SSDExport', [ShipmentReportController::class, 'SSDExport'])->name('SSDExport');
 });
 

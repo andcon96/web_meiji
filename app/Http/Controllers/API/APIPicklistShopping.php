@@ -50,7 +50,7 @@ class APIPicklistShopping extends Controller
         } else {
             $listData = $hasil[1];
         }
-
+        
         foreach ($listData as $key => $value) {
 
 
@@ -175,6 +175,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -201,6 +202,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -219,6 +221,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -245,6 +248,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -316,6 +320,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -344,6 +349,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -363,6 +369,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -389,6 +396,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -415,6 +423,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -441,6 +450,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -459,6 +469,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -485,6 +496,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -609,6 +621,7 @@ class APIPicklistShopping extends Controller
                         'wodpart' => (string)$value->t_wod_part,
                         'qtyreq' => (string)$value->t_qty_req,
                         'qtypick' => (string)$value->t_qty_pick,
+                        'qtykemasan' => (string)$value->t_qty_kemasan,
                         'lot' => (string)$value->t_lot,
                         'id' => (string)$value->t_wo_id,
                         'wrh' => (string)$value->t_wrh,
@@ -635,6 +648,7 @@ class APIPicklistShopping extends Controller
                         'wodpart' => (string)$value->t_wod_part,
                         'qtyreq' => (string)$value->t_qty_req,
                         'qtypick' => (string)$value->t_qty_pick,
+                        'qtykemasan' => (string)$value->t_qty_kemasan,
                         'lot' => (string)$value->t_lot,
                         'id' => (string)$value->t_wo_id,
                         'wrh' => (string)$value->t_wrh,
@@ -653,6 +667,7 @@ class APIPicklistShopping extends Controller
                         'wodpart' => (string)$value->t_wod_part,
                         'qtyreq' => (string)$value->t_qty_req,
                         'qtypick' => (string)$value->t_qty_pick,
+                        'qtykemasan' => (string)$value->t_qty_kemasan,
                         'lot' => (string)$value->t_lot,
                         'id' => (string)$value->t_wo_id,
                         'wrh' => (string)$value->t_wrh,
@@ -679,6 +694,7 @@ class APIPicklistShopping extends Controller
                         'wodpart' => (string)$value->t_wod_part,
                         'qtyreq' => (string)$value->t_qty_req,
                         'qtypick' => (string)$value->t_qty_pick,
+                        'qtykemasan' => (string)$value->t_qty_kemasan,
                         'lot' => (string)$value->t_lot,
                         'id' => (string)$value->t_wo_id,
                         'wrh' => (string)$value->t_wrh,
@@ -892,6 +908,7 @@ class APIPicklistShopping extends Controller
             ], 422);
         } else {
             $listData = $hasil[1];
+            
             return response()->json(['DataWSA' => $listData],200);
         }
      
@@ -920,6 +937,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -948,6 +966,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -967,6 +986,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -993,6 +1013,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -1020,6 +1041,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -1046,6 +1068,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -1064,6 +1087,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -1090,6 +1114,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
