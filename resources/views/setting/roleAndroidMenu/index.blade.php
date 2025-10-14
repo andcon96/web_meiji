@@ -105,9 +105,14 @@
                                     name="data[]" value="SH01" />
                             </div>
                             <div class="form-check d-flex form-switch mt-3 mb-4">
-                                <label for="level" class="form-check-label col-8">Packing Replenishment</label>
+                                <label for="level" class="form-check-label col-8">Shipment Preparation</label>
 
                                 <input type="checkbox" class="custom-control-input form-check-input" id="cbPackingReplenishment" name="data[]" value="SH02" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Shipment Preparation Approval</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPackingReplenishmentApproval" name="data[]" value="SH04" />
                             </div>
                             <div class="form-check d-flex form-switch mt-3 mb-4">
                                 <label for="level" class="form-check-label col-8">Shipment Confirmation</label>
@@ -167,6 +172,9 @@
                 }
                 if (parts.includes("SH03")) {
                     $('#cbShipmentConfirmation').prop('checked', 'true');
+                }
+                if (parts.includes('SH04')) {
+                    $('#cbPackingReplenishmentApproval').prop('checked', 'true');
                 }
 
                 $('#roleId').val(roleId);
