@@ -14,6 +14,7 @@ class MenuMasterSeeder extends Seeder
     public function run(): void
     {
         $data = array(
+            /*
             ['id' => 1, 'menu_name' => 'Settings', 'menu_route' =>  NULL, 'created_by' => '1'],
             ['id' => 2, 'menu_name' => 'Menu Management', 'menu_route' =>  'menus', 'created_by' => '1'],
             ['id' => 3, 'menu_name' => 'Role Management', 'menu_route' =>  'roles', 'created_by' => '1'],
@@ -27,9 +28,9 @@ class MenuMasterSeeder extends Seeder
             ['id' => 10, 'menu_name' => 'Item Management', 'menu_route' => 'items', 'created_by' => '1'],
             ['id' => 11, 'menu_name' => 'Location Management', 'menu_route' => 'locations', 'created_by' => '1'],
             ['id' => 12, 'menu_name' => 'Item Location Management', 'menu_route' => 'itemlocation', 'created_by' => '1'],
-
-            ['id' => 13, 'menu_name' => 'Shipment Schedule', 'menu_route' => Null, 'created_by' => '1'],
-            ['id' => 14, 'menu_name' => 'Shipment Schedule Report', 'menu_route' => 'ShipmentScheduleReport', 'created_by' => '1'],
+*/
+            ['id' => 19, 'menu_name' => 'Shipment Schedule', 'menu_route' => Null, 'created_by' => '1'],
+            ['id' => 20, 'menu_name' => 'Shipment Schedule Report', 'menu_route' => 'ShipmentScheduleReport', 'created_by' => '1'],
         );
         Menu::insert($data);
     }
