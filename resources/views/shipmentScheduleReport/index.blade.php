@@ -14,13 +14,13 @@
                             <form id="formSSDExport" action="{{ route('SSDExport') }}" method="POST" enctype="multipart/form-data">
                                 @csrf
                                 <input type="hidden" id='rows' name="ssdrows"/>
-                                <button id="exportButton" class="btn btn-secondary create-new btn-primary" tabindex="0" type="submit">
+                               {{--  <button id="exportButton" class="btn btn-secondary create-new btn-primary" tabindex="0" type="submit">
                                     <span>
                                         <i class='fa-solid fa-file me-sm-2'></i>
                                         <span class="d-none d-sm-inline-block">Export To Excel</span>
                                     </span>
                                 </button>
-                                {{-- <button style="display: none;" class="btn loading-btn btn-primary" type="button">
+                                <button style="display: none;" class="btn loading-btn btn-primary" type="button">
                                     <span class="spinner-border me-1" role="status" aria-hidden="true"></span>
                                     <span class="visually-hidden loadingText">Loading...</span>
                                 </button> --}}
@@ -32,25 +32,23 @@
                     <table id="shipmentTable" class="dt-responsive table border-top">
                         <thead>
                             <tr>
-                                <th>Order</th>
-                                <th>Sold-To</th>
-                                <th>Item Number</th>
-                                <th>UM</th>
-                                <th>Qty Ordered</th>
-                                <th>No. Lot</th>
+                                <th>Number</th>
+                                <th>Customer Code</th>
+                                <th>Customer Description</th>
+                                <th>Status</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <body></body>
-                        <tfoot>
+                        {{-- <tfoot>
                             <tr>
-                                <th>Order</th>
-                                <th>Sold-To</th>
-                                <th>Item Number</th>
-                                <th>UM</th>
-                                <th>Qty Ordered</th>
-                                <th>No. Lot</th>
+                                <th>Number</th>
+                                <th>Customer Code</th>
+                                <th>Customer Description</th>
+                                <th>Status</th>
+                                <th>Action</th>
                             </tr>
-                        </tfoot>
+                        </tfoot> --}}
                     </table>
                 </div>
             </div>
@@ -64,30 +62,107 @@
         $(document).ready(function () {
             //datatable
             let table = $('#shipmentTable').DataTable({
-                ajax: '{{ url("/getAllSSD") }}', 
+                ajax: '{{ url("/getAllSSM") }}', 
                 serverSide: true,
                 columns: [
-                    {data: 'ssd_sod_nbr',     width: '12em'},
-                    {data: 'sold_to',         width: '12em'},
-                    {data: 'ssd_sod_part',    width: '12em'},
-                    {data: 'ssd_uom',         width: '12em'},
-                    {data: 'ssd_sod_qty_ord', width: '12em'},
-                    {data: 'ssd_sod_lot',     width: '12em'},
+                    {data: 'ssm_number',    width: '8em'},
+                    {data: 'ssm_cust_code', width: '12em'},
+                    {data: 'ssm_cust_desc', width: '32em'},
+                    {data: 'ssm_status',    width: '8em'},
+                    {
+                        data: null,
+                        width: '12em',
+                        sortable: false,
+                        render: function(data, type, row, meta){
+                            return `
+                                <button data-detail='${JSON.stringify(row.get_shipment_schedule_detail)}' data-id='${row.id}' class="btn btn-secondary p-2 btnDetail" tabindex="0" type="button">Detail</button>
+                                <button data-detail='${JSON.stringify(row.get_shipment_schedule_detail)}' class="btn btn-primary p-2 btnExport" tabindex="0" type="button">Export</button>
+                            `
+                        }
+                    },
                 ],
+                scrollX: true
             });
 
-            //dijalankan setiap kali DataTables selesai melakukan request AJAX ke server
-            table.on('xhr.dt', function(e, settings, json){
-                //simpan rows yg ditampilkan saat ini ke input value, untuk dikirim saat export excel
-                $('#rows').val(JSON.stringify(json.data))
-            }) 
+            // //dijalankan setiap kali DataTables selesai melakukan request AJAX ke server
+            // table.on('xhr.dt', function(e, settings, json){
+            //     //simpan rows yg ditampilkan saat ini ke input value, untuk dikirim saat export excel
+            //     $('#rows').val(JSON.stringify(json.data))
+            // }) 
 
-            $('#exportButton').on('click', function(){
+            //klik button export
+            $(document).on('click', '.btnExport', function(){
+                const $rows = $(this).data('detail');
+
+                $('#rows').val(JSON.stringify($rows))
+                $('#formSSDExport').submit()
+
                 /* $(this).hide()
                 $('.loading-btn').css('display', '');
                 $('.loadingText').removeClass('visually-hidden'); */
             })
 
+            //klik button detail
+            $(document).on('click', '.btnDetail', function(){
+                const $nested = $(this).closest('tbody').children('tr.nested'); //ambil semua detail yg sedang tampil
+                const $tr = $(this).closest('tr') //row master, wrapper button
+                const $rows = $(this).data('detail'); //ambil data yg disimpan di attribute button, dengan prefix data
+                const $masterId = $(this).data('id');
+
+                if($tr.next().hasClass(`detail-master-${$masterId}`)){
+                    $tr.next().remove(); //tututp detail, baris(tr)
+                }else{
+                    let html = buildDetailTable($rows || [], $masterId)
+                    $tr.after(html) //simpan di baris(tr) baru setelah masternya, dengan penanda class
+                    $.each($nested || [], function(index, tr){ //tutup detail lain yg sedang tampil
+                        tr.remove();
+                    })
+                }
+            })
+
+            //function build table detail
+            function buildDetailTable(rows, masterId){
+
+                //buat baris(tr) baru setelah baris(tr) master
+                //buat satu cell yg merge lima column
+                //didalam cell tersebut buat table baru
+
+                let detailTable = `
+                <tr class='nested detail-master-${masterId}'>
+                    <td colspan="5">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Item Number</th>
+                                    <th>UM</th>
+                                    <th>Qty Ordered</th>
+                                    <th>No. Lot</th>
+                                </tr>
+                            </thead>
+                            <tbody>`
+
+
+                            $.each(rows, function (index, row) { 
+                                detailTable += `
+                                <tr>
+                                    <td>${row.ssd_sod_nbr}</td>
+                                    <td>${row.ssd_sod_part}</td>
+                                    <td>${row.ssd_uom}</td>
+                                    <td>${row.ssd_sod_qty_ord}</td>
+                                    <td>${row.ssd_sod_lot}</td>
+                                </tr>`
+                                })
+
+                detailTable += `
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                `
+
+                return detailTable
+            }
         })
     </script>
 @endsection

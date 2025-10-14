@@ -1,4 +1,4 @@
-<table>
+<table class="table-bordered">
     <thead>
         <tr>
             <th>Nama dan Paraf Operator Persiapan:</th>
@@ -109,6 +109,24 @@
             <td>{{ $row->ssd_uom }}</td>
             <td>{{ $row->ssd_sod_qty_ord }}</td>
             <td>{{ $row->ssd_sod_lot }}</td>
+
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
         </tr>
         @endforeach
     </tbody>
