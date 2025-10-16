@@ -91,6 +91,7 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::post("rejectPackingReplenishment", [APIPackingReplenishmentController::class, "rejectPackingReplenishment"]);
     Route::post("approvePackingReplenishment", [APIPackingReplenishmentController::class, "approvePackingReplenishment"]);
     Route::get("editPackingReplenishment/{id}", [APIPackingReplenishmentController::class, "editPackingReplenishment"]);
+    Route::get("getPackingReplenishmentApprovalList", [APIPackingReplenishmentController::class, "getPackingReplenishmentApprovalList"]);
 
     // Shipper Confirm
     Route::get("getShipperConfirmation", [APIShipperConfirmController::class, "index"]);

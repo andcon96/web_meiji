@@ -28,13 +28,13 @@ class APIShipperConfirmController extends Controller
 
             $data->where(function ($q) use ($filter) {
                 // Cari shipper number
-                $q->whereHas("getPackingReplenishmentMstr", function ($subq) use ($filter) {
+                $q->whereHas("getPackingReplenishmentMaster", function ($subq) use ($filter) {
                     $subq->where("prm_shipper_nbr", "LIKE", "%" . $filter . "%")->where("prm_status", "Shipper Created");
                 })
 
                     // Cari customer
                     ->orWhereHas(
-                        "getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster",
+                        "getPackingReplenishmentMaster.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster",
                         function ($q) use ($filter) {
                             $q->where("ssm_cust_code", "LIKE", "%" . $filter . "%")->orWhere("ssm_cust_desc", "LIKE", "%" . $filter . "%");
                         },
@@ -42,7 +42,7 @@ class APIShipperConfirmController extends Controller
 
                     // cari SO + item code
                     ->orWhereHas(
-                        "getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet",
+                        "getPackingReplenishmentMaster.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet",
                         function ($q) use ($filter) {
                             $q->where("ssd_sod_part", "LIKE", "%" . $filter . "%");
                         },
@@ -57,12 +57,11 @@ class APIShipperConfirmController extends Controller
 
     public function store(Request $request)
     {
-        // Log::channel('confirmShipment')->info(json_encode($request->all()));
+        // Log::channel("confirmShipment")->info(json_encode($request->all()));
 
         $shipperApproval = $request["shipperPayload"];
         $reason = $request["reason"];
         $activeConnection = qxwsa::first();
-        // dd($shipperApproval, $reason);
 
         $confirmServices = new ConfirmShipmentServices();
         $saveData = $confirmServices->confirmShipment($shipperApproval, $reason, $activeConnection);

@@ -368,7 +368,7 @@ class PackingReplenishmentServices
             $shipperConfirm->prm_id = $packingReplenishmentMaster->id;
             $shipperConfirm->sc_sequence = 1;
             $shipperConfirm->sc_user_approver = Auth::user()->id;
-            $shipperConfirm->sc_status = "Waiting for approval";
+            $shipperConfirm->sc_status = "Waiting for confirmation";
             $shipperConfirm->created_by = Auth::user()->id;
             $shipperConfirm->save();
 

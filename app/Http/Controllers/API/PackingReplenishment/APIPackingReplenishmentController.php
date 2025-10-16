@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\PackingReplenishment;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\GeneralResources;
+use App\Models\API\PackingReplenishment\PackingReplenishmentApproval;
 use App\Models\API\PackingReplenishment\PackingReplenishmentMstr;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleDet;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleMstr;
@@ -13,6 +14,7 @@ use App\Models\Settings\User;
 use App\Services\PackingReplenishmentServices;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class APIPackingReplenishmentController extends Controller
@@ -242,5 +244,46 @@ class APIPackingReplenishmentController extends Controller
             ["Content-Type" => "application/json"],
             JSON_UNESCAPED_UNICODE,
         );
+    }
+
+    public function getPackingReplenishmentApprovalList(Request $request)
+    {
+        $data = PackingReplenishmentApproval::query()
+            ->with([
+                "getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster",
+                "getCreatedBy:id,name,username",
+            ])
+            ->where("pra_user_approver", "LIKE", "%" . Auth::user()->id . "%");
+
+        if ($request->search) {
+            $filter = $request->search;
+
+            $data->where(function ($q) use ($filter) {
+                // Cari shipper number
+                $q->whereHas("getPackingReplenishmentMstr", function ($subq) use ($filter) {
+                    $subq->where("prm_shipper_nbr", "LIKE", "%" . $filter . "%")->where("prm_status", "Shipper Created");
+                })
+
+                    // Cari customer
+                    ->orWhereHas(
+                        "getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster",
+                        function ($q) use ($filter) {
+                            $q->where("ssm_cust_code", "LIKE", "%" . $filter . "%")->orWhere("ssm_cust_desc", "LIKE", "%" . $filter . "%");
+                        },
+                    )
+
+                    // cari SO + item code
+                    ->orWhereHas(
+                        "getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet",
+                        function ($q) use ($filter) {
+                            $q->where("ssd_sod_part", "LIKE", "%" . $filter . "%");
+                        },
+                    );
+            });
+        }
+
+        $data = $data->where("pra_status", "Waiting for confirmation")->orderBy("created_at", "desc")->paginate(10);
+
+        return GeneralResources::collection($data);
     }
 }
