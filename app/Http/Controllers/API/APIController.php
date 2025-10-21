@@ -155,4 +155,45 @@ class APIController extends Controller
 
         return response($request->getContent(), 200)->header('Content-Type', 'text/xml;charset="utf-8"')->header('Accept', 'text/xml')->header('SOAPAction', '""');
     }
+
+    public function getInvWms(Request $req)
+    {
+        /* dd($req->query('inppart')); */
+
+        try {
+            /* throw new Exception('test exception'); */
+
+            $items = (new WSAServices)->wsaInvWms($req->query('inppart'));
+
+           /*  dd($items); */
+
+            if ($items == false) { //jika error koneksi wsa
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "WSA Error Connection"
+                ], 500);
+            }
+
+            if ($items[0] == "false") { //jika error response wsa
+                return response()->json([
+                    'Status' => 'Not found',
+                    'Message' => "Item not found"
+                ], 404); //not found
+            }
+
+            return response()->json([
+                'Status' => 'Not found',
+                'Message' => "Get inventory WMS successfully",
+                'Items' => $items[1]
+            ], 200);
+
+        } catch (\Exception $e) {
+            dd($e);
+            Log::error($e);
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => 'Internal server error',
+            ], 500);
+        }
+    }
 }
