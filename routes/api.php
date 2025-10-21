@@ -138,5 +138,9 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::get("wsaWarehousePick", [APIPicklistShopping::class, "wsaWarehouse"]);
     Route::get("getSearchLocation", [APIPicklistShopping::class, "wsainvdet"]);
     Route::post("sendTransferItem", [APIPicklistShopping::class, "sendTransferItem"]);
+
+    //Work Order Issue
+    //Route::get("getIssueData", [APIWorkOrderController::class, "getIssueData"]);
+    Route::post("issueWorkOrder", [APIPicklistShopping::class, "issueWorkOrder"]);
 });
 // WSA Picklist

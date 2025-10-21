@@ -50,7 +50,7 @@ class APIPicklistShopping extends Controller
         } else {
             $listData = $hasil[1];
         }
-        
+
         foreach ($listData as $key => $value) {
 
 
@@ -75,6 +75,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -103,6 +104,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -122,6 +124,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -148,6 +151,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -175,6 +179,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -202,6 +207,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -215,12 +221,17 @@ class APIPicklistShopping extends Controller
                     }
                 } else {
                     if ($currentWo != (string)$value->t_wo_nbr) {
+
                         $currentWo = (string)$value->t_wo_nbr;
+
+                        $wonbr = [];
+                        $detail = [];
 
                         $detail[] = [
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -231,23 +242,24 @@ class APIPicklistShopping extends Controller
                             'od' => (string)$value->t_orddate,
                             'rd' => (string)$value->t_reldate,
                         ];
-                        $wonbr[$currentWo] = [
-                            'wonbr' => (string)$value->t_wo_nbr,
+
+                        // $wonbr[$currentWo] = [
+                        //     'wonbrnbr' => (string)$value->t_wo_nbr,
+                        //     'wopart' => (string)$value->t_wo_part,
+                        //     'detail' => $detail
+                        // ];
+
+                        $master[$currentPick]['wonbr'][$currentWo] = [
+                            'wonbrnbr' => (string)$value->t_wo_nbr,
                             'wopart' => (string)$value->t_wo_part,
                             'detail' => $detail
-                        ];
-                        $master[$currentPick] = [
-                            'picknbr' => (string)$value->t_pick_nbr,
-                            'site' => (string)$value->t_site,
-                            'status' => (string)$value->t_status,
-                            'loc' => (string)$value->t_loc,
-                            'wonbr' => $wonbr
                         ];
                     } else {
                         $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -320,6 +332,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -332,7 +345,7 @@ class APIPicklistShopping extends Controller
                         ];
 
                         $wonbr[$currentWo] = [
-                            'wonbr' => $wonbrstring,
+                            'wonbrnbr' => $wonbrstring,
                             'wopart' => '',
                             'detail' => $detail
                         ];
@@ -342,13 +355,14 @@ class APIPicklistShopping extends Controller
                             'site' => (string)$value->t_site,
                             'status' => (string)$value->t_status,
                             'loc' => (string)$value->t_loc,
-                            'wonbr' => $wonbr
+                            'wonbr' => $wonbr,
                         ];
                     } else {
                         $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -369,6 +383,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -380,8 +395,9 @@ class APIPicklistShopping extends Controller
                             'rd' => (string)$value->t_reldate,
                         ];
                         $wonbr[$currentWo] = [
-                            'wonbr' => $currentWo,
+                            'wonbrnbr' => $currentWo,
                             'wopart' => '',
+                            'woid' => '',
                             'detail' => $detail
                         ];
                         $master[$currentPick] = [
@@ -396,6 +412,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -409,6 +426,7 @@ class APIPicklistShopping extends Controller
                     }
                 }
             } else {
+
                 if ($currentPick != (string)$value->t_pick_nbr) {
 
                     $currentWo = '';
@@ -423,6 +441,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -434,8 +453,9 @@ class APIPicklistShopping extends Controller
                             'rd' => (string)$value->t_reldate,
                         ];
                         $wonbr[$currentWo] = [
-                            'wonbr' => (string)$value->t_wo_nbr,
+                            'wonbrnbr' => (string)$value->t_wo_nbr,
                             'wopart' => (string)$value->t_wo_part,
+                            'woid' => (string)$value->t_wo_id,
                             'detail' => $detail
                         ];
                         $master[$currentPick] = [
@@ -450,6 +470,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -463,12 +484,17 @@ class APIPicklistShopping extends Controller
                     }
                 } else {
                     if ($currentWo != (string)$value->t_wo_nbr) {
+
                         $currentWo = (string)$value->t_wo_nbr;
+
+                        $wonbr = [];
+                        $detail = [];
 
                         $detail[] = [
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -479,23 +505,25 @@ class APIPicklistShopping extends Controller
                             'od' => (string)$value->t_orddate,
                             'rd' => (string)$value->t_reldate,
                         ];
-                        $wonbr[$currentWo] = [
-                            'wonbr' => (string)$value->t_wo_nbr,
+
+                        // $wonbr[$currentWo] = [
+                        //     'wonbrnbr' => (string)$value->t_wo_nbr,
+                        //     'wopart' => (string)$value->t_wo_part,
+                        //     'detail' => $detail
+                        // ];
+
+                        $master[$currentPick]['wonbr'][$currentWo] = [
+                            'wonbrnbr' => (string)$value->t_wo_nbr,
                             'wopart' => (string)$value->t_wo_part,
                             'detail' => $detail
                         ];
-                        $master[$currentPick] = [
-                            'picknbr' => (string)$value->t_pick_nbr,
-                            'site' => (string)$value->t_site,
-                            'status' => (string)$value->t_status,
-                            'loc' => (string)$value->t_loc,
-                            'wonbr' => $wonbr
-                        ];
                     } else {
+
                         $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -506,10 +534,12 @@ class APIPicklistShopping extends Controller
                             'od' => (string)$value->t_orddate,
                             'rd' => (string)$value->t_reldate,
                         ];
+                        // dd($master[$currentPick]['wonbr'][$currentWo]['detail'],$hasil[1],$currentWo);
                     }
                 }
             }
         }
+
 
         return response()->json(
             [
@@ -531,10 +561,10 @@ class APIPicklistShopping extends Controller
         $wonbrlist = $data['data']['wonbr'];
         foreach ($wonbrlist as $wo) {
             foreach ($wo['detail'] as $det) {
-                if ($wo['wonbr'] == 'manual') {
+                if ($wo['wonbrnbr'] == 'manual') {
                     $wonbr = '';
                 } else {
-                    $wonbr = $wo['wonbr'];
+                    $wonbr = $wo['wonbrnbr'];
                 }
 
                 $wodpart = $det['wodpart'];
@@ -545,7 +575,7 @@ class APIPicklistShopping extends Controller
                 $qtypick = $det['qtypick'];
                 $qxtendsingleitem = (new QxtendServices())->qxTransferSingleItemWo($wodpart, $wonbr, $site, $site, $loc, 'Shopping', $qtypick, $bin, $level, $wrh, $lot);
                 if ($qxtendsingleitem == 'false') {
-                       Log::channel('Picklist')->info("Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart);
+                    Log::channel('Picklist')->info("Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart);
                     return response()->json([
                         'Status' => 'Error',
                         'Message' => "Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
@@ -621,6 +651,7 @@ class APIPicklistShopping extends Controller
                         'wodpart' => (string)$value->t_wod_part,
                         'qtyreq' => (string)$value->t_qty_req,
                         'qtypick' => (string)$value->t_qty_pick,
+                        'qtytopick' => (string)$value->t_qty_topick,
                         'qtykemasan' => (string)$value->t_qty_kemasan,
                         'lot' => (string)$value->t_lot,
                         'id' => (string)$value->t_wo_id,
@@ -648,6 +679,7 @@ class APIPicklistShopping extends Controller
                         'wodpart' => (string)$value->t_wod_part,
                         'qtyreq' => (string)$value->t_qty_req,
                         'qtypick' => (string)$value->t_qty_pick,
+                        'qtytopick' => (string)$value->t_qty_topick,
                         'qtykemasan' => (string)$value->t_qty_kemasan,
                         'lot' => (string)$value->t_lot,
                         'id' => (string)$value->t_wo_id,
@@ -667,6 +699,7 @@ class APIPicklistShopping extends Controller
                         'wodpart' => (string)$value->t_wod_part,
                         'qtyreq' => (string)$value->t_qty_req,
                         'qtypick' => (string)$value->t_qty_pick,
+                        'qtytopick' => (string)$value->t_qty_topick,
                         'qtykemasan' => (string)$value->t_qty_kemasan,
                         'lot' => (string)$value->t_lot,
                         'id' => (string)$value->t_wo_id,
@@ -694,6 +727,7 @@ class APIPicklistShopping extends Controller
                         'wodpart' => (string)$value->t_wod_part,
                         'qtyreq' => (string)$value->t_qty_req,
                         'qtypick' => (string)$value->t_qty_pick,
+                        'qtytopick' => (string)$value->t_qty_topick,
                         'qtykemasan' => (string)$value->t_qty_kemasan,
                         'lot' => (string)$value->t_lot,
                         'id' => (string)$value->t_wo_id,
@@ -712,6 +746,7 @@ class APIPicklistShopping extends Controller
                     'wodpart' => (string)$value->t_wod_part,
                     'qtyreq' => (string)$value->t_qty_req,
                     'qtypick' => (string)$value->t_qty_pick,
+'qtytopick' => (string)$value->t_qty_topick,
                     'lot' => (string)$value->t_lot,
                     'id' => (string)$value->t_wo_id,
                     'wrh' => (string)$value->t_wrh,
@@ -825,10 +860,10 @@ class APIPicklistShopping extends Controller
             $wonbr = $data['wonbr'];
             foreach ($wonbr as $wo) {
                 foreach ($wo['detail'] as $det) {
-                    if ($wo['wonbr'] == 'manual') {
+                    if ($wo['wonbrnbr'] == 'manual') {
                         $wonbr = '';
                     } else {
-                        $wonbr = $wo['wonbr'];
+                        $wonbr = $wo['wonbrnbr'];
                     }
                     $wodpart = $det['wodpart'];
                     $lot = $det['lot'];
@@ -885,10 +920,10 @@ class APIPicklistShopping extends Controller
             }
         }
     }
-     public function getLocationData(Request $req)
+    public function getLocationData(Request $req)
     {
 
-        
+
 
         $currentPick = '';
         $currentWo = '';
@@ -898,9 +933,9 @@ class APIPicklistShopping extends Controller
         $wonbrstring = '';
         $wonbr = $req->wonbr;
         $item = $req->item;
-        
-        $hasil = (new WSAServices())->wsaGetLocationTransfer($wonbr,$item);
-        
+
+        $hasil = (new WSAServices())->wsaGetLocationTransfer($wonbr, $item);
+
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
@@ -908,10 +943,10 @@ class APIPicklistShopping extends Controller
             ], 422);
         } else {
             $listData = $hasil[1];
-            
-            return response()->json(['DataWSA' => $listData],200);
+
+            return response()->json(['DataWSA' => $listData], 200);
         }
-     
+
 
         foreach ($listData as $key => $value) {
 
@@ -937,6 +972,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -966,6 +1002,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -986,6 +1023,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -1013,6 +1051,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -1041,6 +1080,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -1068,6 +1108,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -1087,6 +1128,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -1114,6 +1156,7 @@ class APIPicklistShopping extends Controller
                             'wodpart' => (string)$value->t_wod_part,
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
+                            'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -1161,7 +1204,7 @@ class APIPicklistShopping extends Controller
         $loc = $req->location;
         $site = $req->site;
         $wrh = $req->wrh;
-    
+
         $wsaData = (new WSAServices())->wsaGetInvDet($site,  $loc, $wrh);
         if ($wsaData[0] == 'false') {
             return response()->json([
@@ -1172,8 +1215,9 @@ class APIPicklistShopping extends Controller
 
         return response()->json($wsaData[1]);
     }
-        public function nullConversion($data){
-        if ($data == null || strtolower($data) == 'null'){
+    public function nullConversion($data)
+    {
+        if ($data == null || strtolower($data) == 'null') {
             return '';
         } else {
             return $data;
@@ -1193,7 +1237,7 @@ class APIPicklistShopping extends Controller
         $ref = $this->nullConversion($data['ref']);
         $level = $this->nullConversion($data['level']);
         $bin = $this->nullConversion($data['bin']);
-        $lot = $this->nullConversion($data['lot']) ;
+        $lot = $this->nullConversion($data['lot']);
         $hasil = (new QxtendServices())->qxTransferSingleItemTransfer($item, $qty, $sitefrom, $siteto, $locfrom, $locto, $lot, '', '', $wh, '', $level, '', $bin);
         if ($hasil == 'false') {
             return response()->json([
@@ -1207,10 +1251,298 @@ class APIPicklistShopping extends Controller
             ], 200);
         }
         return response()->json([
-            $item,$sitefrom,$siteto,$locfrom,$locto,$qty,$wh,$ref,$level,$bin,$lot
+            $item,
+            $sitefrom,
+            $siteto,
+            $locfrom,
+            $locto,
+            $qty,
+            $wh,
+            $ref,
+            $level,
+            $bin,
+            $lot
         ]);
-
     }
 
+    public function issueWorkOrder(Request $req)
+    {
 
+        $data = $req->data;
+        $datawo = $data['wonbr'];
+
+        $picknbr = $req->picknbr;
+        $statusreq = $req->status;
+        $status = str_replace('_', ' ', $statusreq);
+        // $hasil = (new WSAServices())->wsaGetPickIssue($status,$picknbr);
+
+        // $currentPick = '';
+        // $currentWo = '';
+        // $detail = [];
+        // $master = [];
+        // $wonbr = [];
+        // $wonbrstring = '';
+        // if ($hasil[0] == 'false') {
+        //     return response()->json([
+        //         'Status' => 'Error',
+        //         'Message' => "Data Not Found."
+        //     ], 422);
+        // } else {
+        //     $listData = $hasil[1];
+        // }
+
+        // foreach ($listData as $key => $value) {
+
+
+        //     $wonbrstring = (string)$value->t_wo_nbr;
+
+        //     if (strlen($wonbrstring) == 0) {
+        //         $wonbrstring = 'manual';
+
+        //         if ($currentPick != (string)$value->t_pick_nbr) {
+        //             $wonbrstring = 'manual';
+        //             $currentWo = '';
+
+        //             $detail = [];
+        //             $wonbr = [];
+        //             $currentPick = (string)$value->t_pick_nbr;
+
+        //             if ($currentWo != $wonbrstring) {
+        //                 $currentWo = $wonbrstring;
+
+
+        //                 $detail[] = [
+        //                     'wodpart' => (string)$value->t_wod_part,
+        //                     'qtyreq' => (string)$value->t_qty_req,
+        //                     'qtypick' => (string)$value->t_qty_pick,
+        //'qtytopick' => (string)$value->t_qty_topick,
+        //                     'qtykemasan' => (string)$value->t_qty_kemasan,
+        //                     'lot' => (string)$value->t_lot,
+        //                     'id' => (string)$value->t_wo_id,
+        //                     'wrh' => (string)$value->t_wrh,
+        //                     'level' => (string)$value->t_level,
+        //                     'bin' => (string)$value->t_bin,
+        //                     'dd' => (string)$value->t_duedate,
+        //                     'od' => (string)$value->t_orddate,
+        //                     'rd' => (string)$value->t_reldate,
+        //                 ];
+
+        //                 $wonbr[$currentWo] = [
+        //                     'wonbrnbr' => $wonbrstring,
+        //                     'wopart' => '',
+        //                     'detail' => $detail
+        //                 ];
+
+        //                 $master[$currentPick] = [
+        //                     'picknbr' => (string)$value->t_pick_nbr,
+        //                     'site' => (string)$value->t_site,
+        //                     'status' => (string)$value->t_status,
+        //                     'loc' => (string)$value->t_loc,
+        //                     'wonbr' => $wonbr,
+        //                 ];
+        //             } else {
+        //                 $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
+        //                     'wodpart' => (string)$value->t_wod_part,
+        //                     'qtyreq' => (string)$value->t_qty_req,
+        //                     'qtypick' => (string)$value->t_qty_pick,
+        //'qtytopick' => (string)$value->t_qty_topick,
+        //                     'qtykemasan' => (string)$value->t_qty_kemasan,
+        //                     'lot' => (string)$value->t_lot,
+        //                     'id' => (string)$value->t_wo_id,
+        //                     'wrh' => (string)$value->t_wrh,
+        //                     'level' => (string)$value->t_level,
+        //                     'bin' => (string)$value->t_bin,
+        //                     'dd' => (string)$value->t_duedate,
+        //                     'od' => (string)$value->t_orddate,
+        //                     'rd' => (string)$value->t_reldate,
+        //                 ];
+        //             }
+        //         } else {
+        //             $wonbrstring = 'manual';
+        //             if ($currentWo != $wonbrstring) {
+        //                 $currentWo = $wonbrstring;
+
+        //                 $detail[] = [
+        //                     'wodpart' => (string)$value->t_wod_part,
+        //                     'qtyreq' => (string)$value->t_qty_req,
+        //                     'qtypick' => (string)$value->t_qty_pick,
+        //'qtytopick' => (string)$value->t_qty_topick,
+        //                     'qtykemasan' => (string)$value->t_qty_kemasan,
+        //                     'lot' => (string)$value->t_lot,
+        //                     'id' => (string)$value->t_wo_id,
+        //                     'wrh' => (string)$value->t_wrh,
+        //                     'level' => (string)$value->t_level,
+        //                     'bin' => (string)$value->t_bin,
+        //                     'dd' => (string)$value->t_duedate,
+        //                     'od' => (string)$value->t_orddate,
+        //                     'rd' => (string)$value->t_reldate,
+        //                 ];
+        //                 $wonbr[$currentWo] = [
+        //                     'wonbrnbr' => $currentWo,
+        //                     'wopart' => '',
+        //                     'woid'=> '',
+        //                     'detail' => $detail
+        //                 ];
+        //                 $master[$currentPick] = [
+        //                     'picknbr' => (string)$value->t_pick_nbr,
+        //                     'site' => (string)$value->t_site,
+        //                     'status' => (string)$value->t_status,
+        //                     'loc' => (string)$value->t_loc,
+        //                     'wonbr' => $wonbr
+        //                 ];
+        //             } else {
+        //                 $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
+        //                     'wodpart' => (string)$value->t_wod_part,
+        //                     'qtyreq' => (string)$value->t_qty_req,
+        //                     'qtypick' => (string)$value->t_qty_pick,
+        //'qtytopick' => (string)$value->t_qty_topick,
+        //                     'qtykemasan' => (string)$value->t_qty_kemasan,
+        //                     'lot' => (string)$value->t_lot,
+        //                     'id' => (string)$value->t_wo_id,
+        //                     'wrh' => (string)$value->t_wrh,
+        //                     'level' => (string)$value->t_level,
+        //                     'bin' => (string)$value->t_bin,
+        //                     'dd' => (string)$value->t_duedate,
+        //                     'od' => (string)$value->t_orddate,
+        //                     'rd' => (string)$value->t_reldate,
+        //                 ];
+        //             }
+        //         }
+        //     } else {
+        //         if ($currentPick != (string)$value->t_pick_nbr) {
+
+        //             $currentWo = '';
+        //             $detail = [];
+        //             $wonbr = [];
+        //             $currentPick = (string)$value->t_pick_nbr;
+
+        //             if ($currentWo != (string)$value->t_wo_nbr) {
+        //                 $currentWo = (string)$value->t_wo_nbr;
+
+        //                 $detail[] = [
+        //                     'wodpart' => (string)$value->t_wod_part,
+        //                     'qtyreq' => (string)$value->t_qty_req,
+        //                     'qtypick' => (string)$value->t_qty_pick,
+        //'qtytopick' => (string)$value->t_qty_topick,
+        //                     'qtykemasan' => (string)$value->t_qty_kemasan,
+        //                     'lot' => (string)$value->t_lot,
+        //                     'id' => (string)$value->t_wo_id,
+        //                     'wrh' => (string)$value->t_wrh,
+        //                     'level' => (string)$value->t_level,
+        //                     'bin' => (string)$value->t_bin,
+        //                     'dd' => (string)$value->t_duedate,
+        //                     'od' => (string)$value->t_orddate,
+        //                     'rd' => (string)$value->t_reldate,
+        //                 ];
+        //                 $wonbr[$currentWo] = [
+        //                     'wonbrnbr' => (string)$value->t_wo_nbr,
+        //                     'wopart' => (string)$value->t_wo_part,
+        //                     'woid' => (string)$value->t_wo_id,
+        //                     'detail' => $detail
+        //                 ];
+        //                 $master[$currentPick] = [
+        //                     'picknbr' => (string)$value->t_pick_nbr,
+        //                     'site' => (string)$value->t_site,
+        //                     'status' => (string)$value->t_status,
+        //                     'loc' => (string)$value->t_loc,
+        //                     'wonbr' => $wonbr
+        //                 ];
+        //             } else {
+        //                 $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
+        //                     'wodpart' => (string)$value->t_wod_part,
+        //                     'qtyreq' => (string)$value->t_qty_req,
+        //                     'qtypick' => (string)$value->t_qty_pick,
+        //'qtytopick' => (string)$value->t_qty_topick,
+        //                     'qtykemasan' => (string)$value->t_qty_kemasan,
+        //                     'lot' => (string)$value->t_lot,
+        //                     'id' => (string)$value->t_wo_id,
+        //                     'wrh' => (string)$value->t_wrh,
+        //                     'level' => (string)$value->t_level,
+        //                     'bin' => (string)$value->t_bin,
+        //                     'dd' => (string)$value->t_duedate,
+        //                     'od' => (string)$value->t_orddate,
+        //                     'rd' => (string)$value->t_reldate,
+        //                 ];
+        //             }
+        //         } else {
+        //             if ($currentWo != (string)$value->t_wo_nbr) {
+        //                 $currentWo = (string)$value->t_wo_nbr;
+
+        //                 $detail[] = [
+        //                     'wodpart' => (string)$value->t_wod_part,
+        //                     'qtyreq' => (string)$value->t_qty_req,
+        //                     'qtypick' => (string)$value->t_qty_pick,
+        //'qtytopick' => (string)$value->t_qty_topick,
+        //                     'qtykemasan' => (string)$value->t_qty_kemasan,
+        //                     'lot' => (string)$value->t_lot,
+        //                     'id' => (string)$value->t_wo_id,
+        //                     'wrh' => (string)$value->t_wrh,
+        //                     'level' => (string)$value->t_level,
+        //                     'bin' => (string)$value->t_bin,
+        //                     'dd' => (string)$value->t_duedate,
+        //                     'od' => (string)$value->t_orddate,
+        //                     'rd' => (string)$value->t_reldate,
+        //                 ];
+        //                 $wonbr[$currentWo] = [
+        //                     'wonbrnbr' => (string)$value->t_wo_nbr,
+        //                     'wopart' => (string)$value->t_wo_part,
+        //                     'detail' => $detail
+        //                 ];
+        //                 $master[$currentPick] = [
+        //                     'picknbr' => (string)$value->t_pick_nbr,
+        //                     'site' => (string)$value->t_site,
+        //                     'status' => (string)$value->t_status,
+        //                     'loc' => (string)$value->t_loc,
+        //                     'wonbr' => $wonbr
+        //                 ];
+        //             } else {
+        //                 $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
+        //                     'wodpart' => (string)$value->t_wod_part,
+        //                     'qtyreq' => (string)$value->t_qty_req,
+        //                     'qtypick' => (string)$value->t_qty_pick,
+        //'qtytopick' => (string)$value->t_qty_topick,
+        //                     'qtykemasan' => (string)$value->t_qty_kemasan,
+        //                     'lot' => (string)$value->t_lot,
+        //                     'id' => (string)$value->t_wo_id,
+        //                     'wrh' => (string)$value->t_wrh,
+        //                     'level' => (string)$value->t_level,
+        //                     'bin' => (string)$value->t_bin,
+        //                     'dd' => (string)$value->t_duedate,
+        //                     'od' => (string)$value->t_orddate,
+        //                     'rd' => (string)$value->t_reldate,
+        //                 ];
+        //             }
+        //         }
+        //     }
+        // }
+        // dd($master);
+
+        $qxtendWoIssue = (new QxtendServices())->qxWorkOrderIssue($data, $datawo);
+        if ($qxtendWoIssue[0] == 'false') {
+            Log::channel('Picklist')->info("Wo issue failed for picklist : " . $data['picknbr'] . " WO : " . $datawo['wonbrnbr']);
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Wo issue failed for picklist : " . $data['picknbr'] . " WO : " . $datawo['wonbrnbr']
+                //'Message'=> $qxtendsingleitem[1];
+            ], 422);
+        } else {
+            $hasil = (new WSAServices())->wsaUpdateStatusPick($data['picknbr'], 'Issued');
+
+            if ($hasil[0] == 'false') {
+                Log::channel('Picklist')->info("Update status wo issue failed for picklist : " . $data['picknbr'] . " WO : " . $datawo['wonbrnbr']);
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "Update status wo issue failed for picklist : " . $data['picknbr'] . " WO : " . $datawo['wonbrnbr']
+                ], 422);
+            } else {
+                return response()->json(
+                    'success',
+                    200
+                );
+            }
+        }
+
+
+        // return GeneralResources::collection($data);
+    }
 }

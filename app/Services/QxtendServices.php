@@ -1502,9 +1502,7 @@ class QxtendServices
     {
         $receiver = "QADERP";
         $shipFrom =
-            $confirmApproval["get_packing_replenishment_master"]["get_packing_replenishment_det"][0]["get_shipment_schedule_location"][
-                "ssl_site"
-            ];
+            $confirmApproval["get_packing_replenishment_master"]["get_packing_replenishment_det"][0]["get_shipment_schedule_location"]["ssl_site"];
         $absID = $confirmApproval["get_packing_replenishment_master"]["prm_shipper_nbr"];
         $vehicleRefID = $confirmApproval["prm_id"];
 
@@ -1805,6 +1803,199 @@ class QxtendServices
 
         if (is_bool($qdocResponse)) {
             return false;
+        }
+
+        $xmlResp = simplexml_load_string($qdocResponse);
+
+        $xmlResp->registerXPathNamespace("ns1", "urn:schemas-qad-com:xml-services");
+
+        $qdocResult = (string) $xmlResp->xpath("//ns1:result")[0];
+
+        if ($qdocResult == "success" or $qdocResult == "warning") {
+            return [true, ""];
+        } else {
+            $xmlResp->registerXPathNamespace("ns3", "urn:schemas-qad-com:xml-services:common");
+            $qdocMsgDesc = $xmlResp->xpath("//ns3:tt_msg_desc");
+            $output = "";
+            foreach ($qdocMsgDesc as $datas) {
+                if (str_contains($datas, "ERROR:")) {
+                    $output .= $datas . " - ";
+                }
+            }
+            $output = substr($output, 0, -3);
+
+            return [false, $output];
+        }
+    }
+
+    public function qxWorkOrderIssue($masterdata, $wodata)
+    {
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? "";
+        $qxwsa = Qxwsa::firstOrFail();
+
+        // Var Qxtend
+        $qxUrl = $qxwsa->qx_url;
+        $receiver = "QADERP";
+
+        $timeout = 0;
+        $currentpart = '';
+        // XML Qextend
+        $qdocHead =
+            '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qcom="urn:schemas-qad-com:xml-services:common" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsa="http://www.w3.org/2005/08/addressing">
+    <soapenv:Header>
+        <wsa:Action/>
+        <wsa:To>urn:services-qad-com:' . $receiver . '</wsa:To>
+        <wsa:MessageID>urn:services-qad-com::' . $receiver . '</wsa:MessageID>
+        <wsa:ReferenceParameters>
+            <qcom:suppressResponseDetail>true</qcom:suppressResponseDetail>
+        </wsa:ReferenceParameters>
+        <wsa:ReplyTo>
+            <wsa:Address>urn:services-qad-com:</wsa:Address>
+        </wsa:ReplyTo>
+    </soapenv:Header>
+    <soapenv:Body>
+        <issueWorkOrderComponent>
+            <qcom:dsSessionContext>
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>domain</qcom:propertyName>
+                    <qcom:propertyValue>' . $domain . '<qcom:propertyValue>
+                </qcom:ttContext>
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>scopeTransaction</qcom:propertyName>
+                    <qcom:propertyValue>true</qcom:propertyValue>
+                </qcom:ttContext>
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>version</qcom:propertyName>
+                    <qcom:propertyValue>ERP3_1</qcom:propertyValue>
+                </qcom:ttContext>
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>mnemonicsRaw</qcom:propertyName>
+                    <qcom:propertyValue>false</qcom:propertyValue>
+                </qcom:ttContext>
+               
+            <qcom:ttContext>
+                <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                <qcom:propertyName>action</qcom:propertyName>
+                <qcom:propertyValue/>
+            </qcom:ttContext>
+            <qcom:ttContext>
+                <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                <qcom:propertyName>entity</qcom:propertyName>
+                <qcom:propertyValue/>
+            </qcom:ttContext>
+            <qcom:ttContext>
+                <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                <qcom:propertyName>email</qcom:propertyName>
+                <qcom:propertyValue/>
+            </qcom:ttContext>
+            <qcom:ttContext>
+                <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                <qcom:propertyName>emailLevel</qcom:propertyName>
+                <qcom:propertyValue/>
+            </qcom:ttContext>
+        </qcom:dsSessionContext>
+        <dsWorkOrderComponent>';
+        $qdocBody = '';
+        foreach ($wodata as $data) {
+            $qdocBody .= '
+            <workOrderComponent>       
+                <woNbr>' . $data["wonbrnbr"] . '</woNbr>
+                <woLot>' . $data["woid"] . '</woLot>        
+                <effDate>' . $data["wonbrnbr"] . '</effDate>
+                <fillAll>false</fillAll>
+                <fillPick>true</fillPick>
+                <yn>true</yn>
+                <yn1>true</yn1>
+                <yn2>true</yn2>
+                <yn3>true</yn3>
+                ';
+            foreach ($data['detail'] as $detail) {
+                if ($currentpart != $detail['wodpart']) {
+                    $currentpart = $detail['wodpart'];
+                    $qdocBody .= '
+                <itemDetail>
+                    <operation>A</operation>
+                    <part>' . $detail['wodpart'] . '</part>
+                 
+                    <site>' . $detail['wodpart'] . '</site>
+                    <location>' . $masterdata['loc'] . '</location>
+                    <lotserial>' . $detail['lot'] . '</lotserial>
+                    <lotserialQty>' . $masterdata['site'] . '</lotserialQty>
+                    <multiEntry>false</multiEntry>
+                    <issueDetail>
+                        <operation>A</operation>
+                        <site>' . $masterdata['site'] . '</site>
+                        <location>' . $masterdata['loc'] . '</location>
+                        <lotserial>' . $detail['lot'] . '</lotserial>
+                        <lotref></lotref>
+                        <lotserialQty>' . $detail['qtyreq'] . '</lotserialQty>
+                    </issueDetail>
+                </itemDetail>';
+                }
+            }
+            $qdocBody .= '</workOrderComponent>';
+        }
+
+
+
+        $qdocFoot = '
+                
+        </dsWorkOrderComponent>
+    </issueWorkOrderComponent>
+</soapenv:Body>
+</soapenv:Envelope>';
+
+        $qdocRequest = $qdocHead . $qdocBody . $qdocFoot;
+
+        $curlOptions = [
+            CURLOPT_URL => $qxUrl,
+            CURLOPT_CONNECTTIMEOUT => $timeout, // in seconds, 0 = unlimited / wait indefinitely.
+            CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
+            CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
+
+        $getInfo = "";
+        $httpCode = 0;
+        $curlErrno = 0;
+        $curlError = "";
+
+        $qdocResponse = "";
+
+        $curl = curl_init();
+        if ($curl) {
+            curl_setopt_array($curl, $curlOptions);
+            $qdocResponse = curl_exec($curl); // sending qdocRequest here, the result is qdocResponse.
+            //
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
+            foreach (curl_getinfo($curl) as $key => $value) {
+                if (gettype($value) != "array") {
+                    if (!$first) {
+                        $getInfo .= ", ";
+                    }
+                    $getInfo = $getInfo . $key . "=>" . $value;
+                    $first = false;
+                    if ($key == "http_code") {
+                        $httpCode = $value;
+                    }
+                }
+            }
+            curl_close($curl);
+        }
+
+        if (is_bool($qdocResponse)) {
+            return [false, 'WSA Connection Error'];
         }
 
         $xmlResp = simplexml_load_string($qdocResponse);

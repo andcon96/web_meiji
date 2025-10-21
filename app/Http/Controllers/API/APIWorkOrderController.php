@@ -731,4 +731,85 @@ class APIWorkOrderController extends Controller
             ], 422);
         }
     }
+
+    public function getIssueData(Request $req)
+    {
+        $workOrder = $req->wonbr;
+        $listwo = [];
+        $listDetail = [];
+        $listPallet = [];
+        $currentwod = '';
+        $dataIssue = (new WSAServices())->WSAGetIssueData($workOrder);
+        if ($dataIssue[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Work Order : " . $req->search . " Not Found."
+            ], 422);
+        } else {
+            $listData = $dataIssue[1];
+         
+            foreach($listData as $data){
+                // dd((string)$data->t_wodpart);
+                if($currentwod == ''){
+                    $currentwod = (string)$data->t_wodpart;
+                }
+                else if($currentwod != (string)$data->t_wodpart){
+                    $listDetail[] = [
+                        't_wodpart' => $currentwod,
+                        't_wodpart_desc' => (string)$data->t_wodpart_desc,
+                        't_wod_um' => (string)$data->t_wod_um,
+                        't_wod_lot'=> (string)$data->t_wod_lot,
+                        't_wod_loc'=> (string)$data->t_wod_loc,
+                        't_wod_qty_req' => (string)$data->t_wod_qty_req,
+                        'pallet' => $listPallet
+                    ];
+                    $listPallet = [];
+                    $currentwod = (string)$data->t_wod_part;
+                }
+                $listPallet[] = [
+                    't_palet_wh' => (string)$data->t_palet_wh,
+                    't_palet_level' => (string)$data->t_palet_level,
+                    't_palet_bin' => (string)$data->t_palet_bin,
+                ];
+                if(end($listData) === $data){
+                    $listDetail[] = [
+                        't_wodpart' => $currentwod,
+                        't_wodpart_desc' => (string)$data->t_wodpart_desc,
+                        't_wod_um' => (string)$data->t_wod_um,
+                        't_wod_lot'=> (string)$data->t_wod_lot,
+                        't_wod_loc'=> (string)$data->t_wod_loc,
+                        't_wod_qty_req' => (string)$data->t_wod_qty_req,
+                        'pallet' => $listPallet
+                    ];
+                    $listwo = [
+                        't_wonbr' => (string)$data->t_wonbr,
+                        't_woid' => (string)$data->t_wolot,
+                        't_wopart' => (string)$data->t_wopart,
+                        't_wopart_desc' => (string)$data->t_wopart_desc,
+                        'details' => $listDetail
+                    ];
+                }
+              
+            }
+            return response()->json([
+                'DataWSA' => $listwo
+            ], 200);
+        }
+    //     $data = workOrderMaster::query()->with(['getDetail' => function ($query) {
+    //         $query->orderBy('wod_part', 'asc')
+    //             ->orderBy('wod_site', 'asc');
+    //     }])->where('created_by', $req->user);
+    //     if ($req->search) {
+    //         $data->where('wo_nbr', 'LIKE', '%' . $req->search . '%')
+    //             ->orWhere('wo_id', 'LIKE', '%' . $req->search . '%')
+    //             ->orWhere('wo_part', 'LIKE', '%' . $req->search . '%')
+    //             ->orWhere('wo_part_desc', 'LIKE', '%' . $req->search . '%');
+    //     }
+
+    //     $data = $data->orderBy('id', 'desc')->get();
+
+
+    //     return GeneralResources::collection($data);
+    }
+
 }
