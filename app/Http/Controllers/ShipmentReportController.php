@@ -41,7 +41,9 @@ class ShipmentReportController extends Controller
 
     public function getAllSSM()
     {
-        $rows = ShipmentScheduleMstr::with(['getShipmentScheduleDetail'])->get()
+        $rows = ShipmentScheduleMstr::with(['getShipmentScheduleDetail'])
+        ->where('ssm_status', 'Scheduled')
+        ->get()
         ->map(function($row){
             $row->getShipmentScheduleDetail->map(function($det) use ($row){
                 $det->setAttribute('sold_to', $row->ssm_cust_code);

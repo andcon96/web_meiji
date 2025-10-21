@@ -75,8 +75,8 @@
                         sortable: false,
                         render: function(data, type, row, meta){
                             return `
-                                <button data-detail='${JSON.stringify(row.get_shipment_schedule_detail)}' data-id='${row.id}' class="btn btn-secondary p-2 btnDetail" tabindex="0" type="button">Detail</button>
-                                <button data-detail='${JSON.stringify(row.get_shipment_schedule_detail)}' class="btn btn-primary p-2 btnExport" tabindex="0" type="button">Export</button>
+                                <button data-detail='${JSON.stringify(row.get_shipment_schedule_detail)}' data-id='${row.id}' class="btn btn-secondary px-2 p-1 btnDetail" tabindex="0" type="button">Detail</button>
+                                <button data-detail='${JSON.stringify(row.get_shipment_schedule_detail)}' class="btn btn-primary px-2 py-1 btnExport" tabindex="0" type="button">Export</button>
                             `
                         }
                     },
@@ -100,6 +100,14 @@
                 /* $(this).hide()
                 $('.loading-btn').css('display', '');
                 $('.loadingText').removeClass('visually-hidden'); */
+
+                const $nested = $(this).closest('tbody').children('tr.nested'); //ambil semua detail yg sedang tampil
+                const $tr = $(this).closest('tr') //row master, wrapper button
+                const $masterId = $(this).data('id');
+
+                $.each($nested || [], function(index, tr){ //tutup detail lain yg sedang tampil
+                    tr.remove();
+                })
             })
 
             //klik button detail
