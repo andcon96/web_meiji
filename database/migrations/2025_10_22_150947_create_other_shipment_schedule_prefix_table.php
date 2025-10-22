@@ -10,10 +10,8 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create("shipment_schedule_prefix", function (Blueprint $table) {
+        Schema::create("other_shipment_schedule_prefix", function (Blueprint $table) {
             $table->id();
-            $table->tinyInteger("other_ship_schedule_month")->after("id")->default(1);
-            $table->tinyInteger("other_ship_schedule_year")->after("id")->default(25);
             $table->string("other_ship_schedule_prefix", 5)->default("SS");
             $table->string("other_ship_schedule_running_nbr", 18)->default("0");
             $table->unsignedBigInteger("created_by")->index();
@@ -29,6 +27,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists("shipment_schedule_prefix");
+        Schema::dropIfExists("other_shipment_schedule_prefix");
     }
 };
