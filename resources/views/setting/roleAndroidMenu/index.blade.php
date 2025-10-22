@@ -120,6 +120,25 @@
                                 <input type="checkbox" class="custom-control-input form-check-input" id="cbShipmentConfirmation" name="data[]"
                                     value="SH03" />
                             </div>
+                            <h4>
+                                <center><strong>Other Shipment</strong></center>
+                            </h4>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Shipment Schedule Non SO</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbOtherShipment"
+                                    name="data[]" value="OS01" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Shipment Preparation Non SO</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbOtherPackingReplenishment" name="data[]" value="OS02" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Shipment Preparation Non SO Approval</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbOtherPackingReplenishmentApproval" name="data[]" value="OS03" />
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -175,6 +194,15 @@
                 }
                 if (parts.includes('SH04')) {
                     $('#cbPackingReplenishmentApproval').prop('checked', 'true');
+                }
+                if (parts.includes('OS01')) {
+                    $('#cbOtherShipment').prop('checked', true);
+                }
+                if (parts.includes('OS02')) {
+                    $('#cbOtherPackingReplenishment').prop('checked', true);
+                }
+                if (parts.includes('OS03')) {
+                    $('#cbOtherPackingReplenishmentApproval').prop('checked', true);
                 }
 
                 $('#roleId').val(roleId);
