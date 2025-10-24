@@ -87,6 +87,11 @@
         </div>
     </div>
     <!-- Content wrapper -->
+    {{-- Dropzone Form --}}
+    <form action="{{ route('checkFileUploadLocation') }}" class="dropzone" id="my-dropzone">
+        @csrf
+        <div class="dz-message">Drop files here or click to upload</div>
+    </form>
 @endsection
 
 
