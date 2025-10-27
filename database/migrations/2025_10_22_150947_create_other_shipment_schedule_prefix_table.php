@@ -12,6 +12,8 @@ return new class extends Migration {
     {
         Schema::create("other_shipment_schedule_prefix", function (Blueprint $table) {
             $table->id();
+            $table->tinyInteger("other_shipment_schedule_year")->default(25);
+            $table->tinyInteger("other_shipment_schedule_month")->default(10);
             $table->string("other_ship_schedule_prefix", 5)->default("SS");
             $table->string("other_ship_schedule_running_nbr", 18)->default("0");
             $table->unsignedBigInteger("created_by")->index();

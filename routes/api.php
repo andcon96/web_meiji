@@ -5,6 +5,8 @@ use App\Http\Controllers\API\APIPurchaseOrderApprovalController;
 use App\Http\Controllers\API\APIPurchaseOrderController;
 use App\Http\Controllers\API\APIPurchaseOrderRecheckController;
 use App\Http\Controllers\API\APIQualityInfoController;
+use App\Http\Controllers\API\OtherShipmentSchedule\APIOtherShipmentScheduleController;
+use App\Http\Controllers\API\OtherShipmentPreparation\APIOtherShipmentPreparationController;
 use App\Http\Controllers\API\ShipmentSchedule\APIShipmentScheduleController;
 use App\Http\Controllers\API\APITrasnferStockController;
 use App\Http\Controllers\API\APIWorkOrderController;
@@ -97,6 +99,25 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::get("getShipperConfirmation", [APIShipperConfirmController::class, "index"]);
     Route::post("confirmShipment", [APIShipperConfirmController::class, "store"]);
 
+    // Other Shipment Schedule
+    Route::get("getOtherShipmentSchedule", [APIOtherShipmentScheduleController::class, "index"]);
+    Route::get("/getItemOSS", [APIOtherShipmentScheduleController::class, "getItemOSS"]);
+    Route::post("/getLocationByPart", [APIOtherShipmentScheduleController::class, "getLocationByPart"]);
+    Route::post("/saveOtherShipmentSchedule", [APIOtherShipmentScheduleController::class, "store"]);
+    Route::post("deleteOtherShipmentSchedule", [APIOtherShipmentScheduleController::class, "delete"]);
+    Route::get("editOtherShipmentSchedule/{id}", [APIOtherShipmentScheduleController::class, "edit"]);
+    Route::put("updateOtherShipmentSchedule/{id}", [APIOtherShipmentScheduleController::class, "update"]);
+
+    // Other Shipment Preparation
+    Route::get("getOtherShipmentPreparation", [APIOtherShipmentPreparationController::class, "index"]);
+    Route::get("listOtherShipmentSchedule", [APIOtherShipmentPreparationController::class, "listOtherShipmentSchedule"]);
+    Route::post("saveOtherShipmentPreparation", [APIOtherShipmentPreparationController::class, "store"]);
+    Route::get("approverListShipmentPreparation", [APIOtherShipmentPreparationController::class, "approverListShipmentPreparation"]);
+    Route::post("rejectShipmentPreparation", [APIOtherShipmentPreparationController::class, "rejectShipmentPreparation"]);
+    Route::post("approveShipmentPreparation", [APIOtherShipmentPreparationController::class, "approveShipmentPreparation"]);
+    Route::get("editShipmentPreparation/{id}", [APIOtherShipmentPreparationController::class, "editShipmentPreparation"]);
+    Route::get("getShipmentPreparationApprovalList", [APIOtherShipmentPreparationController::class, "getShipmentPreparationApprovalList"]);
+
     // Picklist
     Route::get("getDataWo", [APIWorkOrderController::class, "getDataWo"]);
     Route::post("searchDataWo", [APIWorkOrderController::class, "wsaDataWo"]);
@@ -139,13 +160,11 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::get("getSearchLocation", [APIPicklistShopping::class, "wsainvdet"]);
     Route::post("sendTransferItem", [APIPicklistShopping::class, "sendTransferItem"]);
 
-
     //Work Order Issue
     //Route::get("getIssueData", [APIWorkOrderController::class, "getIssueData"]);
     Route::post("issueWorkOrder", [APIPicklistShopping::class, "issueWorkOrder"]);
 
     // Inventory WMS
-    Route::get("/getInvWms", [APIController::class, 'getInvWms']);
-
+    Route::get("/getInvWms", [APIController::class, "getInvWms"]);
 });
 // WSA Picklist
