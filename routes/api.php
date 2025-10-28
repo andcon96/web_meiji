@@ -113,10 +113,13 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::get("listOtherShipmentSchedule", [APIOtherShipmentPreparationController::class, "listOtherShipmentSchedule"]);
     Route::post("saveOtherShipmentPreparation", [APIOtherShipmentPreparationController::class, "store"]);
     Route::get("approverListShipmentPreparation", [APIOtherShipmentPreparationController::class, "approverListShipmentPreparation"]);
-    Route::post("rejectShipmentPreparation", [APIOtherShipmentPreparationController::class, "rejectShipmentPreparation"]);
-    Route::post("approveShipmentPreparation", [APIOtherShipmentPreparationController::class, "approveShipmentPreparation"]);
-    Route::get("editShipmentPreparation/{id}", [APIOtherShipmentPreparationController::class, "editShipmentPreparation"]);
-    Route::get("getShipmentPreparationApprovalList", [APIOtherShipmentPreparationController::class, "getShipmentPreparationApprovalList"]);
+    Route::post("rejectOtherShipmentPreparation", [APIOtherShipmentPreparationController::class, "rejectShipmentPreparation"]);
+    Route::post("approveOtherShipmentPreparation", [APIOtherShipmentPreparationController::class, "approveShipmentPreparation"]);
+    Route::get("editOtherShipmentPreparation/{id}", [APIOtherShipmentPreparationController::class, "editShipmentPreparation"]);
+    Route::get("getOtherShipmentPreparationApprovalList", [
+        APIOtherShipmentPreparationController::class,
+        "getOtherShipmentPreparationApprovalList",
+    ]);
 
     // Picklist
     Route::get("getDataWo", [APIWorkOrderController::class, "getDataWo"]);

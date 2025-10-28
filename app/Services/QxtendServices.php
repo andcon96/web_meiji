@@ -73,7 +73,8 @@ class QxtendServices
         }
 
         if (is_bool($qdocResponse)) {
-            return false;
+            Log::channel("otherShipmentPreparation")->error("Qxtend connection failed: {$curlError} ({$curlErrno}), URL: {$qxUrl}");
+            return [false, "Qxtend connection failed: {$curlError}"];
         }
 
         $xmlResp = simplexml_load_string($qdocResponse);
@@ -2165,6 +2166,108 @@ class QxtendServices
 								</transWms>
 							</dsTransWms>
 						</transferSingleItemWMS>
+					</soapenv:Body>
+					</soapenv:Envelope>';
+
+        return $this->sendQdocRequest($qdocRequest, $activeConnection);
+    }
+
+    public function qxShipmentPreparationIssuesUnplanned(
+        $otherShipmentScheduleDetail,
+        $location,
+        $locationDetail,
+        $otherShipmentPreparationNumber,
+        $activeConnection,
+    ) {
+        $receiver = "QADERP";
+
+        $qdocRequest =
+            '<soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qcom="urn:schemas-qad-com:xml-services:common" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsa="http://www.w3.org/2005/08/addressing">
+						<soapenv:Header>
+							<wsa:Action/>
+							<wsa:To>urn:services-qad-com:' .
+            $receiver .
+            '</wsa:To>
+							<wsa:MessageID>urn:services-qad-com::' .
+            $receiver .
+            '</wsa:MessageID>
+							<wsa:ReferenceParameters>
+								<qcom:suppressResponseDetail>true</qcom:suppressResponseDetail>
+							</wsa:ReferenceParameters>
+							<wsa:ReplyTo>
+								<wsa:Address>urn:services-qad-com:</wsa:Address>
+							</wsa:ReplyTo>
+						</soapenv:Header>
+						<soapenv:Body>
+							<MJIInventoryIssue>
+								<qcom:dsSessionContext>
+									<qcom:ttContext>
+										<qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+										<qcom:propertyName>domain</qcom:propertyName>
+										<qcom:propertyValue>' .
+            $activeConnection->wsas_domain .
+            '</qcom:propertyValue>
+									</qcom:ttContext>
+									<qcom:ttContext>
+										<qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+										<qcom:propertyName>scopeTransaction</qcom:propertyName>
+										<qcom:propertyValue>true</qcom:propertyValue>
+									</qcom:ttContext>
+									<qcom:ttContext>
+										<qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+										<qcom:propertyName>version</qcom:propertyName>
+										<qcom:propertyValue>CustV1</qcom:propertyValue>
+									</qcom:ttContext>
+									<qcom:ttContext>
+										<qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+										<qcom:propertyName>mnemonicsRaw</qcom:propertyName>
+										<qcom:propertyValue>false</qcom:propertyValue>
+									</qcom:ttContext>
+								<qcom:ttContext>
+									<qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+									<qcom:propertyName>action</qcom:propertyName>
+									<qcom:propertyValue/>
+								</qcom:ttContext>
+								<qcom:ttContext>
+									<qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+									<qcom:propertyName>entity</qcom:propertyName>
+									<qcom:propertyValue/>
+								</qcom:ttContext>
+								<qcom:ttContext>
+									<qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+									<qcom:propertyName>email</qcom:propertyName>
+									<qcom:propertyValue/>
+								</qcom:ttContext>
+								<qcom:ttContext>
+									<qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+									<qcom:propertyName>emailLevel</qcom:propertyName>
+									<qcom:propertyValue/>
+								</qcom:ttContext>
+							</qcom:dsSessionContext>
+							<dsMJIiIventoryIssue>
+								<MJIiIventoryIssue>
+									<vPart>' .
+            $otherShipmentScheduleDetail->ossd_part .
+            '</vPart>
+									<vQty>' .
+            $locationDetail->ossl_qty_pick .
+            '</vQty>
+            <vRmks>' .
+            $otherShipmentPreparationNumber .
+            '</vRmks>
+									<vSiteFrom>' .
+            $locationDetail->ossl_site .
+            '</vSiteFrom>
+									<vLocFrom>' .
+            $location .
+            '</vLocFrom>
+									<vLotFrom>' .
+            $locationDetail->ossl_lotserial .
+            '</vLotFrom>
+									<vYn>true</vYn>
+								</MJIiIventoryIssue>
+							</dsMJIiIventoryIssue>
+						</MJIInventoryIssue>
 					</soapenv:Body>
 					</soapenv:Envelope>';
 

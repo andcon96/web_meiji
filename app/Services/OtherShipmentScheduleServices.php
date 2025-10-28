@@ -7,6 +7,7 @@ use App\Models\API\OtherShipmentSchedule\OtherShipmentScheduleDet;
 use App\Models\API\OtherShipmentSchedule\OtherShipmentScheduleHist;
 use App\Models\API\OtherShipmentSchedule\OtherShipmentScheduleLoc;
 use App\Models\API\OtherShipmentSchedule\OtherShipmentScheduleMstr;
+use App\Models\API\OtherShipmentPreparation\OtherShipmentPreparationDet;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -42,6 +43,7 @@ class OtherShipmentScheduleServices
                 $otherShipmentScheduleDet->ossd_qty_ord = $item["totalQty"];
                 $otherShipmentScheduleDet->ossd_qty_pick = 0.0;
                 $otherShipmentScheduleDet->ossd_status = "New";
+                $otherShipmentScheduleDet->ossd_sent_to_qad = "No";
                 $otherShipmentScheduleDet->created_by = Auth::user()->id;
                 $otherShipmentScheduleDet->save();
 
@@ -99,7 +101,7 @@ class OtherShipmentScheduleServices
             // dd("stop");
 
             return true;
-        } catch (\Exception $err) {
+        } catch (Exception $err) {
             Log::channel("otherShipmentSchedule")->info($err);
 
             DB::rollBack();
@@ -189,6 +191,13 @@ class OtherShipmentScheduleServices
             // 1️⃣ Delete details that are no longer in $items
             foreach ($existingDetails as $detail) {
                 if (!in_array($detail->ossd_part, $incomingParts)) {
+                    // Find the shipment preparation
+                    $locationList = OtherShipmentScheduleLoc::where("ossd_id", $detail->id)->get();
+                    foreach ($locationList as $deletedLoc) {
+                        // Find the shipment preparation
+                        $shipmentPreparation = OtherShipmentPreparationDet::where("ossl_id", $deletedLoc->id)->first();
+                        $shipmentPreparation->delete();
+                    }
                     // delete related locations first
                     OtherShipmentScheduleLoc::where("ossd_id", $detail->id)->delete();
                     $detail->delete();

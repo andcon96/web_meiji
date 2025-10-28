@@ -12,6 +12,8 @@ use App\Services\OtherShipmentPreparationServices;
 use App\Models\API\OtherShipmentPreparation\OtherShipmentPreparationApproval;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Models\Settings\Role;
+use App\Models\Settings\User;
 
 class APIOtherShipmentPreparationController extends Controller
 {
@@ -85,7 +87,7 @@ class APIOtherShipmentPreparationController extends Controller
         // Log::channel("otherShipmentPreparation")->info(json_encode($request->all()));
 
         $approver = $request->approver;
-        $idOssm = $request->ossmId;
+        $idOssm = $request->ossm_id;
         $otherShipmentPreparation = $request->otherScheduleDetail;
 
         $activeConnection = qxwsa::first();
@@ -119,15 +121,137 @@ class APIOtherShipmentPreparationController extends Controller
         );
     }
 
-    public function approverListShipmentPreparation() {}
+    public function approverListShipmentPreparation()
+    {
+        $role = Role::where("role_code", "SH")->first();
+        $users = User::where("role_id", $role->id)
+            ->where("is_active", "Active")
+            ->get(["id", "name"]);
 
-    public function rejectShipmentPreparation() {}
+        if ($users->count() == 0) {
+            return response()->json(
+                [
+                    "Status" => "Error",
+                    "Message" => "No users found.",
+                ],
+                422,
+            );
+        }
 
-    public function approveShipmentPreparation() {}
+        return response()->json(
+            [
+                "users" => $users,
+            ],
+            200,
+        );
+    }
 
-    public function editShipmentPreparation() {}
+    public function rejectShipmentPreparation(Request $request)
+    {
+        // Log::channel("otherShipmentPreparation")->info(json_encode($request->all()));
+        $otherShipmentPreparation = $request->shipperPayload;
+        $reason = $request->reason;
+        $otherShipmentScheduleNumber = $request->shipmentScheduleNumber;
+        $otherShipmentPreparationServices = new OtherShipmentPreparationServices();
+        $rejectOtherShipmentPreparation = $otherShipmentPreparationServices->rejectOtherShipmentPreparation(
+            $otherShipmentPreparation,
+            $reason,
+            $otherShipmentScheduleNumber,
+        );
 
-    public function getShipmentPreparationApprovalList(Request $request)
+        if ($rejectOtherShipmentPreparation == false) {
+            return response()->json(
+                [
+                    "Status" => "Error",
+                    "Message" => "Failed To reject other shipment preparation.",
+                ],
+                422,
+            );
+        }
+
+        return response()->json(
+            [
+                "status" => "success",
+                "message" => "Other Shipment preparation has been rejected",
+            ],
+            200,
+            ["Content-Type" => "application/json"],
+            JSON_UNESCAPED_UNICODE,
+        );
+    }
+
+    public function approveShipmentPreparation(Request $request)
+    {
+        Log::channel("otherShipmentPreparation")->info(json_encode($request->all()));
+
+        $shipmentPreparation = $request->shipperPayload;
+        $reason = $request->reason;
+        $otherShipmentScheduleNumber = $request->shipmentScheduleNumber;
+        $activeConnection = qxwsa::first();
+
+        $otherShipmentPreparationServices = new OtherShipmentPreparationServices();
+        $approveShipmentPreparation = $otherShipmentPreparationServices->approveOtherShipmentPreparation(
+            $shipmentPreparation,
+            $reason,
+            $otherShipmentScheduleNumber,
+            $activeConnection,
+        );
+
+        if ($approveShipmentPreparation == false) {
+            return response()->json(
+                [
+                    "Status" => "Error",
+                    "Message" => "Failed to approve shipment preparation.",
+                ],
+                422,
+            );
+        }
+
+        return response()->json(
+            [
+                "status" => "success",
+                "message" => "Shipment preparation has been approved",
+            ],
+            200,
+            ["Content-Type" => "application/json"],
+            JSON_UNESCAPED_UNICODE,
+        );
+    }
+
+    public function editShipmentPreparation($id)
+    {
+        $shipmentPreparation = OtherShipmentPreparationMstr::with([
+            "getOtherShipmentPreparationDet.getOtherShipmentScheduleLocation.getOtherShipmentScheduleDet.getOtherShipmentScheduleMaster",
+        ])->find($id);
+
+        if (!$shipmentPreparation) {
+            return response()->json(
+                [
+                    "status" => "Error",
+                    "message" => "Failed to fetch other shipment preparation data",
+                ],
+                422,
+                ["Content-Type" => "application/json"],
+                JSON_UNESCAPED_UNICODE,
+            );
+        }
+
+        $otherShipmentScheduleDet =
+            $shipmentPreparation->getOtherShipmentPreparationDet[0]->getOtherShipmentScheduleLocation->getOtherShipmentScheduleDet;
+
+        return response()->json(
+            [
+                "status" => "success",
+                "otherShipmentPreparationData" => $shipmentPreparation,
+                "otherShipmentScheduleData" => $otherShipmentScheduleDet,
+            ],
+            200,
+            ["Content-Type" => "application/json"],
+            JSON_UNESCAPED_UNICODE,
+        );
+    }
+
+    public function getOtherShipmentPreparationApprovalList(Request $request)
     {
         $data = OtherShipmentPreparationApproval::query()
             ->with([
