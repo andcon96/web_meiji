@@ -5,6 +5,8 @@ use App\Http\Controllers\API\APIPurchaseOrderApprovalController;
 use App\Http\Controllers\API\APIPurchaseOrderController;
 use App\Http\Controllers\API\APIPurchaseOrderRecheckController;
 use App\Http\Controllers\API\APIQualityInfoController;
+use App\Http\Controllers\API\OtherShipmentSchedule\APIOtherShipmentScheduleController;
+use App\Http\Controllers\API\OtherShipmentPreparation\APIOtherShipmentPreparationController;
 use App\Http\Controllers\API\ShipmentSchedule\APIShipmentScheduleController;
 use App\Http\Controllers\API\APITrasnferStockController;
 use App\Http\Controllers\API\APIWorkOrderController;
@@ -100,6 +102,28 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::get("getShipperConfirmation", [APIShipperConfirmController::class, "index"]);
     Route::post("confirmShipment", [APIShipperConfirmController::class, "store"]);
 
+    // Other Shipment Schedule
+    Route::get("getOtherShipmentSchedule", [APIOtherShipmentScheduleController::class, "index"]);
+    Route::get("/getItemOSS", [APIOtherShipmentScheduleController::class, "getItemOSS"]);
+    Route::post("/getLocationByPart", [APIOtherShipmentScheduleController::class, "getLocationByPart"]);
+    Route::post("/saveOtherShipmentSchedule", [APIOtherShipmentScheduleController::class, "store"]);
+    Route::post("deleteOtherShipmentSchedule", [APIOtherShipmentScheduleController::class, "delete"]);
+    Route::get("editOtherShipmentSchedule/{id}", [APIOtherShipmentScheduleController::class, "edit"]);
+    Route::put("updateOtherShipmentSchedule/{id}", [APIOtherShipmentScheduleController::class, "update"]);
+
+    // Other Shipment Preparation
+    Route::get("getOtherShipmentPreparation", [APIOtherShipmentPreparationController::class, "index"]);
+    Route::get("listOtherShipmentSchedule", [APIOtherShipmentPreparationController::class, "listOtherShipmentSchedule"]);
+    Route::post("saveOtherShipmentPreparation", [APIOtherShipmentPreparationController::class, "store"]);
+    Route::get("approverListShipmentPreparation", [APIOtherShipmentPreparationController::class, "approverListShipmentPreparation"]);
+    Route::post("rejectOtherShipmentPreparation", [APIOtherShipmentPreparationController::class, "rejectShipmentPreparation"]);
+    Route::post("approveOtherShipmentPreparation", [APIOtherShipmentPreparationController::class, "approveShipmentPreparation"]);
+    Route::get("editOtherShipmentPreparation/{id}", [APIOtherShipmentPreparationController::class, "editShipmentPreparation"]);
+    Route::get("getOtherShipmentPreparationApprovalList", [
+        APIOtherShipmentPreparationController::class,
+        "getOtherShipmentPreparationApprovalList",
+    ]);
+
     // Picklist
     Route::get("getDataWo", [APIWorkOrderController::class, "getDataWo"]);
     Route::post("searchDataWo", [APIWorkOrderController::class, "wsaDataWo"]);
@@ -137,6 +161,10 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::post("wsaReceiptPick", [APIPicklistShopping::class, "submitPicklistReceipt"]);
 
     // Single Transfer
+    Route::get("getLocationData", [APIPicklistShopping::class, "getLocationData"]);
+    Route::get("wsaWarehousePick", [APIPicklistShopping::class, "wsaWarehouse"]);
+    Route::get("getSearchLocation", [APIPicklistShopping::class, "wsainvdet"]);
+    Route::post("sendTransferItem", [APIPicklistShopping::class, "sendTransferItem"]);
     Route::get("getLocationData", [APISingleTransfer::class, "getLocationData"]);
     Route::get("wsaWarehousePick", [APISingleTransfer::class, "wsaWarehouse"]);
     Route::get("getSearchLocation", [APISingleTransfer::class, "wsainvdet"]);

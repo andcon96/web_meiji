@@ -10,12 +10,17 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create("other_shipment_schedule_prefix", function (Blueprint $table) {
+        Schema::create("other_shipment_schedule_det", function (Blueprint $table) {
             $table->id();
-            $table->tinyInteger("other_shipment_schedule_year")->default(25);
-            $table->tinyInteger("other_shipment_schedule_month")->default(10);
-            $table->string("other_ship_schedule_prefix", 5)->default("SS");
-            $table->string("other_ship_schedule_running_nbr", 18)->default("0");
+            $table->unsignedBigInteger("ossm_id")->index();
+            $table->foreign("ossm_id")->references("id")->on("other_shipment_schedule_mstr")->onDelete("restrict");
+            $table->string("ossd_part");
+            $table->string("ossd_desc")->nullable();
+            $table->string("ossd_uom");
+            $table->decimal("ossd_qty_ord", 15, 2);
+            $table->decimal("ossd_qty_pick", 15, 2);
+            $table->string("ossd_status");
+            $table->enum("ossd_sent_to_qad", ["Yes", "No"]);
             $table->unsignedBigInteger("created_by")->index();
             $table->foreign("created_by")->references("id")->on("users")->onDelete("restrict");
             $table->unsignedBigInteger("updated_by")->index()->nullable();
@@ -29,6 +34,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists("other_shipment_schedule_prefix");
+        Schema::dropIfExists("other_shipment_schedule_det");
     }
 };

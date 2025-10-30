@@ -2500,7 +2500,7 @@ class WSAServices
             $dataloop,
         ];
     }
-
+    
     //     public function wsaLotSerialLdDetail($lotpallet)
     // {
     //     $wsa = qxwsa::first();
@@ -3068,5 +3068,5 @@ class WSAServices
             $dataloop
         ];
     }
-    
+
 }

@@ -10,15 +10,18 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create("other_shipment_schedule_prefix", function (Blueprint $table) {
+        Schema::create("other_shipment_preparation_approval", function (Blueprint $table) {
             $table->id();
-            $table->tinyInteger("other_shipment_schedule_year")->default(25);
-            $table->tinyInteger("other_shipment_schedule_month")->default(10);
-            $table->string("other_ship_schedule_prefix", 5)->default("SS");
-            $table->string("other_ship_schedule_running_nbr", 18)->default("0");
+            $table->unsignedBigInteger("ospm_id")->index();
+            $table->foreign("ospm_id")->references("id")->on("other_shipment_preparation_mstr")->onDelete("restrict");
+            $table->tinyInteger("ospa_sequence");
+            $table->string("ospa_user_approver")->nullable();
+            $table->string("ospa_alt_user_approver")->nullable();
+            $table->string("ospa_status");
+            $table->string("ospa_reason")->nullable();
             $table->unsignedBigInteger("created_by")->index();
             $table->foreign("created_by")->references("id")->on("users")->onDelete("restrict");
-            $table->unsignedBigInteger("updated_by")->index()->nullable();
+            $table->unsignedBigInteger("updated_by")->index();
             $table->foreign("updated_by")->references("id")->on("users")->onDelete("restrict");
             $table->timestamps();
         });
@@ -29,6 +32,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists("other_shipment_schedule_prefix");
+        Schema::dropIfExists("other_shipment_preparation_approval");
     }
 };

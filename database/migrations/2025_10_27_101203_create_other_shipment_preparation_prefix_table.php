@@ -10,12 +10,12 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create("other_shipment_schedule_prefix", function (Blueprint $table) {
+        Schema::create("other_shipment_preparation_prefix", function (Blueprint $table) {
             $table->id();
-            $table->tinyInteger("other_shipment_schedule_year")->default(25);
-            $table->tinyInteger("other_shipment_schedule_month")->default(10);
-            $table->string("other_ship_schedule_prefix", 5)->default("SS");
-            $table->string("other_ship_schedule_running_nbr", 18)->default("0");
+            $table->tinyInteger("other_shipment_preparation_year")->default(25);
+            $table->tinyInteger("other_shipment_preparation_month")->default(10);
+            $table->string("other_shipment_preparation_prefix", 5)->default("OP");
+            $table->string("other_shipment_preparation_running_nbr", 18)->default("0");
             $table->unsignedBigInteger("created_by")->index();
             $table->foreign("created_by")->references("id")->on("users")->onDelete("restrict");
             $table->unsignedBigInteger("updated_by")->index()->nullable();
@@ -29,6 +29,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists("other_shipment_schedule_prefix");
+        Schema::dropIfExists("other_shipment_preparation_prefix");
     }
 };
