@@ -144,7 +144,6 @@ Route::group(["middleware" => ["auth"]], function () {
 	Route::get('/getAllSSM', [ShipmentReportController::class, 'getAllSSM']);
 	Route::post('/SSDExport', [ShipmentReportController::class, 'SSDExport'])->name('SSDExport');
 
-
 	// Printout Menu
 	Route::get('getReceiptBook', [ReceiptBookController::class, 'getReceiptBook']);
 	Route::get('printBook/{id}', [ReceiptBookController::class, 'printBook'])->name('printBook');

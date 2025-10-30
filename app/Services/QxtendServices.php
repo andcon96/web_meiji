@@ -1802,7 +1802,7 @@ class QxtendServices
         }
 
         if (is_bool($qdocResponse)) {
-            return false;
+            return [false,'Qxtend connection error'];
         }
 
         $xmlResp = simplexml_load_string($qdocResponse);

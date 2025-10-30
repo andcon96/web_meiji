@@ -16,6 +16,8 @@ use App\Models\API\picklistWoDet;
 use App\Models\API\prefixWorkOrder;
 use App\Models\API\picklistHistory;
 use App\Models\API\picklistLocationTo;
+use App\Models\Settings\SingleTransferPrefix;
+use App\Models\API\SingleTransfer;
 use App\Services\WSAServices;
 use App\Services\QxtendServices;
 use Exception;
@@ -27,13 +29,125 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 
-class APIPicklistShopping extends Controller
+class APISingleTransfer extends Controller
 {
-    public function getPicklistMstr(Request $req)
+
+    public function getTransferData(Request $req)
+    {
+        $trfid = $req->trfid;
+        $trfdata = singleTransfer::where('st_trfid', $trfid)->first();
+        if (!$trfdata) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Data Not Found."
+            ], 422);
+        } else {
+            return GeneralResources::collection($trfdata);
+            // return response()->json(
+            //     [
+            //         'Data' => $trfdata
+            //     ],
+            //     200
+            // );
+        }
+    }
+
+    public function getSingleTransferData(Request $req)
+    {
+        $search = $req->search;
+
+        $trfdata = singleTransfer::where('st_status', 'Open');
+        if ($search) {
+            $trfdata =  $trfdata->where('st_trfid', 'LIKE', '%' . $search . '%')
+                ->orWhere('st_item', 'LIKE', '%' . $search . '%')
+                ->orWhere('st_lot', 'LIKE', '%' . $search . '%')
+                ->get();
+        }
+        $trfdata = $trfdata->get();
+
+        if (!$trfdata) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Data Not Found."
+            ], 422);
+        } else {
+            return GeneralResources::collection($trfdata);
+            // return response()->json(
+            //     [
+            //         'Data' => $trfdata
+            //     ],
+            //     200
+            // );
+        }
+    }
+
+    public function receiptItem(Request $req)
+    {
+        
+        $trfid = $req->trfid;
+        $data = singleTransfer::where('st_trfid', $trfid)->first();
+        $part = $data->st_item;
+        $qtyoh = $data->st_qty;
+        $sitefrom = $data->st_site_from;
+        $siteto = $data->st_site_to;
+        $locfrom = $data->st_loc_from;
+        $locto = $data->st_loc_to;
+        $lotfrom = $data->st_lot;
+        $lotto = $data->st_lot;
+        $buildingfrom = '';
+        $buildingto = $data->st_wh;
+        $levelfrom = '';
+        $levelto = $data->st_level;
+        $binfrom = '';
+        $binto = $data->st_bin;
+
+        $qxreceipt = (new QxtendServices())->qxTransferSingleItemTransfer(
+            $part,
+            $qtyoh,
+            $sitefrom,
+            $siteto,
+            $locfrom,
+            $locto,
+            $lotfrom,
+            $lotto,
+            $buildingfrom,
+            $buildingto,
+            $levelfrom,
+            $levelto,
+            $binfrom,
+            $binto
+        );
+        if ($qxreceipt[0] == false) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Transfer Item Failed "
+            ], 422);
+        } else {
+            DB::beginTransaction();
+            try {
+                $dataupdate = singleTransfer::where('st_trfid', $trfid)->first();
+                $dataupdate->st_status = 'Received';
+                $dataupdate->save();
+                DB::commit();
+                return response()->json([
+                    'Status' => 'Success',
+                    'Message' => "Receipt Item Successful"
+                ], 200);
+            } catch (Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "Receipt Item Failed :" . $e->getMessage()
+                ], 422);
+            }
+        }
+    }
+
+    public function getLocation(Request $req)
     {
 
-
-        $hasil = (new WSAServices())->wsaGetPickNbr();
+        $wonbr = $req->wonbr;
+        $hasil = (new WSAServices())->wsaGetLocationTransfer($wonbr);
 
 
         $currentPick = '';
@@ -922,6 +1036,9 @@ class APIPicklistShopping extends Controller
     }
     public function getLocationData(Request $req)
     {
+
+
+
         $currentPick = '';
         $currentWo = '';
         $detail = [];
@@ -1223,18 +1340,61 @@ class APIPicklistShopping extends Controller
 
     public function sendTransferItem(Request $req)
     {
-        $data = $req->all();
-        $item = $data['item'];
-        $sitefrom = $data['sitefrom'];
-        $siteto = $data['siteto'];
-        $locfrom = $data['locfrom'];
-        $locto = $data['locto'];
-        $qty = $data['qty'];
-        $wh = $this->nullConversion($data['wh']);
-        $ref = $this->nullConversion($data['ref']);
-        $level = $this->nullConversion($data['level']);
-        $bin = $this->nullConversion($data['bin']);
-        $lot = $this->nullConversion($data['lot']);
+        DB::beginTransaction();
+        try {
+            $data = $req->all();
+            $item = $data['item'];
+            $sitefrom = $data['sitefrom'];
+            $siteto = $data['siteto'];
+            $locfrom = $data['locfrom'];
+            $locto = $data['locto'];
+            $qty = $data['qty'];
+            $wh = $this->nullConversion($data['wh']);
+            $ref = $this->nullConversion($data['ref']);
+            $level = $this->nullConversion($data['level']);
+            $bin = $this->nullConversion($data['bin']);
+            $lot = $this->nullConversion($data['lot']);
+            $prefixTable = singleTransferPrefix::first();
+            $prefix = $prefixTable->stp_prefix;
+            $runningnbr = $prefixTable->stp_running_nbr;
+            $nextrunningnbr = (int) $runningnbr + 1;
+            $newRunningNbr = str_pad($nextrunningnbr, 6, '0', STR_PAD_LEFT);
+            $newPrefix = $prefix . $newRunningNbr;
+
+            $newTransferData = new SingleTransfer();
+            $newTransferData->st_trfid = $newPrefix;
+            $newTransferData->st_item = $item;
+            $newTransferData->st_site_from = $sitefrom;
+            $newTransferData->st_site_to = $siteto;
+            $newTransferData->st_loc_from = $locfrom;
+            $newTransferData->st_loc_to = $locto;
+            $newTransferData->st_qty = $qty;
+            $newTransferData->st_wh = $wh;
+            $newTransferData->st_ref = $ref;
+            $newTransferData->st_level = $level;
+            $newTransferData->st_bin = $bin;
+            $newTransferData->st_lot = $lot;
+            $newTransferData->st_status = 'Open';
+            $newTransferData->save();
+
+            $prefixTable->stp_running_nbr = $newRunningNbr;
+            $prefixTable->save();
+
+            DB::commit();
+
+            return response()->json([
+                'Status' => 'Success',
+                'Message' => "Transfer Item Success for Item : " . $item
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::channel('SingleTransfer')->info($e);
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Single Transfer Input Error"
+            ], 422);
+        }
+
         $hasil = (new QxtendServices())->qxTransferSingleItemTransfer($item, $qty, $sitefrom, $siteto, $locfrom, $locto, $lot, '', '', $wh, '', $level, '', $bin);
         if ($hasil == 'false') {
             return response()->json([

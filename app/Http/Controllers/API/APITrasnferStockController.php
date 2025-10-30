@@ -31,7 +31,8 @@ class APITrasnferStockController extends Controller
 
     public function getStockItemBin(Request $req)
     {
-        $hasil = (new WSAServices())->wsaPenyimpanan('', $req->itemCode, '', $req->bin, $req->warehouse, $req->lvl);
+        $hasil = (new WSAServices())->wsaPenyimpananTransfer('', $req->itemCode, '', $req->bin, $req->warehouse, $req->lvl);
+        
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',

@@ -9,9 +9,12 @@ use App\Http\Controllers\API\ShipmentSchedule\APIShipmentScheduleController;
 use App\Http\Controllers\API\APITrasnferStockController;
 use App\Http\Controllers\API\APIWorkOrderController;
 use App\Http\Controllers\API\APIPicklistShopping;
+use App\Http\Controllers\API\APISingleTransfer;
 use App\Http\Controllers\API\APIZebraPrinterController;
 use App\Http\Controllers\API\PackingReplenishment\APIPackingReplenishmentController;
 use App\Http\Controllers\API\ShipperConfirm\APIShipperConfirmController;
+use App\Http\Controllers\API\APITransIssUnpController;
+use App\Http\Controllers\API\APITransRctUnpController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -134,11 +137,14 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::post("wsaReceiptPick", [APIPicklistShopping::class, "submitPicklistReceipt"]);
 
     // Single Transfer
-    Route::get("getLocationData", [APIPicklistShopping::class, "getLocationData"]);
-    Route::get("wsaWarehousePick", [APIPicklistShopping::class, "wsaWarehouse"]);
-    Route::get("getSearchLocation", [APIPicklistShopping::class, "wsainvdet"]);
-    Route::post("sendTransferItem", [APIPicklistShopping::class, "sendTransferItem"]);
-
+    Route::get("getLocationData", [APISingleTransfer::class, "getLocationData"]);
+    Route::get("wsaWarehousePick", [APISingleTransfer::class, "wsaWarehouse"]);
+    Route::get("getSearchLocation", [APISingleTransfer::class, "wsainvdet"]);
+    Route::post("sendTransferItem", [APISingleTransfer::class, "sendTransferItem"]);
+    
+    Route::get("getTransferData", [APISingleTransfer::class, "getTransferData"]);
+    Route::post("receiptItem", [APISingleTransfer::class, "receiptItem"]);
+    Route::get("getSingleTransferData", [APISingleTransfer::class, "getSingleTransferData"]);
 
     //Work Order Issue
     //Route::get("getIssueData", [APIWorkOrderController::class, "getIssueData"]);
@@ -146,6 +152,21 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
 
     // Inventory WMS
     Route::get("/getInvWms", [APIController::class, 'getInvWms']);
+
+    //Transaksi Out
+    Route::post('/submitout', [APITransIssUnpController::class, 'submitIssOut']);
+
+    //Transaksi In
+    Route::post('/submitRctUnp', [APITransRctUnpController::class, 'submitRctUnp']);
+
+    //Data Inquiry
+
+    Route::post('/checkpallet', [APIController::class, 'checkPallet']);
+    Route::post('/checkpalletloc', [APIController::class, 'checkPalletLoc']);
+    Route::post('/checkloc', [APIController::class, 'checkLoc']);
+    Route::post('/checkItem', [APIController::class, 'checkItem']);
+    Route::post('/checkSupplier', [APIController::class, 'checkSupplier']);
+    Route::post('/checkdatainquiry', [APIController::class, 'getDataInquiry']);
 
 });
 // WSA Picklist
