@@ -27,8 +27,10 @@ class OtherShipmentScheduleServices
             // Create shipment schedule master
             $otherShipmentScheduleMstr = new OtherShipmentScheduleMstr();
             $otherShipmentScheduleMstr->ossm_number = $ossm_number;
-            $otherShipmentScheduleMstr->ossm_cust_code = $customerCode;
-            $otherShipmentScheduleMstr->ossm_cust_desc = $customerName;
+            // $otherShipmentScheduleMstr->ossm_cust_code = $customerCode;
+            // $otherShipmentScheduleMstr->ossm_cust_desc = $customerName;
+            $otherShipmentScheduleMstr->ossm_cust_code = "-";
+            $otherShipmentScheduleMstr->ossm_cust_desc = "-";
             $otherShipmentScheduleMstr->ossm_status = "New";
             $otherShipmentScheduleMstr->created_by = Auth::user()->id;
             $otherShipmentScheduleMstr->save();
