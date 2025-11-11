@@ -11,9 +11,9 @@
                     </div>
                     <div class="dt-action-buttons text-end pt-3 pt-md-0">
                         <div class="dt-buttons btn-group flex-wrap">
-                            <form id="formSSDExport" action="{{ route('SSDExport') }}" method="POST" enctype="multipart/form-data">
+                            <form id="formOSSDExport" action="{{ route('OSSDExport') }}" method="POST" enctype="multipart/form-data">
                                 @csrf
-                                <input type="hidden" id='rows' name="ssdrows"/>
+                                <input type="hidden" id='rows' name="ossdrows"/>
                                 <input type="hidden" id='nbr_mstr' name="nbr_mstr"/>
                                {{--  <button id="exportButton" class="btn btn-secondary create-new btn-primary" tabindex="0" type="submit">
                                     <span>
@@ -30,7 +30,7 @@
                     </div>
                 </div>
                 <div class="card-datatable table-responsive">
-                    <table id="shipmentTable" class="dt-responsive table border-top">
+                    <table id="othershipmentTable" class="dt-responsive table border-top">
                         <thead>
                             <tr>
                                 <th>Number</th>
@@ -62,22 +62,22 @@
     <script type="text/javascript">
         $(document).ready(function () {
             //datatable
-            let table = $('#shipmentTable').DataTable({
-                ajax: '{{ url("/getAllSSM") }}', 
+            let table = $('#othershipmentTable').DataTable({
+                ajax: '{{ url("/getAllOSSM") }}', 
                 serverSide: true,
                 columns: [
-                    {data: 'ssm_number',    width: '8em'},
-                    {data: 'ssm_cust_code', width: '12em'},
-                    {data: 'ssm_cust_desc', width: '32em'},
-                    {data: 'ssm_status',    width: '8em'},
+                    {data: 'ossm_number',    width: '8em'},
+                    {data: 'ossm_cust_code', width: '12em'},
+                    {data: 'ossm_cust_desc', width: '32em'},
+                    {data: 'ossm_status',    width: '8em'},
                     {
                         data: null,
                         width: '12em',
                         sortable: false,
                         render: function(data, type, row, meta){
                             return `
-                                <button data-detail='${JSON.stringify(row.get_shipment_schedule_detail)}' data-id='${row.id}' class="btn btn-secondary px-2 p-1 btnDetail" tabindex="0" type="button">Detail</button>
-                                <button data-detail='${JSON.stringify(row.get_shipment_schedule_detail)}' data-nbr-mstr='${row.ssm_number}' class="btn btn-primary px-2 py-1 btnExport" tabindex="0" type="button">Export</button>
+                                <button data-detail='${JSON.stringify(row.get_other_shipment_schedule_detail)}' data-id='${row.id}' class="btn btn-secondary px-2 p-1 btnDetail" tabindex="0" type="button">Detail</button>
+                                <button data-detail='${JSON.stringify(row.get_other_shipment_schedule_detail)}' data-nbr-mstr='${row.ossm_number}' class="btn btn-primary px-2 py-1 btnExport" tabindex="0" type="button">Export</button>
                             `
                         }
                     },
@@ -96,11 +96,11 @@
                 const $rows = $(this).data('detail');
                 const $nbrMstr = $(this).data('nbrMstr');
 
-                // console.log($nbrMstr);
+                /* console.log($nbrMstr); */
 
                 $('#rows').val(JSON.stringify($rows))
                 $('#nbr_mstr').val($nbrMstr)
-                $('#formSSDExport').submit()
+                $('#formOSSDExport').submit()
 
                 /* $(this).hide()
                 $('.loading-btn').css('display', '');
@@ -115,7 +115,7 @@
                 })
             })
 
-            //klik button detail
+            // klik button detail
             $(document).on('click', '.btnDetail', function(){
                 const $nested = $(this).closest('tbody').children('tr.nested'); //ambil semua detail yg sedang tampil
                 const $tr = $(this).closest('tr') //row master, wrapper button
@@ -156,16 +156,18 @@
                             <tbody>`
 
 
-                            $.each(rows, function (index, row) { 
-                                detailTable += `
-                                <tr>
-                                    <td>${row.ssd_sod_nbr}</td>
-                                    <td>${row.ssd_sod_part}</td>
-                                    <td>${row.ssd_uom}</td>
-                                    <td>${row.ssd_sod_qty_ord}</td>
-                                    <td>${row.ssd_sod_lot}</td>
-                                </tr>`
+                            $.each(rows, function (index, row) {
+                                $.each(row.get_other_shipment_schedule_location, function (index, loc) {
+                                    detailTable += `
+                                    <tr>
+                                        <td>${row.order}</td>
+                                        <td>${row.ossd_part}</td>
+                                        <td>${row.ossd_uom}</td>
+                                        <td>${row.ossd_qty_ord}</td>
+                                        <td>${loc.ossl_lotserial}</td>
+                                    </tr>`
                                 })
+                            })
 
                 detailTable += `
                             </tbody>

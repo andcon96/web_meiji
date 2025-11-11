@@ -57,6 +57,6 @@ class ShipmentReportController extends Controller
     }
 
     public function SSDExport(Request $req){
-        return Excel::download(new SSDExport(json_decode($req->ssdrows)), 'SSD.xlsx');
+        return Excel::download(new SSDExport(json_decode($req->ssdrows)), $req->nbr_mstr.'.xlsx');
     }
 }

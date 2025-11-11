@@ -21,6 +21,7 @@ use App\Http\Controllers\Settings\ShipperPrefixController;
 use App\Http\Controllers\Settings\PicklistPrefixController;
 use App\Http\Controllers\Settings\UserController;
 use App\Http\Controllers\ShipmentReportController;
+use App\Http\Controllers\OtherShipmentReportController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
@@ -139,16 +140,17 @@ Route::group(["middleware" => ["auth"]], function () {
     Route::resource("PicklistPrefix", PicklistPrefixController::class);
     Route::post("deletePicklistPrefix", [PicklistPrefixController::class, "delete"])->name("deletePicklistPrefix");
 
+
     // Shipment Schedule Report
     Route::get("/ShipmentScheduleReport", [ShipmentReportController::class, "index"]);
     /* Route::get('/getAllSSD', [ShipmentReportController::class, 'getAllSSD']); */
     Route::get("/getAllSSM", [ShipmentReportController::class, "getAllSSM"]);
     Route::post("/SSDExport", [ShipmentReportController::class, "SSDExport"])->name("SSDExport");
-    // Shipment Schedule Report
-    Route::get("/ShipmentScheduleReport", [ShipmentReportController::class, "index"]);
-    /* Route::get('/getAllSSD', [ShipmentReportController::class, 'getAllSSD']); */
-    Route::get("/getAllSSM", [ShipmentReportController::class, "getAllSSM"]);
-    Route::post("/SSDExport", [ShipmentReportController::class, "SSDExport"])->name("SSDExport");
+
+    // Other Shipment Schedule Report
+    Route::get("/OtherShipmentScheduleReport", [OtherShipmentReportController::class, "index"]);
+    Route::get("/getAllOSSM", [OtherShipmentReportController::class, "getAllOSSM"]);
+    Route::post("/OSSDExport", [OtherShipmentReportController::class, "OSSDExport"])->name("OSSDExport");
 
     // Printout Menu
     Route::get("getReceiptBook", [ReceiptBookController::class, "getReceiptBook"]);

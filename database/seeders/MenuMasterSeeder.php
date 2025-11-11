@@ -29,8 +29,9 @@ class MenuMasterSeeder extends Seeder
             ['id' => 11, 'menu_name' => 'Location Management', 'menu_route' => 'locations', 'created_by' => '1'],
             ['id' => 12, 'menu_name' => 'Item Location Management', 'menu_route' => 'itemlocation', 'created_by' => '1'],
 */
-            ['id' => 19, 'menu_name' => 'Shipment Schedule', 'menu_route' => Null, 'created_by' => '1'],
+            ['id' => 19, 'menu_name' => 'Report', 'menu_route' => Null, 'created_by' => '1'],
             ['id' => 20, 'menu_name' => 'Shipment Schedule Report', 'menu_route' => 'ShipmentScheduleReport', 'created_by' => '1'],
+            ['id' => 21, 'menu_name' => 'Other Shipment Schedule Report', 'menu_route' => 'OtherShipmentScheduleReport', 'created_by' => '1'],
         );
         Menu::insert($data);
     }

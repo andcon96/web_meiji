@@ -95,39 +95,35 @@
 
     <tbody>
         @foreach($rows as $row)
-        <tr>
-            {{-- <td>{{ $row['ssd_sod_nbr'] }}</td>
-            <td>{{ $row['ssd_sod_shipto'] }}</td>
-            <td>{{ $row['ssd_sod_part'] }}</td>
-            <td>{{ $row['ssd_uom'] }}</td>
-            <td>{{ $row['ssd_sod_qty_ord'] }}</td>
-            <td>{{ $row['ssd_sod_lot'] }}</td> --}}
+            @foreach($row->get_other_shipment_schedule_location as $loc)
+            <tr>
 
-            <td>{{ $row->ssd_sod_nbr }}</td>
-            <td>{{ $row->sold_to }}</td>
-            <td>{{ $row->ssd_sod_part }}</td>
-            <td>{{ $row->ssd_uom }}</td>
-            <td>{{ $row->ssd_sod_qty_ord }}</td>
-            <td>{{ $row->ssd_sod_lot }}</td>
+                <td>{{ $row->order }}</td>
+                <td>{{ $row->sold_to }}</td>
+                <td>{{ $row->ossd_part }}</td>
+                <td>{{ $row->ossd_uom }}</td>
+                <td>{{ $row->ossd_qty_ord }}</td>
+                <td>{{ $loc->ossl_lotserial }}</td>
 
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-        </tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            @endforeach
         @endforeach
     </tbody>
 </table>
