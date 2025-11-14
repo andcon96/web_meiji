@@ -2413,7 +2413,7 @@ class WSAServices
         ];
     }
 
-    public function wsaInvWms(String $inppart)
+    public function wsaInvWms(String $inppart, String $inplot)
     {
         $wsa = qxwsa::first();
 
@@ -2434,6 +2434,7 @@ class WSAServices
                                 <meiji_inv_wms xmlns='$wsa->wsa_path'>
                                     <inpdomain>$domainCode</inpdomain>
                                     <inppart>$inppart</inppart>
+                                    <inplot>$inplot</inplot>
                                 </meiji_inv_wms>
                             </Body>
                         </Envelope>";

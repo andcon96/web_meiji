@@ -163,7 +163,7 @@ class APIController extends Controller
         try {
             /* throw new Exception('test exception'); */
 
-            $items = (new WSAServices)->wsaInvWms($req->query('inppart'));
+            $items = (new WSAServices)->wsaInvWms($req->query('inppart') ?? '', $req->query('inplot') ?? '');
 
            /*  dd($items); */
 
@@ -177,7 +177,7 @@ class APIController extends Controller
             if ($items[0] == "false") { //jika error response wsa
                 return response()->json([
                     'Status' => 'Not found',
-                    'Message' => "Item not found"
+                    'Message' => "Data not found"
                 ], 404); //not found
             }
 
@@ -188,7 +188,7 @@ class APIController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            dd($e);
+            /* dd($e); */
             Log::error($e);
             return response()->json([
                 'Status' => 'Error',
