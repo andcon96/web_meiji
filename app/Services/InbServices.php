@@ -28,6 +28,9 @@ class InbServices
         $location  = $req['location'];
         $lotserial = $req['lotserial'];
         $lotref    = $req['lotref'];
+        $warehouse = $req['warehouse'] ?? '';
+        $level     = $req['level'] ?? '';
+        $bin       = $req['bin'] ?? '';
 
         //get domain dan settingan koneksi ke QAD
         $domain = Domain::first();
@@ -60,7 +63,7 @@ class InbServices
                         </wsa:ReplyTo>
                     </soapenv:Header>
                     <soapenv:Body>
-                        <receiveInventory>
+                        <scrcptunpmji>
                             <qcom:dsSessionContext>
                                 <qcom:ttContext>
                                     <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
@@ -103,19 +106,22 @@ class InbServices
                                 <qcom:propertyValue/>
                             </qcom:ttContext>
                         </qcom:dsSessionContext>
-                        <dsInventoryReceipt>
-                            <inventoryReceipt>
-                                <ptPart>$part</ptPart>
-                                <lotserialQty>$qty</lotserialQty>
-                                <location>$location</location>
-                                <lotserial>$lotserial</lotserial>
-                                <lotref>$lotref</lotref>
+                        <dsRcptunpmji>
+                            <rcptunpmji>
+                                <vPart>$part</vPart>
+                                <vQty>$qty</vQty>
+                                <vLocFrom>$location</vLocFrom>
+                                <vLotFrom>$lotserial</vLotFrom>
+                                <vRefFrom>$lotref</vRefFrom>
                                 <multiEntry>false</multiEntry>
-                                <rmks>$username</rmks>
+                                <vRmks>$username</vRmks>
+                                <vWhFrom>$warehouse</vWhFrom>
+                                <vLevelFrom>$level</vLevelFrom>
+                                <vBinFrom>$bin</vBinFrom>
                                 <yn>true</yn>
-                            </inventoryReceipt>
-                        </dsInventoryReceipt>
-                    </receiveInventory>
+                            </rcptunpmji>
+                        </dsRcptunpmji>
+                    </scrcptunpmji>
                 </soapenv:Body>
                 </soapenv:Envelope>";
 
@@ -199,6 +205,9 @@ class InbServices
         $location = $req['location'];
         $lotserial = $req['lotserial'];
         $lotref = $req['lotref'];
+        $warehouse = $req['warehouse'] ?? '';
+        $level = $req['level'] ?? '';
+        $bin = $req['bin'] ?? '';
 
         //get domain dan settingan koneksi ke QAD
         $domain = Domain::first();
@@ -233,7 +242,7 @@ class InbServices
                             </wsa:ReplyTo>
                             </soapenv:Header>
                             <soapenv:Body>
-                            <issueInventory>
+                            <MJIInventoryIssue>
                                 <qcom:dsSessionContext>
                                 <qcom:ttContext>
                                     <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
@@ -286,17 +295,20 @@ class InbServices
                                     <qcom:propertyValue/>
                                 </qcom:ttContext>
                                 </qcom:dsSessionContext>
-                                <dsInventoryIssue>
-                                    <inventoryIssue>
-                                        <ptPart>' . $part . '</ptPart>
-                                        <lotserialQty>' . $qty . '</lotserialQty>
-                                        <location>' . $location . '</location>
-                                        <lotserial>' . $lotserial . '</lotserial>
-                                        <lotref>' . $lotref . '</lotref>
-                                        <rmks>'.$username. '</rmks>
-                                    </inventoryIssue>
-                                    </dsInventoryIssue>
-                                    </issueInventory>
+                                <dsMJIiIventoryIssue>
+                                    <MJIiIventoryIssue>
+                                        <vPart>' . $part . '</vPart>
+                                        <vQty>' . $qty . '</vQty>
+                                        <vLocFrom>' . $location . '</vLocFrom>
+                                        <vLotFrom>' . $lotserial . '</vLotFrom>
+                                        <vRefFrom>' . $lotref . '</vRefFrom>
+                                        <vWhFrom>'.$warehouse.'</vWhFrom>
+                                        <vLevelFrom>'.$level.'</vLevelFrom>
+                                        <vBinFrom>'.$bin.'</vBinFrom>
+                                        <vRmks>'.$username. '</vRmks>
+                                    </MJIiIventoryIssue>
+                                    </dsMJIiIventoryIssue>
+                                    </MJIInventoryIssue>
                                 </soapenv:Body>
                             </soapenv:Envelope>';
 

@@ -196,4 +196,305 @@ class APIController extends Controller
             ], 500);
         }
     }
+
+    public function checkPallet(Request $req)
+    {
+        /* dd($request->lotpallet); */
+
+        try {
+            /* throw new Exception('test internal server error'); */
+
+            $checkpallet = (new WSAServices())->wsaLotSerialLdDetail($req->lotpallet);
+            /*  dd($checkpallet[0]); */
+
+            if ($checkpallet == false) { //jika error koneksi wsa
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => 'WSA Error Connection'
+                ], 500);
+            }
+
+            if ($checkpallet[0] == "true") { //jika lot ada
+
+                $result = [];
+
+                foreach ($checkpallet[1] as $item) {
+                    $result[] = [
+                        't_domain' => (string)$item->t_domain,
+                        't_part' => (string)$item->t_part,
+                        't_partdesc' => (string)$item->t_partdesc,  // Otomatis jadi "" kalau kosong
+                        't_site' => (string)$item->t_site,
+                        't_loc' => (string)$item->t_loc,
+                        't_lot' => (string)$item->t_lot,
+                        't_ref' => (string)$item->t_ref,  // Otomatis jadi "" kalau kosong
+                        't_qtyoh' => (string)$item->t_qtyoh,
+                        't_balancetotalstok' => (float)$item->t_balancetotalstok,
+                        't_supplier' => (string)$item->t_supplier,  // Otomatis jadi "" kalau kosong
+                    ];
+                }
+
+                return response()->json([
+                    'Status' => 'success',
+                    'Available' => True,
+                    'Data' => $result
+                ], 200);
+            } else { //jika lot tidak ada
+                return response()->json([
+                    'Status' => 'success',
+                    'Available' => False,
+                    'Data' => ''
+                ], 200);
+            }
+        } catch (\Exception $e) {
+            Log::error($e);
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => 'Internal server error',
+            ], 500);
+        }
+    }
+
+    public function checkLoc(Request $req)
+    {
+        /* dd($req->location); */
+        try {
+            /* throw new Exception('test internal server error'); */
+
+            $isLocExist = (new WSAServices)->wsaCheckLocation($req->location);
+
+            /* dd($isLocExist); */
+
+            if ($isLocExist == false) { //jika error koneksi wsa
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "WSA Error Connection"
+                ], 500);
+            }
+
+            if ($isLocExist[0] == "false") { //jika error response wsa
+                return response()->json([
+                    'Status' => 'Not found',
+                    'Message' => "Location doesn't exist!"
+                ], 404); //not found
+            }
+
+            return response()->json([
+                'Status' => 'success',
+                'Message' => 'Location exist'
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error($e);
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => 'Internal server error',
+            ], 500);
+        }
+    }
+
+    public function checkItem(Request $req)
+    {
+        /* dd($req->item); */
+        try {
+            /* throw new Exception('test internal server error'); */
+
+            $isItemExist = (new WSAServices)->wsaCheckItem($req->item);
+
+            /* dd($isItemExist); */
+
+            if ($isItemExist == false) { //jika error koneksi wsa
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "WSA Item Error Connection"
+                ], 500);
+            }
+
+            if ($isItemExist[0] == "false") { //jika error response wsa
+                return response()->json([
+                    'Status' => 'Not found',
+                    'Message' => "Item doesn't exist!"
+                ], 404); //not found
+            }
+
+            return response()->json([
+                'Status' => 'success',
+                'Message' => 'Item exist',
+                'Item' => $isItemExist[1][0]
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error($e);
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => 'Item Internal server error',
+            ], 500);
+        }
+    }
+
+    public function checkSupplier(Request $req)
+    {
+        /* dd($req->supplier); */
+        try {
+            /*  throw new Exception('test internal server error'); */
+
+            $isSupplierExist = (new WSAServices)->wsaCheckSupplier($req->supplier);
+
+            /* dd($isSupplierExist); */
+
+            if ($isSupplierExist == false) { //jika error koneksi wsa
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "WSA Supplier Error Connection"
+                ], 500);
+            }
+
+            if ($isSupplierExist[0] == "false") { //jika error response wsa
+                return response()->json([
+                    'Status' => 'Not found',
+                    'Message' => "Supplier doesn't exist!"
+                ], 404); //not found
+            }
+
+            return response()->json([
+                'Status' => 'success',
+                'Message' => 'Supplier exist'
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error($e);
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => 'Supplier Internal server error',
+            ], 500);
+        }
+    }
+
+    public function getDataInquiry(Request $req)
+    {
+        /* dd($req->all()); */
+        try {
+            /* throw new Exception('test internal server error'); */
+
+            $getdatainquiry = (new WSAServices())->wsaDataInquiry($req->item, $req->location);
+
+            if ($getdatainquiry == false) { //jika error koneksi wsa
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => 'WSA Error Connection'
+                ], 500);
+            }
+
+            if ($getdatainquiry[0] == "true") { //jika lot ada
+
+                $part = $getdatainquiry[1];
+                $partdesc = $getdatainquiry[2];
+                $totalstok = $getdatainquiry[3];
+
+                // Master: t_part dan t_balancetotalstok
+                $master = [
+                    't_part' => $part,
+                    't_partdesc' => $partdesc,
+                    't_balancetotalstok' => $totalstok,
+                ];
+
+                // Detail: loop semua item, ambil field selain master
+                $detail = [];
+                foreach ($getdatainquiry[4] as $item) {
+                    $detail[] = [
+                        't_domain' => (string)$item->t_domain,
+                        't_partdesc' => (string)$item->t_partdesc,
+                        't_site' => (string)$item->t_site,
+                        't_loc' => (string)$item->t_loc,
+                        't_lot' => (string)$item->t_lot,
+                        't_ref' => (string)$item->t_ref,
+                        't_qtyoh' => (string)$item->t_qtyoh,
+                        't_supplier' => (string)$item->t_supplier,
+                        't_createdate' => (string)$item->t_create_date,
+                        't_createtime' => sprintf('%02d:%02d', 
+                            floor($item->t_create_time / 3600), 
+                            floor(($item->t_create_time % 3600) / 60)
+                        ),
+                    ];
+                }
+
+                // Gabungkan jadi 1 array
+                $result = [
+                    'master' => $master,
+                    'detail' => $detail,
+                ];
+
+                return response()->json([
+                    'Status' => 'success',
+                    'Available' => True,
+                    'Data' => $result
+                ], 200);
+            } else { //jika lot tidak ada
+                return response()->json([
+                    'Status' => 'success',
+                    'Available' => False,
+                    'Data' => ''
+                ], 200);
+            }
+        } catch (\Exception $e) {
+            Log::error($e);
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => 'Internal server error',
+            ], 500);
+        }
+    }
+
+    public function checkPalletLoc(Request $req)
+    {
+        /* dd($request->lotpallet); */
+
+        try {
+            /* throw new Exception('test internal server error'); */
+
+            $checkpallet = (new WSAServices())->wsaLotLoc($req->lotpallet, $req->location);
+            /*  dd($checkpallet[0]); */
+
+            if ($checkpallet == false) { //jika error koneksi wsa
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => 'WSA Error Connection'
+                ], 500);
+            }
+
+            if ($checkpallet[0] == "true") { //jika lot ada
+
+                $result = [];
+
+                foreach ($checkpallet[1] as $item) {
+                    $result[] = [
+                        't_domain' => (string)$item->t_domain,
+                        't_part' => (string)$item->t_part,
+                        't_partdesc' => (string)$item->t_partdesc,  // Otomatis jadi "" kalau kosong
+                        't_site' => (string)$item->t_site,
+                        't_loc' => (string)$item->t_loc,
+                        't_lot' => (string)$item->t_lot,
+                        't_ref' => (string)$item->t_ref,  // Otomatis jadi "" kalau kosong
+                        't_qtyoh' => (string)$item->t_qtyoh,
+                        't_balancetotalstok' => (float)$item->t_balancetotalstok,
+                        't_supplier' => (string)$item->t_supplier,  // Otomatis jadi "" kalau kosong
+                    ];
+                }
+
+                return response()->json([
+                    'Status' => 'success',
+                    'Available' => True,
+                    'Data' => $result
+                ], 200);
+            } else { //jika lot tidak ada
+                return response()->json([
+                    'Status' => 'success',
+                    'Available' => False,
+                    'Data' => ''
+                ], 200);
+            }
+        } catch (\Exception $e) {
+            Log::error($e);
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => 'Internal server error',
+            ], 500);
+        }
+    }
 }
