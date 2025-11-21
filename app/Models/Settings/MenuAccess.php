@@ -15,4 +15,8 @@ class MenuAccess extends Model
     {
         return $this->belongsTo(Role::class, 'role_id', 'menu_id');
     }
+    public function getMenu()
+    {
+        return $this->belongsTo(Menu::class, 'menu_id', 'id');
+    }
 }

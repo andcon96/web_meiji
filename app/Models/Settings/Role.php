@@ -15,4 +15,8 @@ class Role extends Model
     {
         return $this->belongsTo(Domain::class, 'domain_id');
     }
+    public function getMenuAccess()
+    {
+        return $this->hasMany(MenuAccess::class, 'role_id');
+    }
 }

@@ -78,7 +78,7 @@ class InbServices
                                 <qcom:ttContext>
                                     <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
                                     <qcom:propertyName>version</qcom:propertyName>
-                                    <qcom:propertyValue>eB_2</qcom:propertyValue>
+                                    <qcom:propertyValue>cust_1</qcom:propertyValue>
                                 </qcom:ttContext>
                                 <qcom:ttContext>
                                     <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
@@ -259,7 +259,7 @@ class InbServices
                                 <qcom:ttContext>
                                     <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
                                     <qcom:propertyName>version</qcom:propertyName>
-                                    <qcom:propertyValue>eB_2</qcom:propertyValue>
+                                    <qcom:propertyValue>CustV1</qcom:propertyValue>
                                 </qcom:ttContext>
                                 <qcom:ttContext>
                                     <qcom:propertyQualifier>QAD</qcom:propertyQualifier>

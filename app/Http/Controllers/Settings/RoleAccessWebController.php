@@ -13,8 +13,11 @@ class RoleAccessWebController extends Controller
 {
     public function index(Request $request)
     {
+        
         $menuMaster = (new ServerURL())->currentURL($request);
-        $roles = Role::get();
+        $roles = Role::with('getMenuAccess.getMenu')
+       
+        ->get();
 
         return view('setting.roleWebMenu.index', compact('roles', 'menuMaster'));
     }
