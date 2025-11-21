@@ -205,9 +205,10 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
 
     //Sampling & Pengembalian QO
     Route::get("/getSamplingData", [APISampling::class, 'getSamplingData']);
-    Route::get("/getPengembalianQo", [APIPengembalian::class, 'getInvWms']);
-    // Route::post("/getSampling", [APIController::class, 'getInvWms']);
-    // Route::post("/getSampling", [APIController::class, 'getInvWms']);
+    Route::post("/transferSampling", [APISampling::class, 'transferSampling']);
+    
+    Route::get("/getPengembalianQo", [APIPengembalian::class, 'getPengembalianQo']);
+    Route::post("/transferPengembalianQo", [APIPengembalian::class, 'transferPengembalianQo']);
 
 });
 // WSA Picklist

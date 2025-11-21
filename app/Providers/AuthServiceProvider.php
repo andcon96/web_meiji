@@ -36,7 +36,6 @@ class AuthServiceProvider extends ServiceProvider
         // Set access tokens to expire in 2 years
         Passport::personalAccessTokensExpireIn(Carbon::now()->addYears(2));
 
-
         Gate::define('access_menu', function ($user, $linkMenu) {
             $haveAccess = false;
 

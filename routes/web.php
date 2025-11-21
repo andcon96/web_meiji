@@ -13,6 +13,7 @@ use App\Http\Controllers\Settings\MenuController;
 use App\Http\Controllers\Settings\MenuStructureController;
 use App\Http\Controllers\Settings\PrefixController;
 use App\Http\Controllers\Settings\RoleAndroidMenuController;
+use App\Http\Controllers\Settings\RoleAccessWebController;
 use App\Http\Controllers\Settings\RoleController;
 use App\Http\Controllers\Settings\ShipmentSchedulePrefixController;
 use App\Http\Controllers\Settings\OtherShipmentSchedulePrefixController;
@@ -155,6 +156,10 @@ Route::group(["middleware" => ["auth"]], function () {
     // Printout Menu
     Route::get("getReceiptBook", [ReceiptBookController::class, "getReceiptBook"]);
     Route::get("printBook/{id}", [ReceiptBookController::class, "printBook"])->name("printBook");
+
+    //access role menu web
+    Route::resource("rolesWeb", RoleAccessWebController::class);
+    Route::post("/updateRoleAccessWeb", [RoleAccessWebController::class, "updateRoleAccess"])->name("updateRoleAccessWeb");
 });
 
 Auth::routes();

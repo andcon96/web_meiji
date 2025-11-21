@@ -37,7 +37,8 @@ class APISampling extends Controller
 
         $item = $req->item ?? '';
         $lot = $req->lot ?? ''; 
-        $wsaData = (new WSAServices())->wsaGetSamplingData($item,  $lot);
+       
+        $wsaData = (new WSAServices())->wsaGetSamplingData($item,  $lot,'QC-QRT');
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
@@ -46,19 +47,7 @@ class APISampling extends Controller
         }
         else {
             $listData = $wsaData[1];
-            // foreach ($listData as $key => $value) {
-            //     $data[] = [
-            //         'domain' => (string)$value->inv_domain,
-            //         'part' => (string)$value->inv_part, 
-            //         'lot' => (string)$value->inv_lot,
-            //         'loc'=> (string)$value->inv_loc,
-            //         'site' => (string)$value->inv_site,
-            //         'warehouse' => (string)$value->inv_wh,
-            //         'bin' => (string)$value->inv_bin,
-            //         'level' => (string)$value->inv_level,
-            //         'qtyonhand' => (string)$value->inv_qtyoh,
-            //     ];
-            // }
+
             return response()->json(
             [
                 'DataWSA' => $listData
@@ -67,51 +56,63 @@ class APISampling extends Controller
         );
         }
 
-
-
         return response()->json($wsaData[1]);
 
-        // $trfid = $req->trfid;
-        // $trfdata = singleTransfer::where('st_trfid', $trfid)->first();
-        // if (!$trfdata) {
-        //     return response()->json([
-        //         'Status' => 'Error',
-        //         'Message' => "Data Not Found."
-        //     ], 422);
-        // } else {
-        //     return GeneralResources::collection($trfdata);
-
-        // }
     }
 
-    public function getSingleTransferData(Request $req)
+    public function transferSampling(Request $req)
     {
-        $search = $req->search;
 
-        $trfdata = singleTransfer::where('st_status', 'Open');
-        if ($search) {
-            $trfdata =  $trfdata->where('st_trfid', 'LIKE', '%' . $search . '%')
-                ->orWhere('st_item', 'LIKE', '%' . $search . '%')
-                ->orWhere('st_lot', 'LIKE', '%' . $search . '%')
-                ->get();
-        }
-        $trfdata = $trfdata->get();
-
-        if (!$trfdata) {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "Data Not Found."
-            ], 422);
-        } else {
-            return GeneralResources::collection($trfdata);
-            // return response()->json(
-            //     [
-            //         'Data' => $trfdata
-            //     ],
-            //     200
-            // );
-        }
+        /*
+        $item = $data['item'];
+        $sitefrom = $data['sitefrom'];
+        $siteto = $data['siteto'];
+        $locfrom = $data['locfrom'];
+        $locto = $data['locto'];
+        $whfrom = $data['whfrom'];
+        $levelfrom = $data['levelfrom'];
+        $binfrom = $data['binfrom'];
+        $qty = $data['qty'];
+        $wh = $this->nullConversion($data['wh']);
+        $ref = $this->nullConversion($data['ref']);
+        $level = $this->nullConversion($data['level']);
+        $bin = $this->nullConversion($data['bin']);
+        $lot = $this->nullConversion($data['lot']);
+        $prefixTable = singleTransferPrefix::first();
+        $prefix = $prefixTable->stp_prefix;
+        $runningnbr = $prefixTable->stp_running_nbr;
+        $nextrunningnbr = (int) $runningnbr + 1;
+        $newRunningNbr = str_pad($nextrunningnbr, 6, '0', STR_PAD_LEFT);
+        $newPrefix = $prefix . $newRunningNbr;
+        */
+            $data = $req->all();
+            $item = $req->item;
+            $lot = $req->lot;
+            $sitefrom = $req->sitefrom;
+            $siteto = $req->siteto;
+            $locfrom = $req->locfrom;
+            $locto = $req->locto;
+            $whfrom = $req->whfrom;
+            $levelfrom = $req->levelfrom;
+            $binfrom = $req->binfrom;   
+            $qty = $req->qty;
+            DB::commit();
+            $hasil = (new WSAServices())->wsaTransferSamplingData($item, $lot,$sitefrom,$locto,'QC-QRT-WMS',$whfrom,$levelfrom,$binfrom,$qty);
+        
+            if ($hasil == 'false') {
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "Transfer sampling Item Failed for Item : " . $item
+                ], 422);
+            } else {
+                return response()->json([
+                    'Status' => 'Success',
+                    'Message' => "Transfer sampling Item Success for Item : " . $item
+                ], 200);
+            }
+        
     }
+
 
     
 }
