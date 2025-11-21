@@ -78,7 +78,7 @@ class InbServices
                                 <qcom:ttContext>
                                     <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
                                     <qcom:propertyName>version</qcom:propertyName>
-                                    <qcom:propertyValue>cust_1</qcom:propertyValue>
+                                    <qcom:propertyValue>cust_2</qcom:propertyValue>
                                 </qcom:ttContext>
                                 <qcom:ttContext>
                                     <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
@@ -106,8 +106,8 @@ class InbServices
                                 <qcom:propertyValue/>
                             </qcom:ttContext>
                         </qcom:dsSessionContext>
-                        <dsRcptunpmji>
-                            <rcptunpmji>
+                        <dsReceiptUnplanned>
+                            <ReceiptUnplanned>
                                 <vPart>$part</vPart>
                                 <vQty>$qty</vQty>
                                 <vLocFrom>$location</vLocFrom>
@@ -120,8 +120,8 @@ class InbServices
                                 <vLevelFrom>$level</vLevelFrom>
                                 <vBinFrom>$bin</vBinFrom>
                                 <yn>true</yn>
-                            </rcptunpmji>
-                        </dsRcptunpmji>
+                            </ReceiptUnplanned>
+                        </dsReceiptUnplanned>
                     </scrcptunpmji>
                 </soapenv:Body>
                 </soapenv:Envelope>";
@@ -142,18 +142,22 @@ class InbServices
 
         $curl = curl_init();
 
-        if($curl){
+        if ($curl) {
             curl_setopt_array($curl, $options);
             $qdocResponse = curl_exec($curl); // sending qdocRequest here, the result is qdocResponse.
             $curlErrno    = curl_errno($curl);
             $curlError    = curl_error($curl);
             $first        = true;
-            
-            if($curlErrno){/* dd("Curl error: ". $curlError) */ Log::info("Curl error: ". $curlError);}
 
-            foreach(curl_getinfo($curl) as $key => $value){
-                if(gettype($value) != 'array'){
-                    if (!$first){$getInfo .= ", ";}
+            if ($curlErrno) {/* dd("Curl error: ". $curlError) */
+                Log::info("Curl error: " . $curlError);
+            }
+
+            foreach (curl_getinfo($curl) as $key => $value) {
+                if (gettype($value) != 'array') {
+                    if (!$first) {
+                        $getInfo .= ", ";
+                    }
                     $getInfo = $getInfo . $key . '=>' . $value;
                     $first = false;
                 }
@@ -179,10 +183,10 @@ class InbServices
 
         $qdocResult = (string) $xmlResp->xpath('//ns1:result')[0]; /*output: array, error/success*/
 
-        if ($qdocResult == 'error'){
+        if ($qdocResult == 'error') {
             $xmlResp->registerXPathNamespace('ns3', 'urn:schemas-qad-com:xml-services:common');
             $qdocMsgDesc = $xmlResp->xpath('//ns3:tt_msg_desc');
-            $output = ''; 
+            $output = '';
 
             foreach ($qdocMsgDesc as $datas) {
                 if (str_contains($datas, 'ERROR:')) {
@@ -234,8 +238,8 @@ class InbServices
                             xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsa="http://www.w3.org/2005/08/addressing">
                             <soapenv:Header>
                             <wsa:Action/>
-                            <wsa:To>urn:services-qad-com:'.$receiver.'</wsa:To>
-                            <wsa:MessageID>urn:services-qad-com::'.$receiver.'</wsa:MessageID>
+                            <wsa:To>urn:services-qad-com:' . $receiver . '</wsa:To>
+                            <wsa:MessageID>urn:services-qad-com::' . $receiver . '</wsa:MessageID>
                             <wsa:ReferenceParameters>
                                 <qcom:suppressResponseDetail>true</qcom:suppressResponseDetail>
                             </wsa:ReferenceParameters>
@@ -249,7 +253,7 @@ class InbServices
                                 <qcom:ttContext>
                                     <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
                                     <qcom:propertyName>domain</qcom:propertyName>
-                                    <qcom:propertyValue>'.$domainCode.'</qcom:propertyValue>
+                                    <qcom:propertyValue>' . $domainCode . '</qcom:propertyValue>
                                 </qcom:ttContext>
                                 <qcom:ttContext>
                                     <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
@@ -303,12 +307,12 @@ class InbServices
                                         <vQty>' . $qty . '</vQty>
                                         <vLocFrom>' . $location . '</vLocFrom>
                                         <vLotFrom>' . $lotserial . '</vLotFrom>
-                                        <vSiteFrom>'.$site.'</vSiteFrom>
+                                        <vSiteFrom>' . $site . '</vSiteFrom>
                                         
-                                        <vWhFrom>'.$warehouse.'</vWhFrom>
-                                        <vLevelFrom>'.$level.'</vLevelFrom>
-                                        <vBinFrom>'.$bin.'</vBinFrom>
-                                        <vRmks>'.$username. '</vRmks>
+                                        <vWhFrom>' . $warehouse . '</vWhFrom>
+                                        <vLevelFrom>' . $level . '</vLevelFrom>
+                                        <vBinFrom>' . $bin . '</vBinFrom>
+                                        <vRmks>' . $username . '</vRmks>
                                     </MJIiIventoryIssue>
                                     </dsMJIiIventoryIssue>
                                     </MJIInventoryIssue>
@@ -363,7 +367,7 @@ class InbServices
         } else {
             $xmlResp->registerXPathNamespace('ns3', 'urn:schemas-qad-com:xml-services:common');
             $qdocMsgDesc = $xmlResp->xpath('//ns3:tt_msg_desc');
-            $output = '';   
+            $output = '';
             foreach ($qdocMsgDesc as $datas) {
                 if (str_contains($datas, 'ERROR:')) {
                     $output .= $datas . ' - ';
