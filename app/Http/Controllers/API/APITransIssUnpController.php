@@ -26,18 +26,24 @@ class APITransIssUnpController extends Controller
             $partdesc = $request->partdesc;
             $supplier = $request->supplier;
             $qty = $request->qty;
-            // $site = $request->site;
+            $site = $request->site;
             $location = $request->location;
             $lotserial = $request->lotserial;
             $lotref = $request->ref;
+            $warehouse = $request->warehouse ?? '';
+            $level = $request->level ?? '';
+            $bin = $request->bin ?? '';
 
             $submitQxtendIssunp = (new InbServices())->inbissunp([
                 'part' => $part,
                 'qty' => $qty,
-                // 'site' => $site,
+                'site' => $site,
                 'location' => $location,
                 'lotserial' => $lotserial,
-                'lotref' => $lotref
+                'warehouse' => $warehouse,
+                'level' => $level,
+                'bin' => $bin,
+                //'lotref' => $lotref
             ]);
 
             if ($submitQxtendIssunp == false) { //jika error koneksi qxtend
@@ -65,7 +71,7 @@ class APITransIssUnpController extends Controller
                 $newTransfer->site = '';
                 $newTransfer->location = $location;
                 $newTransfer->pallet_no = $lotserial; // pallet number
-                $newTransfer->batch_no = $lotref; // batch
+                $newTransfer->batch_no = $lotref ?? ''; // batch
                 $newTransfer->quantity = $qty;
                 $newTransfer->created_by = Auth::user()->id;
                 $newTransfer->save();

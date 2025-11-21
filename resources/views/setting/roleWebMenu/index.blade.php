@@ -6,7 +6,7 @@
             <div class="dataTables_wrapper dt-bootstrap5 no-footer">
                 <div class="card-header flex-column flex-md-row py-1">
                     <div class="head-label text-center">
-                        <h5 class="card-title mb-0">Role Android Menu</h5>
+                        <h5 class="card-title mb-0">Role Access Management</h5>
                     </div>
                 </div>
 

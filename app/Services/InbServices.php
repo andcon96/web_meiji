@@ -27,7 +27,7 @@ class InbServices
         $qty       = $req['qty'];
         $location  = $req['location'];
         $lotserial = $req['lotserial'];
-        $lotref    = $req['lotref'];
+        $site      = $req['site'] ?? '';
         $warehouse = $req['warehouse'] ?? '';
         $level     = $req['level'] ?? '';
         $bin       = $req['bin'] ?? '';
@@ -112,7 +112,8 @@ class InbServices
                                 <vQty>$qty</vQty>
                                 <vLocFrom>$location</vLocFrom>
                                 <vLotFrom>$lotserial</vLotFrom>
-                                <vRefFrom>$lotref</vRefFrom>
+                                <vSiteFrom>$site</vSiteFrom>
+                                
                                 <multiEntry>false</multiEntry>
                                 <vRmks>$username</vRmks>
                                 <vWhFrom>$warehouse</vWhFrom>
@@ -204,7 +205,8 @@ class InbServices
         // $site = $req['site'];
         $location = $req['location'];
         $lotserial = $req['lotserial'];
-        $lotref = $req['lotref'];
+        // $lotref = $req['lotref'];
+        $site = $req['site'] ?? '';
         $warehouse = $req['warehouse'] ?? '';
         $level = $req['level'] ?? '';
         $bin = $req['bin'] ?? '';
@@ -301,7 +303,8 @@ class InbServices
                                         <vQty>' . $qty . '</vQty>
                                         <vLocFrom>' . $location . '</vLocFrom>
                                         <vLotFrom>' . $lotserial . '</vLotFrom>
-                                        <vRefFrom>' . $lotref . '</vRefFrom>
+                                        <vSiteFrom>'.$site.'</vSiteFrom>
+                                        
                                         <vWhFrom>'.$warehouse.'</vWhFrom>
                                         <vLevelFrom>'.$level.'</vLevelFrom>
                                         <vBinFrom>'.$bin.'</vBinFrom>
