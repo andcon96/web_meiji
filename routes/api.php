@@ -17,6 +17,8 @@ use App\Http\Controllers\API\PackingReplenishment\APIPackingReplenishmentControl
 use App\Http\Controllers\API\ShipperConfirm\APIShipperConfirmController;
 use App\Http\Controllers\API\APITransIssUnpController;
 use App\Http\Controllers\API\APITransRctUnpController;
+use App\Http\Controllers\API\APISampling;
+use App\Http\Controllers\API\APIPengembalian;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -62,6 +64,9 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
 
     // Print QR
     Route::get("getDataPrintQR", [APIZebraPrinterController::class, "getDataPrintQR"]);
+    Route::post("getPoPrint", [APIZebraPrinterController::class, "getPoPrint"]);
+    Route::post("getBookPrint", [APIZebraPrinterController::class, "getBookPrint"]);
+    Route::post("getItemPrint", [APIZebraPrinterController::class, "getItemPrint"]);
     Route::post("printQRItem", [APIZebraPrinterController::class, "printQRItem"]);
 
     // WSA PO
@@ -161,11 +166,13 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::post("wsaReceiptPick", [APIPicklistShopping::class, "submitPicklistReceipt"]);
 
     // Single Transfer
-    Route::get("getLocationData", [APIPicklistShopping::class, "getLocationData"]);
-    Route::get("wsaWarehousePick", [APIPicklistShopping::class, "wsaWarehouse"]);
-    Route::get("getSearchLocation", [APIPicklistShopping::class, "wsainvdet"]);
-    Route::post("sendTransferItem", [APIPicklistShopping::class, "sendTransferItem"]);
+    // Route::get("getLocationData", [APIPicklistShopping::class, "getLocationData"]);
+    // Route::get("wsaWarehousePick", [APIPicklistShopping::class, "wsaWarehouse"]);
+    // Route::get("getSearchLocation", [APIPicklistShopping::class, "wsainvdet"]);
+    // Route::post("sendTransferItem", [APIPicklistShopping::class, "sendTransferItem"]);
     Route::get("getLocationData", [APISingleTransfer::class, "getLocationData"]);
+    Route::get("getSiteData", [APISingleTransfer::class, "getSiteData"]);
+    
     Route::get("wsaWarehousePick", [APISingleTransfer::class, "wsaWarehouse"]);
     Route::get("getSearchLocation", [APISingleTransfer::class, "wsainvdet"]);
     Route::post("sendTransferItem", [APISingleTransfer::class, "sendTransferItem"]);
@@ -195,6 +202,12 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::post('/checkItem', [APIController::class, 'checkItem']);
     Route::post('/checkSupplier', [APIController::class, 'checkSupplier']);
     Route::post('/checkdatainquiry', [APIController::class, 'getDataInquiry']);
+
+    //Sampling & Pengembalian QO
+    Route::get("/getSamplingData", [APISampling::class, 'getSamplingData']);
+    Route::get("/getPengembalianQo", [APIPengembalian::class, 'getInvWms']);
+    // Route::post("/getSampling", [APIController::class, 'getInvWms']);
+    // Route::post("/getSampling", [APIController::class, 'getInvWms']);
 
 });
 // WSA Picklist

@@ -9,7 +9,7 @@ use App\Models\Settings\PrinterSetup;
 use App\Services\ZebraPrinterServices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-
+use App\Models\API\PurchaseOrderMaster;
 class APIZebraPrinterController extends Controller
 {
     public function getDataPrintQR(Request $request)
@@ -17,6 +17,7 @@ class APIZebraPrinterController extends Controller
         $poNumber = $request->poNumber;
         $receiverNumber = $request->receiverNumber;
         $bookNumber = $request->bookNumber;
+        $itemNumber = $request->itemNumber;
 
         $data = ReceiptDetail::query()
             ->with(['getMaster.getPurchaseOrderMaster', 'getPurchaseOrderDetail']);
@@ -31,6 +32,9 @@ class APIZebraPrinterController extends Controller
 
         if ($bookNumber) {
             $data->where('rd_nomor_buku', '=', $bookNumber);
+        }
+        if($itemNumber){
+            $data->where('rd_nama_barang', '=', $itemNumber);
         }
 
         $data = $data->get();
@@ -86,4 +90,47 @@ class APIZebraPrinterController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Label sent to printer!']);
     }
+
+    public function getPoPrint(Request $request)
+    {
+        $data = PurchaseOrderMaster::query();
+        
+        if($request->search){
+            $data->where('po_nbr', 'like', '%' . $request->search . '%');
+        }
+        
+
+        $data = $data->orderBy('po_nbr')->get();
+
+        return GeneralResources::collection($data);
+    }
+
+    public function getBookPrint(Request $request)
+    {
+        $data = ReceiptDetail::select('rd_nomor_buku')->query();
+        
+        if($request->search){
+            $data->where('rd_nomor_buku', 'like', '%' . $request->search . '%');
+        }
+        $data = $data->groupBy('rd_nomor_buku')->orderBy('rd_nomor_buku')->get();
+        //$data = $data->groupBy('rd_nomor_buku')->orderBy('rd_nomor_buku')->get();
+
+        return GeneralResources::collection($data);
+    }
+
+    public function getItemPrint(Request $request)
+    {
+       
+        $data = ReceiptDetail::select('rd_nama_barang')->query();
+        if($request->search){
+            $data->where('rd_nama_barang', 'like', '%' . $request->search . '%');
+        }
+        $data = $data
+            ->groupBy('rd_nama_barang')->orderBy('rd_nama_barang')->get();
+
+        //$data = $data->groupBy('rd_nama_barang')->orderBy('rd_nama_barang')->get();
+
+        return GeneralResources::collection($data);
+    }
+
 }
