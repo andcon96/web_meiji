@@ -19,6 +19,8 @@ class APITransIssUnpController extends Controller
     {
         /* dd($request->all()); //array key-value */
         try {
+
+            // throw new Exception('test exception');
         
             DB::beginTransaction();
 
@@ -90,8 +92,8 @@ class APITransIssUnpController extends Controller
             Log::error($e);
 
             return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to submit transaction',
+                'Status' => 'error',
+                'Message' => 'Internal server error' /* 'Failed to submit transaction' */,
             ],422);
         }
     }
