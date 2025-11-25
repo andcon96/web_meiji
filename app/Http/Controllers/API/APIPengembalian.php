@@ -66,14 +66,15 @@ class APIPengembalian extends Controller
             $lot = $req->lot;
             $sitefrom = $req->sitefrom;
             $siteto = $req->siteto;
-            $locfrom = $req->locfrom;
+            $locfrom = 'QC-QRT-WMS';
             $locto = $req->locto;
             $whfrom = $req->whfrom;
             $levelfrom = $req->levelfrom;
             $binfrom = $req->binfrom;   
             $qty = $req->qty;
             DB::commit();
-            $hasil = (new WSAServices())->wsaTransferSamplingData($item, $lot,$sitefrom,$locto,'SAMPLING',$whfrom,$levelfrom,$binfrom,$qty);
+            // $hasil = (new WSAServices())->wsaTransferSamplingData($item, $lot,$sitefrom,$locto,'SAMPLING',$whfrom,$levelfrom,$binfrom,$qty);
+            $hasil = (new WSAServices())->wsaTransferSamplingData($item, $lot,$sitefrom,$locfrom,'SAMPLING',$whfrom,$levelfrom,$binfrom,$qty);
         
             if ($hasil == 'false') {
                 return response()->json([

@@ -3177,6 +3177,7 @@ class WSAServices
                 <inpdomain>' . $domainCode . '</inpdomain>
                 <inploc>' . $status . '</inploc>
                 <inppart>'.$item.'</inppart>
+                <inplot>'.$lot.'</inplot>
             </meiji_get_sampling_data>'.
            
             '</Body>' .

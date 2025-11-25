@@ -119,7 +119,7 @@ class InbServices
                                 <vWhFrom>$warehouse</vWhFrom>
                                 <vLevelFrom>$level</vLevelFrom>
                                 <vBinFrom>$bin</vBinFrom>
-                                <yn>true</yn>
+                                <vYn>true</vYn>
                             </ReceiptUnplanned>
                         </dsReceiptUnplanned>
                     </scrcptunpmji>
