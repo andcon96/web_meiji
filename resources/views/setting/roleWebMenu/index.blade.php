@@ -59,30 +59,15 @@
                             </div>
                         </div>
                         <div class="row">
-                            <h4>
-                                <center><strong>Receipt</strong></center>
-                            </h4>
+                            @foreach($menuList as $menu)
+                          
                             <div class="form-check d-flex form-switch mt-3 mb-4">
-                                <label for="level" class="form-check-label col-8">Receipt Print</label>
+                                <label for="level" class="form-check-label col-8">{{$menu->menu_name}}</label>
 
                                 <input type="checkbox" class="custom-control-input form-check-input" id="cbPurchaseOrder01"
-                                    name="data[]" value="RP" />
+                                    name="data[]" value="{{$menu->id}}" />
                             </div>
-                            <h4>
-                                <center><strong>Shipment</strong></center>
-                            </h4>
-                            <div class="form-check d-flex form-switch mt-3 mb-4">
-                                <label for="level" class="form-check-label col-8">Shipment Schedule Report</label>
-
-                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPurchaseOrder01"
-                                    name="data[]" value="SR" />
-                            </div>
-                            <div class="form-check d-flex form-switch mt-3 mb-4">
-                                <label for="level" class="form-check-label col-8">Other Shipment Schedule Report</label>
-
-                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPurchaseOrder01"
-                                    name="data[]" value="OSR" />
-                            </div>
+                            @endforeach
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -111,44 +96,14 @@
 
                 console.log(roleAccess);
                 let parts = roleAccess.split(";").filter(Boolean);
-
-                if (parts.includes("PO01")) {
-                    $('#cbPurchaseOrder01').prop('checked', 'true');
-                }
-                if (parts.includes("PO02")) {
-                    $('#cbPurchaseOrder02').prop('checked', 'true');
-                }
-                if (parts.includes("PO03")) {
-                    $('#cbPurchaseOrder03').prop('checked', 'true');
-                }
-                if (parts.includes("PO04")) {
-                    $('#cbPurchaseOrder04').prop('checked', 'true');
-                }
-                if (parts.includes("TS01")) {
-                    $('#cbTransferItem01').prop('checked', 'true');
-                }
-                if (parts.includes("SH01")) {
-                    $('#cbShipment').prop('checked', 'true');
-                }
-                if (parts.includes("SH02")) {
-                    $('#cbPackingReplenishment').prop('checked', 'true');
-                }
-                if (parts.includes("SH03")) {
-                    $('#cbShipmentConfirmation').prop('checked', 'true');
-                }
-                if (parts.includes('SH04')) {
-                    $('#cbPackingReplenishmentApproval').prop('checked', 'true');
-                }
-                if (parts.includes('OS01')) {
-                    $('#cbOtherShipment').prop('checked', true);
-                }
-                if (parts.includes('OS02')) {
-                    $('#cbOtherPackingReplenishment').prop('checked', true);
-                }
-                if (parts.includes('OS03')) {
-                    $('#cbOtherPackingReplenishmentApproval').prop('checked', true);
-                }
-
+                $('input[name="data[]"]').each(function() {
+                    if (parts.includes($(this).val())) {
+                        $(this).prop('checked', true);
+                    } else {
+                        $(this).prop('checked', false);
+                    }
+                });
+                
                 $('#roleId').val(roleId);
                 $('#roleName').val(roleName);
 

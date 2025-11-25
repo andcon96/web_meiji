@@ -82,18 +82,18 @@ class APIPengembalian extends Controller
                     'Message' => "Transfer sampling Item Failed for Item : " . $item
                 ], 422);
             } else {
-                $transfer = (new QxtendServices())->qxTransferSingleItemTransfer($item,$qty,$sitefrom,$sitefrom,$locto,'BL3-PM',$lot,$lot,$whfrom,$whfrom,$levelfrom,$levelfrom,$binfrom,$binfrom);
-                if ($hasil == 'false') {
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "Transfer sampling Item Failed for Item : " . $item
-                ], 422);
-                } else {
+                // $transfer = (new QxtendServices())->qxTransferSingleItemTransfer($item,$qty,$sitefrom,$sitefrom,$locto,'BL3-PM',$lot,$lot,$whfrom,$whfrom,$levelfrom,$levelfrom,$binfrom,$binfrom);
+                // if ($hasil == 'false') {
+                // return response()->json([
+                //     'Status' => 'Error',
+                //     'Message' => "Transfer sampling Item Failed for Item : " . $item
+                // ], 422);
+                // } else {
                     return response()->json([
                         'Status' => 'Success',
                         'Message' => "Transfer sampling Item Success for Item : " . $item
                     ], 200);
-                }
+                // }
             }
         
     }

@@ -41,7 +41,8 @@ class InbServices
 
         // Var Qxtend
         $qxUrl    = $qxwsa->qx_url;
-        $receiver = $qxwsa->qx_receiver;
+        // $receiver = $qxwsa->qx_receiver;
+        $receiver = 'QADERP';
 
         $errMsg    = [];
         $xmlResp   = '';
