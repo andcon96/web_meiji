@@ -21,10 +21,12 @@ class RoleAccessWebController extends Controller
         $roles = Role::with('getMenuAccess')
        
         ->get();
-        // foreach ($roles as $role) {
+        // foreach($roles as $role){
+            
         //     dd($role->getMenuAccess);
         // }
-
+        
+        // dd($roles);
         return view('setting.roleWebMenu.index', compact('roles', 'menuMaster','menuList'));
     }
 
@@ -37,6 +39,8 @@ class RoleAccessWebController extends Controller
         
             $userdata = Auth::user();
             $menuAccess = MenuAccess::where('role_id',$userdata->role_id)->where('menu_id',$datas)->first();
+            $menu = Menu::where('id',$datas)->first();
+            // dd($menu);
             if(!$menuAccess){
                 $menuAccess = new MenuAccess();
                 $menuAccess->role_id = $userdata->role_id;
@@ -44,6 +48,15 @@ class RoleAccessWebController extends Controller
                 $menuAccess->save();
             
             }
+            if(str_contains(strtolower($menu->menu_name),'shipment schedule')){
+                $shipmentschedulemaster = Menu::where('menu_name','Shipment Schedule')->first();
+                $menuAccess = new Menuaccess();
+                $menuAccess->role_id = $userdata->role_id;
+                $menuAccess->menu_id = $shipmentschedulemaster->id;
+                $menuAccess->save();
+            }
+
+
         }
 
 

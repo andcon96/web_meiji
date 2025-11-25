@@ -11,7 +11,10 @@
             <a href="javascript:void(0)" class="editRoleAcc" data-toggle="tooltip" title="Delete Data"
                 data-target="#editModal" data-role="{{ $role->role_desc }}" data-roleId="{{ $role->id }}"
                 data-roleAccess="
-                @foreach {{ $role->getMenuAccess }}">
+                @foreach ($role->getMenuAccess as $roleaccess)
+                {{trim($roleaccess->menu_id). ',' ;}}
+                @endforeach
+                ">
                 <i class="icon-table fa fa-edit fa-lg"></i>
             </a>
         </td>

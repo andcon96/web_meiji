@@ -64,7 +64,7 @@
                             <div class="form-check d-flex form-switch mt-3 mb-4">
                                 <label for="level" class="form-check-label col-8">{{$menu->menu_name}}</label>
 
-                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPurchaseOrder01"
+                                <input type="checkbox" class="custom-control-input form-check-input" id="{{$menu->id}}"
                                     name="data[]" value="{{$menu->id}}" />
                             </div>
                             @endforeach
@@ -90,19 +90,19 @@
             $('#roleTable').dataTable();
 
             $(document).on('click', '.editRoleAcc', function() {
+                $('input[type="checkbox"]').prop('checked', false);
                 let roleName = $(this).attr('data-role');
                 let roleId = $(this).attr('data-roleId');
-                let roleAccess = $(this).attr('data-roleAccess');
+                let roleAccess = $(this).attr('data-roleAccess').trim();
 
-                console.log(roleAccess);
-                let parts = roleAccess.split(";").filter(Boolean);
-                $('input[name="data[]"]').each(function() {
-                    if (parts.includes($(this).val())) {
-                        $(this).prop('checked', true);
-                    } else {
-                        $(this).prop('checked', false);
-                    }
+                
+                let parts = roleAccess.split(",").filter(Boolean);
+                
+                parts.forEach(function(id) {
+                    id = id.trim();
+                    $('#'+id).prop('checked', true);
                 });
+               
                 
                 $('#roleId').val(roleId);
                 $('#roleName').val(roleName);
