@@ -225,7 +225,7 @@ class InbServices
 
         // Var Qxtend
         $qxUrl              = $qxwsa->qx_url;
-        $receiver           = $qxwsa->qx_receiver;
+        $receiver           = 'QADERP' /* $qxwsa->qx_receiver */;
 
         $errMsg    = [];
         $xmlResp   = '';
@@ -314,6 +314,7 @@ class InbServices
                                         <vLevelFrom>' . $level . '</vLevelFrom>
                                         <vBinFrom>' . $bin . '</vBinFrom>
                                         <vRmks>' . $username . '</vRmks>
+                                        <vYn>true</vYn>
                                     </MJIiIventoryIssue>
                                     </dsMJIiIventoryIssue>
                                     </MJIInventoryIssue>
