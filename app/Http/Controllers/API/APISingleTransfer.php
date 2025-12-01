@@ -1105,6 +1105,44 @@ class APISingleTransfer extends Controller
         
     }
 
+    public function getSites(Request $req)
+    {
+        /* dd($req->loc); */
+
+        $hasil = (new WSAServices())->wsaGetSites($req->site);
+
+        if ($hasil[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Data Not Found."
+            ], 422);
+        } else {
+            $listData = $hasil[1];
+
+            return response()->json(['DataWSA' => $listData], 200);
+        }
+        
+    }
+
+    public function getLocData(Request $req)
+    {
+        /* dd($req->loc); */
+
+        $hasil = (new WSAServices())->wsaGetLocData($req->loc);
+
+        if ($hasil[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Data Not Found."
+            ], 422);
+        } else {
+            $listData = $hasil[1];
+
+            return response()->json(['DataWSA' => $listData], 200);
+        }
+        
+    }
+
     public function wsaWarehouse(Request $req)
     {
         $wsaData = Cache::remember('wsaWarehouse', 60, function () {
