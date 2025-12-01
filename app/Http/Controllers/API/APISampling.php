@@ -97,7 +97,7 @@ class APISampling extends Controller
             $binfrom = $req->binfrom;   
             $qty = $req->qty;
             DB::commit();
-            $hasil = (new WSAServices())->wsaTransferSamplingData($item, $lot,$sitefrom,$locto,'QC-QRT-WMS',$whfrom,$levelfrom,$binfrom,$qty);
+            $hasil = (new WSAServices())->wsaTransferSamplingData($item, $lot,$sitefrom,$locto,'QC-QRT',$whfrom,$levelfrom,$binfrom,$qty);
         
             if ($hasil == 'false') {
                 return response()->json([

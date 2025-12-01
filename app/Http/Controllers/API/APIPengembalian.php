@@ -66,7 +66,7 @@ class APIPengembalian extends Controller
             $lot = $req->lot;
             $sitefrom = $req->sitefrom;
             $siteto = $req->siteto;
-            $locfrom = 'QC-QRT-WMS';
+            $locfrom = 'QC-QRT';
             $locto = $req->locto;
             $whfrom = $req->whfrom;
             $levelfrom = $req->levelfrom;

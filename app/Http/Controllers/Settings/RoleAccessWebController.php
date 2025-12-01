@@ -50,10 +50,14 @@ class RoleAccessWebController extends Controller
             }
             if(str_contains(strtolower($menu->menu_name),'shipment schedule')){
                 $shipmentschedulemaster = Menu::where('menu_name','Shipment Schedule')->first();
-                $menuAccess = new Menuaccess();
-                $menuAccess->role_id = $userdata->role_id;
-                $menuAccess->menu_id = $shipmentschedulemaster->id;
-                $menuAccess->save();
+                $menuAccesscheck = MenuAccess::where('role_id',$userdata->role_id)->where('menu_id',$shipmentschedulemaster->id)->first();
+                if(!$menuAccesscheck){
+                    $menuAccess = new Menuaccess();
+                    $menuAccess->role_id = $userdata->role_id;
+                    $menuAccess->menu_id = $shipmentschedulemaster->id;
+                    $menuAccess->save();
+                }
+
             }
 
 
