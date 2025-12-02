@@ -34,8 +34,8 @@
                         <thead>
                             <tr>
                                 <th>Number</th>
-                                <th>Customer Code</th>
-                                <th>Customer Description</th>
+                                {{-- <th>Customer Code</th>
+                                <th>Customer Description</th> --}}
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -66,10 +66,10 @@
                 ajax: '{{ url("/getAllOSSM") }}', 
                 serverSide: true,
                 columns: [
-                    {data: 'ossm_number',    width: '8em'},
-                    {data: 'ossm_cust_code', width: '12em'},
-                    {data: 'ossm_cust_desc', width: '32em'},
-                    {data: 'ossm_status',    width: '8em'},
+                    {data: 'ossm_number',    width: '32em'},
+                    /* {data: 'ossm_cust_code', width: '12em'},
+                    {data: 'ossm_cust_desc', width: '32em'}, */
+                    {data: 'ossm_status',    width: '32em'},
                     {
                         data: null,
                         width: '12em',
@@ -148,6 +148,7 @@
                                 <tr>
                                     <th>Order</th>
                                     <th>Item Number</th>
+                                    <th>Item Description</th>
                                     <th>UM</th>
                                     <th>Qty Ordered</th>
                                     <th>No. Lot</th>
@@ -162,6 +163,7 @@
                                     <tr>
                                         <td>${row.order}</td>
                                         <td>${row.ossd_part}</td>
+                                        <td style="white-space: normal !important; word-wrap: break-word !important; max-width: 250px;">${row.ossd_desc}</td>
                                         <td>${row.ossd_uom}</td>
                                         <td>${row.ossd_qty_ord}</td>
                                         <td>${loc.ossl_lotserial}</td>

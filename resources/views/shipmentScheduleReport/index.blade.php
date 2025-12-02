@@ -68,7 +68,7 @@
                 columns: [
                     {data: 'ssm_number',    width: '8em'},
                     {data: 'ssm_cust_code', width: '12em'},
-                    {data: 'ssm_cust_desc', width: '32em'},
+                    {data: 'ssm_cust_desc', width: '24em'},
                     {data: 'ssm_status',    width: '8em'},
                     {
                         data: null,
@@ -148,6 +148,7 @@
                                 <tr>
                                     <th>Order</th>
                                     <th>Item Number</th>
+                                    <th>Item Description</th>
                                     <th>UM</th>
                                     <th>Qty Ordered</th>
                                     <th>No. Lot</th>
@@ -161,6 +162,7 @@
                                 <tr>
                                     <td>${row.ssd_sod_nbr}</td>
                                     <td>${row.ssd_sod_part}</td>
+                                    <td style="white-space: normal !important; word-wrap: break-word !important; max-width: 250px;">${row.ssd_sod_desc}</td>
                                     <td>${row.ssd_uom}</td>
                                     <td>${row.ssd_sod_qty_ord}</td>
                                     <td>${row.ssd_sod_lot}</td>
