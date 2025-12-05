@@ -143,6 +143,8 @@ class LocationController extends Controller
 
     public function confirmFileUploadLocation(Request $request)
     {
+        ini_set('max_execution_time', 3000);
+
         $filePath = public_path('upload/temp/' . $request->tempFileName);
 
         Excel::import(new LocationDetailImport, $filePath);

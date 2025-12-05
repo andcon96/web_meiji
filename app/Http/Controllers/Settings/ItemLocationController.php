@@ -108,7 +108,7 @@ class ItemLocationController extends Controller
     {
         try {
             $filePath = public_path('upload/temp/' . $request->tempFileName);
-
+            ini_set('max_execution_time', 3000);
             $import = new ItemLocationImport;
             Excel::import($import, $filePath);
             File::delete($filePath);
