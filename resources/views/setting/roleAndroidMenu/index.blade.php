@@ -63,37 +63,61 @@
                                 <center><strong>Purchase Order</strong></center>
                             </h4>
                             <div class="form-check d-flex form-switch mt-3 mb-4">
-                                <label for="level" class="form-check-label col-8">Purchase Order Maint</label>
+                                <label for="level" class="form-check-label col-8">PO Receipt</label>
 
-                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPurchaseOrder01"
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPOReceipt"
                                     name="data[]" value="PO01" />
                             </div>
                             <div class="form-check d-flex form-switch mb-4">
-                                <label for="level" class="form-check-label col-8">Purchase Order Approval</label>
+                                <label for="level" class="form-check-label col-8">PO Approval</label>
 
-                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPurchaseOrder02"
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPOApproval"
                                     name="data[]" value="PO02" />
                             </div>
                             <div class="form-check d-flex form-switch mb-4">
-                                <label for="level" class="form-check-label col-8">Quality Info</label>
+                                <label for="level" class="form-check-label col-8">Receipt Report</label>
 
-                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPurchaseOrder03"
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbReceiptReport"
                                     name="data[]" value="PO03" />
                             </div>
                             <div class="form-check d-flex form-switch mb-4">
                                 <label for="level" class="form-check-label col-8">Print QR</label>
 
-                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPurchaseOrder04"
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPrintQR"
                                     name="data[]" value="PO04" />
                             </div>
                             <h4>
-                                <center><strong>Transfer Item</strong></center>
+                                <center><strong>Inventory</strong></center>
                             </h4>
                             <div class="form-check d-flex form-switch mt-3 mb-4">
-                                <label for="level" class="form-check-label col-8">Transfer Item Maint</label>
+                                <label for="level" class="form-check-label col-8">Single Transfer Out</label>
 
-                                <input type="checkbox" class="custom-control-input form-check-input" id="cbTransferItem01"
-                                    name="data[]" value="TS01" />
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbSingleTransferOut"
+                                    name="data[]" value="TS02" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Single Transfer Receipt</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbSingleTransferReceipt"
+                                    name="data[]" value="TS03" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Issue Unplanned</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbIssueUnplanned"
+                                    name="data[]" value="OT01" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Receipt Unplanned</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbReceiptUnplanned"
+                                    name="data[]" value="OT02" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Inv. Data Inquiry</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbInvDataInquiry" name="data[]"
+                                    value="OT04" />
                             </div>
                             <h4>
                                 <center><strong>Shipment</strong></center>
@@ -120,6 +144,7 @@
                                 <input type="checkbox" class="custom-control-input form-check-input" id="cbShipmentConfirmation" name="data[]"
                                     value="SH03" />
                             </div>
+                            
                             <h4>
                                 <center><strong>Other Shipment</strong></center>
                             </h4>
@@ -139,6 +164,56 @@
 
                                 <input type="checkbox" class="custom-control-input form-check-input" id="cbOtherPackingReplenishmentApproval" name="data[]" value="OS03" />
                             </div>
+                            <h4>
+                                <center><strong>Picklist</strong></center>
+                            </h4>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Picklist Browse</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPicklistBrowse"
+                                    name="data[]" value="PL01" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Picklist Shopping</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPicklistShopping" name="data[]" value="PL05" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Picklist Approval</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPicklistApproval" name="data[]" value="PL06" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Picklist Transfer</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPicklistTransfer" name="data[]" value="PL07" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Picklist Receipt</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPicklistReceipt" name="data[]" value="PL08" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Work Order Issue</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbWorkOrderIssue" name="data[]" value="WO01" />
+                            </div>
+
+                            <h4>
+                                <center><strong>Sampling</strong></center>
+                            </h4>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Sampling</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbSampling"
+                                    name="data[]" value="SP01" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Sampling Return</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbSamplingReturn" name="data[]" value="SP02" />
+                            </div>
+                            
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -169,31 +244,43 @@
                 let parts = roleAccess.split(";").filter(Boolean);
 
                 if (parts.includes("PO01")) {
-                    $('#cbPurchaseOrder01').prop('checked', 'true');
+                    $('#cbPOReceipt').prop('checked', 'true');
                 }
                 if (parts.includes("PO02")) {
-                    $('#cbPurchaseOrder02').prop('checked', 'true');
+                    $('#cbPOApproval').prop('checked', 'true');
                 }
                 if (parts.includes("PO03")) {
-                    $('#cbPurchaseOrder03').prop('checked', 'true');
+                    $('#cbReceiptReport').prop('checked', 'true');
                 }
                 if (parts.includes("PO04")) {
-                    $('#cbPurchaseOrder04').prop('checked', 'true');
+                    $('#cbPrintQR').prop('checked', 'true');
                 }
-                if (parts.includes("TS01")) {
-                    $('#cbTransferItem01').prop('checked', 'true');
+                if (parts.includes("TS02")) {
+                    $('#cbSingleTransferOut').prop('checked', 'true');
                 }
-                if (parts.includes("SH01")) {
-                    $('#cbShipment').prop('checked', 'true');
+                if (parts.includes("TS03")) {
+                    $('#cbSingleTransferReceipt').prop('checked', 'true');
                 }
-                if (parts.includes("SH02")) {
-                    $('#cbPackingReplenishment').prop('checked', 'true');
+                if (parts.includes("OT01")) {
+                    $('#cbIssueUnplanned').prop('checked', 'true');
                 }
-                if (parts.includes("SH03")) {
-                    $('#cbShipmentConfirmation').prop('checked', 'true');
+                if (parts.includes("OT02")) {
+                    $('#cbReceiptUnplanned').prop('checked', 'true');
+                }
+                if (parts.includes('OT04')) {
+                    $('#cbInvDataInquiry').prop('checked', 'true');
+                }
+                if (parts.includes('SH01')) {
+                    $('#cbShipment').prop('checked', true);
+                }
+                if (parts.includes('SH02')) {
+                    $('#cbPackingReplenishment').prop('checked', true);
+                }
+                if (parts.includes('SH03')) {
+                    $('#cbShipmentConfirmation').prop('checked', true);
                 }
                 if (parts.includes('SH04')) {
-                    $('#cbPackingReplenishmentApproval').prop('checked', 'true');
+                    $('#cbPackingReplenishmentApproval').prop('checked', true);
                 }
                 if (parts.includes('OS01')) {
                     $('#cbOtherShipment').prop('checked', true);
@@ -203,6 +290,31 @@
                 }
                 if (parts.includes('OS03')) {
                     $('#cbOtherPackingReplenishmentApproval').prop('checked', true);
+                }
+
+                if (parts.includes('PL01')) {
+                    $('#cbPicklistBrowse').prop('checked', true);
+                }
+                if (parts.includes('PL05')) {
+                    $('#cbPicklistShopping').prop('checked', true);
+                }
+                if (parts.includes('PL06')) {
+                    $('#cbPicklistApproval').prop('checked', true);
+                }
+                if (parts.includes('PL07')) {
+                    $('#cbPicklistTransfer').prop('checked', true);
+                }
+                if (parts.includes('PL08')) {
+                    $('#cbPicklistReceipt').prop('checked', true);
+                }
+                if (parts.includes('WO01')) {
+                    $('#cbWorkOrderIssue').prop('checked', true);
+                }
+                if (parts.includes('SP01')) {
+                    $('#cbSampling').prop('checked', true);
+                }
+                if (parts.includes('SP02')) {
+                    $('#cbSamplingReturn').prop('checked', true);
                 }
 
                 $('#roleId').val(roleId);
