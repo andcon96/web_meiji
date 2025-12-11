@@ -497,4 +497,103 @@ class APIController extends Controller
             ], 500);
         }
     }
+
+    public function getLocData(Request $req)
+    {
+        /* dd($req->loc); */
+
+        $hasil = (new WSAServices())->wsaGetLocData($req->loc);
+
+        if ($hasil[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Data Not Found."
+            ], 422);
+        } else {
+            $listData = $hasil[1];
+
+            return response()->json(['DataWSA' => $listData], 200);
+        }
+        
+    }
+
+
+    public function getSites(Request $req)
+    {
+        /* dd($req->loc); */
+
+        $hasil = (new WSAServices())->wsaGetSites($req->site);
+
+        if ($hasil[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Data Not Found."
+            ], 422);
+        } else {
+            $listData = $hasil[1];
+
+            return response()->json(['DataWSA' => $listData], 200);
+        }
+        
+    }
+
+
+    public function getWrhData(Request $req)
+    {
+        /* dd($req->loc); */
+
+        $hasil = (new WSAServices())->wsaGetWrhData($req->wrh);
+
+        if ($hasil[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Data Not Found."
+            ], 422);
+        } else {
+            $listData = $hasil[1];
+
+            return response()->json(['DataWSA' => $listData], 200);
+        }
+        
+    }
+
+
+    public function getLevelData(Request $req)
+    {
+        /* dd($req->loc); */
+
+        $hasil = (new WSAServices())->wsaGetLevelData($req->level);
+
+        if ($hasil[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Data Not Found."
+            ], 422);
+        } else {
+            $listData = $hasil[1];
+
+            return response()->json(['DataWSA' => $listData], 200);
+        }
+        
+    }
+
+
+    public function getBinData(Request $req)
+    {
+        /* dd($req->loc); */
+
+        $hasil = (new WSAServices())->wsaGetBinData($req->bin);
+
+        if ($hasil[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Data Not Found."
+            ], 422);
+        } else {
+            $listData = $hasil[1];
+
+            return response()->json(['DataWSA' => $listData], 200);
+        }
+        
+    }
 }
