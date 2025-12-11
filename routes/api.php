@@ -172,8 +172,7 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     // Route::post("sendTransferItem", [APIPicklistShopping::class, "sendTransferItem"]);
     Route::get("getLocationData", [APISingleTransfer::class, "getLocationData"]);
     Route::get("getSiteData", [APISingleTransfer::class, "getSiteData"]);
-    Route::get("getLocData", [APISingleTransfer::class, "getLocData"]);
-    Route::get("getSites", [APISingleTransfer::class, "getSites"]);
+    
     
     Route::get("wsaWarehousePick", [APISingleTransfer::class, "wsaWarehouse"]);
     Route::get("getSearchLocation", [APISingleTransfer::class, "wsainvdet"]);
@@ -211,8 +210,13 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     
     Route::get("/getPengembalianQo", [APIPengembalian::class, 'getPengembalianQo']);
     Route::post("/transferPengembalianQo", [APIPengembalian::class, 'transferPengembalianQo']);
-
     Route::get("getTransactionHistory", [APISingleTransfer::class, "getTransactionHistory"]);
-    
+      //lookup browse android
+    Route::get("getLocData", [APIController::class, "getLocData"]);
+    Route::get("getSites", [APIController::class, "getSites"]);
+    Route::get("getWrhData", [APIController::class, "getWrhData"]);
+    Route::get("getLevelData", [APIController::class, "getLevelData"]);
+    Route::get("getBinData", [APIController::class, "getBinData"]);
+
 });
 // WSA Picklist
