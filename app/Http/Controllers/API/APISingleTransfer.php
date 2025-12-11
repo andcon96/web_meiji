@@ -1172,8 +1172,13 @@ class APISingleTransfer extends Controller
                 'Message' => "No Data Available"
             ], 422);
         }
+        else {
+            $listData = $wsaData[1];
 
-        return response()->json($wsaData[1]);
+            return response()->json(['DataWSA' => $listData], 200);
+        }
+
+        // return response()->json($wsaData[1]);
     }
     public function nullConversion($data)
     {

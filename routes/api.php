@@ -212,5 +212,7 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::get("/getPengembalianQo", [APIPengembalian::class, 'getPengembalianQo']);
     Route::post("/transferPengembalianQo", [APIPengembalian::class, 'transferPengembalianQo']);
 
+    Route::get("getTransactionHistory", [APISingleTransfer::class, "getTransactionHistory"]);
+    
 });
 // WSA Picklist
