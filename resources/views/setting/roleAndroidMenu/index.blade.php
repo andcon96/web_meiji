@@ -86,6 +86,12 @@
                                 <input type="checkbox" class="custom-control-input form-check-input" id="cbPrintQR"
                                     name="data[]" value="PO04" />
                             </div>
+                            <div class="form-check d-flex form-switch mb-4">
+                                <label for="level" class="form-check-label col-8">Verify Location</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbVerifyLocation"
+                                    name="data[]" value="PO05" />
+                            </div>
                             <h4>
                                 <center><strong>Inventory</strong></center>
                             </h4>
@@ -254,6 +260,9 @@
                 }
                 if (parts.includes("PO04")) {
                     $('#cbPrintQR').prop('checked', 'true');
+                }
+                if (parts.includes("PO05")) {
+                    $('#cbVerifyLocation').prop('checked', 'true');
                 }
                 if (parts.includes("TS02")) {
                     $('#cbSingleTransferOut').prop('checked', 'true');
