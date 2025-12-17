@@ -1397,7 +1397,7 @@ class QxtendServices
             $soSite = $shipmentScheduleDetail->ssd_sod_site;
             $qdocRequest .=
                 '
-                                    <schedOrderItemDetail>
+                                    <itemDetail>
                                         <scxOrder>' .
                 $soNumber .
                 '</scxOrder>
@@ -1423,7 +1423,7 @@ class QxtendServices
                 $pickedQty = $locationDetail->ssl_qty_pick;
 
                 $qdocRequest .=
-                    '<schedOrderIssueDetail>
+                    '<issueDetail>
                                             <site>' .
                     $soSite .
                     '</site>
@@ -1439,56 +1439,56 @@ class QxtendServices
                     '</lotserialQty>
                                             <lContinue>true</lContinue>
                                             <yn>true</yn>
-                                        </schedOrderIssueDetail>';
+                                        </issueDetail>';
             }
 
             $qdocRequest .=
                 '
-                                    </schedOrderItemDetail>
-                                    <discreteOrderItemDetail>
-                                        <scxOrder>' .
-                $soNumber .
-                '</scxOrder>
-                                        <scxLine>' .
-                $soLine .
-                '</scxLine>
-                                        <srSite>' .
-                $soSite .
-                '</srSite>
-                                        <srQty>0</srQty>
-                                        <srLoc>' .
-                $location .
-                '</srLoc>
-                                        <srLotser></srLotser>
-                                        <multiple>true</multiple>
-                                        <vCmmts>false</vCmmts>
-                                        <yn>true</yn>
-                                        <answer>true</answer>
-                                        <lAnswer>true</lAnswer>';
+                                    </itemDetail>';
+                //                     <discreteOrderItemDetail>
+                //                         <scxOrder>' .
+                // $soNumber .
+                // '</scxOrder>
+                //                         <scxLine>' .
+                // $soLine .
+                // '</scxLine>
+                //                         <srSite>' .
+                // $soSite .
+                // '</srSite>
+                //                         <srQty>0</srQty>
+                //                         <srLoc>' .
+                // $location .
+                // '</srLoc>
+                //                         <srLotser></srLotser>
+                //                         <multiple>true</multiple>
+                //                         <vCmmts>false</vCmmts>
+                //                         <yn>true</yn>
+                //                         <answer>true</answer>
+                //                         <lAnswer>true</lAnswer>';
 
-            foreach ($shipmentScheduleDetail->getShipmentScheduleLocation as $locationDetail) {
-                $lot = $locationDetail->ssl_lotserial;
-                $pickedQty = $locationDetail->ssl_qty_pick;
+            // foreach ($shipmentScheduleDetail->getShipmentScheduleLocation as $locationDetail) {
+            //     $lot = $locationDetail->ssl_lotserial;
+            //     $pickedQty = $locationDetail->ssl_qty_pick;
 
-                $qdocRequest .=
-                    '<discreteOrderIssueDetail>
-                                            <site>' .
-                    $soSite .
-                    '</site>
-                                            <location>' .
-                    $location .
-                    '</location>
-                                            <lotserial>' .
-                    $lot .
-                    '</lotserial>
-                                            <lotref></lotref>
-                                            <lotserialQty>' .
-                    $pickedQty .
-                    '</lotserialQty>
-                                            <yn>true</yn>
-                                        </discreteOrderIssueDetail>';
-            }
-            $qdocRequest .= "</discreteOrderItemDetail>";
+            //     $qdocRequest .=
+            //         '<discreteOrderIssueDetail>
+            //                                 <site>' .
+            //         $soSite .
+            //         '</site>
+            //                                 <location>' .
+            //         $location .
+            //         '</location>
+            //                                 <lotserial>' .
+            //         $lot .
+            //         '</lotserial>
+            //                                 <lotref></lotref>
+            //                                 <lotserialQty>' .
+            //         $pickedQty .
+            //         '</lotserialQty>
+            //                                 <yn>true</yn>
+            //                             </discreteOrderIssueDetail>';
+            // }
+            // $qdocRequest .= "</discreteOrderItemDetail>";
         }
 
         $qdocRequest .= '
