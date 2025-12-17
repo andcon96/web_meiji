@@ -125,6 +125,11 @@
                                 <input type="checkbox" class="custom-control-input form-check-input" id="cbInvDataInquiry" name="data[]"
                                     value="OT04" />
                             </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Transaction History Browse</label>
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbTransactionHistoryBrowse" name="data[]"
+                                    value="OT05" />
+                            </div>
                             <h4>
                                 <center><strong>Shipment</strong></center>
                             </h4>
@@ -278,6 +283,9 @@
                 }
                 if (parts.includes('OT04')) {
                     $('#cbInvDataInquiry').prop('checked', 'true');
+                }
+                if (parts.includes('OT05')) {
+                    $('#cbTransactionHistoryBrowse').prop('checked', 'true');
                 }
                 if (parts.includes('SH01')) {
                     $('#cbShipment').prop('checked', true);
