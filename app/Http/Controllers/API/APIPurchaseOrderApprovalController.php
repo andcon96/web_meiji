@@ -120,7 +120,7 @@ class APIPurchaseOrderApprovalController extends Controller
                         $newTransactionHistory->tr_lot = $data->batch_penanda;
                         $newTransactionHistory->tr_qty = $data->jumlah_terima;
                         $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                        $newTransactionHistory->tr_ref = $data->kode_cetak;
+                        $newTransactionHistory->tr_reference = $data->kode_cetak;
                         $newTransactionHistory->tr_site = $data->site_penyimpanan;
                         $newTransactionHistory->tr_location = $data->loc_penyimpanan;
                         $newTransactionHistory->tr_warehouse = $data->building_penyimpanan;
@@ -256,7 +256,7 @@ class APIPurchaseOrderApprovalController extends Controller
                         $newTransactionHistory->tr_lot = $data->batch_penanda;
                         $newTransactionHistory->tr_qty = $data->jumlah_terima;
                         $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                        $newTransactionHistory->tr_ref = $data->kode_cetak;
+                        $newTransactionHistory->tr_reference = $data->kode_cetak;
                         $newTransactionHistory->tr_site = $data->site_penyimpanan;
                         $newTransactionHistory->tr_location = $data->loc_penyimpanan;
                         $newTransactionHistory->tr_warehouse = $data->building_penyimpanan;

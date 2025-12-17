@@ -127,7 +127,7 @@ class ReceiptServices
                     $newTransactionHistory->tr_lot = $dataDetail->batch_penanda;
                     $newTransactionHistory->tr_qty = $dataDetail->jumlah_terima;
                     $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                    $newTransactionHistory->tr_ref = $dataDetail->kode_cetak;
+                    $newTransactionHistory->tr_reference = $dataDetail->kode_cetak;
                     $newTransactionHistory->tr_site = $dataDetail->site_penyimpanan;
                     $newTransactionHistory->tr_location = $dataDetail->loc_penyimpanan;
                     $newTransactionHistory->tr_warehouse = $dataDetail->building_penyimpanan;
@@ -322,7 +322,7 @@ class ReceiptServices
                 $newTransactionHistory->tr_lot = $data->batch_penanda;
                 $newTransactionHistory->tr_qty = $data->jumlah_terima;
                 $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                $newTransactionHistory->tr_ref = $data->kode_cetak;
+                $newTransactionHistory->tr_reference = $data->kode_cetak;
                 $newTransactionHistory->tr_site = $data->site_penyimpanan;
                 $newTransactionHistory->tr_location = $data->loc_penyimpanan;
                 $newTransactionHistory->tr_warehouse = $data->building_penyimpanan;
