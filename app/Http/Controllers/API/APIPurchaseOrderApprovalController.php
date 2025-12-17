@@ -7,6 +7,7 @@ use App\Http\Resources\GeneralResources;
 use App\Models\API\ApprovalReceiptHistory;
 use App\Models\API\ApprovalReceiptTemp;
 use App\Models\API\PurchaseOrderDetail;
+use App\Models\API\TransactionHistory;
 use App\Models\API\ReceiptDetail;
 use App\Models\Settings\ApprovalReceipt;
 use App\Services\QxtendServices;
@@ -102,6 +103,31 @@ class APIPurchaseOrderApprovalController extends Controller
                     $detailReceipt = ReceiptDetail::find($tempApprove->art_receipt_det_id);
                     $detailReceipt->rd_status = 'Draft';
                     $detailReceipt->save();
+
+                    //getDetail Receipt
+                    $data = ReceiptDetail::with('getMaster')->find($tempApprove->art_receipt_det_id);
+                    $getMaster = $data->getMaster;
+
+                     // Transaction History
+                        $newTransactionHistory = new TransactionHistory();
+                        $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
+                        $newTransactionHistory->tr_program = 'PO Approval Module';
+                        $newTransactionHistory->tr_activity = 'Reject Receipt';
+                        $newTransactionHistory->tr_user = $data->created_by;
+                        $newTransactionHistory->tr_part = $data->nama_barang;
+                        $newTransactionHistory->tr_uom = $data->satuan;
+                        $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                        $newTransactionHistory->tr_lot = $data->batch_penanda;
+                        $newTransactionHistory->tr_qty = $data->jumlah_terima;
+                        $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                        $newTransactionHistory->tr_ref = $data->kode_cetak;
+                        $newTransactionHistory->tr_site = $data->site_penyimpanan;
+                        $newTransactionHistory->tr_location = $data->loc_penyimpanan;
+                        $newTransactionHistory->tr_warehouse = $data->building_penyimpanan;
+                        $newTransactionHistory->tr_level = $data->level_penyimpanan;
+                        $newTransactionHistory->tr_bin = $data->bin_penyimpanan;
+                        $newTransactionHistory->tr_remark = '';
+                        $newTransactionHistory->save();
 
 
                     break;
@@ -214,6 +240,30 @@ class APIPurchaseOrderApprovalController extends Controller
                             }
                         }
                     }
+                    //getDetail Receipt
+                    $data = ReceiptDetail::with('getMaster')->find($tempApprove->art_receipt_det_id);
+                    $getMaster = $data->getMaster;
+
+                     // Transaction History
+                        $newTransactionHistory = new TransactionHistory();
+                        $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
+                        $newTransactionHistory->tr_program = 'PO Approval Module';
+                        $newTransactionHistory->tr_activity = 'Approve Receipt';
+                        $newTransactionHistory->tr_user = $data->created_by;
+                        $newTransactionHistory->tr_part = $data->nama_barang;
+                        $newTransactionHistory->tr_uom = $data->satuan;
+                        $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                        $newTransactionHistory->tr_lot = $data->batch_penanda;
+                        $newTransactionHistory->tr_qty = $data->jumlah_terima;
+                        $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                        $newTransactionHistory->tr_ref = $data->kode_cetak;
+                        $newTransactionHistory->tr_site = $data->site_penyimpanan;
+                        $newTransactionHistory->tr_location = $data->loc_penyimpanan;
+                        $newTransactionHistory->tr_warehouse = $data->building_penyimpanan;
+                        $newTransactionHistory->tr_level = $data->level_penyimpanan;
+                        $newTransactionHistory->tr_bin = $data->bin_penyimpanan;
+                        $newTransactionHistory->tr_remark = '';
+                        $newTransactionHistory->save();
                     break;
             }
 

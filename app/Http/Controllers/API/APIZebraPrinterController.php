@@ -76,7 +76,8 @@ class APIZebraPrinterController extends Controller
                 }
 
                 try {
-                    $setupPrinter = PrinterSetup::first();
+                    // $setupPrinter = PrinterSetup::first();
+                    $setupPrinter = PrinterSetup::where('ps_printer_name', $request->printerName)->first();
                     $ip = $setupPrinter->ps_ip_printer;
 
                     $printerIp = $ip; // Replace with your Zebra printer's IP
@@ -127,6 +128,20 @@ class APIZebraPrinterController extends Controller
         }
         $data = $data
             ->groupBy('rd_nama_barang')->orderBy('rd_nama_barang')->get();
+
+        //$data = $data->groupBy('rd_nama_barang')->orderBy('rd_nama_barang')->get();
+
+        return GeneralResources::collection($data);
+    }
+    public function getPrinterPrint(Request $request)
+    {
+       
+        $data = PrinterSetup::query();
+        if($request->search){
+            $data->where('ps_printer_name', 'like', '%' . $request->search . '%');
+        }
+        $data = $data
+            ->orderBy('ps_printer_name')->get();
 
         //$data = $data->groupBy('rd_nama_barang')->orderBy('rd_nama_barang')->get();
 

@@ -67,6 +67,7 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::post("getPoPrint", [APIZebraPrinterController::class, "getPoPrint"]);
     Route::post("getBookPrint", [APIZebraPrinterController::class, "getBookPrint"]);
     Route::post("getItemPrint", [APIZebraPrinterController::class, "getItemPrint"]);
+    Route::post("getPrinterPrint", [APIZebraPrinterController::class, "getPrinterPrint"]);
     Route::post("printQRItem", [APIZebraPrinterController::class, "printQRItem"]);
 
     // WSA PO
@@ -217,6 +218,7 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::get("getWrhData", [APIController::class, "getWrhData"]);
     Route::get("getLevelData", [APIController::class, "getLevelData"]);
     Route::get("getBinData", [APIController::class, "getBinData"]);
+    Route::get("getHistoryData", [APIController::class, "getHistoryData"]);
 
 });
 // WSA Picklist

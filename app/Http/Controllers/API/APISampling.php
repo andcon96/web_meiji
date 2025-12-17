@@ -19,6 +19,7 @@ use App\Models\API\picklistLocationTo;
 use App\Models\Settings\SingleTransferPrefix;
 use App\Models\API\SingleTransfer;
 use App\Services\WSAServices;
+use App\Models\API\TransactionHistory;
 use App\Services\QxtendServices;
 use Exception;
 use Illuminate\Http\Request;
@@ -28,6 +29,7 @@ use App\Services\ReceiptServices;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Auth;
 
 class APISampling extends Controller
 {
@@ -105,6 +107,32 @@ class APISampling extends Controller
                     'Message' => "Transfer sampling Item Failed for Item : " . $item
                 ], 422);
             } else {
+
+                //getDetail Receipt
+
+                    $user = Auth::user()->name;
+                     // Transaction History
+                        $newTransactionHistory = new TransactionHistory();
+                        $newTransactionHistory->tr_nbr = 'Sampling';
+                        $newTransactionHistory->tr_program = 'Sampling Module';
+                        $newTransactionHistory->tr_activity = 'Insert Sampling From';
+                        $newTransactionHistory->tr_user = $user;
+                        $newTransactionHistory->tr_part = $item;
+                        $newTransactionHistory->tr_uom = '';
+                        $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                        $newTransactionHistory->tr_lot = $lot;
+                        $newTransactionHistory->tr_qty = $qty;
+                        $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                        $newTransactionHistory->tr_ref = '';
+                        $newTransactionHistory->tr_site = $siteto;
+                        $newTransactionHistory->tr_location = $locto;
+                        $newTransactionHistory->tr_warehouse = $whfrom;
+                        $newTransactionHistory->tr_level = $levelfrom;
+                        $newTransactionHistory->tr_bin = $binfrom;
+                        $newTransactionHistory->tr_remark = '';
+                        $newTransactionHistory->save();
+
+
                 return response()->json([
                     'Status' => 'Success',
                     'Message' => "Transfer sampling Item Success for Item : " . $item
