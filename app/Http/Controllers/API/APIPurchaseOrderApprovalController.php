@@ -70,7 +70,7 @@ class APIPurchaseOrderApprovalController extends Controller
         // Log::channel('customlog')->info('Data : ', ['input' => $req->all()]);
         try {
             DB::beginTransaction();
-
+            $approver = Auth::user()->name;
             switch ($req->action) {
                 case 'Reject':
                     // Update Status Current
@@ -113,14 +113,14 @@ class APIPurchaseOrderApprovalController extends Controller
                         $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
                         $newTransactionHistory->tr_program = 'PO Approval Module';
                         $newTransactionHistory->tr_activity = 'Reject Receipt';
-                        $newTransactionHistory->tr_user = $data->created_by;
+                        $newTransactionHistory->tr_user = $approver;
                         $newTransactionHistory->tr_part = $data->nama_barang;
                         $newTransactionHistory->tr_uom = $data->satuan;
                         $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                         $newTransactionHistory->tr_lot = $data->batch_penanda;
                         $newTransactionHistory->tr_qty = $data->jumlah_terima;
                         $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                        $newTransactionHistory->tr_ref = $data->kode_cetak;
+                        $newTransactionHistory->tr_reference = $data->kode_cetak;
                         $newTransactionHistory->tr_site = $data->site_penyimpanan;
                         $newTransactionHistory->tr_location = $data->loc_penyimpanan;
                         $newTransactionHistory->tr_warehouse = $data->building_penyimpanan;
@@ -249,14 +249,14 @@ class APIPurchaseOrderApprovalController extends Controller
                         $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
                         $newTransactionHistory->tr_program = 'PO Approval Module';
                         $newTransactionHistory->tr_activity = 'Approve Receipt';
-                        $newTransactionHistory->tr_user = $data->created_by;
+                        $newTransactionHistory->tr_user = $approver;
                         $newTransactionHistory->tr_part = $data->nama_barang;
                         $newTransactionHistory->tr_uom = $data->satuan;
                         $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                         $newTransactionHistory->tr_lot = $data->batch_penanda;
                         $newTransactionHistory->tr_qty = $data->jumlah_terima;
                         $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                        $newTransactionHistory->tr_ref = $data->kode_cetak;
+                        $newTransactionHistory->tr_reference = $data->kode_cetak;
                         $newTransactionHistory->tr_site = $data->site_penyimpanan;
                         $newTransactionHistory->tr_location = $data->loc_penyimpanan;
                         $newTransactionHistory->tr_warehouse = $data->building_penyimpanan;

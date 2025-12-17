@@ -18,7 +18,7 @@ use App\Models\Settings\User;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Support\Facades\Auth;
 class ReceiptServices
 {
 
@@ -42,6 +42,7 @@ class ReceiptServices
 
             // Create Receipt Detail
             foreach ($data as $dataDetail) {
+                $creator = Auth::user()->name;
                 if (empty($dataDetail->list_user)) {
                     return [false, 'Approval Cannot Be Empty'];
                 }
@@ -119,19 +120,19 @@ class ReceiptServices
                     $newTransactionHistory->tr_nbr = $getRunningNumber;
                     $newTransactionHistory->tr_program = 'PO Receipt Module';
                     $newTransactionHistory->tr_activity = 'Create Receipt';
-                    $newTransactionHistory->tr_user = $data->created_by;
-                    $newTransactionHistory->tr_part = $data->nama_barang;
-                    $newTransactionHistory->tr_uom = $data->satuan;
+                    $newTransactionHistory->tr_user = $creator;
+                    $newTransactionHistory->tr_part = $dataDetail->nama_barang;
+                    $newTransactionHistory->tr_uom = '';
                     $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-                    $newTransactionHistory->tr_lot = $data->batch_penanda;
-                    $newTransactionHistory->tr_qty = $data->jumlah_terima;
+                    $newTransactionHistory->tr_lot = $dataDetail->batch_penanda;
+                    $newTransactionHistory->tr_qty = $dataDetail->jumlah_terima;
                     $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                    $newTransactionHistory->tr_ref = $data->kode_cetak;
-                    $newTransactionHistory->tr_site = $data->site_penyimpanan;
-                    $newTransactionHistory->tr_location = $data->loc_penyimpanan;
-                    $newTransactionHistory->tr_warehouse = $data->building_penyimpanan;
-                    $newTransactionHistory->tr_level = $data->level_penyimpanan;
-                    $newTransactionHistory->tr_bin = $data->bin_penyimpanan;
+                    $newTransactionHistory->tr_reference = $dataDetail->kode_cetak;
+                    $newTransactionHistory->tr_site = $dataDetail->site_penyimpanan;
+                    $newTransactionHistory->tr_location = $dataDetail->loc_penyimpanan;
+                    $newTransactionHistory->tr_warehouse = $dataDetail->building_penyimpanan;
+                    $newTransactionHistory->tr_level = $dataDetail->level_penyimpanan;
+                    $newTransactionHistory->tr_bin = $dataDetail->bin_penyimpanan;
                     $newTransactionHistory->tr_remark = '';
                     $newTransactionHistory->save();
                 }
@@ -227,7 +228,7 @@ class ReceiptServices
     {
         try {
             DB::beginTransaction();
-
+            $creator = Auth::user()->name;
             // Receipt Detail
             $findReceiptDetail = ReceiptDetail::findOrFail($data->id);
             $findReceiptDetail->rd_tanggal_datang = $data->rd_tanggal_datang;
@@ -314,14 +315,14 @@ class ReceiptServices
                 $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
                 $newTransactionHistory->tr_program = 'PO Receipt Module';
                 $newTransactionHistory->tr_activity = 'Edit Receipt';
-                $newTransactionHistory->tr_user = $data->created_by;
+                $newTransactionHistory->tr_user = $creator;
                 $newTransactionHistory->tr_part = $data->nama_barang;
-                $newTransactionHistory->tr_uom = $data->satuan;
+                $newTransactionHistory->tr_uom = '';
                 $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                 $newTransactionHistory->tr_lot = $data->batch_penanda;
                 $newTransactionHistory->tr_qty = $data->jumlah_terima;
                 $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                $newTransactionHistory->tr_ref = $data->kode_cetak;
+                $newTransactionHistory->tr_reference = $data->kode_cetak;
                 $newTransactionHistory->tr_site = $data->site_penyimpanan;
                 $newTransactionHistory->tr_location = $data->loc_penyimpanan;
                 $newTransactionHistory->tr_warehouse = $data->building_penyimpanan;
