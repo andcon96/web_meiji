@@ -121,7 +121,7 @@ class ReceiptServices
                     $newTransactionHistory->tr_program = 'PO Receipt Module';
                     $newTransactionHistory->tr_activity = 'Create Receipt';
                     $newTransactionHistory->tr_user = $creator;
-                    $newTransactionHistory->tr_part = $data->nama_barang;
+                    $newTransactionHistory->tr_part = $dataDetail->nama_barang;
                     $newTransactionHistory->tr_uom = $data->satuan;
                     $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                     $newTransactionHistory->tr_lot = $data->batch_penanda;
