@@ -125,12 +125,12 @@ class ReceiptServices
                     $newTransactionHistory->tr_uom = '';
                     $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                     $newTransactionHistory->tr_lot = $dataDetail->batch_penanda;
-                    $newTransactionHistory->tr_qty = $data->jumlah_terima;
+                    $newTransactionHistory->tr_qty = $dataDetail->jumlah_terima;
                     $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                    $newTransactionHistory->tr_ref = $data->rd_kode_cetak;
+                    $newTransactionHistory->tr_ref = $dataDetail->rd_kode_cetak;
                     $newTransactionHistory->tr_site = $dataDetail->site_penyimpanan;
                     $newTransactionHistory->tr_location = $dataDetail->loc_penyimpanan;
-                    $newTransactionHistory->tr_warehouse = $data->building_penyimpanan;
+                    $newTransactionHistory->tr_warehouse = $dataDetail->building_penyimpanan;
                     $newTransactionHistory->tr_level = $dataDetail->level_penyimpanan;
                     $newTransactionHistory->tr_bin = $dataDetail->bin_penyimpanan;
                     $newTransactionHistory->tr_remark = '';
