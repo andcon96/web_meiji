@@ -12,6 +12,7 @@ use App\Models\API\ReceiptKendaraan;
 use App\Models\API\ReceiptMaster;
 use App\Models\API\ReceiptPenanda;
 use App\Models\API\ReceiptPallet;
+use App\Models\API\TransactionHistory;
 use App\Models\Settings\ApprovalReceipt;
 use App\Models\Settings\User;
 use Exception;
@@ -106,16 +107,35 @@ class ReceiptServices
                 }
 
                 // Pallet
-                foreach($dataDetail->pallet_list as $pallet){ 
+                foreach ($dataDetail->pallet_list as $pallet) {
                     $newReceiptPallet = new ReceiptPallet();
                     $newReceiptPallet->rdp_rd_det_id = $newReceiptDetail->id;
                     $newReceiptPallet->rdp_level_penyimpanan = $pallet->level_penyimpanan;
                     $newReceiptPallet->rdp_bin_penyimpanan = $pallet->bin_penyimpanan;
                     $newReceiptPallet->rdp_qty_penyimpanan = $pallet->qty_pallet;
                     $newReceiptPallet->save();
-                    
+                    // Transaction History
+                    $newTransactionHistory = new TransactionHistory();
+                    $newTransactionHistory->tr_nbr = $getRunningNumber;
+                    $newTransactionHistory->tr_program = 'PO Receipt Module';
+                    $newTransactionHistory->tr_activity = 'Create Receipt';
+                    $newTransactionHistory->tr_user = $data->created_by;
+                    $newTransactionHistory->tr_part = $data->nama_barang;
+                    $newTransactionHistory->tr_uom = $data->satuan;
+                    $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                    $newTransactionHistory->tr_lot = $data->batch_penanda;
+                    $newTransactionHistory->tr_qty = $data->jumlah_terima;
+                    $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                    $newTransactionHistory->tr_ref = $data->kode_cetak;
+                    $newTransactionHistory->tr_site = $data->site_penyimpanan;
+                    $newTransactionHistory->tr_location = $data->loc_penyimpanan;
+                    $newTransactionHistory->tr_warehouse = $data->building_penyimpanan;
+                    $newTransactionHistory->tr_level = $data->level_penyimpanan;
+                    $newTransactionHistory->tr_bin = $data->bin_penyimpanan;
+                    $newTransactionHistory->tr_remark = '';
+                    $newTransactionHistory->save();
                 }
-               
+
                 // Update Qty Ongoing PO Detail
                 // $dataPodDetail = PurchaseOrderDetail::find($dataDetail->id_pod_det);
                 // $dataPodDetail->pod_qty_ongoing = $dataPodDetail->pod_qty_ongoing + $dataDetail->total;
@@ -233,6 +253,9 @@ class ReceiptServices
             $findReceiptDetail->rd_status = 'Waiting';
             $findReceiptDetail->save();
 
+            //get master
+            $getMaster = ReceiptMaster::findOrFail($findReceiptDetail->rd_rm_id);
+
             // Dokumen
             $newReceiptDetailDokumen = ReceiptDokumen::findOrFail($data->get_dokumen->id);
             $newReceiptDetailDokumen->rdd_is_purchase_order = $data->get_dokumen->rdd_is_purchase_order;
@@ -278,15 +301,35 @@ class ReceiptServices
             $newReceiptDetailPenanda->save();
 
             // Pallet
-                foreach($data->pallet_list as $pallet){ 
-                    $newReceiptPallet = new ReceiptPallet();
-                    $newReceiptPallet->rdp_rd_det_id = $data->id;
-                    $newReceiptPallet->rdp_level_penyimpanan = $pallet->rdp_level_penyimpanan;
-                    $newReceiptPallet->rdp_bin_penyimpanan = $pallet->rdp_bin_penyimpanan;
-                    $newReceiptPallet->rdp_qty_penyimpanan = $pallet->rdp_qty_penyimpanan;
-                    $newReceiptPallet->save();
-                    
-                }
+            foreach ($data->pallet_list as $pallet) {
+                $newReceiptPallet = new ReceiptPallet();
+                $newReceiptPallet->rdp_rd_det_id = $data->id;
+                $newReceiptPallet->rdp_level_penyimpanan = $pallet->rdp_level_penyimpanan;
+                $newReceiptPallet->rdp_bin_penyimpanan = $pallet->rdp_bin_penyimpanan;
+                $newReceiptPallet->rdp_qty_penyimpanan = $pallet->rdp_qty_penyimpanan;
+                $newReceiptPallet->save();
+
+                // Transaction History
+                $newTransactionHistory = new TransactionHistory();
+                $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
+                $newTransactionHistory->tr_program = 'PO Receipt Module';
+                $newTransactionHistory->tr_activity = 'Edit Receipt';
+                $newTransactionHistory->tr_user = $data->created_by;
+                $newTransactionHistory->tr_part = $data->nama_barang;
+                $newTransactionHistory->tr_uom = $data->satuan;
+                $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                $newTransactionHistory->tr_lot = $data->batch_penanda;
+                $newTransactionHistory->tr_qty = $data->jumlah_terima;
+                $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                $newTransactionHistory->tr_ref = $data->kode_cetak;
+                $newTransactionHistory->tr_site = $data->site_penyimpanan;
+                $newTransactionHistory->tr_location = $data->loc_penyimpanan;
+                $newTransactionHistory->tr_warehouse = $data->building_penyimpanan;
+                $newTransactionHistory->tr_level = $data->level_penyimpanan;
+                $newTransactionHistory->tr_bin = $data->bin_penyimpanan;
+                $newTransactionHistory->tr_remark = '';
+                $newTransactionHistory->save();
+            }
 
             // Create Approval
             // $currentApprover = ApprovalReceipt::get();
@@ -315,6 +358,8 @@ class ReceiptServices
                 $approvalReceiptTemp->art_status = 'Waiting';
                 $approvalReceiptTemp->save();
             }
+
+
 
             DB::commit();
             return true;

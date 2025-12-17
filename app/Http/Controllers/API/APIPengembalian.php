@@ -28,6 +28,8 @@ use App\Services\ReceiptServices;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Auth;
+use App\Models\API\TransactionHistory;
 
 class APIPengembalian extends Controller
 {
@@ -89,6 +91,28 @@ class APIPengembalian extends Controller
                 //     'Message' => "Transfer sampling Item Failed for Item : " . $item
                 // ], 422);
                 // } else {
+
+                    $user = Auth::user()->name;
+                     // Transaction History
+                        $newTransactionHistory = new TransactionHistory();
+                        $newTransactionHistory->tr_nbr = 'Sampling';
+                        $newTransactionHistory->tr_program = 'Sampling Module';
+                        $newTransactionHistory->tr_activity = 'Insert Sampling From';
+                        $newTransactionHistory->tr_user = $user;
+                        $newTransactionHistory->tr_part = $item;
+                        $newTransactionHistory->tr_uom = '';
+                        $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                        $newTransactionHistory->tr_lot = $lot;
+                        $newTransactionHistory->tr_qty = $qty;
+                        $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                        $newTransactionHistory->tr_ref = '';
+                        $newTransactionHistory->tr_site = $siteto;
+                        $newTransactionHistory->tr_location = $locto;
+                        $newTransactionHistory->tr_warehouse = $whfrom;
+                        $newTransactionHistory->tr_level = $levelfrom;
+                        $newTransactionHistory->tr_bin = $binfrom;
+                        $newTransactionHistory->tr_remark = '';
+                        $newTransactionHistory->save();
                     return response()->json([
                         'Status' => 'Success',
                         'Message' => "Transfer sampling Item Success for Item : " . $item

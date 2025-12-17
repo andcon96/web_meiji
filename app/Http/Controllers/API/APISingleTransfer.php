@@ -28,6 +28,8 @@ use App\Services\ReceiptServices;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
+use App\Models\API\TransactionHistory;
+use Illuminate\Support\Facades\Auth;
 
 class APISingleTransfer extends Controller
 {
@@ -128,6 +130,50 @@ class APISingleTransfer extends Controller
                 $dataupdate = singleTransfer::where('st_trfid', $trfid)->first();
                 $dataupdate->st_status = 'Received';
                 $dataupdate->save();
+
+                $user = Auth::user()->name;
+                     // Transaction History
+
+                        $newTransactionHistoryfrom = new TransactionHistory();
+                        $newTransactionHistoryfrom->tr_nbr = 'Sampling';
+                        $newTransactionHistoryfrom->tr_program = 'Single Transfer Module';
+                        $newTransactionHistoryfrom->tr_activity = 'Single Transfer From';
+                        $newTransactionHistoryfrom->tr_user = $user;
+                        $newTransactionHistoryfrom->tr_part = $part;
+                        $newTransactionHistoryfrom->tr_uom = '';
+                        $newTransactionHistoryfrom->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                        $newTransactionHistoryfrom->tr_lot = $lotfrom;
+                        $newTransactionHistoryfrom->tr_qty = $qtyoh;
+                        $newTransactionHistoryfrom->tr_date = date('Y-m-d H:i:s');
+                        $newTransactionHistoryfrom->tr_ref = '';
+                        $newTransactionHistoryfrom->tr_site = $sitefrom;
+                        $newTransactionHistoryfrom->tr_location = $locfrom;
+                        $newTransactionHistoryfrom->tr_warehouse = $buildingfrom;
+                        $newTransactionHistoryfrom->tr_level = $levelfrom;
+                        $newTransactionHistoryfrom->tr_bin = $binfrom;
+                        $newTransactionHistoryfrom->tr_remark = '';
+                        $newTransactionHistoryfrom->save();
+
+                        $newTransactionHistory = new TransactionHistory();
+                        $newTransactionHistory->tr_nbr = 'Sampling';
+                        $newTransactionHistory->tr_program = 'Single Transfer Module';
+                        $newTransactionHistory->tr_activity = 'Single Transfer To';
+                        $newTransactionHistory->tr_user = $user;
+                        $newTransactionHistory->tr_part = $part;
+                        $newTransactionHistory->tr_uom = '';
+                        $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                        $newTransactionHistory->tr_lot = $lotto;
+                        $newTransactionHistory->tr_qty = $qtyoh;
+                        $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                        $newTransactionHistory->tr_ref = '';
+                        $newTransactionHistory->tr_site = $siteto;
+                        $newTransactionHistory->tr_location = $locto;
+                        $newTransactionHistory->tr_warehouse = $buildingto;
+                        $newTransactionHistory->tr_level = $levelto;
+                        $newTransactionHistory->tr_bin = $binto;
+                        $newTransactionHistory->tr_remark = '';
+                        $newTransactionHistory->save();
+
                 DB::commit();
                 return response()->json([
                     'Status' => 'Success',

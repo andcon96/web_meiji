@@ -22,6 +22,9 @@ use App\Jobs\API\PendingInvoiceEpointJob;
 use App\Models\API\SummaryDetailEpoint;
 use App\Models\API\SummaryEpoint;
 use App\Models\API\WorkOrderQAD;
+use App\Models\API\TransactionHistory;
+use App\Http\Resources\GeneralResources;
+
 use Carbon\Carbon;
 
 class APIController extends Controller
@@ -594,6 +597,17 @@ class APIController extends Controller
 
             return response()->json(['DataWSA' => $listData], 200);
         }
+        
+    }
+     public function getHistoryData(Request $req)
+    {
+        
+        $data = TransactionHistory::orderBy('id', 'DESC')->paginate(10);
+            
+
+        return GeneralResources::collection($data);
+
+        
         
     }
 }
