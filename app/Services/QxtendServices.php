@@ -1277,8 +1277,8 @@ class QxtendServices
 
         $domain = Domain::first();
         $domainCode = $domain->domain ?? "";
-        $receiver = 'eB21_2';
-        // $receiver = 'ERP3_1';
+        $version = 'eB21_2';
+        // $version = 'ERP3_1';
 
         $qdocRequest =
             '<?xml version="1.0" encoding="UTF-8"?>
@@ -1318,7 +1318,7 @@ class QxtendServices
                         <qcom:ttContext>
                         <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
                         <qcom:propertyName>version</qcom:propertyName>
-                        <qcom:propertyValue>' . $receiver . '</qcom:propertyValue>
+                        <qcom:propertyValue>' . $version . '</qcom:propertyValue>
                         </qcom:ttContext>
                         <qcom:ttContext>
                         <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
