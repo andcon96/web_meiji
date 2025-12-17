@@ -70,7 +70,7 @@ class APIPurchaseOrderApprovalController extends Controller
         // Log::channel('customlog')->info('Data : ', ['input' => $req->all()]);
         try {
             DB::beginTransaction();
-
+            $approver = Auth::user()->name;
             switch ($req->action) {
                 case 'Reject':
                     // Update Status Current
@@ -113,7 +113,7 @@ class APIPurchaseOrderApprovalController extends Controller
                         $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
                         $newTransactionHistory->tr_program = 'PO Approval Module';
                         $newTransactionHistory->tr_activity = 'Reject Receipt';
-                        $newTransactionHistory->tr_user = $data->created_by;
+                        $newTransactionHistory->tr_user = $approver;
                         $newTransactionHistory->tr_part = $data->nama_barang;
                         $newTransactionHistory->tr_uom = $data->satuan;
                         $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
@@ -249,7 +249,7 @@ class APIPurchaseOrderApprovalController extends Controller
                         $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
                         $newTransactionHistory->tr_program = 'PO Approval Module';
                         $newTransactionHistory->tr_activity = 'Approve Receipt';
-                        $newTransactionHistory->tr_user = $data->created_by;
+                        $newTransactionHistory->tr_user = $approver;
                         $newTransactionHistory->tr_part = $data->nama_barang;
                         $newTransactionHistory->tr_uom = $data->satuan;
                         $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan

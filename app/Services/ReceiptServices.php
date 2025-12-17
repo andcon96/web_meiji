@@ -18,7 +18,7 @@ use App\Models\Settings\User;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Support\Facades\Auth;
 class ReceiptServices
 {
 
@@ -42,6 +42,7 @@ class ReceiptServices
 
             // Create Receipt Detail
             foreach ($data as $dataDetail) {
+                $creator = Auth::user()->name;
                 if (empty($dataDetail->list_user)) {
                     return [false, 'Approval Cannot Be Empty'];
                 }
@@ -119,7 +120,7 @@ class ReceiptServices
                     $newTransactionHistory->tr_nbr = $getRunningNumber;
                     $newTransactionHistory->tr_program = 'PO Receipt Module';
                     $newTransactionHistory->tr_activity = 'Create Receipt';
-                    $newTransactionHistory->tr_user = $data->created_by;
+                    $newTransactionHistory->tr_user = $creator;
                     $newTransactionHistory->tr_part = $data->nama_barang;
                     $newTransactionHistory->tr_uom = $data->satuan;
                     $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
@@ -227,7 +228,7 @@ class ReceiptServices
     {
         try {
             DB::beginTransaction();
-
+            $creator = Auth::user()->name;
             // Receipt Detail
             $findReceiptDetail = ReceiptDetail::findOrFail($data->id);
             $findReceiptDetail->rd_tanggal_datang = $data->rd_tanggal_datang;
@@ -314,7 +315,7 @@ class ReceiptServices
                 $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
                 $newTransactionHistory->tr_program = 'PO Receipt Module';
                 $newTransactionHistory->tr_activity = 'Edit Receipt';
-                $newTransactionHistory->tr_user = $data->created_by;
+                $newTransactionHistory->tr_user = $creator;
                 $newTransactionHistory->tr_part = $data->nama_barang;
                 $newTransactionHistory->tr_uom = $data->satuan;
                 $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
