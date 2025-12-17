@@ -121,18 +121,18 @@ class ReceiptServices
                     $newTransactionHistory->tr_program = 'PO Receipt Module';
                     $newTransactionHistory->tr_activity = 'Create Receipt';
                     $newTransactionHistory->tr_user = $creator;
-                    $newTransactionHistory->tr_part = $dataDetail->nama_barang;
-                    $newTransactionHistory->tr_uom = $data->satuan;
+                    $newTransactionHistory->tr_part = $datas->nama_barang;
+                    $newTransactionHistory->tr_uom = '';
                     $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-                    $newTransactionHistory->tr_lot = $data->batch_penanda;
+                    $newTransactionHistory->tr_lot = $dataDetail->batch_penanda;
                     $newTransactionHistory->tr_qty = $data->jumlah_terima;
                     $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                    $newTransactionHistory->tr_ref = $data->kode_cetak;
-                    $newTransactionHistory->tr_site = $data->site_penyimpanan;
-                    $newTransactionHistory->tr_location = $data->loc_penyimpanan;
+                    $newTransactionHistory->tr_ref = $data->rd_kode_cetak;
+                    $newTransactionHistory->tr_site = $dataDetail->site_penyimpanan;
+                    $newTransactionHistory->tr_location = $dataDetail->loc_penyimpanan;
                     $newTransactionHistory->tr_warehouse = $data->building_penyimpanan;
-                    $newTransactionHistory->tr_level = $data->level_penyimpanan;
-                    $newTransactionHistory->tr_bin = $data->bin_penyimpanan;
+                    $newTransactionHistory->tr_level = $dataDetail->level_penyimpanan;
+                    $newTransactionHistory->tr_bin = $dataDetail->bin_penyimpanan;
                     $newTransactionHistory->tr_remark = '';
                     $newTransactionHistory->save();
                 }
@@ -317,7 +317,7 @@ class ReceiptServices
                 $newTransactionHistory->tr_activity = 'Edit Receipt';
                 $newTransactionHistory->tr_user = $creator;
                 $newTransactionHistory->tr_part = $data->nama_barang;
-                $newTransactionHistory->tr_uom = $data->satuan;
+                $newTransactionHistory->tr_uom = '';
                 $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                 $newTransactionHistory->tr_lot = $data->batch_penanda;
                 $newTransactionHistory->tr_qty = $data->jumlah_terima;
