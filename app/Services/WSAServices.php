@@ -642,7 +642,7 @@ class WSAServices
             '<inpQty>' . $qty . '</inpQty>' .
             '<inpEntryDate>' . $entryDate . '</inpEntryDate>' .
             '<inpExpDate>' . $expDate . '</inpExpDate>' .
-            '<invPotensi>' . $potensi . '</invPotensi>' .
+            '<inpPotensi>' . $potensi . '</inpPotensi>' .
             '</meiji_update_xxinv_det>' .
             '</Body>' .
             '</Envelope>';
