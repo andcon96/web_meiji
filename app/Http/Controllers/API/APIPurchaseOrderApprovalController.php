@@ -227,7 +227,8 @@ class APIPurchaseOrderApprovalController extends Controller
                                     $dataReceipt->rd_building_penyimpanan,
                                     $dataPallet->rdp_qty_penyimpanan,
                                     $dataReceipt->rd_tanggal_datang,
-                                    $dataReceipt->rd_tgl_expire
+                                    $dataReceipt->rd_tgl_expire,
+                                    $dataReceipt->rd_qty_potensi
                                 );
 
                                 if ($updateDataQAD == false) {

@@ -441,4 +441,24 @@ class APIPurchaseOrderController extends Controller
 
         return response()->json($wsaData[1]);
     }
+    public function wsaGetPotensi(Request $req)
+    {
+        $part = $req->part ?? '';
+        $lot = $req->lot ?? '';
+        $site = $req->site ?? '';
+        $wrh = $req->wrh ?? '';
+        $loc = $req->loc ?? '';
+        $level = $req->level ?? '';
+        $wsaData = (new WSAServices())->wsaGetPotensi($part,$lot,$site,$loc);
+        
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+
+        return response()->json($wsaData[1]);
+    }
+
 }

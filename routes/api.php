@@ -85,6 +85,8 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::post("getWebLocationData", [APIPurchaseOrderController::class, "getWebLocationData"]);
     Route::post("wsaNewLevel", [APIPurchaseOrderController::class, "wsaNewLevel"]);
     Route::post("wsaNewBin", [APIPurchaseOrderController::class, "wsaNewBin"]);
+     Route::post("wsaGetPotensi", [APIPurchaseOrderController::class, "wsaGetPotensi"]);
+
 
     // Shipment Schedule
     Route::get("getShipmentSchedule", [APIShipmentScheduleController::class, "index"]);
