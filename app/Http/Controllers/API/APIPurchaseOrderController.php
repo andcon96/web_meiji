@@ -446,7 +446,7 @@ class APIPurchaseOrderController extends Controller
         $part = $req->part ?? '';
         $lot = $req->lot ?? '';
         $site = $req->site ?? '';
-        $wrh = $req->wrh ?? '';
+        $wrh = $req->wh ?? '';
         $loc = $req->loc ?? '';
         $level = $req->level ?? '';
         $bin = $req->bin ?? '';

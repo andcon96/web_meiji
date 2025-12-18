@@ -3785,7 +3785,7 @@ class WSAServices
                     </meiji_get_level_for_po>
                 </Body>
             </Envelope>";
-
+        
 
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
@@ -3868,12 +3868,12 @@ class WSAServices
                         <inploc>$loc</inploc>
                         <inpwrh>$wrh</inpwrh>
                         <inplevel>$level</inplevel>
-                                                <inpbin>$level</inpbin>
+                                                <inpbin>$bin</inpbin>
                     </meiji_get_bin_for_po>
                 </Body>
             </Envelope>";
 
-        /* dd($qdocRequest); */
+        
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
@@ -3910,7 +3910,7 @@ class WSAServices
             }
             curl_close($curl);
         }
-
+// dd($qdocRequest,$qdocResponse);
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
