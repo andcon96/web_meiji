@@ -411,15 +411,34 @@ class APIPurchaseOrderController extends Controller
         $site = $req->site ?? '';
         $wrh = $req->wrh ?? '';
         $loc = $req->loc ?? '';
-        $wsaData = (new WSAServices())->wsaGetLevelForPo($part,$lot,$site,$wrh,$loc);
-        if ($wsaData[0] == 'false') {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "No Data Available"
-            ], 422);
-        }
+        $level = $req->level ?? '';
+        // $wsaData = (new WSAServices())->wsaGetLevelForPo($part,$lot,$site,$wrh,$loc);
+        // if ($wsaData[0] == 'false') {
+        //     return response()->json([
+        //         'Status' => 'Error',
+        //         'Message' => "No Data Available"
+        //     ], 422);
+        // }
+        // return response()->json($wsaData[1]);
+        $locationDetail = Location::query()->with(['getDetailLocation' => function($query){
+            $query->select('ld_location_id','ld_building','ld_level')->groupBy('ld_level')->orderBy('ld_level');}])
+            ->where('location_site', $site)
+            ->where('location_code', $loc)
+            ->whereRelation('getDetailLocation', 'ld_building', '=', $wrh);
+            if ($level != '') {
+                $locationDetail->whereRelation('getDetailLocation', 'ld_level', '=', $level);
+            }
 
-        return response()->json($wsaData[1]);
+            $getAllItemLocation = $locationDetail->get();
+            
+            if (count($getAllItemLocation) == 0) {
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "No Data Available"
+                ], 422);
+            }
+            return response()->json($getAllItemLocation);
+        
     }
 
     public function wsaNewBin(Request $req)
@@ -430,16 +449,36 @@ class APIPurchaseOrderController extends Controller
         $wrh = $req->wrh ?? '';
         $loc = $req->loc ?? '';
         $level = $req->level ?? '';
-        $wsaData = (new WSAServices())->wsaGetBinForPo($part,$lot,$site,$wrh,$loc,$level);
+        $bin = $req->bin ?? '';
+        // $wsaData = (new WSAServices())->wsaGetBinForPo($part,$lot,$site,$wrh,$loc,$level);
         
-        if ($wsaData[0] == 'false') {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "No Data Available"
-            ], 422);
-        }
+        // if ($wsaData[0] == 'false') {
+        //     return response()->json([
+        //         'Status' => 'Error',
+        //         'Message' => "No Data Available"
+        //     ], 422);
+        // }
 
-        return response()->json($wsaData[1]);
+        // return response()->json($wsaData[1]);
+                $locationDetail = Location::query()->with(['getDetailLocation' => function($query){
+            $query->select('ld_location_id','ld_building','ld_level','ld_bin')->groupBy('ld_bin')->orderBy('ld_bin');}])
+            ->where('location_site', $site)
+            ->where('location_code', $loc)
+            ->whereRelation('getDetailLocation', 'ld_building', '=', $wrh)
+            ->whereRelation('getDetailLocation', 'ld_level', '=', $level);
+            if ($bin != '') {
+                $locationDetail->whereRelation('getDetailLocation', 'ld_bin', '=', $bin);
+            }
+
+            $getAllItemLocation = $locationDetail->get();
+            
+            if (count($getAllItemLocation) == 0) {
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "No Data Available"
+                ], 422);
+            }
+            return response()->json($getAllItemLocation);
     }
     public function wsaGetPotensi(Request $req)
     {
