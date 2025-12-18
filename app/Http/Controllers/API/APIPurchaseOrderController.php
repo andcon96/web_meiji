@@ -9,6 +9,7 @@ use App\Models\API\PurchaseOrderMaster;
 use App\Models\API\ReceiptAttachment;
 use App\Models\Settings\ItemLocation;
 use App\Models\Settings\LocationDetail;
+use App\Models\Settings\Location;
 use App\Models\Settings\User;
 use App\Services\WSAServices;
 use Exception;
@@ -276,6 +277,7 @@ class APIPurchaseOrderController extends Controller
 
     public function wsaWarehouse(Request $req)
     {
+
         $wsaData = Cache::remember('wsaWarehouse', 60, function () {
             return (new WSAServices())->wsaGenCode('mji_wrh');
         });
@@ -375,5 +377,68 @@ class APIPurchaseOrderController extends Controller
         }
 
         return response()->json($wsaData[0], 422);
+    }
+
+    public function getWebLocationData(Request $req)
+    {
+            $warehouse = $req->wh ?? '';
+            $level = $req->level ?? '';
+            $bin = $req->bin ?? '';
+            $site = $req->site ?? '';
+            $location = $req->location ?? '';
+
+            $getAllItemLocation = Location::query()->with(['getDetailLocation' => function($query){
+            $query->select('ld_location_id','ld_building')->groupBy('ld_building')->orderBy('ld_building');}])->where('location_site', $site)->where('location_code', $location);
+            if ($warehouse != '') {
+                $getAllItemLocation->whereRelation('getDetailLocation', 'ld_building', '=', $warehouse);
+            }
+
+            $getAllItemLocation = $getAllItemLocation->get();
+            
+            if (count($getAllItemLocation) == 0) {
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "No Data Available"
+                ], 422);
+            }
+
+            return response()->json($getAllItemLocation);
+    }
+        public function wsaNewLevel(Request $req)
+    {
+        $part = $req->part ?? '';
+        $lot = $req->lot ?? '';
+        $site = $req->site ?? '';
+        $wrh = $req->wrh ?? '';
+        $loc = $req->loc ?? '';
+        $wsaData = (new WSAServices())->wsaGetLevelForPo($part,$lot,$site,$wrh,$loc);
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+
+        return response()->json($wsaData[1]);
+    }
+
+    public function wsaNewBin(Request $req)
+    {
+        $part = $req->part ?? '';
+        $lot = $req->lot ?? '';
+        $site = $req->site ?? '';
+        $wrh = $req->wrh ?? '';
+        $loc = $req->loc ?? '';
+        $level = $req->level ?? '';
+        $wsaData = (new WSAServices())->wsaGetBinForPo($part,$lot,$site,$wrh,$loc,$level);
+        
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+
+        return response()->json($wsaData[1]);
     }
 }
