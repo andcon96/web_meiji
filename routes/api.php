@@ -225,5 +225,7 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::get("getBinData", [APIController::class, "getBinData"]);
     Route::get("getHistoryData", [APIController::class, "getHistoryData"]);
 
+    Route::get("cekItemLot", [APIController::class, "cekItemLot"]);
+
 });
 // WSA Picklist

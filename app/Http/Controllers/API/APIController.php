@@ -177,7 +177,7 @@ class APIController extends Controller
                 ], 500);
             }
 
-            if ($items[0] == "false") { //jika error response wsa
+            if ($items[0] == "false") { //jika data tidak ada
                 return response()->json([
                     'Status' => 'Not found',
                     'Message' => "Data not found"
@@ -505,7 +505,11 @@ class APIController extends Controller
     {
         /* dd($req->loc); */
 
-        $hasil = (new WSAServices())->wsaGetLocData($req->loc);
+        $hasil = (new WSAServices())->wsaGetLocData(
+            $req->query('inppart') ?? '',
+            $req->query('inplot') ?? '',
+            $req->query('inpsite') ?? ''
+        );
 
         if ($hasil[0] == 'false') {
             return response()->json([
@@ -525,7 +529,10 @@ class APIController extends Controller
     {
         /* dd($req->loc); */
 
-        $hasil = (new WSAServices())->wsaGetSites($req->site);
+        $hasil = (new WSAServices())->wsaGetSites(
+            $req->query('inppart') ?? '',
+            $req->query('inplot') ?? ''
+        );
 
         if ($hasil[0] == 'false') {
             return response()->json([
@@ -545,7 +552,12 @@ class APIController extends Controller
     {
         /* dd($req->loc); */
 
-        $hasil = (new WSAServices())->wsaGetWrhData($req->wrh);
+        $hasil = (new WSAServices())->wsaGetWrhData(
+            $req->query('inppart') ?? '',
+            $req->query('inplot') ?? '',
+            $req->query('inpsite') ?? '',
+            $req->query('inploc') ?? ''
+        );
 
         if ($hasil[0] == 'false') {
             return response()->json([
@@ -565,7 +577,13 @@ class APIController extends Controller
     {
         /* dd($req->loc); */
 
-        $hasil = (new WSAServices())->wsaGetLevelData($req->level);
+        $hasil = (new WSAServices())->wsaGetLevelData(
+            $req->query('inppart') ?? '',
+            $req->query('inplot') ?? '',
+            $req->query('inpsite') ?? '',
+            $req->query('inploc') ?? '',
+            $req->query('inpwrh') ?? '',
+        );
 
         if ($hasil[0] == 'false') {
             return response()->json([
@@ -585,7 +603,13 @@ class APIController extends Controller
     {
         /* dd($req->loc); */
 
-        $hasil = (new WSAServices())->wsaGetBinData($req->bin);
+        $hasil = (new WSAServices())->wsaGetBinData(
+            $req->query('inppart') ?? '',
+            $req->query('inplot') ?? '',
+            $req->query('inpsite') ?? '',
+            $req->query('inploc') ?? '',
+            $req->query('inpwrh') ?? '',
+            $req->query('inplevel') ?? '');
 
         if ($hasil[0] == 'false') {
             return response()->json([
@@ -599,7 +623,8 @@ class APIController extends Controller
         }
         
     }
-     public function getHistoryData(Request $req)
+
+    public function getHistoryData(Request $req)
     {
         
         $data = TransactionHistory::orderBy('id', 'DESC')->paginate(10);
@@ -608,6 +633,29 @@ class APIController extends Controller
         return GeneralResources::collection($data);
 
         
+        
+    }
+
+    public function cekItemLot(Request $req)
+    {
+        /* dd($req->loc); */
+
+        $hasil = (new WSAServices())->wsaCekItemLot($req->query('inppart') ?? '', $req->query('inplot') ?? '');
+
+        if ($hasil[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => $hasil[1] //Data Not Found
+            ], 422);
+        } else {
+            // $listData = $hasil[1];
+
+            return response()->json([
+                'Status' => 'Success',
+                'Message' => $hasil[1], //Data Found
+                'DataWSA' => $hasil[0]
+            ], 200);
+        }
         
     }
 }

@@ -2174,7 +2174,7 @@ class WSAServices
         ];
     }
 
-    public function wsaGetSites($site)
+    public function wsaGetSites(String $inppart, String $inplot)
     {
 
         $wsa = qxwsa::first();
@@ -2198,7 +2198,8 @@ class WSAServices
                 <Body>
                     <meiji_get_sites xmlns='urn:imi.co.id:wsaweb'>
                         <inpdomain>$domainCode</inpdomain>
-                        <inpsite>$site</inpsite>
+                        <inppart>$inppart</inppart>
+                        <inplot>$inplot</inplot>
                     </meiji_get_sites>
                 </Body>
             </Envelope>";
@@ -2254,7 +2255,7 @@ class WSAServices
         ];
     }
 
-    public function wsaGetLocData($loc)
+    public function wsaGetLocData(String $inppart, String $inplot, String $inpsite)
     {
 
         $wsa = qxwsa::first();
@@ -2278,7 +2279,9 @@ class WSAServices
                 <Body>
                     <meiji_get_loc_data xmlns='urn:imi.co.id:wsaweb'>
                         <inpdomain>$domainCode</inpdomain>
-                        <inploc>$loc</inploc>
+                        <inppart>$inppart</inppart>
+                        <inplot>$inplot</inplot>
+                        <inpsite>$inpsite</inpsite>
                     </meiji_get_loc_data>
                 </Body>
             </Envelope>";
@@ -3480,7 +3483,11 @@ class WSAServices
     }
 
    
-    public function wsaGetWrhData($wrh)
+    public function wsaGetWrhData(
+        String $inppart,
+        String $inplot,
+        String $inpsite,
+        String $inploc)
     {
 
         $wsa = qxwsa::first();
@@ -3504,7 +3511,10 @@ class WSAServices
                 <Body>
                     <meiji_get_wrh_data xmlns='urn:imi.co.id:wsaweb'>
                         <inpdomain>$domainCode</inpdomain>
-                        <inpwrh>$wrh</inpwrh>
+                        <inppart>$inppart</inppart>
+                        <inplot>$inplot</inplot>
+                        <inpsite>$inpsite</inpsite>
+                        <inploc>$inploc</inploc>
                     </meiji_get_wrh_data>
                 </Body>
             </Envelope>";
@@ -3561,7 +3571,12 @@ class WSAServices
     }
 
 
-    public function wsaGetLevelData($level)
+    public function wsaGetLevelData(
+        String $inppart,
+        String $inplot,
+        String $inpsite,
+        String $inploc,
+        String $inpwrh)
     {
 
         $wsa = qxwsa::first();
@@ -3585,7 +3600,11 @@ class WSAServices
                 <Body>
                     <meiji_get_level_data xmlns='urn:imi.co.id:wsaweb'>
                         <inpdomain>$domainCode</inpdomain>
-                        <inplevel>$level</inplevel>
+                        <inppart>$inppart</inppart>
+                        <inplot>$inplot</inplot>
+                        <inpsite>$inpsite</inpsite>
+                        <inploc>$inploc</inploc>
+                        <inpwrh>$inpwrh</inpwrh>
                     </meiji_get_level_data>
                 </Body>
             </Envelope>";
@@ -3642,7 +3661,13 @@ class WSAServices
     }
 
 
-    public function wsaGetBinData($bin)
+    public function wsaGetBinData(
+        String $inppart,
+        String $inplot,
+        String $inpsite,
+        String $inploc,
+        String $inpwrh,
+        String $inpLevel)
     {
 
         $wsa = qxwsa::first();
@@ -3666,7 +3691,12 @@ class WSAServices
                 <Body>
                     <meiji_get_bin_data xmlns='urn:imi.co.id:wsaweb'>
                         <inpdomain>$domainCode</inpdomain>
-                        <inpbin>$bin</inpbin>
+                        <inppart>$inppart</inppart>
+                        <inplot>$inplot</inplot>
+                        <inpsite>$inpsite</inpsite>
+                        <inploc>$inploc</inploc>
+                        <inpwrh>$inpwrh</inpwrh>
+                        <inplevel>$inpLevel</inplevel>
                     </meiji_get_bin_data>
                 </Body>
             </Envelope>";
@@ -3721,7 +3751,8 @@ class WSAServices
             $dataloop,
         ];
     }
-     public function wsaGetLevelForPo($part,$lot,$site,$wrh,$loc)
+
+    public function wsaGetLevelForPo($part,$lot,$site,$wrh,$loc)
     {
 
         $wsa = qxwsa::first();
@@ -3888,6 +3919,89 @@ class WSAServices
         return [
             $qdocResult,
             $dataloop,
+        ];
+    }
+
+    public function wsaCekItemLot(String $inppart, String $inplot)
+    {
+
+        $wsa = qxwsa::first();
+
+
+        $qxUrl = $wsa->wsa_url;
+
+        $qxReceiver = '';
+        $qxSuppRes = 'false';
+        $qxScopeTrx = '';
+        $qdocName = '';
+        $qdocVersion = '';
+        $dsName = '';
+        $timeout = 0;
+
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+
+        $qdocRequest =
+            "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
+                <Body>
+                    <meiji_cek_itemlot xmlns='urn:imi.co.id:wsaweb'>
+                        <inpdomain>$domainCode</inpdomain>
+                        <inppart>$inppart</inppart>
+                        <inplot>$inplot</inplot>
+                    </meiji_cek_itemlot>
+                </Body>
+            </Envelope>";
+
+        /* dd($qdocRequest); */
+        $curlOptions = array(
+            CURLOPT_URL => $qxUrl,
+            CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
+            CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
+            CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false
+        );
+
+        $getInfo = '';
+        $httpCode = 0;
+        $curlErrno = 0;
+        $curlError = '';
+        $qdocResponse = '';
+
+        $curl = curl_init();
+        if ($curl) {
+            curl_setopt_array($curl, $curlOptions);
+            $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
+            $curlErrno    = curl_errno($curl);
+            $curlError    = curl_error($curl);
+            $first        = true;
+
+            foreach (curl_getinfo($curl) as $key => $value) {
+                if (gettype($value) != 'array') {
+                    if (!$first) $getInfo .= ", ";
+                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $first = false;
+                    if ($key == 'http_code') $httpCode = $value;
+                }
+            }
+            curl_close($curl);
+        }
+
+        $xmlResp = simplexml_load_string($qdocResponse);
+
+        $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
+
+        // $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
+        $qdocMsg = (string) $xmlResp->xpath('//ns1:outMsg')[0];
+
+        return [
+            $qdocResult,
+            $qdocMsg
+            // $dataloop,
         ];
     }
      public function wsaGetPotensi($part,$lot,$site,$loc)
