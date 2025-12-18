@@ -3752,7 +3752,7 @@ class WSAServices
         ];
     }
 
-    public function wsaGetLevelForPo($part,$lot,$site,$wrh,$loc)
+    public function wsaGetLevelForPo($part,$lot,$site,$wrh,$loc,$level)
     {
 
         $wsa = qxwsa::first();
@@ -3781,11 +3781,12 @@ class WSAServices
                         <inpsite>$site</inpsite>
                         <inploc>$loc</inploc>
                         <inpwrh>$wrh</inpwrh>
+                        <inplevel>$level</inplevel>
                     </meiji_get_level_for_po>
                 </Body>
             </Envelope>";
 
-        /* dd($qdocRequest); */
+
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
@@ -3837,7 +3838,7 @@ class WSAServices
     }
 
 
-    public function wsaGetBinForPo($part,$lot,$site,$wrh,$loc,$level)
+    public function wsaGetBinForPo($part,$lot,$site,$wrh,$loc,$level,$bin)
     {
 
         $wsa = qxwsa::first();
@@ -3867,6 +3868,7 @@ class WSAServices
                         <inploc>$loc</inploc>
                         <inpwrh>$wrh</inpwrh>
                         <inplevel>$level</inplevel>
+                                                <inpbin>$level</inpbin>
                     </meiji_get_bin_for_po>
                 </Body>
             </Envelope>";

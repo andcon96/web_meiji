@@ -409,10 +409,10 @@ class APIPurchaseOrderController extends Controller
         $part = $req->part ?? '';
         $lot = $req->lot ?? '';
         $site = $req->site ?? '';
-        $wrh = $req->wrh ?? '';
-        $loc = $req->loc ?? '';
+        $wrh = $req->wh ?? '';
+        $loc = $req->location ?? '';
         $level = $req->level ?? '';
-        $wsaData = (new WSAServices())->wsaGetLevelForPo($part,$lot,$site,$wrh,$loc);
+        $wsaData = (new WSAServices())->wsaGetLevelForPo($part,$lot,$site,$wrh,$loc,$level);
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
@@ -450,7 +450,7 @@ class APIPurchaseOrderController extends Controller
         $loc = $req->loc ?? '';
         $level = $req->level ?? '';
         $bin = $req->bin ?? '';
-        $wsaData = (new WSAServices())->wsaGetBinForPo($part,$lot,$site,$wrh,$loc,$level);
+        $wsaData = (new WSAServices())->wsaGetBinForPo($part,$lot,$site,$wrh,$loc,$level,$bin);
         
         if ($wsaData[0] == 'false') {
             return response()->json([
