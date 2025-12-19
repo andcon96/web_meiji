@@ -66,7 +66,7 @@ class APISampling extends Controller
     {
 
         $item = $req->item ?? '';
-        $lot = $req->lot ?? ''; 
+        $lot = $req->search ?? ''; 
        
         $wsaData = (new WSAServices())->wsaGetLotSampling($item,  $lot,'QC-QRT');
         if ($wsaData[0] == 'false') {
@@ -128,8 +128,8 @@ class APISampling extends Controller
             $qty = $req->qty;
             DB::commit();
             $hasil = (new WSAServices())->wsaTransferSamplingData($item, $lot,$sitefrom,$locto,'QC-QRT',$whfrom,$levelfrom,$binfrom,$qty);
-        
-            if ($hasil == 'false') {
+            
+            if ($hasil == false) {
                 return response()->json([
                     'Status' => 'Error',
                     'Message' => "Transfer sampling Item Failed for Item : " . $item
@@ -151,7 +151,7 @@ class APISampling extends Controller
                         $newTransactionHistory->tr_lot = $lot;
                         $newTransactionHistory->tr_qty = $qty;
                         $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                        $newTransactionHistory->tr_ref = '';
+ 
                         $newTransactionHistory->tr_site = $siteto;
                         $newTransactionHistory->tr_location = $locto;
                         $newTransactionHistory->tr_warehouse = $whfrom;

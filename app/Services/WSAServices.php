@@ -2092,7 +2092,7 @@ class WSAServices
     }
 
     
-    public function wsaGetSiteTransfer($site)
+    public function wsaGetSiteTransfer($site,$item,$location)
     {
 
         $wsa = qxwsa::first();
@@ -2117,6 +2117,8 @@ class WSAServices
             '<meiji_get_site_transfer xmlns="' . $wsa->wsa_path . '">' .
             '<inpdomain>' . $domainCode . '</inpdomain>
             <inpsite>' . $site . '</inpsite>' .
+             '<inpitem>' . $item . '</inpitem>' .
+             '<inplocation>' . $location . '</inplocation>' .
 
 
 
@@ -3383,7 +3385,7 @@ class WSAServices
             }
             curl_close($curl);
         }
-
+        //dd($qdocRequest, $qdocResponse);
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
@@ -3555,6 +3557,9 @@ class WSAServices
         $dataloop    = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
+        if ($qdocResult == 'false'){
+           return false;
+        }
         return [
             $qdocResult,
             json_decode(json_encode($dataloop), true),

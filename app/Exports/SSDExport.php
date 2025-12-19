@@ -16,7 +16,7 @@ class SSDExport implements FromView
 
     public function view() : View
     {
-        return view('ShipmentScheduleReport.export', [
+        return view('shipmentScheduleReport.export', [
             'rows' => $this->ssdRows,
         ]);
     }

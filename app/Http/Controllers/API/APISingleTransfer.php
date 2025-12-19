@@ -1129,8 +1129,9 @@ class APISingleTransfer extends Controller
         // $wonbr = $req->wonbr;
         $wonbr = '';
         $site = $req->site;
-        
-        $hasil = (new WSAServices())->wsaGetSiteTransfer($site);
+        $item = $req->item;
+        $location = $req->location;
+        $hasil = (new WSAServices())->wsaGetSiteTransfer($site,$item,$location);
 
         if ($hasil[0] == 'false') {
             return response()->json([
