@@ -275,6 +275,7 @@ class APIPurchaseOrderApprovalController extends Controller
             ], 200);
         } catch (Exception $e) {
             DB::rollback();
+            Log::info($e);
             return response()->json([
                 'Status' => 'Error',
                 'Message' => "Failed To Approve / Reject Data"
