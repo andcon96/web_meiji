@@ -62,6 +62,34 @@ class APISampling extends Controller
 
     }
 
+     public function getLotSampling(Request $req)
+    {
+
+        $item = $req->item ?? '';
+        $lot = $req->lot ?? ''; 
+       
+        $wsaData = (new WSAServices())->wsaGetLotSampling($item,  $lot,'QC-QRT');
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+        else {
+            $listData = $wsaData[1];
+
+            return response()->json(
+            [
+                'DataWSA' => $listData
+            ],
+            200
+        );
+        }
+
+        return response()->json($wsaData[1]);
+
+    }
+
     public function transferSampling(Request $req)
     {
 
