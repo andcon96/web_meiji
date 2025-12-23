@@ -11,6 +11,7 @@ use App\Models\Settings\ItemLocation;
 use App\Models\Settings\LocationDetail;
 use App\Models\Settings\Location;
 use App\Models\Settings\User;
+use App\Models\Settings\Item;
 use App\Services\WSAServices;
 use Exception;
 use Illuminate\Http\Request;
@@ -386,15 +387,21 @@ class APIPurchaseOrderController extends Controller
             $bin = $req->bin ?? '';
             $site = $req->site ?? '';
             $location = $req->location ?? '';
+            $item = $req->item ?? '';
+            $lot = $req->lot ?? '';
+            $itemQuery = Item::query()->with('getItemLocation.getLocationDetail')->where('im_item_part',$item)->first();
 
-            $getAllItemLocation = Location::query()->with(['getDetailLocation' => function($query){
-            $query->select('ld_location_id','ld_building')->groupBy('ld_building')->orderBy('ld_building');}])->where('location_site', $site)->where('location_code', $location);
+            $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function($query) use ($lot)
+            {$query->orderBy('ld_building');}])
+            ->where('il_item_id',$itemQuery->id);
+  
+            
             if ($warehouse != '') {
-                $getAllItemLocation->whereRelation('getDetailLocation', 'ld_building', '=', $warehouse);
+                $getAllItemLocation->whereRelation('getLocationDetail', 'ld_building', '=', $warehouse);
             }
 
             $getAllItemLocation = $getAllItemLocation->get();
-            
+                   
             if (count($getAllItemLocation) == 0) {
                 return response()->json([
                     'Status' => 'Error',

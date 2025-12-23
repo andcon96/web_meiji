@@ -12,7 +12,7 @@ class ReceiptBookController extends Controller
     public function getReceiptBook(Request $request)
     {
         $menuMaster = (new ServerURL())->currentURL($request);
-        $data = ReceiptDetail::query()->with(['getMaster.getPurchaseOrderMaster', 'getDokumen', 'getKemasan', 'getKendaraan', 'getPenanda', 'getPallet']);
+        $data = ReceiptDetail::query()->with(['getMaster.getPurchaseOrderMaster','getPurchaseOrderDetail', 'getDokumen', 'getKemasan', 'getKendaraan', 'getPenanda', 'getPallet']);
 
         if ($request->search) {
             $data->where('rd_nomor_buku', $request->search)

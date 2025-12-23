@@ -20,6 +20,8 @@
                                 <th>Nomor Buku</th>
                                 <th>PO Number</th>
                                 <th>Receipt Number</th>
+                                <th>Item</th>
+                                <th>Lot</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -32,6 +34,8 @@
                                 <th>Nomor Buku</th>
                                 <th>PO Number</th>
                                 <th>Receipt Number</th>
+                                 <th>Item</th>
+                                <th>Lot</th>
                                 <th>Action</th>
                             </tr>
                         </tfoot>

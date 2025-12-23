@@ -25,4 +25,8 @@ class Item extends Model
     {
         return $this->belongsTo(User::class, 'updated_by', 'id');
     }
+    public function getItemLocation()
+    {
+        return $this->hasMany(ItemLocation::class, 'il_item_id', 'id');
+    }
 }

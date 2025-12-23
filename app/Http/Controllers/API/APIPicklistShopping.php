@@ -573,15 +573,15 @@ class APIPicklistShopping extends Controller
                 $level = $det['level'];
                 $bin = $det['bin'];
                 $qtypick = $det['qtypick'];
-                $qxtendsingleitem = (new QxtendServices())->qxTransferSingleItemWo($wodpart, $wonbr, $site, $site, $loc, 'Shopping', $qtypick, $bin, $level, $wrh, $lot);
-                if ($qxtendsingleitem == 'false') {
-                    Log::channel('Picklist')->info("Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart);
-                    return response()->json([
-                        'Status' => 'Error',
-                        'Message' => "Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
-                        //'Message'=> $qxtendsingleitem[1];
-                    ], 422);
-                } else {
+                // $qxtendsingleitem = (new QxtendServices())->qxTransferSingleItemWo($wodpart, $wonbr, $site, $site, $loc, 'Shopping', $qtypick, $bin, $level, $wrh, $lot);
+                // if ($qxtendsingleitem == 'false') {
+                //     Log::channel('Picklist')->info("Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart);
+                //     return response()->json([
+                //         'Status' => 'Error',
+                //         'Message' => "Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
+                //         //'Message'=> $qxtendsingleitem[1];
+                //     ], 422);
+                // } else {
                     $hasil = (new WSAServices())->wsaUpdateQtyPick($picknbr, $qtypick, $wonbr, $wodpart, $site, $loc, $lot, $wrh, $level, $bin);
                     if ($hasil == 'false') {
                         Log::channel('Picklist')->info("Update Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart);
@@ -590,7 +590,7 @@ class APIPicklistShopping extends Controller
                             'Message' => "Update Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
                         ], 422);
                     }
-                }
+                // }
             }
         }
 
