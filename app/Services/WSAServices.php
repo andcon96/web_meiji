@@ -1894,7 +1894,8 @@ class WSAServices
             }
             curl_close($curl);
         }
-
+log::info($qdocRequest);
+log::info($qdocResponse);
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);

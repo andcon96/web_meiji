@@ -194,6 +194,32 @@
                             </div>
                         </div>
                     </div>
+                    <div class="mb-3 row">
+                        <div class="row">
+                            <label class="col-md-2 col-form-label">
+                                Is Approver
+                                <span id="alert1" style="color: red; font-weight: 200;">*</span>
+                            </label>
+                            <div class="col-sm-9">
+                                <div class="form-check mb-2">
+                                    <input name="isApprover" class="form-check-input" type="radio" value="Yes"
+                                        id="collapsible-isApprover-active"
+                                        {{ old('isApprover') == 'Active' ? 'checked' : '' }} />
+                                    <label class="form-check-label" for="collapsible-isApprover-yes">
+                                        Yes
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input name="isApprover" class="form-check-input" type="radio" value="No"
+                                        id="collapsible-isApprover-inactive"
+                                        {{ old('isApprover') == 'Inactive' ? 'checked' : '' }} />
+                                    <label class="form-check-label" for="collapsible-isApprover-no">
+                                        No
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="mt-1" style="float: inline-end;">
                         <a href="{{ route('users.index') }}" class="btn btn-label-secondary cancel">Cancel</a>
                         <button type="submit" class="btn btn-primary me-sm-2 me-1 submitButton">Save</button>

@@ -76,7 +76,7 @@ class UserController extends Controller
         $isActive = $request->isActive;
         $password = $request->password;
         $currentUser = Auth::user()->id;
-
+        $isApprover = $request->isApprover;
         // Cek username sudah ada atau belum
         $usernameExists = User::where('username', $username)->first();
         if ($usernameExists) {
@@ -110,6 +110,7 @@ class UserController extends Controller
             $user->password = Hash::make($password);
             $user->created_by = $currentUser;
             $user->updated_by = $currentUser;
+            $user->is_approver = $isApprover;
             $user->save();
 
             // if (isset($workCenter) && count($workCenter) > 0) {
@@ -155,6 +156,7 @@ class UserController extends Controller
         $isSuperUser = $request->isSuperUser;
         // $canAccessAllDomain = $request->accessAllDomain;
         $isActive = $request->isActive;
+        $isApprover = $request->isApprover;
         $currentUser = Auth::user()->id;
 
         DB::beginTransaction();
@@ -172,6 +174,7 @@ class UserController extends Controller
             $user->is_super_user = $isSuperUser;
             // $user->can_access_all_domains = $canAccessAllDomain;
             $user->is_active = $isActive;
+            $user->is_approver = $isApprover;
             $user->updated_by = $currentUser;
 
             if (isset($workCenter) && count($workCenter) > 0) {

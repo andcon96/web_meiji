@@ -157,6 +157,7 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     // Picklist Shopping
     Route::get("getPicklistDet", [APIPicklistShopping::class, "getPicklistDet"]);
     Route::post("wsaSendQtyPick", [APIPicklistShopping::class, "wsaSendQtyPick"]);
+    Route::post("getApproverList", [APIPicklistShopping::class, "getApproverList"]);
 
     // Picklist Approval
     Route::get("getPicklistDetAppr", [APIPicklistShopping::class, "getPicklistDetAppr"]);
