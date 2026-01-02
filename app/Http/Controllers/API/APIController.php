@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Services\RunningNumberServices;
 use App\Services\WSAServices;
 use App\Services\APIServices;
+use App\Services\QxtendServices;
 use App\Models\QadData;
 use App\Models\SalesOrderShopify;
 use Exception;
@@ -49,7 +50,7 @@ class APIController extends Controller
 
                 $success['token'] =  $strToken;
                 $success['expirationDate'] = $expiration;
-                
+
                 return response()->json(
                     [
                         'message' => 'Sukses',
@@ -168,7 +169,7 @@ class APIController extends Controller
 
             $items = (new WSAServices)->wsaInvWms($req->query('inppart') ?? '', $req->query('inplot') ?? '');
 
-           /*  dd($items); */
+            /*  dd($items); */
 
             if ($items == false) { //jika error koneksi wsa
                 return response()->json([
@@ -189,7 +190,6 @@ class APIController extends Controller
                 'Message' => "Get inventory WMS successfully",
                 'Items' => $items[1]
             ], 200);
-
         } catch (\Exception $e) {
             /* dd($e); */
             Log::error($e);
@@ -410,8 +410,9 @@ class APIController extends Controller
                         't_qtyoh' => (string)$item->t_qtyoh,
                         't_supplier' => (string)$item->t_supplier,
                         't_createdate' => (string)$item->t_create_date,
-                        't_createtime' => sprintf('%02d:%02d', 
-                            floor($item->t_create_time / 3600), 
+                        't_createtime' => sprintf(
+                            '%02d:%02d',
+                            floor($item->t_create_time / 3600),
                             floor(($item->t_create_time % 3600) / 60)
                         ),
                     ];
@@ -521,7 +522,6 @@ class APIController extends Controller
 
             return response()->json(['DataWSA' => $listData], 200);
         }
-        
     }
 
 
@@ -544,7 +544,6 @@ class APIController extends Controller
 
             return response()->json(['DataWSA' => $listData], 200);
         }
-        
     }
 
 
@@ -569,7 +568,6 @@ class APIController extends Controller
 
             return response()->json(['DataWSA' => $listData], 200);
         }
-        
     }
 
 
@@ -595,7 +593,6 @@ class APIController extends Controller
 
             return response()->json(['DataWSA' => $listData], 200);
         }
-        
     }
 
 
@@ -609,7 +606,8 @@ class APIController extends Controller
             $req->query('inpsite') ?? '',
             $req->query('inploc') ?? '',
             $req->query('inpwrh') ?? '',
-            $req->query('inplevel') ?? '');
+            $req->query('inplevel') ?? ''
+        );
 
         if ($hasil[0] == 'false') {
             return response()->json([
@@ -621,19 +619,15 @@ class APIController extends Controller
 
             return response()->json(['DataWSA' => $listData], 200);
         }
-        
     }
 
     public function getHistoryData(Request $req)
     {
-        
+
         $data = TransactionHistory::orderBy('id', 'DESC')->paginate(10);
-            
+
 
         return GeneralResources::collection($data);
-
-        
-        
     }
 
     public function cekItemLot(Request $req)
@@ -656,6 +650,43 @@ class APIController extends Controller
                 'DataWSA' => $hasil[0]
             ], 200);
         }
+    }
+
+    public function sendQxCompIssue(Request $request)
+    {
+        Log::info($request->all());
+        // Ambil Data Outbound
+        $data = $request->all();
         
+        if (!empty($data)) {
+            $wonbr    = $data['wonbr'] ?? null;
+            $location = $data['location'] ?? null;
+            $lot      = $data['lot'] ?? null;
+            $effdate  = $data['effdate'] ?? null;
+            $part     = isset($data['part']) &&  $data['part'] !== '' ? explode(';', $data['part']) : [];
+            $qty      = isset($data['qty']) && $data['qty'] !== '' ? explode(';', $data['qty']) : [];
+            $site     = isset($data['site']) && $data['site'] !== '' ? explode(';', $data['site']) : [];
+            $lotserial = isset($data['lotserial']) && $data['lotserial'] !== '' ? explode(';', $data['lotserial']) : [];
+
+            if ($wonbr == null || $location == null || $lot == null || $effdate == null || empty($part) || empty($qty) || empty($site) || empty($lotserial)) {
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "Missing Required Parameters."
+                ], 422);
+            } else {
+                $sendQxCompIssue = (new QxtendServices())->qxWorkOrderComponentIssue($wonbr, $location, $lot, $effdate, $part, $qty, $site, $lotserial);
+                if ($sendQxCompIssue[0] == 'true') {
+                    return response()->json([
+                        'Status' => 'Success',
+                        'Message' => $sendQxCompIssue[1]
+                    ], 200);
+                } else {
+                    return response()->json([
+                        'Status' => 'Error',
+                        'Message' => $sendQxCompIssue[1]
+                    ], 422);
+                }
+            }
+        }
     }
 }

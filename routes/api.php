@@ -38,6 +38,9 @@ Route::post("changepass", [APIController::class, "resetPass"]);
 // Outbound WO
 Route::post("getWorkOrderQad", [APIController::class, "getWorkOrderQad"]);
 
+// Outbound WO
+Route::post("sendQxCompIssue", [APIController::class, "sendQxCompIssue"]);
+
 Route::middleware(["auth:api", "token.api"])->group(function () {
     // PO
     Route::get("getDataPO", [APIPurchaseOrderController::class, "index"]);
