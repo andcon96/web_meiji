@@ -2277,23 +2277,23 @@ public function qxWorkOrderComponentIssue(
             <yn2>true</yn2>
             <yn3>true</yn3>
             ';
-        foreach ($part as $key => $part) {
+       
             $qdocBody = $qdocBody . 
             '<itemDetail>
                 <part>'.$part.'</part>                
-                <lotserialQty>'.$qty[$key].'</lotserialQty>
-                <site>'.$site[$key].'</site>
-                <location>'.$location[$key].'</location>
-                <lotserial>'.$lotserial[$key].'</lotserial>            
+                <lotserialQty>'.$qty.'</lotserialQty>
+                <site>'.$site.'</site>
+                <location>'.$location.'</location>
+                <lotserial>'.$lotserial.'</lotserial>            
             <issueDetail>            
-                <site>'.$site[$key].'</site>
-                <location>'.$location[$key].'</location>
-                <lotserial>'.$lotserial[$key].'</lotserial>
-                <lotserialQty>'.$qty[$key].'</lotserialQty>
+                <site>'.$site.'</site>
+                <location>'.$location.'</location>
+                <lotserial>'.$lotserial.'</lotserial>
+                <lotserialQty>'.$qty.'</lotserialQty>
             </issueDetail>
             </itemDetail>
             ';
-        }
+       
         $qdocFoot = '            
             </workOrderComponent>
             </dsWorkOrderComponent>

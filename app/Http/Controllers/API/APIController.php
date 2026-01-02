@@ -25,6 +25,7 @@ use App\Models\API\SummaryEpoint;
 use App\Models\API\WorkOrderQAD;
 use App\Models\API\TransactionHistory;
 use App\Http\Resources\GeneralResources;
+use App\Http\Requests\SendQxCompIssueRequest;
 
 use Carbon\Carbon;
 
@@ -652,41 +653,40 @@ class APIController extends Controller
         }
     }
 
-    public function sendQxCompIssue(Request $request)
+    public function sendQxCompIssue(SendQxCompIssueRequest $request)
     {
         Log::info($request->all());
-        // Ambil Data Outbound
-        $data = $request->all();
-        
-        if (!empty($data)) {
-            $wonbr    = $data['wonbr'] ?? null;
-            $location = $data['location'] ?? null;
-            $lot      = $data['lot'] ?? null;
-            $effdate  = $data['effdate'] ?? null;
-            $part     = isset($data['part']) &&  $data['part'] !== '' ? explode(';', $data['part']) : [];
-            $qty      = isset($data['qty']) && $data['qty'] !== '' ? explode(';', $data['qty']) : [];
-            $site     = isset($data['site']) && $data['site'] !== '' ? explode(';', $data['site']) : [];
-            $lotserial = isset($data['lotserial']) && $data['lotserial'] !== '' ? explode(';', $data['lotserial']) : [];
 
-            if ($wonbr == null || $location == null || $lot == null || $effdate == null || empty($part) || empty($qty) || empty($site) || empty($lotserial)) {
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "Missing Required Parameters."
-                ], 422);
-            } else {
-                $sendQxCompIssue = (new QxtendServices())->qxWorkOrderComponentIssue($wonbr, $location, $lot, $effdate, $part, $qty, $site, $lotserial);
-                if ($sendQxCompIssue[0] == 'true') {
-                    return response()->json([
-                        'Status' => 'Success',
-                        'Message' => $sendQxCompIssue[1]
-                    ], 200);
-                } else {
-                    return response()->json([
-                        'Status' => 'Error',
-                        'Message' => $sendQxCompIssue[1]
-                    ], 422);
-                }
-            }
+
+        $wonbr      = $request->wonbr;
+        $location   = $request->location;
+        $lot        = $request->lot;
+        $effdate    = $request->effdate;
+        $part       = $request->part;
+        $qty        = $request->qty;
+        $site       = $request->site;
+        $lotserial  = $request->lotserial;
+        // $wonbr    = $data['wonbr'] ?? null;
+        // $location = $data['location'] ?? null;
+        // $lot      = $data['lot'] ?? null;
+        // $effdate  = $data['effdate'] ?? null;
+        // $part     = isset($data['part']) &&  $data['part'] !== '' ? explode(';', $data['part']) : [];
+        // $qty      = isset($data['qty']) && $data['qty'] !== '' ? explode(';', $data['qty']) : [];
+        // $site     = isset($data['site']) && $data['site'] !== '' ? explode(';', $data['site']) : [];
+        // $lotserial = isset($data['lotserial']) && $data['lotserial'] !== '' ? explode(';', $data['lotserial']) : [];
+
+
+        $sendQxCompIssue = (new QxtendServices())->qxWorkOrderComponentIssue($wonbr, $location, $lot, $effdate, $part, $qty, $site, $lotserial);
+        if ($sendQxCompIssue[0] == 'true') {
+            return response()->json([
+                'Status' => 'Success',
+                'Message' => $sendQxCompIssue[1]
+            ], 200);
+        } else {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => $sendQxCompIssue[1]
+            ], 422);
         }
     }
 }
