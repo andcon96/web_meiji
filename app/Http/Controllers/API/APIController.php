@@ -14,6 +14,7 @@ use App\Services\APIServices;
 use App\Services\QxtendServices;
 use App\Models\QadData;
 use App\Models\SalesOrderShopify;
+use App\Models\API\MobileApk;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use App\Http\Resources\QadDataResources;
@@ -688,5 +689,14 @@ class APIController extends Controller
                 'Message' => $sendQxCompIssue[1]
             ], 422);
         }
+    }
+
+    public function getAPKLatestVersion()
+    {
+        $data = MobileApk::where('apk_is_active', 1)
+        ->orderByDesc('apk_updated_number')
+        ->first();
+
+        return response()->json($data);
     }
 }

@@ -29,7 +29,7 @@ class SendQxCompIssueRequest extends FormRequest
             'part'       => 'required|string',
             'qty'        => 'required|string',
             'site'       => 'required|string',
-            'lotserial'  => 'required|string',
+            'lotserial'  => 'nullable|string',
         ];
     }
      /**
