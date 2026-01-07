@@ -121,4 +121,32 @@ class APIPengembalian extends Controller
             }
         
     }
+
+    public function getLotPengembalian(Request $req)
+    {
+
+        $item = $req->item ?? '';
+        $lot = $req->search ?? ''; 
+       
+        $wsaData = (new WSAServices())->wsaGetLotSampling($item,  $lot,'SAMPLING');
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+        else {
+            $listData = $wsaData[1];
+
+            return response()->json(
+            [
+                'DataWSA' => $listData
+            ],
+            200
+        );
+        }
+
+        return response()->json($wsaData[1]);
+
+    }
 }

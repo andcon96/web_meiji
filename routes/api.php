@@ -223,7 +223,9 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::post("/transferSampling", [APISampling::class, 'transferSampling']);
     
     Route::get("/getPengembalianQo", [APIPengembalian::class, 'getPengembalianQo']);
+    Route::get("/getLotPengembalian", [APIPengembalian::class, 'getLotPengembalian']);
     Route::post("/transferPengembalianQo", [APIPengembalian::class, 'transferPengembalianQo']);
+    
     Route::get("getTransactionHistory", [APISingleTransfer::class, "getTransactionHistory"]);
       //lookup browse android
     Route::get("getLocData", [APIController::class, "getLocData"]);
