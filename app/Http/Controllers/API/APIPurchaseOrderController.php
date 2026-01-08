@@ -206,7 +206,7 @@ class APIPurchaseOrderController extends Controller
         if ($req->wh){
             $warehouse = $req->wh;
         }
-
+        
         // Ambil Relati Item ke Location di Web
         $getAllItemLocation = LocationDetail::query()->with(['getListItem.getItem', 'getMaster']);
         if ($itemCode) {
@@ -243,7 +243,7 @@ class APIPurchaseOrderController extends Controller
             return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
             // return $item['t_inv_site'] . '-' . $item['t_inv_loc'] . '-' . $item['t_inv_bin'] . '-' . $item['t_inv_wrh'] . '-' . $item['t_inv_level'];
         });
-
+        
         $merged = $grouped->map(function ($items) {
             $first = $items->first(); // take base data from the first item
             $first['t_inv_qtyoh'] = $items->sum(function ($i) {
@@ -270,6 +270,7 @@ class APIPurchaseOrderController extends Controller
             }
             return $item;
         });
+       
 
         $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
 
@@ -390,18 +391,18 @@ class APIPurchaseOrderController extends Controller
             $item = $req->item ?? '';
             $lot = $req->lot ?? '';
             $itemQuery = Item::query()->with('getItemLocation.getLocationDetail')->where('im_item_part',$item)->first();
-
+            
             $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function($query) use ($lot)
             {$query->orderBy('ld_building');}])
             ->where('il_item_id',$itemQuery->id);
-  
+
             
             if ($warehouse != '') {
                 $getAllItemLocation->whereRelation('getLocationDetail', 'ld_building', '=', $warehouse);
             }
 
-            $getAllItemLocation = $getAllItemLocation->get();
-                   
+            $getAllItemLocation = $getAllItemLocation->toSql();
+                     
             if (count($getAllItemLocation) == 0) {
                 return response()->json([
                     'Status' => 'Error',

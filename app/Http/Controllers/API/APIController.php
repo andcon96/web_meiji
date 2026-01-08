@@ -625,9 +625,21 @@ class APIController extends Controller
 
     public function getHistoryData(Request $req)
     {
-
-        $data = TransactionHistory::orderBy('id', 'DESC')->paginate(10);
-
+        $number = $req->number;
+        $part = $req->part;
+        $program = $req->program;
+        $data = TransactionHistory::query();
+        if ($number) {
+            $data = $data->where('tr_nbr', 'LIKE', '%' . $number . '%');
+        }
+        if ($part) {
+            $data = $data->where('tr_part', 'LIKE', '%' . $part . '%');
+        }
+        if ($program) {
+            $data = $data->where('tr_program', 'LIKE', '%' . $program . '%');
+        }
+        $data = $data->orderBy('id', 'DESC')->paginate(100);
+        
 
         return GeneralResources::collection($data);
     }
