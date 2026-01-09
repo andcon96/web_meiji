@@ -170,19 +170,19 @@ class APISampling extends Controller
                         $newTransactionHistory->tr_nbr = 'Sampling';
                         $newTransactionHistory->tr_program = 'Sampling Module';
                         $newTransactionHistory->tr_activity = 'Insert Sampling From';
-                        $newTransactionHistory->tr_user = $user;
-                        $newTransactionHistory->tr_part = $item;
+                        $newTransactionHistory->tr_user = $user ?? '';
+                        $newTransactionHistory->tr_part = $item ?? '';
                         $newTransactionHistory->tr_uom = '';
                         $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-                        $newTransactionHistory->tr_lot = $lot;
-                        $newTransactionHistory->tr_qty = $qty;
+                        $newTransactionHistory->tr_lot = $lot ?? '';
+                        $newTransactionHistory->tr_qty = $qty ?? '';
                         $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
  
-                        $newTransactionHistory->tr_site = $siteto;
-                        $newTransactionHistory->tr_location = $locto;
-                        $newTransactionHistory->tr_warehouse = $whfrom;
-                        $newTransactionHistory->tr_level = $levelfrom;
-                        $newTransactionHistory->tr_bin = $binfrom;
+                        $newTransactionHistory->tr_site = $siteto ?? '';
+                        $newTransactionHistory->tr_location = $locto ?? '';
+                        $newTransactionHistory->tr_warehouse = $whfrom ?? '';
+                        $newTransactionHistory->tr_level = $levelfrom ?? '';
+                        $newTransactionHistory->tr_bin = $binfrom ?? '';
                         $newTransactionHistory->tr_remark = '';
                         $newTransactionHistory->save();
 
