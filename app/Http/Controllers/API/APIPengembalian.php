@@ -39,8 +39,33 @@ class APIPengembalian extends Controller
 
         $item = $req->item ?? '';
         $lot = $req->lot ?? ''; 
-        
-        $wsaData = (new WSAServices())->wsaGetSamplingData($item,  $lot,'SAMPLING');
+
+         if($lot != ''){
+        if($item != ''){
+            
+            $wsaData = (new WSAServices())->wsaGetWarehouseSampling($item,  $lot,'SAMPLING');
+            if ($wsaData[0] == 'false') {
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "No Data Available"
+                ], 422);
+            }
+            else {
+            $listData = $wsaData[1];
+
+            return response()->json(
+            [
+                'DataWSA' => $listData
+            ],
+            200
+        );
+        }
+
+        return response()->json($wsaData[1]);
+        }
+       }
+       else{
+         $wsaData = (new WSAServices())->wsaGetSamplingData($item,  $lot,'SAMPLING');
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
@@ -59,6 +84,27 @@ class APIPengembalian extends Controller
         }
 
         return response()->json($wsaData[1]);
+       }
+        
+        // $wsaData = (new WSAServices())->wsaGetSamplingData($item,  $lot,'SAMPLING');
+        // if ($wsaData[0] == 'false') {
+        //     return response()->json([
+        //         'Status' => 'Error',
+        //         'Message' => "No Data Available"
+        //     ], 422);
+        // }
+        // else {
+        //     $listData = $wsaData[1];
+
+        //     return response()->json(
+        //     [
+        //         'DataWSA' => $listData
+        //     ],
+        //     200
+        // );
+        // }
+
+        // return response()->json($wsaData[1]);
 
     }
     public function transferPengembalianQo(Request $req)
