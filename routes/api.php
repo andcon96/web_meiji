@@ -83,8 +83,8 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::post("wsaPenyimpanan", [APIPurchaseOrderController::class, "wsaPenyimpanan"]);
 
     Route::post("wsaWarehouse", [APIPurchaseOrderController::class, "wsaWarehouse"]);
-    Route::post("wsaLevel", [APIPurchaseOrderController::class, "wsaLevel"]);
-    Route::post("wsaBin", [APIPurchaseOrderController::class, "wsaBin"]);
+    Route::post("wsaLevel", [APIPurchaseOrderController::class, "wsaPenyimpananPalet"]);
+    Route::post("wsaBin", [APIPurchaseOrderController::class, "wsaPenyimpananPalet"]);
     Route::post("wsaLoc", [APIPurchaseOrderController::class, "wsaLoc"]);
     Route::post("wsaLastBatch", [APIPurchaseOrderController::class, "wsaLastBatch"]);
     Route::post("getListUser", [APIPurchaseOrderController::class, "getListUser"]);
