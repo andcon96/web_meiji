@@ -203,8 +203,12 @@ class APIPurchaseOrderController extends Controller
         // Request Xena 1609
         $itemCode = '';
         $warehouse = '';
+        $type = 'input';
         if ($req->wh){
             $warehouse = $req->wh;
+        }
+        if($req->item){
+            $itemCode = $req->item;
         }
         
         // Ambil Relati Item ke Location di Web
@@ -232,7 +236,7 @@ class APIPurchaseOrderController extends Controller
 
         // Prioritaskan Location yang ada di Web by order.
         $getDataQAD = collect($wsaData[1]);
-      
+
         $grouped = $getDataQAD->groupBy(function ($item) {
             $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
             $loc   = is_array($item['t_inv_loc']) ? '' : (string)($item['t_inv_loc'] ?? '');
@@ -243,7 +247,7 @@ class APIPurchaseOrderController extends Controller
             return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
             // return $item['t_inv_site'] . '-' . $item['t_inv_loc'] . '-' . $item['t_inv_bin'] . '-' . $item['t_inv_wrh'] . '-' . $item['t_inv_level'];
         });
-        
+       
         $merged = $grouped->map(function ($items) {
             $first = $items->first(); // take base data from the first item
             $first['t_inv_qtyoh'] = $items->sum(function ($i) {
@@ -255,7 +259,10 @@ class APIPurchaseOrderController extends Controller
                 return (int) $item['t_inv_qtyoh'] <= 0;
             })
             ->values();
-
+           
+        $dataQAD = $merged->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
+       
+        return response()->json($dataQAD);
         $dataQAD = $merged->map(function ($item) use ($getAllItemLocation) {
             foreach ($getAllItemLocation as $datas) {
                 if (
@@ -273,22 +280,125 @@ class APIPurchaseOrderController extends Controller
        
 
         $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
-
+       
         return response()->json($dataQAD);
     }
 
-    public function wsaWarehouse(Request $req)
+     public function wsaPenyimpananPalet(Request $req)
     {
-
-        $wsaData = Cache::remember('wsaWarehouse', 60, function () {
-            return (new WSAServices())->wsaGenCode('mji_wrh');
-        });
+        // $itemCode = $req->search; 
+        // Request Xena 1609
+        $itemCode = '';
+        $warehouse = '';
+        $levelsearch = '';
+        $binSearch = '';
+        
+        if ($req->wh){
+            $warehouse = $req->wh;
+        }
+        if($req->item){
+            $itemCode = $req->item;
+        }
+        if ($req->level){
+            $levelsearch = $req->level;
+        }
+        if ($req->bin){
+            $binSearch = $req->bin;
+        }
+       
+        $wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse,$levelsearch);
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
                 'Message' => "No Data Available"
             ], 422);
         }
+
+        // Prioritaskan Location yang ada di Web by order.
+        $getDataQAD = collect($wsaData[1]);
+        if ($levelsearch != ''){
+            $grouped = $getDataQAD->groupBy(function ($item) {
+            $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
+            $loc   = is_array($item['t_inv_loc']) ? '' : (string)($item['t_inv_loc'] ?? '');
+            $bin   = is_array($item['t_inv_bin']) ? '' : (string) ($item['t_inv_bin'] ?? '');
+            $wrh   = is_array($item['t_inv_wrh']) ? '' : (string) ($item['t_inv_wrh'] ?? '');
+            $level = is_array($item['t_inv_level']) ? '' : (string) ($item['t_inv_level'] ?? '');
+              return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
+        });
+    }
+        else{
+            $grouped = $getDataQAD->groupBy(function ($item) {
+            $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
+            $wrh   = is_array($item['t_inv_wrh']) ? '' : (string) ($item['t_inv_wrh'] ?? '');
+            $level = is_array($item['t_inv_level']) ? '' : (string) ($item['t_inv_level'] ?? '');
+              return "{$site}-{$wrh}-{$level}";
+        });
+    }
+        
+
+         
+
+       
+        $merged = $grouped->map(function ($items) {
+            $first = $items->first(); // take base data from the first item
+            $first['t_inv_qtyoh'] = $items->sum(function ($i) {
+                return (int)$i['t_inv_qtyoh'];
+            });
+            return $first;
+        })
+            // ->filter(function ($item) {
+            //     return (int) $item['t_inv_qtyoh'] <= 0;
+            // })
+            ->values();
+        
+        $dataQAD = $merged->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
+        
+        return response()->json($dataQAD);
+        $dataQAD = $merged->map(function ($item) use ($getAllItemLocation) {
+            foreach ($getAllItemLocation as $datas) {
+                if (
+                    $item['t_inv_level'] == $datas->ld_rak &&
+                    $item['t_inv_wrh'] == $datas->ld_building &&
+                    $item['t_inv_bin'] == $datas->ld_bin &&
+                    $item['t_inv_loc'] == $datas->getMaster->location_code
+                ) {
+                    $item['t_is_prioritize'] = '1';
+                    break;
+                }
+            }
+            return $item;
+        });
+       
+
+        $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
+       
+        return response()->json($dataQAD);
+    }
+
+    public function wsaWarehouse(Request $req)
+    {
+
+        // $itemCode = $req->search; 
+        // Request Xena 1609
+        $itemCode = '';
+        $warehouse = '';
+        $type = 'input';
+        if ($req->wh){
+            $warehouse = $req->wh;
+        }
+        if($req->item){
+            $itemCode = $req->item;
+        }
+
+        $wsaData = (new WSAServices())->wsaWarehouse('', $itemCode, '', '', $warehouse, '');
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+
+        
 
         return response()->json($wsaData[1]);
     }

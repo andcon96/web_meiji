@@ -49,13 +49,14 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::get("getDataPO", [APIPurchaseOrderController::class, "index"]);
     Route::post("saveReceipt", [APIPurchaseOrderController::class, "saveReceipt"]);
     Route::post("saveEditReceipt", [APIPurchaseOrderController::class, "saveEditReceipt"]);
-    Route::get("getPoApproval", [APIPurchaseOrderApprovalController::class, "getPoApproval"]);
-
-    // PO Recheck
+    Route::get("getWarehouseReceipt", [APIPurchaseOrderController::class, "wsaWarehouse"]);
+    Route::get("wsaPenyimpananPalet", [APIPurchaseOrderController::class, "wsaPenyimpananPalet"]);
+    
     Route::get("getDataPORecheck", [APIPurchaseOrderRecheckController::class, "index"]);
     Route::post("submitRecheckReceipt", [APIPurchaseOrderRecheckController::class, "saveReceiptRecheck"]);
 
     // PO Approval
+    Route::get("getPoApproval", [APIPurchaseOrderApprovalController::class, "getPoApproval"]);
     Route::get("getDataApprovalPO", [APIPurchaseOrderApprovalController::class, "index"]);
     Route::post("approveRejectReceipt", [APIPurchaseOrderApprovalController::class, "approveRejectReceipt"]);
 
