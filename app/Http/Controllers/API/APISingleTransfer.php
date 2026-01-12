@@ -1572,4 +1572,30 @@ class APISingleTransfer extends Controller
 
         // return GeneralResources::collection($data);
     }
+
+    public function getWlbData(Request $req)
+    {
+        $part = $req->part ?? '';
+        $lot = $req->lot ?? '';
+        $site = $req->site ?? '';
+        $loc = $req->loc ?? '';
+        $wrh = $req->wrh ?? '';
+        $level = $req->level ?? '';
+        $bin = $req->bin ?? '';
+       
+
+        $hasil = (new WSAServices())->wsaGetWlb($part,$lot,$site,$loc,$wrh,$level,$bin);
+
+        if ($hasil[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Data Not Found."
+            ], 422);
+        } else {
+   
+            $listData = $hasil[1];
+
+            return response()->json(['DataWSA' => $listData], 200);
+        }
+    }
 }

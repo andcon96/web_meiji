@@ -196,6 +196,8 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::post("receiptItem", [APISingleTransfer::class, "receiptItem"]);
     Route::get("getSingleTransferData", [APISingleTransfer::class, "getSingleTransferData"]);
 
+    Route::post("getWlbData", [APISingleTransfer::class, "getWlbData"]);
+
     //Work Order Issue
     //Route::get("getIssueData", [APIWorkOrderController::class, "getIssueData"]);
     Route::post("issueWorkOrder", [APIPicklistShopping::class, "issueWorkOrder"]);
