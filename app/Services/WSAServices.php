@@ -2169,7 +2169,7 @@ log::info($qdocResponse);
 
         $dataloop    = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-
+        
         return [
             $qdocResult,
             $dataloop,

@@ -384,13 +384,16 @@ class APIPurchaseOrderController extends Controller
         $warehouse = '';
         $type = 'input';
         if ($req->wh){
-            $warehouse = $req->wh;
+            $warehouse = $req->wh ?? '';
         }
         if($req->item){
-            $itemCode = $req->item;
+            $itemCode = $req->item ?? '';
+        }
+        if($req->lot){
+            $lot = $req->lot ?? '';
         }
 
-        $wsaData = (new WSAServices())->wsaWarehouse('', $itemCode, '', '', $warehouse, '');
+        $wsaData = (new WSAServices())->wsaWarehouse('', $itemCode, $lot, '', $warehouse, '');
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
@@ -500,19 +503,20 @@ class APIPurchaseOrderController extends Controller
             $location = $req->location ?? '';
             $item = $req->item ?? '';
             $lot = $req->lot ?? '';
+            
             $itemQuery = Item::query()->with('getItemLocation.getLocationDetail')->where('im_item_part',$item)->first();
+            
             
             $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function($query) use ($lot)
             {$query->orderBy('ld_building');}])
             ->where('il_item_id',$itemQuery->id);
 
-            
             if ($warehouse != '') {
                 $getAllItemLocation->whereRelation('getLocationDetail', 'ld_building', '=', $warehouse);
             }
 
-            $getAllItemLocation = $getAllItemLocation->toSql();
-                     
+            $getAllItemLocation = $getAllItemLocation->get();
+            dd($getAllItemLocation);
             if (count($getAllItemLocation) == 0) {
                 return response()->json([
                     'Status' => 'Error',
