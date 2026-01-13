@@ -302,7 +302,7 @@ class ReceiptServices
             $newReceiptDetailPenanda->save();
 
             // Pallet
-            foreach ($data->pallet_list as $pallet) {
+            foreach ($data->get_pallet as $pallet) {
                 $newReceiptPallet = new ReceiptPallet();
                 $newReceiptPallet->rdp_rd_det_id = $data->id;
                 $newReceiptPallet->rdp_level_penyimpanan = $pallet->rdp_level_penyimpanan;

@@ -138,74 +138,105 @@
         <tr>
             <td>Nama Barang</td>
             <td>{{ $nama_barang }}</td>
-            <td>
-                @if ($note_namabarang == '')
+
+            @if ($note_namabarang == '')
+                <td>
                     (Sesuai / <s>Tidak Sesuai</s>)
-                @else
+                </td>
+                <td style="text-align:center">{{ '-' }}</td>
+            @else
+                <td>
                     (<s>Sesuai</s> / Tidak Sesuai)
-                @endif
-            </td>
-            <td>{{ $note_namabarang }}</td>
+                </td>
+                <td>{{ $note_namabarang }}</td>
+            @endif
+
         </tr>
         <tr>
             <td>No. Batch/No. Lot</td>
             <td>{{ $no_batch }}</td>
-            <td>
-                @if ($note_batch == '')
+
+            @if ($note_batch == '')
+                <td>
                     (Sesuai / <s>Tidak Sesuai</s>)
-                @else
+                </td>
+                <td style="text-align:center">{{ '-' }}</td>
+            @else
+                <td>
                     (<s>Sesuai</s> / Tidak Sesuai)
-                @endif
-            </td>
-            <td>{{ $note_batch }}</td>
+                </td>
+                <td>{{ $note_batch }}</td>
+            @endif
+
+
         </tr>
         <tr>
             <td>Expire Date</td>
             <td>{{ $expire_date }}</td>
-            <td>
-                @if ($note_expdate == '')
+
+            @if ($note_expdate == '')
+                <td>
                     (Sesuai / <s>Tidak Sesuai</s>)
-                @else
+                </td>
+                <td style="text-align:center">{{ '-' }}</td>
+            @else
+                <td>
                     (<s>Sesuai</s> / Tidak Sesuai)
-                @endif
-            </td>
-            <td>{{ $note_expdate }}</td>
+                </td>
+                <td>{{ $note_expdate }}</td>
+            @endif
+
         </tr>
         <tr>
             <td>Re-Test Date</td>
             <td>{{ $retest_date }}</td>
-            <td>
-                @if ($note_retestdate == '')
+
+            @if ($note_retestdate == '')
+                <td>
                     (Sesuai / <s>Tidak Sesuai</s>)
-                @else
+                </td>
+                <td style="text-align:center">{{ '-' }}</td>
+            @else
+                <td>
                     (<s>Sesuai</s> / Tidak Sesuai)
-                @endif
-            </td>
-            <td>{{ $note_retestdate }}</td>
+                </td>
+                <td>{{ $note_retestdate }}</td>
+            @endif
+
         </tr>
         <tr>
             <td>Kode Cetak</td>
             <td>{{ $kode_cetak }}</td>
-            <td>
-                @if ($note_kodecetak == '')
+
+            @if ($note_kodecetak == '')
+                <td>
                     (Sesuai / <s>Tidak Sesuai</s>)
-                @else
+                </td>
+                <td style="text-align:center">{{ '-' }}</td>
+            @else
+                <td>
                     (<s>Sesuai</s> / Tidak Sesuai)
-                @endif
-            </td>
-            <td>{{ $note_kodecetak }}</td>
+                </td>
+                <td>{{ $note_kodecetak }}</td>
+            @endif
+
         </tr>
         <tr>
             <td>Jumlah Terima</td>
             <td>{{ $jumlah_terima }}</td>
-            <td>
-                @if ($note_jumlahterima == '')
+
+            @if ($note_jumlahterima == '')
+                <td>
                     (Sesuai / <s>Tidak Sesuai</s>)
-                @else
+                </td>
+                <td style="text-align:center">{{ '-' }}</td>
+            @else
+                <td>
                     (<s>Sesuai</s> / Tidak Sesuai)
-                @endif
-            </td>
-            <td>{{ $note_jumlahterima }}</td>
+                </td>
+                <td>{{ $note_jumlahterima }}</td>
+            @endif
+
         </tr>
     </table>
 

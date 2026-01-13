@@ -87,7 +87,7 @@ class APISingleTransfer extends Controller
 
     public function receiptItem(Request $req)
     {
-        
+
         $trfid = $req->trfid;
         $data = singleTransfer::where('st_trfid', $trfid)->first();
         $part = $data->st_item;
@@ -134,47 +134,47 @@ class APISingleTransfer extends Controller
                 $dataupdate->save();
 
                 $user = Auth::user()->name;
-                     // Transaction History
+                // Transaction History
 
-                        $newTransactionHistoryfrom = new TransactionHistory();
-                        $newTransactionHistoryfrom->tr_nbr = 'Sampling';
-                        $newTransactionHistoryfrom->tr_program = 'Single Transfer Module';
-                        $newTransactionHistoryfrom->tr_activity = 'Single Transfer From';
-                        $newTransactionHistoryfrom->tr_user = $user ?? '';
-                        $newTransactionHistoryfrom->tr_part = $part ?? '';
-                        $newTransactionHistoryfrom->tr_uom = '';
-                        $newTransactionHistoryfrom->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-                        $newTransactionHistoryfrom->tr_lot = $lotfrom ?? '';
-                        $newTransactionHistoryfrom->tr_qty = $qtyoh ?? '';
-                        $newTransactionHistoryfrom->tr_date = date('Y-m-d H:i:s');
-                        $newTransactionHistoryfrom->tr_ref = '';
-                        $newTransactionHistoryfrom->tr_site = $sitefrom ?? '';
-                        $newTransactionHistoryfrom->tr_location = $locfrom ?? '';
-                        $newTransactionHistoryfrom->tr_warehouse = $buildingfrom ?? '';
-                        $newTransactionHistoryfrom->tr_level = $levelfrom ?? '';
-                        $newTransactionHistoryfrom->tr_bin = $binfrom ?? '';
-                        $newTransactionHistoryfrom->tr_remark = '';
-                        $newTransactionHistoryfrom->save();
+                $newTransactionHistoryfrom = new TransactionHistory();
+                $newTransactionHistoryfrom->tr_nbr = 'Sampling';
+                $newTransactionHistoryfrom->tr_program = 'Single Transfer Module';
+                $newTransactionHistoryfrom->tr_activity = 'Single Transfer From';
+                $newTransactionHistoryfrom->tr_user = $user ?? '';
+                $newTransactionHistoryfrom->tr_part = $part ?? '';
+                $newTransactionHistoryfrom->tr_uom = '';
+                $newTransactionHistoryfrom->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                $newTransactionHistoryfrom->tr_lot = $lotfrom ?? '';
+                $newTransactionHistoryfrom->tr_qty = $qtyoh ?? '';
+                $newTransactionHistoryfrom->tr_date = date('Y-m-d H:i:s');
+                $newTransactionHistoryfrom->tr_ref = '';
+                $newTransactionHistoryfrom->tr_site = $sitefrom ?? '';
+                $newTransactionHistoryfrom->tr_location = $locfrom ?? '';
+                $newTransactionHistoryfrom->tr_warehouse = $buildingfrom ?? '';
+                $newTransactionHistoryfrom->tr_level = $levelfrom ?? '';
+                $newTransactionHistoryfrom->tr_bin = $binfrom ?? '';
+                $newTransactionHistoryfrom->tr_remark = '';
+                $newTransactionHistoryfrom->save();
 
-                        $newTransactionHistory = new TransactionHistory();
-                        $newTransactionHistory->tr_nbr = 'Sampling';
-                        $newTransactionHistory->tr_program = 'Single Transfer Module';
-                        $newTransactionHistory->tr_activity = 'Single Transfer To';
-                        $newTransactionHistory->tr_user = $user ?? '';
-                        $newTransactionHistory->tr_part = $part ?? '';
-                        $newTransactionHistory->tr_uom = '';
-                        $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-                        $newTransactionHistory->tr_lot = $lotto ?? '';
-                        $newTransactionHistory->tr_qty = $qtyoh ?? '';
-                        $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                        $newTransactionHistory->tr_ref = '';
-                        $newTransactionHistory->tr_site = $siteto ?? '';
-                        $newTransactionHistory->tr_location = $locto ?? '';
-                        $newTransactionHistory->tr_warehouse = $buildingto ?? '';
-                        $newTransactionHistory->tr_level = $levelto ?? '';
-                        $newTransactionHistory->tr_bin = $binto ?? '';
-                        $newTransactionHistory->tr_remark = '';
-                        $newTransactionHistory->save();
+                $newTransactionHistory = new TransactionHistory();
+                $newTransactionHistory->tr_nbr = 'Sampling';
+                $newTransactionHistory->tr_program = 'Single Transfer Module';
+                $newTransactionHistory->tr_activity = 'Single Transfer To';
+                $newTransactionHistory->tr_user = $user ?? '';
+                $newTransactionHistory->tr_part = $part ?? '';
+                $newTransactionHistory->tr_uom = '';
+                $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                $newTransactionHistory->tr_lot = $lotto ?? '';
+                $newTransactionHistory->tr_qty = $qtyoh ?? '';
+                $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                $newTransactionHistory->tr_ref = '';
+                $newTransactionHistory->tr_site = $siteto ?? '';
+                $newTransactionHistory->tr_location = $locto ?? '';
+                $newTransactionHistory->tr_warehouse = $buildingto ?? '';
+                $newTransactionHistory->tr_level = $levelto ?? '';
+                $newTransactionHistory->tr_bin = $binto ?? '';
+                $newTransactionHistory->tr_remark = '';
+                $newTransactionHistory->save();
 
                 DB::commit();
                 return response()->json([
@@ -1096,9 +1096,9 @@ class APISingleTransfer extends Controller
         // $wonbr = $req->wonbr;
         $wonbr = '';
         $item = $req->item;
-            $site = $req->site;
+        $site = $req->site;
 
-        $hasil = (new WSAServices())->wsaGetLocationTransfer($wonbr,$item,$site);
+        $hasil = (new WSAServices())->wsaGetLocationTransfer($wonbr, $item, $site);
 
         if ($hasil[0] == 'false') {
             return response()->json([
@@ -1110,13 +1110,6 @@ class APISingleTransfer extends Controller
 
             return response()->json(['DataWSA' => $listData], 200);
         }
-
-
-        
-
-
-
-        
     }
 
     public function getSiteData(Request $req)
@@ -1133,7 +1126,7 @@ class APISingleTransfer extends Controller
         $site = $req->site ?? '';
         $item = $req->item ?? '';
         $location = $req->location ?? '';
-        $hasil = (new WSAServices())->wsaGetSiteTransfer($site,$item,$location);
+        $hasil = (new WSAServices())->wsaGetSiteTransfer($site, $item, $location);
 
         if ($hasil[0] == 'false') {
             return response()->json([
@@ -1145,18 +1138,11 @@ class APISingleTransfer extends Controller
 
             return response()->json(['DataWSA' => $listData], 200);
         }
-
-
-        
-
-
-
-        
     }
 
-    
 
-    
+
+
 
     public function wsaWarehouse(Request $req)
     {
@@ -1180,14 +1166,13 @@ class APISingleTransfer extends Controller
         $wrh = $req->wrh;
         $item = $req->item;
 
-        $wsaData = (new WSAServices())->wsaGetInvDet($site,  $loc, $wrh,$item);
+        $wsaData = (new WSAServices())->wsaGetInvDet($site,  $loc, $wrh, $item);
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
                 'Message' => "No Data Available"
             ], 422);
-        }
-        else {
+        } else {
             $listData = $wsaData[1];
 
             return response()->json(['DataWSA' => $listData], 200);
@@ -1584,9 +1569,9 @@ class APISingleTransfer extends Controller
         $wrh = $req->wrh ?? '';
         $level = $req->level ?? '';
         $bin = $req->bin ?? '';
-       
 
-        $hasil = (new WSAServices())->wsaGetWlb($part,$lot,$site,$loc,$wrh,$level,$bin);
+
+        $hasil = (new WSAServices())->wsaGetWlb($part, $lot, $site, $loc, $wrh, $level, $bin);
 
         if ($hasil[0] == 'false') {
             return response()->json([
@@ -1594,7 +1579,7 @@ class APISingleTransfer extends Controller
                 'Message' => "Data Not Found."
             ], 422);
         } else {
-   
+
             $listData = $hasil[1];
 
             return response()->json(['DataWSA' => $listData], 200);
@@ -1603,47 +1588,76 @@ class APISingleTransfer extends Controller
 
     public function getWebLocationDataTransfer(Request $req)
     {
-            $warehouse = $req->wh ?? '';
-            $level = $req->level ?? '';
-            $bin = $req->bin ?? '';
-            $site = $req->site ?? '';
-            $location = $req->location ?? '';
-            $item = $req->item ?? '';
-            $lot = $req->lot ?? '';
-            
-            $location = Location::where('location_site',$site)->where('location_code',$location)->first();
-            $locationdetail = LocationDetail::where('ld_location_id',$location->id)->where('ld_building',$warehouse)->where('ld_rak',$level)->where('ld_bin',$bin)->first();
-            
-            $itemQuery = Item::query()->with('getItemLocation.getLocationDetail')->where('im_item_part',$item)->first();
-            
-            
-            $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function($query) use ($lot)
-            {$query->orderBy('ld_building');}])
-            ->where('il_item_id',$itemQuery->id)
-            ->whereRelation('getLocationDetail','ld_location_id',$location->id);
-            
-            // if($lot != ''){
-            //     $getAllItemLocation->whereRelation('getLocationDetail', 'ld_lot_serial', '=', $lot);
-            // }
-            if ($warehouse != '') {
-                $getAllItemLocation->whereRelation('getLocationDetail', 'ld_building', '=', $warehouse);
-            }
-               if ($level != '') {
-                $getAllItemLocation->whereRelation('getLocationDetail', 'ld_rak', '=', $level);
-            }
-                if ($bin != '') {
-                 $getAllItemLocation->whereRelation('getLocationDetail', 'ld_bin', '=', $bin);
-                }
+        $warehouse = $req->wh ?? '';
+        $level = $req->level ?? '';
+        $bin = $req->bin ?? '';
+        $site = $req->site ?? '';
+        $loc = $req->location ?? '';
+        $item = $req->item ?? '';
+        $lot = $req->lot ?? '';
 
-            $getAllItemLocation = $getAllItemLocation->get();
-           
-            if (count($getAllItemLocation) == 0) {
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "No Data Available"
-                ], 422);
-            }
+        $location = Location::where('location_site', $site)->where('location_code', $loc)->first();
+        $locationdetail = LocationDetail::where('ld_location_id', $location->id)->where('ld_building', $warehouse)->where('ld_rak', $level)->where('ld_bin', $bin)->first();
 
-            return response()->json($getAllItemLocation);
+        $itemQuery = Item::query()->with('getItemLocation.getLocationDetail')->where('im_item_part', $item)->first();
+
+
+        $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function ($query) use ($lot) {
+            $query->orderBy('ld_building');
+        }])
+            ->where('il_item_id', $itemQuery->id)
+            ->whereRelation('getLocationDetail', 'ld_location_id', $location->id);
+
+        // if($lot != ''){
+        //     $getAllItemLocation->whereRelation('getLocationDetail', 'ld_lot_serial', '=', $lot);
+        // }
+
+        if ($warehouse != '') {
+            $getAllItemLocation->whereRelation('getLocationDetail', 'ld_building', '=', $warehouse);
+        }
+        if ($level != '') {
+            $getAllItemLocation->whereRelation('getLocationDetail', 'ld_rak', '=', $level);
+        }
+        if ($bin != '') {
+            $getAllItemLocation->whereRelation('getLocationDetail', 'ld_bin', '=', $bin);
+        }
+
+        $getAllItemLocation = $getAllItemLocation->get();
+
+
+        if (count($getAllItemLocation) == 0) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+        $hasil = (new WSAServices())->wsaGetWlb($item, $lot, $site, $loc, $warehouse, $level, $bin);
+        // if ($hasil[0] == 'false') {
+        //     return response()->json([
+        //         'Status' => 'Error',
+        //         'Message' => "Data Not Found."
+        //     ], 422);
+        // } 
+        
+        if($hasil[0] == 'true') {
+            $wsaData = collect($hasil[1]);
+            
+            // Add qty to each locationDetail
+            $getAllItemLocation->transform(function ($location) use ($wsaData) {
+                // Match based on location detail properties
+                $matchingWsa = $wsaData
+                    ->where('t_wrh', $location->getLocationDetail->ld_building)
+                    ->where('t_level', $location->getLocationDetail->ld_rak)
+                    ->where('t_bin', $location->getLocationDetail->ld_bin)
+                    ->first();
+
+                // Add qty to getLocationDetail
+                $location->getLocationDetail->qty = $matchingWsa['t_qtyoh'] ?? 0;
+
+                return $location;
+            });
+
+        }
+        return response()->json($getAllItemLocation);
     }
 }
