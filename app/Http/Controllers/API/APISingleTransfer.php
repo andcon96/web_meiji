@@ -1622,9 +1622,9 @@ class APISingleTransfer extends Controller
             ->where('il_item_id',$itemQuery->id)
             ->whereRelation('getLocationDetail','ld_location_id',$location->id);
             
-            if($lot != ''){
-                $getAllItemLocation->whereRelation('getLocationDetail', 'ld_lot_serial', '=', $lot);
-            }
+            // if($lot != ''){
+            //     $getAllItemLocation->whereRelation('getLocationDetail', 'ld_lot_serial', '=', $lot);
+            // }
             if ($warehouse != '') {
                 $getAllItemLocation->whereRelation('getLocationDetail', 'ld_building', '=', $warehouse);
             }
