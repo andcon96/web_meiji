@@ -34,7 +34,8 @@ class APIZebraPrinterController extends Controller
             $data->where('rd_nomor_buku', '=', $bookNumber);
         }
         if($itemNumber){
-            $data->where('rd_nama_barang', '=', $itemNumber);
+            // $data->where('rd_nama_barang', '=', $itemNumber);
+            $data->whereRelation('getPurchaseOrderDetail', 'pod_part', '=', $itemNumber);
         }
 
         $data = $data->get();
