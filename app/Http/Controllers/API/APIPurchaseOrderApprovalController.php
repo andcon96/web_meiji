@@ -89,7 +89,8 @@ class APIPurchaseOrderApprovalController extends Controller
                         $newHistoryApproval->arh_user_approve_alt = $datas->art_user_approve_alt;
                         $newHistoryApproval->arh_sequence = $datas->art_sequence;
                         $newHistoryApproval->arh_approved_by = $datas->art_approved_by;
-                        $newHistoryApproval->arh_status = $datas->art_status;
+                        // $newHistoryApproval->arh_status = $datas->art_status;
+                        $newHistoryApproval->arh_status = 'Reject';
                         $newHistoryApproval->arh_reason = $datas->art_reason;
                         $newHistoryApproval->created_at = $datas->created_at;
                         $newHistoryApproval->updated_at = $datas->updated_at;
@@ -151,7 +152,8 @@ class APIPurchaseOrderApprovalController extends Controller
                             $newHistoryApproval->arh_user_approve_alt = $datas->art_user_approve_alt;
                             $newHistoryApproval->arh_sequence = $datas->art_sequence;
                             $newHistoryApproval->arh_approved_by = $datas->art_approved_by;
-                            $newHistoryApproval->arh_status = $datas->art_status;
+                            // $newHistoryApproval->arh_status = $datas->art_status;
+                            $newHistoryApproval->arh_status = 'Approved';
                             $newHistoryApproval->arh_reason = $datas->art_reason;
                             $newHistoryApproval->created_at = $datas->created_at;
                             $newHistoryApproval->updated_at = $datas->updated_at;
