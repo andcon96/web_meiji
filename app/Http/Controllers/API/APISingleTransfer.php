@@ -16,6 +16,8 @@ use App\Models\API\picklistWoDet;
 use App\Models\API\prefixWorkOrder;
 use App\Models\API\picklistHistory;
 use App\Models\API\picklistLocationTo;
+use App\Models\Settings\Item;
+use App\Models\Settings\Location;
 use App\Models\Settings\SingleTransferPrefix;
 use App\Models\API\SingleTransfer;
 use App\Services\WSAServices;
@@ -1597,5 +1599,51 @@ class APISingleTransfer extends Controller
 
             return response()->json(['DataWSA' => $listData], 200);
         }
+    }
+
+    public function getWebLocationDataTransfer(Request $req)
+    {
+            $warehouse = $req->wh ?? '';
+            $level = $req->level ?? '';
+            $bin = $req->bin ?? '';
+            $site = $req->site ?? '';
+            $location = $req->location ?? '';
+            $item = $req->item ?? '';
+            $lot = $req->lot ?? '';
+            
+            $location = Location::where('location_site',$site)->where('location_code',$location)->first();
+            $locationdetail = LocationDetail::where('ld_location_id',$location->id)->where('ld_building',$warehouse)->where('ld_rak',$level)->where('ld_bin',$bin)->first();
+            
+            $itemQuery = Item::query()->with('getItemLocation.getLocationDetail')->where('im_item_part',$item)->first();
+            
+            
+            $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function($query) use ($lot)
+            {$query->orderBy('ld_building');}])
+            ->where('il_item_id',$itemQuery->id)
+            ->whereRelation('getLocationDetail','ld_location_id',$location->id);
+            
+            if($lot != ''){
+                $getAllItemLocation->whereRelation('getLocationDetail', 'ld_lot_serial', '=', $lot);
+            }
+            if ($warehouse != '') {
+                $getAllItemLocation->whereRelation('getLocationDetail', 'ld_building', '=', $warehouse);
+            }
+               if ($level != '') {
+                $getAllItemLocation->whereRelation('getLocationDetail', 'ld_rak', '=', $level);
+            }
+                if ($bin != '') {
+                 $getAllItemLocation->whereRelation('getLocationDetail', 'ld_bin', '=', $bin);
+                }
+
+            $getAllItemLocation = $getAllItemLocation->get();
+           
+            if (count($getAllItemLocation) == 0) {
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "No Data Available"
+                ], 422);
+            }
+
+            return response()->json($getAllItemLocation);
     }
 }

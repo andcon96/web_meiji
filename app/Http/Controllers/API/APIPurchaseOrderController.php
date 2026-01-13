@@ -516,7 +516,7 @@ class APIPurchaseOrderController extends Controller
             }
 
             $getAllItemLocation = $getAllItemLocation->get();
-            dd($getAllItemLocation);
+            
             if (count($getAllItemLocation) == 0) {
                 return response()->json([
                     'Status' => 'Error',
@@ -620,6 +620,39 @@ class APIPurchaseOrderController extends Controller
         }
 
         return response()->json($wsaData[1]);
+    }
+
+     public function getWebLocationDataTransfer(Request $req)
+    {
+            $warehouse = $req->wh ?? '';
+            $level = $req->level ?? '';
+            $bin = $req->bin ?? '';
+            $site = $req->site ?? '';
+            $location = $req->location ?? '';
+            $item = $req->item ?? '';
+            $lot = $req->lot ?? '';
+            
+            $itemQuery = Item::query()->with('getItemLocation.getLocationDetail')->where('im_item_part',$item)->first();
+            
+            
+            $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function($query) use ($lot)
+            {$query->orderBy('ld_building');}])
+            ->where('il_item_id',$itemQuery->id);
+
+            if ($warehouse != '') {
+                $getAllItemLocation->whereRelation('getLocationDetail', 'ld_building', '=', $warehouse);
+            }
+
+            $getAllItemLocation = $getAllItemLocation->get();
+            
+            if (count($getAllItemLocation) == 0) {
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "No Data Available"
+                ], 422);
+            }
+
+            return response()->json($getAllItemLocation);
     }
 
 }

@@ -185,6 +185,8 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     // Route::get("getSearchLocation", [APIPicklistShopping::class, "wsainvdet"]);
     // Route::post("sendTransferItem", [APIPicklistShopping::class, "sendTransferItem"]);
     Route::get("getLocationData", [APISingleTransfer::class, "getLocationData"]);
+     Route::post("getWebLocationDataTransfer", [APISingleTransfer::class, "getWebLocationDataTransfer"]);
+    
     Route::get("getSiteData", [APISingleTransfer::class, "getSiteData"]);
     
     
