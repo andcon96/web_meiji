@@ -1597,34 +1597,33 @@ class APISingleTransfer extends Controller
         $lot = $req->lot ?? '';
 
         $location = Location::where('location_site', $site)->where('location_code', $loc)->first();
-        $locationdetail = LocationDetail::where('ld_location_id', $location->id)->where('ld_building', $warehouse)->where('ld_rak', $level)->where('ld_bin', $bin)->first();
-
-        $itemQuery = Item::query()->with('getItemLocation.getLocationDetail')->where('im_item_part', $item)->first();
-
-
-        $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function ($query) use ($lot) {
-            $query->orderBy('ld_building');
-        },'getLocationDetail.getLocation'])
-            ->where('il_item_id', $itemQuery->id)
-            ->whereRelation('getLocationDetail.getLocation', 'location_site', $site)
-            ->whereRelation('getLocationDetail.getLocation', 'location_code', $loc);
-            // ->whereRelation('getLocationDetail', 'ld_location_id', $location->id);
-
-        // if($lot != ''){
-        //     $getAllItemLocation->whereRelation('getLocationDetail', 'ld_lot_serial', '=', $lot);
-        // }
-       
+        if (!$location) {
+            return collect();
+        }
+        $locationdetail = LocationDetail::query()->where('ld_location_id', $location->id);
         if ($warehouse != '') {
-            $getAllItemLocation->whereRelation('getLocationDetail', 'ld_building', '=', $warehouse);
+            $locationdetail->where('ld_building', '=', $warehouse);
         }
         if ($level != '') {
-            $getAllItemLocation->whereRelation('getLocationDetail', 'ld_rak', '=', $level);
+            $locationdetail->where('ld_rak', '=', $level);
         }
         if ($bin != '') {
-            $getAllItemLocation->whereRelation('getLocationDetail', 'ld_bin', '=', $bin);
+            $locationdetail->where('ld_bin', '=', $bin);
+        }
+        // $locationdetail = $locationdetail->select('id')->toArray();
+        $locationdetail = $locationdetail->pluck('id')->toArray();
+
+        $itemQuery = Item::with('getItemLocation.getLocationDetail')->where('im_item_part', $item)->select('id')->first();
+        
+        if (!$itemQuery) {
+            return collect();
         }
 
-        $getAllItemLocation = $getAllItemLocation->get();
+        $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function ($query) use ($lot) {
+            $query->orderBy('ld_building');}])
+            ->where('il_item_id', $itemQuery->id)
+            ->whereIn('il_ld_id', $locationdetail)
+            ->get();
 
 
         if (count($getAllItemLocation) == 0) {
