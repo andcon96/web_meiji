@@ -1714,7 +1714,7 @@ class APIPicklistShopping extends Controller
     }
     public function getApproverList(Request $req)
     {
-        $user = User::select('username')->where('is_approver', 'Yes')->orderBy('username', 'asc')->get();
+        $user = User::with('getRole')->select('username')->whereRelation('getRole', 'role_android_acc', 'like', '%AP02%')->orderBy('username', 'asc')->get();
         return response()->json(
             [
                 'DataWSA' => $user

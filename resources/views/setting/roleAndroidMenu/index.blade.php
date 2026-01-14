@@ -224,6 +224,26 @@
 
                                 <input type="checkbox" class="custom-control-input form-check-input" id="cbSamplingReturn" name="data[]" value="SP02" />
                             </div>
+                            <h4>
+                                <center><strong>Approver</strong></center>
+                        
+                            </h4>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="cbApproverPo" class="form-check-label col-8">PO Approver</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbApproverPo"
+                                    name="data[]" value="AP01" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="cbApproverPicklist" class="form-check-label col-8">Picklist Approver</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbApproverPicklist" name="data[]" value="AP02" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="cbApproverShipment" class="form-check-label col-8">Shipment Approver</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbApproverShipment" name="data[]" value="AP03" />
+                            </div>
                             
                         </div>
                     </div>
@@ -332,6 +352,16 @@
                 }
                 if (parts.includes('SP02')) {
                     $('#cbSamplingReturn').prop('checked', true);
+                }
+
+                if (parts.includes('AP01')) {
+                    $('#cbApproverPo').prop('checked', true);
+                }
+                if (parts.includes('AP02')) {
+                    $('#cbApproverPicklist').prop('checked', true);
+                }
+                if (parts.includes('AP03')) {
+                    $('#cbApproverShipment').prop('checked', true);
                 }
 
                 $('#roleId').val(roleId);

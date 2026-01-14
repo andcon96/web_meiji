@@ -39,6 +39,7 @@ class APIPurchaseOrderApprovalController extends Controller
             $data->whereRelation('getReceiptDetail', 'rd_nomor_buku', 'LIKE', '%' . $req->search . '%')
                 ->orWhereRelation('getReceiptDetail.getMaster', 'rm_rn_number', 'LIKE', '%' . $req->search . '%')
                 ->orWhereRelation('getReceiptDetail.getMaster.getPurchaseOrderMaster', 'po_nbr', 'LIKE', '%' . $req->search . '%')
+                ->orWhereRelation('getReceiptDetail.getPurchaseOrderDetail', 'pod_part', 'LIKE', '%' . $req->search . '%')
             ;
         }
 

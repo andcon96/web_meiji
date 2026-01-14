@@ -470,7 +470,7 @@ class APIPurchaseOrderController extends Controller
 
     public function getListUser(Request $req)
     {
-        $data = User::query();
+        $data = User::query()->with('getRole')->whereRelation('getRole','role_android_acc','like','%AP01%');
 
         if ($req->search) {
             $data->where('username', $req->search)

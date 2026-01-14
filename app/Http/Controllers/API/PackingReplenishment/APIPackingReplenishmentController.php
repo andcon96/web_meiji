@@ -120,10 +120,15 @@ class APIPackingReplenishmentController extends Controller
 
     public function approverList()
     {
-        $role = Role::where("role_code", "SH")->first();
-        $users = User::where("role_id", $role->id)
-            ->where("is_active", "Active")
-            ->get(["id", "name"]);
+        $users = user::with('getRole')
+        ->whereRelation('getRole','role_android_acc','like','%AP03%')
+        ->where("is_active", "Active")
+        ->orderBy('username','asc')
+        ->get(["id", "name"]);
+        // $role = Role::where("role_code", "SH")->first();
+        // $users = User::where("role_id", $role->id)
+        //     ->where("is_active", "Active")
+        //     ->get(["id", "name"]);
 
         if ($users->count() == 0) {
             return response()->json(
