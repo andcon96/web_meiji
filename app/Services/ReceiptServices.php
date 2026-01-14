@@ -49,6 +49,18 @@ class ReceiptServices
                 // Generate Running Number Buku
                 $getRunningNumberBuku = (new RunningNumberServices())->getRunningNumberBuku();
 
+                //reference 
+                $reference = '';
+                if ($dataDetail->qty_potensi == 1) {
+                    if($dataDetail->kode_cetak == '-'){
+                        $reference = '';
+                    }
+                    else{
+                        $reference = $dataDetail->kode_cetak;
+                    }
+                } else {
+                    $reference = $dataDetail->qty_potensi;
+                }
 
                 // Receipt Detail
                 $newReceiptDetail = new ReceiptDetail();
@@ -72,6 +84,7 @@ class ReceiptServices
                 $newReceiptDetail->rd_qty_pallete = $dataDetail->qty_pallete;
                 $newReceiptDetail->rd_site_penyimpanan = $dataDetail->site_penyimpanan;
                 $newReceiptDetail->rd_location_penyimpanan = $dataDetail->loc_penyimpanan;
+                $newReceiptDetail->rd_ref = $reference;
                 //$newReceiptDetail->rd_level_penyimpanan = $dataDetail->level_penyimpanan;
                 //$newReceiptDetail->rd_bin_penyimpanan = $dataDetail->bin_penyimpanan;
                 $newReceiptDetail->rd_building_penyimpanan = $dataDetail->building_penyimpanan;
@@ -251,7 +264,8 @@ class ReceiptServices
             $findReceiptDetail->rd_level_penyimpanan = $data->rd_level_penyimpanan;
             $findReceiptDetail->rd_bin_penyimpanan = $data->rd_bin_penyimpanan;
             $findReceiptDetail->rd_building_penyimpanan = $data->rd_building_penyimpanan;
-            $findReceiptDetail->rd_status = 'Waiting';
+            // $findReceiptDetail->rd_status = 'Waiting';
+            $findReceiptDetail->rd_status = 'Checked';
             $findReceiptDetail->save();
 
             //get master
@@ -303,13 +317,23 @@ class ReceiptServices
 
             // Pallet
             foreach ($data->get_pallet as $pallet) {
-                $newReceiptPallet = new ReceiptPallet();
-                $newReceiptPallet->rdp_rd_det_id = $data->id;
-                $newReceiptPallet->rdp_level_penyimpanan = $pallet->rdp_level_penyimpanan;
-                $newReceiptPallet->rdp_bin_penyimpanan = $pallet->rdp_bin_penyimpanan;
-                $newReceiptPallet->rdp_qty_penyimpanan = $pallet->rdp_qty_penyimpanan;
+                // $newReceiptPallet = new ReceiptPallet();
+                // $newReceiptPallet->rdp_rd_det_id = $data->id;
+                // $newReceiptPallet->rdp_level_penyimpanan = $pallet->rdp_level_penyimpanan;
+                // $newReceiptPallet->rdp_bin_penyimpanan = $pallet->rdp_bin_penyimpanan;
+                // $newReceiptPallet->rdp_qty_penyimpanan = $pallet->rdp_qty_penyimpanan;
+                // $newReceiptPallet->save();
+                $newReceiptPallet = ReceiptPallet::firstOrNew(
+                    [
+                        'rdp_rd_det_id' => $data->id,
+                        'rdp_level_penyimpanan' => $pallet->rdp_level_penyimpanan,
+                        'rdp_bin_penyimpanan' => $pallet->rdp_bin_penyimpanan,
+                    ],
+                    [
+                        'rdp_qty_penyimpanan' => $pallet->rdp_qty_penyimpanan,
+                    ]
+                );
                 $newReceiptPallet->save();
-
                 // Transaction History
                 $newTransactionHistory = new TransactionHistory();
                 $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
@@ -356,7 +380,8 @@ class ReceiptServices
                 $approvalReceiptTemp->art_user_approve = $user->id;
                 $approvalReceiptTemp->art_user_approve_alt = $user->id;
                 $approvalReceiptTemp->art_sequence = $key + 1;
-                $approvalReceiptTemp->art_status = 'Waiting';
+                // $approvalReceiptTemp->art_status = 'Waiting';
+                $approvalReceiptTemp->art_status = 'Checked';
                 $approvalReceiptTemp->save();
             }
 

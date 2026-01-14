@@ -697,6 +697,7 @@ class APIPurchaseOrderController extends Controller
             });
 
         }
+        
         return response()->json($getAllItemLocation);
     }
 

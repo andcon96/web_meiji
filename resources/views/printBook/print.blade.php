@@ -224,12 +224,9 @@
         </tr>
         <tr>
             <td>Kode Cetak</td>
-            @if( $kode_cetak == null || $kode_cetak == '' )
-                <td style="text-align:center">-</td>
-            @else
+            
             <td>{{ $kode_cetak }}</td>
-            @endif
-
+           
             @if ($note_kodecetak == '')
                 <td>
                     (Sesuai / <s>Tidak Sesuai</s>)
@@ -279,11 +276,9 @@
             </td>
             <td rowspan="2" style="width: 15%; vertical-align:middle;">JUMLAH KEMASAN</td>
             <td style="width: 28%; vertical-align:middle;">Kemasan Luar</td>
-            @if( $qty_jumlahkemasanluar == null || $qty_jumlahkemasanluar == '' )
-                <td style="width: 16%; vertical-align:middle;text-align:center">-</td>
-            @else
+           
             <td style="width: 16%; vertical-align:middle;">{{ $qty_jumlahkemasanluar }}</td>
-            @endif
+            
         </tr>
         <tr>
             <td>Alamat Pembuat </td>
@@ -295,11 +290,9 @@
                 @endif
             </td>
             <td>Kemasan Dalam</td>
-            @if( $qty_jumlahkemasandalam == null || $qty_jumlahkemasandalam == '' )
-                <td style="text-align:center">-</td>
-            @else
+          
             <td>{{ $qty_jumlahkemasandalam }}</td>
-            @endif
+           
         </tr>
         <tr>
             <td>Pemasok / Agent </td>
@@ -312,63 +305,47 @@
             </td>
             <td rowspan="4">KONDISI & JUMLAH</td>
             <td>Kemasan Luar Baik</td>
-            @if( $qty_kondisikemasanluarbaik == null || $qty_kondisikemasanluarbaik == '' )
-                <td style="text-align:center">-</td>
-            @else
+            
             <td>{{ $qty_kondisikemasanluarbaik }}</td>
-            @endif
+            
         </tr>
         <tr>
             <td rowspan="2" style="width: 15%; vertical-align:middle;">JENIS KEMASAN</td>
             <td style="width: 20%; vertical-align:middle;">Luar</td>
-            @if( $qty_jeniskemasanluar == null || $qty_jeniskemasanluar == '' )
-                <td style="text-align:center">-</td>
-            @else
+          
             <td>{{ $qty_jeniskemasanluar }}</td>
-            @endif
+           
             <td>Kemasan Luar Tak Baik</td>
-            @if( $qty_kondisikemasanluartidakbaik == null || $qty_kondisikemasanluartidakbaik == '' )
-                <td style="text-align:center">-</td>
-            @else
+          
             <td>{{ $qty_kondisikemasanluartidakbaik }}</td>
-            @endif
+            
         </tr>
         <tr>
             <td>Dalam</td>
-            @if( $qty_jeniskemasandalam == null || $qty_jeniskemasandalam == '' )
-                <td style="text-align:center">-</td>
-            @else
+           
             <td>{{ $qty_jeniskemasandalam }}</td>
-            @endif
+           
             <td>Kemasan Dalam Baik</td>
-            @if( $qty_kondisikemasandalambaik == null || $qty_kondisikemasandalambaik == '' )
-                <td style="text-align:center">-</td>
-            @else
+           
             <td>{{ $qty_kondisikemasandalambaik }}</td>
-            @endif
+           
         </tr>
         <tr>
             <td rowspan="2" style="width: 15%; vertical-align:middle;">ISI/BERAT</td>
             <td style="width: 20%; vertical-align:middle;">Per Kemasan</td>
-            @if( $qty_isiberatperkemasan == null || $qty_isiberatperkemasan == '' )
-                <td style="text-align:center">-</td>
-            @else
+           
             <td>{{ $qty_isiberatperkemasan }}</td>
-            @endif
+            
             <td>Kemasan Dalam Tak Baik</td>
-            @if( $qty_kondisikemasandalamtidakbaik == null || $qty_kondisikemasandalamtidakbaik == '' )
-                <td style="text-align:center">-</td>
-            @else
+            
             <td>{{ $qty_kondisikemasandalamtidakbaik }}</td>
-            @endif
+            
         </tr>
         <tr>
             <td>Total Kemasan</td>
-            @if( $qty_isiberattotalkemasan == null || $qty_isiberattotalkemasan == '' )
-                <td style="text-align:center">-</td>
-            @else
+            
             <td>{{ $qty_isiberattotalkemasan }}</td>
-            @endif
+            
             <td colspan="3"></td>
         </tr>
     </table>
@@ -377,43 +354,33 @@
     <table>
         <tr>
             <td width="25%">Nama Barang</td>
-            @if( $nama_barang_penanda == null || $nama_barang_penanda == '' )
-                <td style="text-align:center">-</td>
-            @else
+           
             <td>{{ $nama_barang_penanda }}</td>
-            @endif
+           
         </tr>
         <tr>
             <td>Nomor Lot</td>
-            @if( $no_batch_penanda == null || $no_batch_penanda == '' )
-                <td style="text-align:center">-</td>
-                @else
+           
             <td>{{ $no_batch_penanda }}</td>
-            @endif
+           
         </tr>
         <tr>
             <td>Expiry Date</td>
-            @if( $expire_date_penanda == null || $expire_date_penanda == '' )
-                <td style="text-align:center">-</td>
-                @else
+           
             <td>{{ $expire_date_penanda }}</td>
-            @endif
+            
         </tr>
         <tr>
             <td>Mfg. Date</td>
-            @if( $mfg_date_penanda == null || $mfg_date_penanda == '' )
-                <td style="text-align:center">-</td>
-                @else
+           
             <td>{{ $mfg_date_penanda ?? '-' }}</td>
-            @endif
+            
         </tr>
         <tr>
             <td>Suhu Penyimpanan</td>
-            @if( $suhu_penanda == null || $suhu_penanda == '' )
-                <td style="text-align:center">-</td>
-                @else
+            
             <td>{{ $suhu_penanda ?? '-' }}</td>
-            @endif
+           
         </tr>
     </table>
 
