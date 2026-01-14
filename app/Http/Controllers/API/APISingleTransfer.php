@@ -1631,33 +1631,33 @@ class APISingleTransfer extends Controller
                 'Message' => "No Data Available"
             ], 422);
         }
-        $hasil = (new WSAServices())->wsaGetWlb($item, $lot, $site, $loc, $warehouse, $level, $bin);
-        // if ($hasil[0] == 'false') {
-        //     return response()->json([
-        //         'Status' => 'Error',
-        //         'Message' => "Data Not Found."
-        //     ], 422);
-        // } 
+        // $hasil = (new WSAServices())->wsaGetWlb($item, $lot, $site, $loc, $warehouse, $level, $bin);
+        // // if ($hasil[0] == 'false') {
+        // //     return response()->json([
+        // //         'Status' => 'Error',
+        // //         'Message' => "Data Not Found."
+        // //     ], 422);
+        // // } 
         
-        if($hasil[0] == 'true') {
-            $wsaData = collect($hasil[1]);
+        // if($hasil[0] == 'true') {
+        //     $wsaData = collect($hasil[1]);
             
-            // Add qty to each locationDetail
-            $getAllItemLocation->transform(function ($location) use ($wsaData) {
-                // Match based on location detail properties
-                $matchingWsa = $wsaData
-                    ->where('t_wrh', $location->getLocationDetail->ld_building)
-                    ->where('t_level', $location->getLocationDetail->ld_rak)
-                    ->where('t_bin', $location->getLocationDetail->ld_bin)
-                    ->first();
+        //     // Add qty to each locationDetail
+        //     $getAllItemLocation->transform(function ($location) use ($wsaData) {
+        //         // Match based on location detail properties
+        //         $matchingWsa = $wsaData
+        //             ->where('t_wrh', $location->getLocationDetail->ld_building)
+        //             ->where('t_level', $location->getLocationDetail->ld_rak)
+        //             ->where('t_bin', $location->getLocationDetail->ld_bin)
+        //             ->first();
 
-                // Add qty to getLocationDetail
-                $location->getLocationDetail->qty = $matchingWsa['t_qtyoh'] ?? 0;
+        //         // Add qty to getLocationDetail
+        //         $location->getLocationDetail->qty = $matchingWsa['t_qtyoh'] ?? 0;
 
-                return $location;
-            });
+        //         return $location;
+        //     });
 
-        }
+        // }
         return response()->json($getAllItemLocation);
     }
 }
