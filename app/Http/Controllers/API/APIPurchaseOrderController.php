@@ -260,9 +260,9 @@ class APIPurchaseOrderController extends Controller
             })
             ->values();
            
-        $dataQAD = $merged->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
+        //$dataQAD = $merged->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
        
-        return response()->json($dataQAD);
+        //return response()->json($dataQAD);
         $dataQAD = $merged->map(function ($item) use ($getAllItemLocation) {
             foreach ($getAllItemLocation as $datas) {
                 if (
@@ -277,9 +277,9 @@ class APIPurchaseOrderController extends Controller
             }
             return $item;
         });
-       
 
-        $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
+        $dataQAD = $dataQAD->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
+        // $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
        
         return response()->json($dataQAD);
     }
@@ -470,8 +470,8 @@ class APIPurchaseOrderController extends Controller
 
     public function getListUser(Request $req)
     {
-        $data = User::query()->with('getRole')->whereRelation('getRole','role_android_acc','like','%AP01%');
-
+        $data = User::query();
+// ->with('getRole')->whereRelation('getRole','role_android_acc','like','%AP01%');;
         if ($req->search) {
             $data->where('username', $req->search)
                 ->orWhere('name', $req->search);
@@ -622,37 +622,82 @@ class APIPurchaseOrderController extends Controller
         return response()->json($wsaData[1]);
     }
 
-     public function getWebLocationDataTransfer(Request $req)
+    public function getWebLocationDataReceipt(Request $req)
     {
-            $warehouse = $req->wh ?? '';
-            $level = $req->level ?? '';
-            $bin = $req->bin ?? '';
-            $site = $req->site ?? '';
-            $location = $req->location ?? '';
-            $item = $req->item ?? '';
-            $lot = $req->lot ?? '';
-            
-            $itemQuery = Item::query()->with('getItemLocation.getLocationDetail')->where('im_item_part',$item)->first();
-            
-            
-            $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function($query) use ($lot)
-            {$query->orderBy('ld_building');}])
-            ->where('il_item_id',$itemQuery->id);
+        $warehouse = $req->wh ?? '';
+        $level = $req->level ?? '';
+        $bin = $req->bin ?? '';
+        $site = $req->site ?? '';
+        $loc = $req->location ?? '';
+        $item = $req->item ?? '';
+        $lot = $req->lot ?? '';
 
-            if ($warehouse != '') {
-                $getAllItemLocation->whereRelation('getLocationDetail', 'ld_building', '=', $warehouse);
-            }
+        $location = Location::where('location_site', $site)->where('location_code', $loc)->first();
+        $locationdetail = LocationDetail::where('ld_location_id', $location->id)->where('ld_building', $warehouse)->where('ld_rak', $level)->where('ld_bin', $bin)->first();
 
-            $getAllItemLocation = $getAllItemLocation->get();
+        
+
+
+        $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function ($query) use ($lot) {
+            $query->orderBy('ld_building');
+        }])
             
-            if (count($getAllItemLocation) == 0) {
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "No Data Available"
-                ], 422);
-            }
+            ->whereRelation('getLocationDetail', 'ld_location_id', $location->id);
 
-            return response()->json($getAllItemLocation);
+        // if($lot != ''){
+        //     $getAllItemLocation->whereRelation('getLocationDetail', 'ld_lot_serial', '=', $lot);
+        // }
+        if($item != ''){
+            $itemQuery = Item::query()->with('getItemLocation.getLocationDetail')->where('im_item_part', $item)->first();
+             $getAllItemLocation->where('il_item_id', $itemQuery->id);
+        }
+        if ($warehouse != '') {
+            $getAllItemLocation->whereRelation('getLocationDetail', 'ld_building', '=', $warehouse);
+        }
+        if ($level != '') {
+            $getAllItemLocation->whereRelation('getLocationDetail', 'ld_rak', '=', $level);
+        }
+        if ($bin != '') {
+            $getAllItemLocation->whereRelation('getLocationDetail', 'ld_bin', '=', $bin);
+        }
+
+        $getAllItemLocation = $getAllItemLocation->get();
+
+
+        if (count($getAllItemLocation) == 0) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+        $hasil = (new WSAServices())->wsaGetWlb($item, $lot, $site, $loc, $warehouse, $level, $bin);
+        // if ($hasil[0] == 'false') {
+        //     return response()->json([
+        //         'Status' => 'Error',
+        //         'Message' => "Data Not Found."
+        //     ], 422);
+        // } 
+        
+        if($hasil[0] == 'true') {
+            $wsaData = collect($hasil[1]);
+            
+            // Add qty to each locationDetail
+            $getAllItemLocation->transform(function ($location) use ($wsaData) {
+                // Match based on location detail properties
+                $matchingWsa = $wsaData
+                    ->where('t_wrh', $location->getLocationDetail->ld_building)
+                    ->where('t_level', $location->getLocationDetail->ld_rak)
+                    ->where('t_bin', $location->getLocationDetail->ld_bin)
+                    ->first();
+
+                // Add qty to getLocationDetail
+                $location->getLocationDetail->qty = $matchingWsa['t_qtyoh'] ?? 0;
+
+                return $location;
+            });
+
+        }
+        return response()->json($getAllItemLocation);
     }
 
 }

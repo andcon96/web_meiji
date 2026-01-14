@@ -92,8 +92,8 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::post("getWebLocationData", [APIPurchaseOrderController::class, "getWebLocationData"]);
     Route::post("wsaNewLevel", [APIPurchaseOrderController::class, "wsaNewLevel"]);
     Route::post("wsaNewBin", [APIPurchaseOrderController::class, "wsaNewBin"]);
-     Route::post("wsaGetPotensi", [APIPurchaseOrderController::class, "wsaGetPotensi"]);
-
+    Route::post("wsaGetPotensi", [APIPurchaseOrderController::class, "wsaGetPotensi"]);
+    Route::post("getWebLocationDataReceipt", [APIPurchaseOrderController::class, "getWebLocationDataReceipt"]);
 
     // Shipment Schedule
     Route::get("getShipmentSchedule", [APIShipmentScheduleController::class, "index"]);
@@ -186,6 +186,7 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     // Route::post("sendTransferItem", [APIPicklistShopping::class, "sendTransferItem"]);
     Route::get("getLocationData", [APISingleTransfer::class, "getLocationData"]);
      Route::post("getWebLocationDataTransfer", [APISingleTransfer::class, "getWebLocationDataTransfer"]);
+     
     
     Route::get("getSiteData", [APISingleTransfer::class, "getSiteData"]);
     
