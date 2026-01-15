@@ -418,7 +418,7 @@ class QxtendServices
                                     <lotserial>' .
             $lotserial .
             '</lotserial>
-            lotref>'.$ref.'</lotref>
+            <lotref>'.$ref.'</lotref>
                                     <multiEntry>false</multiEntry>
                                     <chgAttr>true</chgAttr>
                                     <chgExpire>' .
@@ -485,7 +485,8 @@ class QxtendServices
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace("ns1", "urn:schemas-qad-com:xml-services");
-
+        log::info($qdocRequest);
+        log::info($qdocResponse);
         $qdocResult = (string) $xmlResp->xpath("//ns1:result")[0];
 
         if ($qdocResult == "success" or $qdocResult == "warning") {

@@ -625,7 +625,7 @@ class APIController extends Controller
 
     public function getHistoryData(Request $req)
     {
-        $number = $req->number;
+        $number = $req->trnbr;
         $part = $req->part;
         $program = $req->program;
         $data = TransactionHistory::query();

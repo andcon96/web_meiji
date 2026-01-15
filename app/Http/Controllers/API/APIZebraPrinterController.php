@@ -10,6 +10,7 @@ use App\Services\ZebraPrinterServices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Models\API\PurchaseOrderMaster;
+
 class APIZebraPrinterController extends Controller
 {
     public function getDataPrintQR(Request $request)
@@ -33,7 +34,7 @@ class APIZebraPrinterController extends Controller
         if ($bookNumber) {
             $data->where('rd_nomor_buku', '=', $bookNumber);
         }
-        if($itemNumber){
+        if ($itemNumber) {
             // $data->where('rd_nama_barang', '=', $itemNumber);
             $data->whereRelation('getPurchaseOrderDetail', 'pod_part', '=', $itemNumber);
         }
@@ -61,9 +62,12 @@ class APIZebraPrinterController extends Controller
                     "itemDesc"     => $datas->get_purchase_order_detail->pod_part_desc1,
                     "itemDes2"     => $datas->get_purchase_order_detail->pod_part_desc2,
                     "lotSerial"    => $datas->rd_batch,
-                    "itemRef"      => $datas->rd_ref,
-                    "supplierCode" => $datas->get_master->get_purchase_order_master->po_vend,
-                    "supplierDesc" => $datas->get_master->get_purchase_order_master->po_vend_desc,
+                    // "itemRef"      => $datas->rd_ref,
+                    // "supplierCode" => $datas->get_master->get_purchase_order_master->po_vend,
+                    // "supplierDesc" => $datas->get_master->get_purchase_order_master->po_vend_desc,
+                    "itemRef"      => $datas->rd_kode_cetak,
+                    "supplierCode" => '',
+                    "supplierDesc" => '',
                     "receiptDate"  => $datas->rd_tanggal_datang,
                     "expDate"      => $datas->rd_tgl_expire,
                     "CurP"         => $i,
@@ -96,11 +100,11 @@ class APIZebraPrinterController extends Controller
     public function getPoPrint(Request $request)
     {
         $data = PurchaseOrderMaster::query();
-        
-        if($request->search){
+
+        if ($request->search) {
             $data->where('po_nbr', 'like', '%' . $request->search . '%');
         }
-        
+
 
         $data = $data->orderBy('po_nbr')->get();
 
@@ -110,8 +114,8 @@ class APIZebraPrinterController extends Controller
     public function getBookPrint(Request $request)
     {
         $data = ReceiptDetail::select('rd_nomor_buku')->query();
-        
-        if($request->search){
+
+        if ($request->search) {
             $data->where('rd_nomor_buku', 'like', '%' . $request->search . '%');
         }
         $data = $data->groupBy('rd_nomor_buku')->orderBy('rd_nomor_buku')->get();
@@ -122,9 +126,9 @@ class APIZebraPrinterController extends Controller
 
     public function getItemPrint(Request $request)
     {
-       
+
         $data = ReceiptDetail::select('rd_nama_barang')->query();
-        if($request->search){
+        if ($request->search) {
             $data->where('rd_nama_barang', 'like', '%' . $request->search . '%');
         }
         $data = $data
@@ -136,9 +140,9 @@ class APIZebraPrinterController extends Controller
     }
     public function getPrinterPrint(Request $request)
     {
-       
+
         $data = PrinterSetup::query();
-        if($request->search){
+        if ($request->search) {
             $data->where('ps_printer_name', 'like', '%' . $request->search . '%');
         }
         $data = $data
@@ -148,5 +152,4 @@ class APIZebraPrinterController extends Controller
 
         return GeneralResources::collection($data);
     }
-
 }

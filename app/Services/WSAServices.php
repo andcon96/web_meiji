@@ -617,7 +617,7 @@ class WSAServices
         return $qdocResult;
     }
 
-    public function wsaUpdateStockTableCustom($part, $loc, $lot, $bin, $lvl, $site, $building, $qty, $entryDate, $expDate,$potensi)
+    public function wsaUpdateStockTableCustom($part, $loc, $lot, $bin, $lvl, $site, $building, $qty, $entryDate, $expDate,$potensi,$ref)
     {
         $wsa = qxwsa::first();
 
@@ -643,6 +643,7 @@ class WSAServices
             '<inpEntryDate>' . $entryDate . '</inpEntryDate>' .
             '<inpExpDate>' . $expDate . '</inpExpDate>' .
             '<inpPotensi>' . $potensi . '</inpPotensi>' .
+            '<inpRef>' . $ref . '</inpRef>' .
             '</meiji_update_xxinv_det>' .
             '</Body>' .
             '</Envelope>';

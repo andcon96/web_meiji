@@ -1599,7 +1599,7 @@ class APISingleTransfer extends Controller
         $location = Location::where('location_site', $site)->where('location_code', $loc)->first();
         if (!$location) {
             return collect();
-        }
+        } // 1
         $locationdetail = LocationDetail::query()->where('ld_location_id', $location->id);
         if ($warehouse != '') {
             $locationdetail->where('ld_building', '=', $warehouse);
@@ -1618,13 +1618,22 @@ class APISingleTransfer extends Controller
         if (!$itemQuery) {
             return collect();
         }
-
+        $arrayloc = [];
+        $stringloc = '';
+        foreach($locationdetail as $locdetail){
+            $stringloc .= $locdetail . ',';
+        }
+        // dd($stringloc, $itemQuery->id);
         $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function ($query) use ($lot) {
             $query->orderBy('ld_building');}])
             ->where('il_item_id', $itemQuery->id)
             ->whereIn('il_ld_id', $locationdetail)
             ->get();
-
+            // foreach($getAllItemLocation as $key => $value){
+            //     dump($value->getLocationDetail->ld_rak);
+            // }
+            // dd('a');
+        
 
         if (count($getAllItemLocation) == 0) {
             return response()->json([

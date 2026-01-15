@@ -262,25 +262,40 @@ class APIPurchaseOrderController extends Controller
            
         //$dataQAD = $merged->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
        
-        //return response()->json($dataQAD);
-        $dataQAD = $merged->map(function ($item) use ($getAllItemLocation) {
-            foreach ($getAllItemLocation as $datas) {
-                if (
-                    $item['t_inv_level'] == $datas->ld_rak &&
-                    $item['t_inv_wrh'] == $datas->ld_building &&
-                    $item['t_inv_bin'] == $datas->ld_bin &&
-                    $item['t_inv_loc'] == $datas->getMaster->location_code
-                ) {
-                    $item['t_is_prioritize'] = '1';
-                    break;
-                }
-            }
-            return $item;
-        });
+        // //return response()->json($dataQAD);
+        // $dataQAD = $merged->map(function ($item) use ($getAllItemLocation) {
+        //     foreach ($getAllItemLocation as $datas) {
+        //         if (
+        //             $item['t_inv_level'] == $datas->ld_rak &&
+        //             $item['t_inv_wrh'] == $datas->ld_building &&
+        //             $item['t_inv_bin'] == $datas->ld_bin &&
+        //             $item['t_inv_loc'] == $datas->getMaster->location_code
+        //         ) {
+        //             $item['t_is_prioritize'] = '1';
+        //             break;
+        //         }
+        //     }
+        //     return $item;
+        // });
+
+        $dataQAD = $merged->filter(function ($item) use ($getAllItemLocation) {
+    foreach ($getAllItemLocation as $datas) {
+        if (
+            $item['t_inv_level'] == $datas->ld_rak &&
+            $item['t_inv_wrh'] == $datas->ld_building &&
+            $item['t_inv_bin'] == $datas->ld_bin &&
+            $item['t_inv_loc'] == $datas->getMaster->location_code
+        ) {
+            return true; // Keep this item
+        }
+    }
+    return false; // Exclude this item
+})
+->values();
 
         $dataQAD = $dataQAD->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
         // $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
-       
+
         return response()->json($dataQAD);
     }
 
@@ -622,7 +637,53 @@ class APIPurchaseOrderController extends Controller
         return response()->json($wsaData[1]);
     }
 
-    public function getWebLocationDataReceipt(Request $req)
+ 
+    public function getAllWarehouse(Request $req){
+        $warehouse = $req->wh ?? '';
+        $level = $req->level ?? '';
+        $bin = $req->bin ?? '';
+        $site = $req->site ?? '';
+        $loc = $req->location ?? '';
+        $item = $req->item ?? '';
+        $lot = $req->lot ?? '';
+
+        $location = Location::where('location_site', $site)->where('location_code', $loc)->first();
+        $warehouse = LocationDetail::where('ld_location_id', $location->id)->groupBy('ld_building')->orderBy('ld_building')->select('ld_building')->get();
+        return response()->json($warehouse);
+    }
+    public function getAllLevel(Request $req){
+
+        $warehouse = $req->wh ?? '';
+        $level = $req->level ?? '';
+        $bin = $req->bin ?? '';
+        $site = $req->site ?? '';
+        $loc = $req->location ?? '';
+        $item = $req->item ?? '';
+        $lot = $req->lot ?? '';
+
+        $location = Location::where('location_site', $site)->where('location_code', $loc)->first();
+        $level = LocationDetail::where('ld_location_id', $location->id)->where('ld_building', $warehouse)->groupBy('ld_rak')->orderBy('ld_rak')->select('ld_rak')->get();
+
+        return response()->json($level);
+    }
+
+    public function getAllBin(Request $req){
+
+        $warehouse = $req->wh ?? '';
+        $level = $req->level ?? '';
+        $bin = $req->bin ?? '';
+        $site = $req->site ?? '';
+        $loc = $req->location ?? '';
+        $item = $req->item ?? '';
+        $lot = $req->lot ?? '';
+
+        $location = Location::where('location_site', $site)->where('location_code', $loc)->first();
+        $bin = LocationDetail::where('ld_location_id', $location->id)->where('ld_building', $warehouse)->where('ld_rak', $level)->groupBy('ld_bin')->orderBy('ld_bin')->select('ld_bin')->get();
+
+        return response()->json($bin);
+    }
+
+     public function getWebLocationDataReceipt(Request $req)
     {
         $warehouse = $req->wh ?? '';
         $level = $req->level ?? '';
