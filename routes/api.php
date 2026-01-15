@@ -232,6 +232,7 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::post("/transferSampling", [APISampling::class, 'transferSampling']);
     
     Route::get("/getPengembalianQo", [APIPengembalian::class, 'getPengembalianQo']);
+        Route::post("/checkWarehouseReturn", [APIPengembalian::class, 'checkWarehouseReturn']);
     Route::get("/getLotPengembalian", [APIPengembalian::class, 'getLotPengembalian']);
     Route::post("/transferPengembalianQo", [APIPengembalian::class, 'transferPengembalianQo']);
     

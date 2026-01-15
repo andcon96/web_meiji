@@ -37,8 +37,10 @@ class APISampling extends Controller
     public function getSamplingData(Request $req)
     {
 
-        $item = $req->item ?? '';
+        $item = $req->item?? '';
         $lot = $req->lot ?? ''; 
+        $search = $req->query('search') ?? '';
+        
        if($lot != ''){
         if($item != ''){
             
@@ -64,6 +66,7 @@ class APISampling extends Controller
         }
        }
        else{
+       
          $wsaData = (new WSAServices())->wsaGetSamplingData($item,  $lot,'QC-QRT');
         if ($wsaData[0] == 'false') {
             return response()->json([

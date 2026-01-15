@@ -263,6 +263,7 @@ class ReceiptServices
             $findReceiptDetail->rd_location_penyimpanan = $data->rd_location_penyimpanan;
             $findReceiptDetail->rd_level_penyimpanan = $data->rd_level_penyimpanan;
             $findReceiptDetail->rd_bin_penyimpanan = $data->rd_bin_penyimpanan;
+            $findReceiptDetail->rd_keterangan_tambahan = $data->rd_keterangan_tambahan;
             $findReceiptDetail->rd_building_penyimpanan = $data->rd_building_penyimpanan;
             // $findReceiptDetail->rd_status = 'Waiting';
             $findReceiptDetail->rd_status = 'Checked';

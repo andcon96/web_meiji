@@ -330,5 +330,12 @@ return [
             "days" => "30",
             "permission" => 0775,
         ],
+                "samplingLog" => [
+            "driver" => "daily",
+            "path" => storage_path("logs/samplingLog.log"),
+            "level" => "info",
+            "days" => "30",
+            "permission" => 0775,
+        ],
     ],
 ];

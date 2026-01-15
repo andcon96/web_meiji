@@ -625,21 +625,27 @@ class APIController extends Controller
 
     public function getHistoryData(Request $req)
     {
-        $number = $req->trnbr;
-        $part = $req->part;
-        $program = $req->program;
+        $number = $req->query('trnbr') ?? '';
+        $part = $req->query('part') ?? '';
+        $program = $req->query('program') ?? '';
+        $lot = $req->query('lot') ?? '';
         $data = TransactionHistory::query();
-        if ($number) {
-            $data = $data->where('tr_nbr', 'LIKE', '%' . $number . '%');
+
+        if (!empty($number)) {
+            $data->where('tr_nbr', 'LIKE', '%' . $number . '%');
         }
-        if ($part) {
-            $data = $data->where('tr_part', 'LIKE', '%' . $part . '%');
+        if (!empty($part)) {
+            $data->where('tr_part', 'LIKE', '%' . $part . '%');
         }
-        if ($program) {
-            $data = $data->where('tr_program', 'LIKE', '%' . $program . '%');
+        if (!empty($program)) {
+            $data->where('tr_program', 'LIKE', '%' . $program . '%');
         }
+        if (!empty($lot)) {
+            $data->where('tr_lot', 'LIKE', '%' . $lot . '%');
+        }
+
         $data = $data->orderBy('id', 'DESC')->paginate(100);
-        
+        // dd($data); // Remove this when done debugging
 
         return GeneralResources::collection($data);
     }
@@ -706,8 +712,8 @@ class APIController extends Controller
     public function getAPKLatestVersion()
     {
         $data = MobileApk::where('apk_is_active', 1)
-        ->orderByDesc('apk_updated_number')
-        ->first();
+            ->orderByDesc('apk_updated_number')
+            ->first();
 
         return response()->json($data);
     }

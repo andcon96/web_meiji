@@ -147,7 +147,7 @@ class APISingleTransfer extends Controller
                 $newTransactionHistoryfrom->tr_lot = $lotfrom ?? '';
                 $newTransactionHistoryfrom->tr_qty = $qtyoh ?? '';
                 $newTransactionHistoryfrom->tr_date = date('Y-m-d H:i:s');
-                $newTransactionHistoryfrom->tr_ref = '';
+                $newTransactionHistoryfrom->tr_reference = '';
                 $newTransactionHistoryfrom->tr_site = $sitefrom ?? '';
                 $newTransactionHistoryfrom->tr_location = $locfrom ?? '';
                 $newTransactionHistoryfrom->tr_warehouse = $buildingfrom ?? '';
@@ -167,7 +167,7 @@ class APISingleTransfer extends Controller
                 $newTransactionHistory->tr_lot = $lotto ?? '';
                 $newTransactionHistory->tr_qty = $qtyoh ?? '';
                 $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                $newTransactionHistory->tr_ref = '';
+                $newTransactionHistory->tr_reference = '';
                 $newTransactionHistory->tr_site = $siteto ?? '';
                 $newTransactionHistory->tr_location = $locto ?? '';
                 $newTransactionHistory->tr_warehouse = $buildingto ?? '';

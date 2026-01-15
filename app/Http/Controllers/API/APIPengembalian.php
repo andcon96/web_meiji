@@ -125,6 +125,7 @@ class APIPengembalian extends Controller
             $hasil = (new WSAServices())->wsaTransferSamplingData($item, $lot,$sitefrom,$locfrom,'SAMPLING',$whfrom,$levelfrom,$binfrom,$qty);
         
             if ($hasil == 'false') {
+                log::channel('samplingLog')->info('masuk false transfer');
                 return response()->json([
                     'Status' => 'Error',
                     'Message' => "Transfer sampling Item Failed for Item : " . $item
@@ -137,7 +138,7 @@ class APIPengembalian extends Controller
                 //     'Message' => "Transfer sampling Item Failed for Item : " . $item
                 // ], 422);
                 // } else {
-
+                    log::channel('samplingLog')->info('masuk true transfer');
                     $user = Auth::user()->name;
                      // Transaction History
                         $newTransactionHistory = new TransactionHistory();
@@ -151,7 +152,7 @@ class APIPengembalian extends Controller
                         $newTransactionHistory->tr_lot = $lot ?? '';
                         $newTransactionHistory->tr_qty = $qty ?? '';
                         $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                        $newTransactionHistory->tr_ref = '';
+                        $newTransactionHistory->tr_reference = '';
                         $newTransactionHistory->tr_site = $siteto ?? '';
                         $newTransactionHistory->tr_location = $locto ?? '';
                         $newTransactionHistory->tr_warehouse = $whfrom ?? '';
@@ -159,6 +160,7 @@ class APIPengembalian extends Controller
                         $newTransactionHistory->tr_bin = $binfrom ?? '';
                         $newTransactionHistory->tr_remark = '';
                         $newTransactionHistory->save();
+                        
                     return response()->json([
                         'Status' => 'Success',
                         'Message' => "Transfer sampling Item Success for Item : " . $item
@@ -193,6 +195,41 @@ class APIPengembalian extends Controller
         }
 
         return response()->json($wsaData[1]);
+
+    }
+
+        public function checkWarehouseReturn(Request $req)
+    {
+
+        $item = $req->item ?? '';
+        $lot = $req->lot ?? ''; 
+        $wh = $req->warehouse ?? '';
+        $level = $req->level ?? '';
+        $bin = $req->bin ?? '';
+
+            $wsaData = (new WSAServices())->wsaGetWarehouseCheckReturn($item,  $lot,'SAMPLING',$wh,$level,$bin);
+            if ($wsaData[0] == 'false') {
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "No Data Available"
+                ], 422);
+            }
+            else {
+            $listData = $wsaData[1];
+
+            return response()->json(
+            [
+                'DataWSA' => $listData
+            ],
+            200
+        );
+        }
+
+        return response()->json($wsaData[1]);
+
+      
+        
+     
 
     }
 }
