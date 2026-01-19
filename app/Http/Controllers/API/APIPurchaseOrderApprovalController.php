@@ -107,16 +107,17 @@ class APIPurchaseOrderApprovalController extends Controller
                     $detailReceipt->save();
 
                     //getDetail Receipt
-                    $data = ReceiptDetail::with('getMaster')->find($tempApprove->art_receipt_det_id);
+                    $data = ReceiptDetail::with(['getMaster','getPurchaseOrderDetail'])->find($tempApprove->art_receipt_det_id);
                     $getMaster = $data->getMaster;
-
+                    $getPurchaseOrderDetail = $data->getPurchaseOrderDetail;
                      // Transaction History
                         $newTransactionHistory = new TransactionHistory();
                         $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
                         $newTransactionHistory->tr_program = 'PO Approval Module';
                         $newTransactionHistory->tr_activity = 'Reject Receipt';
                         $newTransactionHistory->tr_user = $approver ?? '';
-                        $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                        // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                        $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
                         $newTransactionHistory->tr_uom = $data->satuan ?? '';
                         $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                         $newTransactionHistory->tr_lot = $data->batch_penanda ?? '';
@@ -249,14 +250,15 @@ class APIPurchaseOrderApprovalController extends Controller
                     //getDetail Receipt
                     $data = ReceiptDetail::with('getMaster')->find($tempApprove->art_receipt_det_id);
                     $getMaster = $data->getMaster;
-
+                    $getPurchaseOrderDetail = $data->getPurchaseOrderDetail;
                      // Transaction History
                         $newTransactionHistory = new TransactionHistory();
                         $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
                         $newTransactionHistory->tr_program = 'PO Approval Module';
                         $newTransactionHistory->tr_activity = 'Approve Receipt';
                         $newTransactionHistory->tr_user = $approver ?? '';
-                        $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                        // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                        $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
                         $newTransactionHistory->tr_uom = $data->satuan ?? '';
                         $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                         $newTransactionHistory->tr_lot = $data->batch_penanda ?? '';

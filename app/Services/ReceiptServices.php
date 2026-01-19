@@ -61,7 +61,7 @@ class ReceiptServices
                 } else {
                     $reference = $dataDetail->qty_potensi;
                 }
-
+                $getPurchaseOrderDetail = PurchaseOrderDetail::find($dataDetail->id_pod_det);
                 // Receipt Detail
                 $newReceiptDetail = new ReceiptDetail();
                 $newReceiptDetail->rd_rm_id = $newReceiptMaster->id;
@@ -134,7 +134,9 @@ class ReceiptServices
                     $newTransactionHistory->tr_program = 'PO Receipt Module';
                     $newTransactionHistory->tr_activity = 'Create Receipt';
                     $newTransactionHistory->tr_user = $creator ?? '';
-                    $newTransactionHistory->tr_part = $dataDetail->nama_barang ?? '';
+                    // $newTransactionHistory->tr_part = $dataDetail->nama_barang ?? '';
+                    $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
+                    
                     $newTransactionHistory->tr_uom = '';
                     $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                     $newTransactionHistory->tr_lot = $dataDetail->batch_penanda ?? '';
@@ -271,7 +273,7 @@ class ReceiptServices
 
             //get master
             $getMaster = ReceiptMaster::findOrFail($findReceiptDetail->rd_rm_id);
-
+            $getPurchaseOrderDetail = PurchaseOrderDetail::findOrFail($findReceiptDetail->rd_pod_det_id);
             // Dokumen
             $newReceiptDetailDokumen = ReceiptDokumen::findOrFail($data->get_dokumen->id);
             $newReceiptDetailDokumen->rdd_is_purchase_order = $data->get_dokumen->rdd_is_purchase_order;
@@ -341,7 +343,8 @@ class ReceiptServices
                 $newTransactionHistory->tr_program = 'PO Receipt Module';
                 $newTransactionHistory->tr_activity = 'Edit Receipt';
                 $newTransactionHistory->tr_user = $creator ?? '';
-                $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
                 $newTransactionHistory->tr_uom = '';
                 $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                 $newTransactionHistory->tr_lot = $data->batch_penanda ?? '';
