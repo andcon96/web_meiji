@@ -72,7 +72,9 @@ class APIPurchaseOrderApprovalController extends Controller
         try {
             DB::beginTransaction();
             $approver = Auth::user()->name;
+
             switch ($req->action) {
+                
                 case 'Reject':
                     // Update Status Current
                     $tempApprove = ApprovalReceiptTemp::find($req->idApproval);
@@ -143,7 +145,7 @@ class APIPurchaseOrderApprovalController extends Controller
                     $tempApprove->save();
 
                     // Get Sisa Approval Temp yg blm approve
-                    $sisaApproval = ApprovalReceiptTemp::where('art_receipt_det_id', $tempApprove->art_receipt_det_id)->where('art_status', 'Waiting')->count();
+                    $sisaApproval = ApprovalReceiptTemp::where('art_receipt_det_id', $tempApprove->art_receipt_det_id)->where('art_status', 'Checked')->count();
                     if ($sisaApproval == 0) {
                         // Pindain ke Approval Receipt Hist.
                         $getAllApproval = ApprovalReceiptTemp::where('art_receipt_det_id', $tempApprove->art_receipt_det_id)->get();
