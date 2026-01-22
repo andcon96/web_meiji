@@ -168,7 +168,7 @@ class APIPurchaseOrderApprovalController extends Controller
                         ApprovalReceiptTemp::where('art_receipt_det_id', $tempApprove->art_receipt_det_id)->delete();
 
                         // Ubah Status Receipt Det -> Approved
-                        $detailReceipt = ReceiptDetail::find($tempApprove->art_receipt_det_id);
+                        $detailReceipt = ReceiptDetail::with(['getDokumen','getKemasan'])->find($tempApprove->art_receipt_det_id);
                         $detailReceipt->rd_status = 'Approved';
                         $detailReceipt->save();
 
@@ -191,6 +191,8 @@ class APIPurchaseOrderApprovalController extends Controller
                         $expireddate = date('Y-m-d', strtotime($dataReceipt->rd_tgl_expire)) ;
                         // Assign pod_um_conv sebelum receipt -> request bang dany
                         $changeUmConv = (new WSAServices())->wsaChangeUmConv($poNbr, $line, $qtyPotensi);
+                        $suratjalan = $dataReceipt->getDokumen->rdd_surat_jalan ?? '';
+                        $jumlahkemasanluar = $dataReceipt->getKemasan->rdk_jumlah_kemasan_luar ?? 0;
                         if ($changeUmConv == false) {
                             DB::rollback();
                             return response()->json([
@@ -201,7 +203,7 @@ class APIPurchaseOrderApprovalController extends Controller
 
 
                         
-                        $submitReceiptQxtend = (new QxtendServices())->qxPurchaseOrderReceipt($poNbr, $line, $lotserialQty, $receiptUm, $site, $location, $lotserial,$expireddate,$ref);
+                        $submitReceiptQxtend = (new QxtendServices())->qxPurchaseOrderReceipt($poNbr, $line, $lotserialQty, $receiptUm, $site, $location, $lotserial,$expireddate,$ref,$suratjalan,$jumlahkemasanluar);
                         if ($submitReceiptQxtend == false) {
                             DB::rollback();
                             return response()->json([

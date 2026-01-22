@@ -158,7 +158,7 @@ class APIPurchaseOrderController extends Controller
 
 
                     $newReceiptAttachment = new ReceiptAttachment();
-                    $newReceiptAttachment->rda_rd_det_id = $inputan->rd_pod_det_id;
+                    $newReceiptAttachment->rda_rd_det_id = $inputan->id;
                     $newReceiptAttachment->rda_filepath = $filepath . $filename;
                     $newReceiptAttachment->save();
                 }

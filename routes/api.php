@@ -43,7 +43,7 @@ Route::post("sendQxCompIssue", [APIController::class, "sendQxCompIssue"]);
 
     // Get APK Latest Version
     Route::get("getAPKLatestVersion", [APIController::class, "getAPKLatestVersion"]);
-Route::middleware(["auth:api", "token.api"])->group(function () {
+    Route::middleware(["auth:api", "token.api"])->group(function () {
 
     // PO
     Route::get("getDataPO", [APIPurchaseOrderController::class, "index"]);

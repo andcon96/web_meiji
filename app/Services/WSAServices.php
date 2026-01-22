@@ -1739,7 +1739,7 @@ class WSAServices
         ];
     }
 
-    public function wsaUpdateStatusPick($picknbr, $status)
+    public function wsaUpdateStatusPick($picknbr, $status, $qty, $part, $lot)
     {
 
         $wsa = qxwsa::first();
@@ -1765,6 +1765,9 @@ class WSAServices
             '<inpdomain>' . $domainCode . '</inpdomain>
             <inppick>' . $picknbr . '</inppick>
             <inpstatus>' . $status . '</inpstatus>' .
+            '<inpqty>'.$qty.'</inpqty>
+            <inppart>'.$part.'</inppart>
+            <inplot>'.$lot.'</inplot>'.
             '</meiji_update_status_xxpick>' .
             '</Body>' .
             '</Envelope>';
