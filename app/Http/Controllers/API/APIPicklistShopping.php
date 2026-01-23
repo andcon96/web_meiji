@@ -704,8 +704,8 @@ class APIPicklistShopping extends Controller
         $data = $req->input('data');
         $lot = $data['lot'];
         $part = $data['wodpart'];
-        $qty = $data['qtysmp'];
-        $locto = $data['loc'];
+        $qty = $data['qtyshp'];
+        // $locto = $data['loc'];
         $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $status, $qty, $part, $lot);
         if ($hasil[0] == 'false') {
             return response()->json([
