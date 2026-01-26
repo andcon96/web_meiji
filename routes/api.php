@@ -50,7 +50,7 @@ Route::post("sendQxCompIssue", [APIController::class, "sendQxCompIssue"]);
     Route::post("saveReceipt", [APIPurchaseOrderController::class, "saveReceipt"]);
     Route::post("saveEditReceipt", [APIPurchaseOrderController::class, "saveEditReceipt"]);
     Route::get("getWarehouseReceipt", [APIPurchaseOrderController::class, "wsaWarehouse"]);
-    Route::get("wsaPenyimpananPalet", [APIPurchaseOrderController::class, "wsaPenyimpananPalet"]);
+    Route::get("wsaPenyimpananPalet", [APIPurchaseOrderController::class, "wsaPenyimpananPaletSearch"]);
     
     Route::get("getDataPORecheck", [APIPurchaseOrderRecheckController::class, "index"]);
     Route::post("submitRecheckReceipt", [APIPurchaseOrderRecheckController::class, "saveReceiptRecheck"]);
