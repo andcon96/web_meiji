@@ -1155,28 +1155,12 @@ class APIPicklistShopping extends Controller
                 'Message' => "Update Qty Pick Failed for Picklist : " . $picknbr
             ], 422);
         } else {
-            try {
-                DB::beginTransaction();
-                $hasil = PicklistLocationTo::firstOrNew(
-                    ['picklist_number' => $picknbr],
-
-                );
-                $hasil->location_to = $locto;
-
-                $hasil->save();
-                DB::commit();
+             DB::commit();
                 return response()->json(
                     'success',
                     200
                 );
-            } catch (\Exception $e) {
-                DB::rollBack();
-                Log::channel('Picklist')->info($e);
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "Picklist Transfer Input Error"
-                ], 422);
-            }
+            
         }
     }
 
@@ -1199,14 +1183,14 @@ class APIPicklistShopping extends Controller
 
         // $locto = $data['loc'];
         if ($status == 'Receipt') {
-            $pickloctodata = PicklistLocationTo::where('picklist_number', $picknbr)->first();
-            if ($pickloctodata == null) {
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "Location To for Picklist : " . $picknbr . " Not Found. Please do Transfer Process First."
-                ], 422);
-            }
-            $picklocto = $pickloctodata->location_to;
+            // $pickloctodata = PicklistLocationTo::where('picklist_number', $picknbr)->first();
+            // if ($pickloctodata == null) {
+            //     return response()->json([
+            //         'Status' => 'Error',
+            //         'Message' => "Location To for Picklist : " . $picknbr . " Not Found. Please do Transfer Process First."
+            //     ], 422);
+            // }
+            // $picklocto = $pickloctodata->location_to;
 
             $wonbr = $req->input('wonbr');
             // foreach ($wonbr as $wo) {
@@ -1223,15 +1207,15 @@ class APIPicklistShopping extends Controller
             $bin = $data['bin'];
             $qtypick = $data['qtywip'];
             $site = $req->input('site');
-            $loc = $req->input('loc');
+            // $loc = $req->input('loc');
             // dd($req->all(),$status,$pickloctodata,$picklocto);
-            $qxtendsingleitem = (new QxtendServices())->qxTransferSingleItemWo($wodpart, $wonbr, $site, $site, $loc, $picklocto, $qtypick, '', '', '', $lot);
-            if ($qxtendsingleitem == 'false') {
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
-                ], 422);
-            }
+            // $qxtendsingleitem = (new QxtendServices())->qxTransferSingleItemWo($wodpart, $wonbr, $site, $site, $loc, $picklocto, $qtypick, '', '', '', $lot);
+            // if ($qxtendsingleitem == 'false') {
+            //     return response()->json([
+            //         'Status' => 'Error',
+            //         'Message' => "Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
+            //     ], 422);
+            // }
             // }
             // }
 
@@ -1249,10 +1233,10 @@ class APIPicklistShopping extends Controller
                 );
             }
         } else if ($status == 'Deny') {
-
+            $statusnew = 'PICK';
             //return to previous status
-            $status = 'Approve';
-            $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $status, $qty, $part, $lot);
+            // $status = 'Approve';
+            $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $statusnew, $qty, $part, $lot);
             if ($hasil[0] == 'false') {
                 return response()->json([
                     'Status' => 'Error',
