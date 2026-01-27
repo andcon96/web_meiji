@@ -842,7 +842,7 @@ class WSAServices
         }
 
         $xmlResp = simplexml_load_string($qdocResponse);
-
+// dd($qdocRequest,$qdocResponse);
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
         $dataloop    = $xmlResp->xpath('//ns1:tempRow');
@@ -1732,7 +1732,7 @@ class WSAServices
 
         $dataloop    = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-
+        
         return [
             $qdocResult,
             $dataloop,

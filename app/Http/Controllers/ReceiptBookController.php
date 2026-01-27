@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\API\ReceiptDetail;
+use App\Models\API\TransactionHistory;
 use App\Services\ServerURL;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -12,7 +13,7 @@ class ReceiptBookController extends Controller
     public function getReceiptBook(Request $request)
     {
         $menuMaster = (new ServerURL())->currentURL($request);
-        $data = ReceiptDetail::query()->with(['getMaster.getPurchaseOrderMaster','getPurchaseOrderDetail', 'getDokumen', 'getKemasan', 'getKendaraan', 'getPenanda', 'getPallet']);
+        $data = ReceiptDetail::query()->with(['getMaster.getPurchaseOrderMaster', 'getPurchaseOrderDetail', 'getDokumen', 'getKemasan', 'getKendaraan', 'getPenanda', 'getPallet']);
 
         if ($request->search) {
             $data->where('rd_nomor_buku', $request->search)
@@ -26,7 +27,25 @@ class ReceiptBookController extends Controller
 
     public function printBook(Request $request, $id)
     {
-        $dataReceipt = ReceiptDetail::with(['getMaster.getPurchaseOrderMaster', 'getDokumen', 'getKemasan', 'getKendaraan', 'getPenanda', 'getPallet'])->findOrFail($id);
+        $dataReceipt = ReceiptDetail::with(['getMaster.getPurchaseOrderMaster', 'getDokumen', 'getKemasan', 'getKendaraan', 'getPenanda', 'getPallet', 'getApprovalHist.getUserApprove', 'getApprovalHist.getUserApproveAlt'])->findOrFail($id);
+        $receiptnumber = $dataReceipt->getMaster->rm_rn_number;
+        $transactionHist = TransactionHistory::where('tr_program', 'PO Receipt Module')->where('tr_activity', 'Create Receipt')->where('tr_nbr', $receiptnumber)->first();
+        
+        if($transactionHist){
+             $approver[] = [['Approved' ?? ''],[$transactionHist->tr_user ?? ''],[$transactionHist->updated_at ?? '']];
+        }
+        
+       
+
+                
+        foreach ($dataReceipt->getApprovalHist as $status) {
+
+            $approver[] = [[$status->arh_status],[$status->getUserApprove->name],[$status->updated_at]];
+
+
+            
+        }
+        
 
         $data = [
             'no_buku' => $dataReceipt->rd_nomor_buku,
@@ -77,7 +96,8 @@ class ReceiptBookController extends Controller
             'kendaraan_is_tidak_bersih' => $dataReceipt->getKendaraan->rdken_is_tidak_bersih,
             'kendaraan_is_serangga' => $dataReceipt->getKendaraan->rdken_is_ada_serangga,
 
-            'rd_keterangan_tambahan' => $dataReceipt->rd_keterangan_tambahan
+            'rd_keterangan_tambahan' => $dataReceipt->rd_keterangan_tambahan,
+            'approver' => $approver
         ];
 
         $pdf = Pdf::loadView('printBook.print', $data)

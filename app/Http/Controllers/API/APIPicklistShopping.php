@@ -679,14 +679,20 @@ class APIPicklistShopping extends Controller
             }
         }
 
-        // $checkpicklistshopping = PicklistShopping::where('ps_number', $picknbr)->where('ps_status', 'shopping')->first();
-        // if (!$checkpicklistshopping) {
-        //     $shopping = new PicklistShopping();
-        //     $shopping->ps_number = $picknbr;
-        //     $shopping->ps_approver = $approver;
-        //     $shopping->ps_status = "shopping";
-        //     $shopping->save();
-        // }
+        $checkpicklistshopping = PicklistShopping::where('ps_number', $picknbr)
+        ->where('ps_part',$wodpart)
+        ->where('ps_lot',$lot)
+        ->where('ps_status', 'shopping')
+        ->first();
+        if (!$checkpicklistshopping) {
+            $shopping = new PicklistShopping();
+            $shopping->ps_number = $picknbr;
+            $shopping->ps_approver = $approver;
+            $shopping->ps_part = $wodpart;
+            $shopping->ps_lot = $lot;
+            $shopping->ps_status = "shopping";
+            $shopping->save();
+        }
 
 
         return response()->json([
@@ -753,10 +759,12 @@ class APIPicklistShopping extends Controller
             if (strlen($wonbrstring) == 0) {
                 $wonbrstring = 'manual';
                 $checkpicklistshopping = PicklistShopping::where('ps_number', (string)$value->t_pick_nbr)
+                    ->where('ps_part',(string)$value->t_wod_part)
+                    ->where('ps_lot', (string)$value->t_lot)
                     ->where('ps_status', 'shopping')
                     ->where('ps_approver', $req->player)
                     ->first();
-                // if ($checkpicklistshopping) {
+                if ($checkpicklistshopping) {
                 if ($currentPick != (string)$value->t_pick_nbr) {
                     $wonbrstring = 'manual';
                     $currentWo = '';
@@ -899,13 +907,19 @@ class APIPicklistShopping extends Controller
                         ];
                     }
                 }
-                // }
+                }
             } else {
-                $checkpicklistshopping = PicklistShopping::where('ps_number', (string)$value->t_pick_nbr)
+                // $checkpicklistshopping = PicklistShopping::where('ps_number', (string)$value->t_pick_nbr)
+                //     ->where('ps_status', 'shopping')
+                //     ->where('ps_approver', $req->player)
+                //     ->first();
+                     $checkpicklistshopping = PicklistShopping::where('ps_number', (string)$value->t_pick_nbr)
+                    ->where('ps_part',(string)$value->t_wod_part)
+                    ->where('ps_lot', (string)$value->t_lot)
                     ->where('ps_status', 'shopping')
                     ->where('ps_approver', $req->player)
                     ->first();
-                // if ($checkpicklistshopping) {
+                if ($checkpicklistshopping) {
                 if ($currentPick != (string)$value->t_pick_nbr) {
 
                     $currentWo = '';
@@ -1047,7 +1061,7 @@ class APIPicklistShopping extends Controller
                         // dd($master[$currentPick]['wonbr'][$currentWo]['detail'],$hasil[1],$currentWo);
                     }
                 }
-                // }
+                }
             }
         }
 

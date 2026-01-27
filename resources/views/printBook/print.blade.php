@@ -427,22 +427,22 @@
             <th>Seksi</th>
         </tr>
         <tr class="center">
-            <td>Paraf</td>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td>Approval</td>
+            <td>{{$approver[0][0][0] ?? ''}}</td>
+            <td>{{$approver[1][0][0] ?? ''}}</td>
+            <td>{{$approver[2][0][0] ?? ''}}</td>
         </tr>
         <tr class="center">
             <td>Nama</td>
-            <td></td>
-            <td></td>
-            <td></td>
+             <td>{{$approver[0][1][0] ?? ''}}</td>
+            <td>{{$approver[1][1][0] ?? ''}}</td>
+            <td>{{$approver[2][1][0] ?? ''}}</td>
         </tr>
         <tr class="center">
             <td>Tanggal</td>
-            <td></td>
-            <td></td>
-            <td></td>
+             <td>{{$approver[0][2][0] ?? ''}}</td>
+            <td>{{$approver[1][2][0] ?? ''}}</td>
+            <td>{{$approver[2][2][0] ?? ''}}</td>
         </tr>
     </table>
 </body>

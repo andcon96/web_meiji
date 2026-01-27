@@ -210,7 +210,10 @@ class APIPurchaseOrderController extends Controller
             $warehouse = $req->wh;
         }
         if ($req->search) {
-            $itemCode = $req->search;
+            $warehouse = $req->search;
+        }
+        if($req->item){
+            $itemCode = $req->item;
         }
 
         // Ambil Relati Item ke Location di Web

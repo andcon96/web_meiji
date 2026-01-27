@@ -312,7 +312,7 @@ class QxtendServices
         }
     }
 
-    public function qxPurchaseOrderReceipt($ponbr, $line, $lotSerialQty, $um, $site, $location, $lotserial, $expireddate,$ref,$suratjalan,$jumlahkemasanluar)
+    public function qxPurchaseOrderReceipt($ponbr, $line, $lotSerialQty, $um, $site, $location, $lotserial, $expireddate,$ref,$suratjalan,$jumlahkemasanluar,$effdate)
     {
         $domain = Domain::first();
         $domainCode = $domain->domain ?? "";
@@ -398,6 +398,7 @@ class QxtendServices
             $ponbr .
             '</ordernum>
             <psNbr>'.$suratjalan.'</psNbr>
+            <effDate>'.$effdate.'</effDate>
                             <yn>true</yn>
                             <yn1>true</yn1>
                             <lineDetail>
