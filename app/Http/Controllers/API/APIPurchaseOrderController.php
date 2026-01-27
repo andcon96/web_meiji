@@ -219,7 +219,7 @@ class APIPurchaseOrderController extends Controller
         // Ambil Relati Item ke Location di Web
         $getAllItemLocation = LocationDetail::query()->with(['getListItem.getItem', 'getMaster']);
         if ($itemCode) {
-            $getAllItemLocation->whereRelation('getListItem.getItem', 'im_item_part', '=', $itemCode);
+            $getAllItemLocation->whereRelation('getListItem.getItem', 'im_item_part', '=', 'CRAFT60LS');
         }
         if ($req->wh) {
             $getAllItemLocation->where('ld_building', $warehouse);
@@ -291,13 +291,15 @@ class APIPurchaseOrderController extends Controller
                     $item['t_inv_bin'] == $datas->ld_bin &&
                     $item['t_inv_loc'] == $datas->getMaster->location_code
                 ) {
+                   
                     return true; // Keep this item
                 }
             }
+            
             return false; // Exclude this item
         })
             ->values();
-
+ 
         $dataQAD = $dataQAD->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
         // $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
 
