@@ -602,6 +602,7 @@ class APIPicklistShopping extends Controller
                         $master[$currentPick]['wonbr'][$currentWo] = [
                             'wonbrnbr' => (string)$value->t_wo_nbr,
                             'wopart' => (string)$value->t_wo_part,
+                            'woid' => (string)$value->t_wo_id,
                             'detail' => $detail
                         ];
                     } else {

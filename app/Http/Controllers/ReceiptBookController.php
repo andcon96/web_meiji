@@ -30,22 +30,28 @@ class ReceiptBookController extends Controller
         $dataReceipt = ReceiptDetail::with(['getMaster.getPurchaseOrderMaster', 'getDokumen', 'getKemasan', 'getKendaraan', 'getPenanda', 'getPallet', 'getApprovalHist.getUserApprove', 'getApprovalHist.getUserApproveAlt'])->findOrFail($id);
         $receiptnumber = $dataReceipt->getMaster->rm_rn_number;
         $transactionHist = TransactionHistory::where('tr_program', 'PO Receipt Module')->where('tr_activity', 'Create Receipt')->where('tr_nbr', $receiptnumber)->first();
-        
-        if($transactionHist){
-             $approver[] = [['Approved' ?? ''],[$transactionHist->tr_user ?? ''],[$transactionHist->updated_at ?? '']];
+        $approverReceipt = ReceiptDetail::with(['getApprovalHist' => function ($query) {
+            $query->where('arh_status', 'Approved')
+                ->orderBy('updated_at', 'desc')
+                ->take(2);
+        }, 'getApprovalHist.getUserApprove'])
+            ->where('id', $id)
+
+
+            ->first(); // Add this to execute the query
+
+        if ($transactionHist) {
+            $approver[] = [['Approved' ?? ''], [$transactionHist->tr_user ?? ''], [$transactionHist->updated_at ?? '']];
         }
-        
-       
-
-                
-        foreach ($dataReceipt->getApprovalHist as $status) {
-
-            $approver[] = [[$status->arh_status],[$status->getUserApprove->name],[$status->updated_at]];
 
 
-            
+
+
+        foreach ($approverReceipt->getApprovalHist as $status) {
+
+            $approver[] = [[$status->arh_status], [$status->getUserApprove->name], [$status->updated_at]];
         }
-        
+
 
         $data = [
             'no_buku' => $dataReceipt->rd_nomor_buku,
