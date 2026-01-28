@@ -180,7 +180,7 @@
         </tr>
         <tr>
             <td>Expire Date</td>
-             @if ($retest_date != null || $retest_date != '')
+             @if ($expire_date != null || $expire_date != '')
              <td>{{ $expire_date }}</td>
              @else
                 <td style="text-align:center">-</td>
