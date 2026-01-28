@@ -15,6 +15,7 @@ use App\Models\API\picklistMstr;
 use App\Models\API\picklistWo;
 use App\Models\API\picklistWoDet;
 use App\Models\API\PicklistShopping;
+use App\Models\API\TransactionHistory;
 use App\Models\API\prefixWorkOrder;
 use App\Models\API\picklistHistory;
 use App\Models\API\picklistLocationTo;
@@ -712,6 +713,27 @@ class APIPicklistShopping extends Controller
                     $shopping->ps_status = "shopping";
                     $shopping->save();
                 }
+
+                $newTransactionHistory = new TransactionHistory();
+                $newTransactionHistory->tr_nbr = $picknbr;
+                $newTransactionHistory->tr_program = 'Picklist Module';
+                $newTransactionHistory->tr_activity = 'Shopping';
+                $newTransactionHistory->tr_user =  $approver ?? '';
+                // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                $newTransactionHistory->tr_part = $wodpart ?? '';
+                $newTransactionHistory->tr_uom =  '';
+                $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                $newTransactionHistory->tr_lot =  $lot ?? '';
+                $newTransactionHistory->tr_qty =  $qtypick ?? '';
+                $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                $newTransactionHistory->tr_reference =  '';
+                $newTransactionHistory->tr_site =  $site ?? '';
+                $newTransactionHistory->tr_location = $loc ?? '';
+                $newTransactionHistory->tr_warehouse =  $wrh ?? '';
+                $newTransactionHistory->tr_level = $level ?? '';
+                $newTransactionHistory->tr_bin =  $bin ?? '';
+                $newTransactionHistory->tr_remark = '';
+                $newTransactionHistory->save();
             }
         }
 
@@ -728,12 +750,18 @@ class APIPicklistShopping extends Controller
         //$data = $req->all();
         $picknbr = $req->input('picknbr');
         $status = $req->input('status');
-        $picknbr = $req->input('picknbr');
+
         $status = $req->input('status');
         $data = $req->input('data');
-        $lot = $data['lot'];
-        $part = $data['wodpart'];
-        $qty = $data['qtyshp'];
+        $approver = $req->input('approver') ?? '';
+        $lot = $data['lot'] ?? '';
+        $part = $data['wodpart'] ?? '';
+        $qty = $data['qtyshp'] ?? '';
+        $site = $data['site'] ?? '';
+        $loc = $data['loc'] ?? '';
+        $wrh = $data['wrh'] ?? '';
+        $level = $data['level'] ?? '';
+        $bin = $data['bin'] ?? '';
         // $locto = $data['loc'];
         $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $status, $qty, $part, $lot);
         if ($hasil[0] == 'false') {
@@ -742,6 +770,26 @@ class APIPicklistShopping extends Controller
                 'Message' => "Update Qty Pick Failed for Picklist : " . $picknbr
             ], 422);
         } else {
+            $newTransactionHistory = new TransactionHistory();
+            $newTransactionHistory->tr_nbr = $picknbr;
+            $newTransactionHistory->tr_program = 'Picklist Module';
+            $newTransactionHistory->tr_activity = 'Approval';
+            $newTransactionHistory->tr_user =  $approver ?? '';
+            // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+            $newTransactionHistory->tr_part = $part ?? '';
+            $newTransactionHistory->tr_uom =  '';
+            $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+            $newTransactionHistory->tr_lot =  $lot ?? '';
+            $newTransactionHistory->tr_qty =  $qty ?? '';
+            $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+            $newTransactionHistory->tr_reference =  '';
+            $newTransactionHistory->tr_site =  $site ?? '';
+            $newTransactionHistory->tr_location = $loc ?? '';
+            $newTransactionHistory->tr_warehouse =  $wrh ?? '';
+            $newTransactionHistory->tr_level = $level ?? '';
+            $newTransactionHistory->tr_bin =  $bin ?? '';
+            $newTransactionHistory->tr_remark = '';
+            $newTransactionHistory->save();
         }
 
 
@@ -1142,10 +1190,15 @@ class APIPicklistShopping extends Controller
         $status = $req->input('status');
         $data = $req->input('data');
         $locto = $req->input('loc');
-
+        $user = $req->input('username');
         $lot = $data['lot'];
         $part = $data['wodpart'];
         $qty = $data['qtysmp'] ?? 0;
+        $site = $data['site'] ?? '';
+        $loc = $data['loc'] ?? '';
+        $wrh = $data['wrh'] ?? '';
+        $level = $data['level'] ?? '';
+        $bin = $data['bin'] ?? '';
         // $locto = $req->query('loc');
 
 
@@ -1156,12 +1209,31 @@ class APIPicklistShopping extends Controller
                 'Message' => "Update Qty Pick Failed for Picklist : " . $picknbr
             ], 422);
         } else {
-             DB::commit();
-                return response()->json(
-                    'success',
-                    200
-                );
-            
+            $newTransactionHistory = new TransactionHistory();
+            $newTransactionHistory->tr_nbr = $picknbr;
+            $newTransactionHistory->tr_program = 'Picklist Module';
+            $newTransactionHistory->tr_activity = 'Transfer';
+            $newTransactionHistory->tr_user =  $user ?? '';
+            // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+            $newTransactionHistory->tr_part = $part ?? '';
+            $newTransactionHistory->tr_uom =  '';
+            $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+            $newTransactionHistory->tr_lot =  $lot ?? '';
+            $newTransactionHistory->tr_qty =  $qty ?? '';
+            $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+            $newTransactionHistory->tr_reference =  '';
+            $newTransactionHistory->tr_site =  $site ?? '';
+            $newTransactionHistory->tr_location = $loc ?? '';
+            $newTransactionHistory->tr_warehouse =  $wrh ?? '';
+            $newTransactionHistory->tr_level = $level ?? '';
+            $newTransactionHistory->tr_bin =  $bin ?? '';
+            $newTransactionHistory->tr_remark = '';
+            $newTransactionHistory->save();
+            DB::commit();
+            return response()->json(
+                'success',
+                200
+            );
         }
     }
 
@@ -1181,7 +1253,12 @@ class APIPicklistShopping extends Controller
         $part = $data['wodpart'];
         // dd($req->all());
         $qty = $data['qtywip'];
-
+        $user = $req->input('username');
+        $site = $data['site'] ?? '';
+        $loc = $data['loc'] ?? '';
+        $wrh = $data['wrh'] ?? '';
+        $level = $data['level'] ?? '';
+        $bin = $data['bin'] ?? '';
         // $locto = $data['loc'];
         if ($status == 'Receipt') {
             // $pickloctodata = PicklistLocationTo::where('picklist_number', $picknbr)->first();
@@ -1208,6 +1285,7 @@ class APIPicklistShopping extends Controller
             $bin = $data['bin'];
             $qtypick = $data['qtywip'];
             $site = $req->input('site');
+
             // $loc = $req->input('loc');
             // dd($req->all(),$status,$pickloctodata,$picklocto);
             // $qxtendsingleitem = (new QxtendServices())->qxTransferSingleItemWo($wodpart, $wonbr, $site, $site, $loc, $picklocto, $qtypick, '', '', '', $lot);
@@ -1227,7 +1305,26 @@ class APIPicklistShopping extends Controller
                     'Message' => "Receipt Picklist Failed for Picklist : " . $picknbr
                 ], 422);
             } else {
-
+                $newTransactionHistory = new TransactionHistory();
+                $newTransactionHistory->tr_nbr = $picknbr;
+                $newTransactionHistory->tr_program = 'Picklist Module';
+                $newTransactionHistory->tr_activity = 'Receipt';
+                $newTransactionHistory->tr_user =  $user ?? '';
+                // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                $newTransactionHistory->tr_part = $part ?? '';
+                $newTransactionHistory->tr_uom =  '';
+                $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                $newTransactionHistory->tr_lot =  $lot ?? '';
+                $newTransactionHistory->tr_qty =  $qty ?? '';
+                $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                $newTransactionHistory->tr_reference =  '';
+                $newTransactionHistory->tr_site =  $site ?? '';
+                $newTransactionHistory->tr_location = $loc ?? '';
+                $newTransactionHistory->tr_warehouse =  $wrh ?? '';
+                $newTransactionHistory->tr_level = $level ?? '';
+                $newTransactionHistory->tr_bin =  $bin ?? '';
+                $newTransactionHistory->tr_remark = '';
+                $newTransactionHistory->save();
                 return response()->json(
                     'success',
                     200

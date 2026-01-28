@@ -8,10 +8,11 @@ use App\Models\API\PurchaseOrderDetail;
 use App\Models\API\PurchaseOrderMaster;
 use App\Models\API\ReceiptAttachment;
 use App\Models\API\ReceiptDetail;
+use App\Models\API\ReceiptMaster;
 use App\Models\Settings\ItemLocation;
 use App\Models\Settings\LocationDetail;
 use App\Models\Settings\Location;
-
+use App\Models\API\TransactionHistory;
 use App\Models\Settings\User;
 use App\Models\Settings\Item;
 use App\Services\WSAServices;
@@ -212,7 +213,7 @@ class APIPurchaseOrderController extends Controller
         if ($req->search) {
             $warehouse = $req->search;
         }
-        if($req->item){
+        if ($req->item) {
             $itemCode = $req->item;
         }
 
@@ -291,15 +292,15 @@ class APIPurchaseOrderController extends Controller
                     $item['t_inv_bin'] == $datas->ld_bin &&
                     $item['t_inv_loc'] == $datas->getMaster->location_code
                 ) {
-                   
+
                     return true; // Keep this item
                 }
             }
-            
+
             return false; // Exclude this item
         })
             ->values();
- 
+
         $dataQAD = $dataQAD->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
         // $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
 
@@ -813,7 +814,7 @@ class APIPurchaseOrderController extends Controller
         if ($binSearch != '') {
             $receiptDetail->where('rd_bin_penyimpanan', $binSearch);
         }
-        
+
         $receiptDetail = $receiptDetail
             ->select('rd_building_penyimpanan', 'rd_level_penyimpanan', 'rd_bin_penyimpanan')
             ->distinct()
@@ -892,5 +893,67 @@ class APIPurchaseOrderController extends Controller
             ->sortBy('t_inv_qtyoh')
             ->values();
         return response()->json($dataQAD);
+    }
+    public function deleteDraft(Request $req)
+    {
+
+        DB::beginTransaction();
+        try {
+            $id = $req->id;
+
+            $data = ReceiptDetail::with('getPurchaseOrderDetail')->findOrFail($id);
+            $master = ReceiptMaster::findOrFail($data->rd_rm_id);
+
+            $newTransactionHistory = new TransactionHistory();
+            $newTransactionHistory->tr_nbr = $master->rm_rn_number;
+            $newTransactionHistory->tr_program = 'PO Approval Module';
+            $newTransactionHistory->tr_activity = 'Delete Receipt';
+            $newTransactionHistory->tr_user =  '';
+            // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+            $newTransactionHistory->tr_part = $data->getPurchaseOrderDetail->pod_part ?? '';
+            $newTransactionHistory->tr_uom = $data->getPurchaseOrderDetail->pod_um ?? '';
+            $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+            $newTransactionHistory->tr_lot =  '';
+            $newTransactionHistory->tr_qty =  '';
+            $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+            $newTransactionHistory->tr_reference =  '';
+            $newTransactionHistory->tr_site =  '';
+            $newTransactionHistory->tr_location = '';
+            $newTransactionHistory->tr_warehouse =  '';
+            $newTransactionHistory->tr_level = '';
+            $newTransactionHistory->tr_bin =  '';
+            $newTransactionHistory->tr_remark = '';
+            $newTransactionHistory->save();
+            
+            // Delete all related records using query builder (more efficient)
+            $data->getAttachment()->delete();
+            $data->getDokumen()->delete();
+            $data->getKemasan()->delete();
+            $data->getKendaraan()->delete();
+            $data->getPenanda()->delete();
+            $data->getPallet()->delete();
+            $data->getUserSeenBy()->delete();
+            $data->getApprovalTemp()->delete();
+            $data->getApprovalHist()->delete();
+
+
+            // Delete the main record
+            $data->delete();
+            $master->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'Status' => 'Success',
+                'Message' => "Data deleted successfully"
+            ], 200);
+        } catch (Exception $err) {
+            DB::rollback();
+            Log::error($err);
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Failed to delete data"
+            ], 422);
+        }
     }
 }

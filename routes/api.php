@@ -41,9 +41,9 @@ Route::post("getWorkOrderQad", [APIController::class, "getWorkOrderQad"]);
 // Outbound WO
 Route::post("sendQxCompIssue", [APIController::class, "sendQxCompIssue"]);
 
-    // Get APK Latest Version
-    Route::get("getAPKLatestVersion", [APIController::class, "getAPKLatestVersion"]);
-    Route::middleware(["auth:api", "token.api"])->group(function () {
+// Get APK Latest Version
+Route::get("getAPKLatestVersion", [APIController::class, "getAPKLatestVersion"]);
+Route::middleware(["auth:api", "token.api"])->group(function () {
 
     // PO
     Route::get("getDataPO", [APIPurchaseOrderController::class, "index"]);
@@ -51,6 +51,8 @@ Route::post("sendQxCompIssue", [APIController::class, "sendQxCompIssue"]);
     Route::post("saveEditReceipt", [APIPurchaseOrderController::class, "saveEditReceipt"]);
     Route::get("getWarehouseReceipt", [APIPurchaseOrderController::class, "wsaWarehouse"]);
     Route::get("wsaPenyimpananPalet", [APIPurchaseOrderController::class, "wsaPenyimpananPaletSearch"]);
+    //delete po
+    Route::post("deleteDraftPo", [APIPurchaseOrderController::class, "deleteDraft"]);
     
     Route::get("getDataPORecheck", [APIPurchaseOrderRecheckController::class, "index"]);
     Route::post("submitRecheckReceipt", [APIPurchaseOrderRecheckController::class, "saveReceiptRecheck"]);
@@ -68,6 +70,8 @@ Route::post("sendQxCompIssue", [APIController::class, "sendQxCompIssue"]);
     Route::get("getTransferList", [APITrasnferStockController::class, "index"]);
     Route::get("getStockItemBin", [APITrasnferStockController::class, "getStockItemBin"]);
     Route::post("saveTransfer", [APITrasnferStockController::class, "saveTransfer"]);
+
+
 
     // Print QR
     Route::get("getDataPrintQR", [APIZebraPrinterController::class, "getDataPrintQR"]);
@@ -94,7 +98,7 @@ Route::post("sendQxCompIssue", [APIController::class, "sendQxCompIssue"]);
     Route::post("wsaNewBin", [APIPurchaseOrderController::class, "wsaNewBin"]);
     Route::post("wsaGetPotensi", [APIPurchaseOrderController::class, "wsaGetPotensi"]);
     Route::post("getWebLocationDataReceipt", [APIPurchaseOrderController::class, "getWebLocationDataReceipt"]);
-     Route::post("getAllWarehouse", [APIPurchaseOrderController::class, "getAllWarehouse"]);
+    Route::post("getAllWarehouse", [APIPurchaseOrderController::class, "getAllWarehouse"]);
     Route::post("getAllLevel", [APIPurchaseOrderController::class, "getAllLevel"]);
     Route::post("getAllBin", [APIPurchaseOrderController::class, "getAllBin"]);
 
@@ -188,16 +192,16 @@ Route::post("sendQxCompIssue", [APIController::class, "sendQxCompIssue"]);
     // Route::get("getSearchLocation", [APIPicklistShopping::class, "wsainvdet"]);
     // Route::post("sendTransferItem", [APIPicklistShopping::class, "sendTransferItem"]);
     Route::get("getLocationData", [APISingleTransfer::class, "getLocationData"]);
-     Route::post("getWebLocationDataTransfer", [APISingleTransfer::class, "getWebLocationDataTransfer"]);
-     
-    
+    Route::post("getWebLocationDataTransfer", [APISingleTransfer::class, "getWebLocationDataTransfer"]);
+
+
     Route::get("getSiteData", [APISingleTransfer::class, "getSiteData"]);
-    
-    
+
+
     Route::get("wsaWarehousePick", [APISingleTransfer::class, "wsaWarehouse"]);
     Route::get("getSearchLocation", [APISingleTransfer::class, "wsainvdet"]);
     Route::post("sendTransferItem", [APISingleTransfer::class, "sendTransferItem"]);
-    
+
     Route::get("getTransferData", [APISingleTransfer::class, "getTransferData"]);
     Route::post("receiptItem", [APISingleTransfer::class, "receiptItem"]);
     Route::get("getSingleTransferData", [APISingleTransfer::class, "getSingleTransferData"]);
@@ -230,14 +234,14 @@ Route::post("sendQxCompIssue", [APIController::class, "sendQxCompIssue"]);
     Route::get("/getSamplingData", [APISampling::class, 'getSamplingData']);
     Route::get("/getLotSampling", [APISampling::class, 'getLotSampling']);
     Route::post("/transferSampling", [APISampling::class, 'transferSampling']);
-    
+
     Route::get("/getPengembalianQo", [APIPengembalian::class, 'getPengembalianQo']);
-        Route::post("/checkWarehouseReturn", [APIPengembalian::class, 'checkWarehouseReturn']);
+    Route::post("/checkWarehouseReturn", [APIPengembalian::class, 'checkWarehouseReturn']);
     Route::get("/getLotPengembalian", [APIPengembalian::class, 'getLotPengembalian']);
     Route::post("/transferPengembalianQo", [APIPengembalian::class, 'transferPengembalianQo']);
-    
+
     Route::get("getTransactionHistory", [APISingleTransfer::class, "getTransactionHistory"]);
-      //lookup browse android
+    //lookup browse android
     Route::get("getLocData", [APIController::class, "getLocData"]);
     Route::get("getSites", [APIController::class, "getSites"]);
     Route::get("getWrhData", [APIController::class, "getWrhData"]);
@@ -246,6 +250,5 @@ Route::post("sendQxCompIssue", [APIController::class, "sendQxCompIssue"]);
     Route::get("getHistoryData", [APIController::class, "getHistoryData"]);
 
     Route::get("cekItemLot", [APIController::class, "cekItemLot"]);
-
 });
 // WSA Picklist
