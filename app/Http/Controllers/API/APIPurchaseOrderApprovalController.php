@@ -122,7 +122,7 @@ class APIPurchaseOrderApprovalController extends Controller
                         $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
                         $newTransactionHistory->tr_uom = $data->satuan ?? '';
                         $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-                        $newTransactionHistory->tr_lot = $data->batch_penanda ?? '';
+                        $newTransactionHistory->tr_lot = $data->rd_batch ?? '';
                         $newTransactionHistory->tr_qty = $data->jumlah_terima ?? '';
                         $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
                         $newTransactionHistory->tr_reference = $data->kode_cetak ?? '';
@@ -266,7 +266,7 @@ class APIPurchaseOrderApprovalController extends Controller
                         $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
                         $newTransactionHistory->tr_uom = $data->satuan ?? '';
                         $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-                        $newTransactionHistory->tr_lot = $data->batch_penanda ?? '';
+                        $newTransactionHistory->tr_lot = $data->rd_batch ?? '';
                         $newTransactionHistory->tr_qty = $data->jumlah_terima ?? '' ;
                         $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
                         $newTransactionHistory->tr_reference = $data->kode_cetak ?? '';

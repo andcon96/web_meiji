@@ -139,7 +139,7 @@ class ReceiptServices
                     
                     $newTransactionHistory->tr_uom = '';
                     $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-                    $newTransactionHistory->tr_lot = $dataDetail->batch_penanda ?? '';
+                    $newTransactionHistory->tr_lot = $dataDetail->batch ?? '';
                     $newTransactionHistory->tr_qty = $dataDetail->jumlah_terima ?? '';
                     $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
                     $newTransactionHistory->tr_reference = $dataDetail->kode_cetak ?? '';
@@ -347,7 +347,7 @@ class ReceiptServices
                 $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
                 $newTransactionHistory->tr_uom = '';
                 $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-                $newTransactionHistory->tr_lot = $data->batch_penanda ?? '';
+                $newTransactionHistory->tr_lot = $data->rd_batch ?? '';
                 $newTransactionHistory->tr_qty = $data->jumlah_terima ?? '';
                 $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
                 $newTransactionHistory->tr_reference = $data->kode_cetak ?? '';
