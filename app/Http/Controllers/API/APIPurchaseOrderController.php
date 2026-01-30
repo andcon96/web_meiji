@@ -901,11 +901,12 @@ class APIPurchaseOrderController extends Controller
         try {
             $id = $req->id;
 
-            $data = ReceiptDetail::with('getPurchaseOrderDetail')->findOrFail($id);
+            $data = ReceiptDetail::with(['getMaster', 'getPurchaseOrderDetail.getMaster'])->findOrFail($id);
             $master = ReceiptMaster::findOrFail($data->rd_rm_id);
-
+            $getPurchaseOrderDetail = $data->getPurchaseOrderDetail;
             $newTransactionHistory = new TransactionHistory();
             $newTransactionHistory->tr_nbr = $master->rm_rn_number;
+            $newTransactionHistory->tr_order = $getPurchaseOrderDetail->getMaster->po_nbr;
             $newTransactionHistory->tr_program = 'PO Approval Module';
             $newTransactionHistory->tr_activity = 'Delete Receipt';
             $newTransactionHistory->tr_user =  '';
@@ -924,7 +925,7 @@ class APIPurchaseOrderController extends Controller
             $newTransactionHistory->tr_bin =  '';
             $newTransactionHistory->tr_remark = '';
             $newTransactionHistory->save();
-            
+
             // Delete all related records using query builder (more efficient)
             $data->getAttachment()->delete();
             $data->getDokumen()->delete();

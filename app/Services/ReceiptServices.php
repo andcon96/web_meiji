@@ -61,7 +61,7 @@ class ReceiptServices
                 } else {
                     $reference = $dataDetail->qty_potensi;
                 }
-                $getPurchaseOrderDetail = PurchaseOrderDetail::find($dataDetail->id_pod_det);
+                $getPurchaseOrderDetail = PurchaseOrderDetail::with('getMaster')->find($dataDetail->id_pod_det);
                 // Receipt Detail
                 $newReceiptDetail = new ReceiptDetail();
                 $newReceiptDetail->rd_rm_id = $newReceiptMaster->id;
@@ -131,6 +131,8 @@ class ReceiptServices
                     // Transaction History
                     $newTransactionHistory = new TransactionHistory();
                     $newTransactionHistory->tr_nbr = $getRunningNumber;
+                     $newTransactionHistory->tr_order = $getPurchaseOrderDetail->getMaster->po_nbr;
+                    $newTransactionHistory->tr_order = $getRunningNumber;
                     $newTransactionHistory->tr_program = 'PO Receipt Module';
                     $newTransactionHistory->tr_activity = 'Create Receipt';
                     $newTransactionHistory->tr_user = $creator ?? '';
@@ -273,7 +275,7 @@ class ReceiptServices
 
             //get master
             $getMaster = ReceiptMaster::findOrFail($findReceiptDetail->rd_rm_id);
-            $getPurchaseOrderDetail = PurchaseOrderDetail::findOrFail($findReceiptDetail->rd_pod_det_id);
+            $getPurchaseOrderDetail = PurchaseOrderDetail::with('getMaster')->findOrFail($findReceiptDetail->rd_pod_det_id);
             // Dokumen
             $newReceiptDetailDokumen = ReceiptDokumen::findOrFail($data->get_dokumen->id);
             $newReceiptDetailDokumen->rdd_is_purchase_order = $data->get_dokumen->rdd_is_purchase_order;
@@ -340,6 +342,7 @@ class ReceiptServices
                 // Transaction History
                 $newTransactionHistory = new TransactionHistory();
                 $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
+                 $newTransactionHistory->tr_order = $getPurchaseOrderDetail->getMaster->po_nbr;
                 $newTransactionHistory->tr_program = 'PO Receipt Module';
                 $newTransactionHistory->tr_activity = 'Edit Receipt';
                 $newTransactionHistory->tr_user = $creator ?? '';

@@ -158,6 +158,7 @@ class APISingleTransfer extends Controller
 
                 $newTransactionHistory = new TransactionHistory();
                 $newTransactionHistory->tr_nbr = 'Sampling';
+                $newTransactionHistory->tr_order = '';
                 $newTransactionHistory->tr_program = 'Single Transfer Module';
                 $newTransactionHistory->tr_activity = 'Single Transfer To';
                 $newTransactionHistory->tr_user = $user ?? '';
@@ -1614,26 +1615,27 @@ class APISingleTransfer extends Controller
         $locationdetail = $locationdetail->pluck('id')->toArray();
 
         $itemQuery = Item::with('getItemLocation.getLocationDetail')->where('im_item_part', $item)->select('id')->first();
-        
+
         if (!$itemQuery) {
             return collect();
         }
         $arrayloc = [];
         $stringloc = '';
-        foreach($locationdetail as $locdetail){
+        foreach ($locationdetail as $locdetail) {
             $stringloc .= $locdetail . ',';
         }
         // dd($stringloc, $itemQuery->id);
         $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function ($query) use ($lot) {
-            $query->orderBy('ld_building');}])
+            $query->orderBy('ld_building');
+        }])
             ->where('il_item_id', $itemQuery->id)
             ->whereIn('il_ld_id', $locationdetail)
             ->get();
-            // foreach($getAllItemLocation as $key => $value){
-            //     dump($value->getLocationDetail->ld_rak);
-            // }
-            // dd('a');
-        
+        // foreach($getAllItemLocation as $key => $value){
+        //     dump($value->getLocationDetail->ld_rak);
+        // }
+        // dd('a');
+
 
         if (count($getAllItemLocation) == 0) {
             return response()->json([
@@ -1648,10 +1650,10 @@ class APISingleTransfer extends Controller
         //         'Message' => "Data Not Found."
         //     ], 422);
         // } 
-        
-        if($hasil[0] == 'true') {
+
+        if ($hasil[0] == 'true') {
             $wsaData = collect($hasil[1]);
-            
+
             // Add qty to each locationDetail
             $getAllItemLocation->transform(function ($location) use ($wsaData) {
                 // Match based on location detail properties
@@ -1666,7 +1668,6 @@ class APISingleTransfer extends Controller
 
                 return $location;
             });
-
         }
         return response()->json($getAllItemLocation);
     }

@@ -62,7 +62,7 @@ class APIPurchaseOrderApprovalController extends Controller
             ->orderBy('id', 'desc')
             ->paginate(10);
 
-            
+
         return GeneralResources::collection($data);
     }
 
@@ -74,7 +74,7 @@ class APIPurchaseOrderApprovalController extends Controller
             $approver = Auth::user()->name;
 
             switch ($req->action) {
-                
+
                 case 'Reject':
                     // Update Status Current
                     $tempApprove = ApprovalReceiptTemp::find($req->idApproval);
@@ -109,30 +109,31 @@ class APIPurchaseOrderApprovalController extends Controller
                     $detailReceipt->save();
 
                     //getDetail Receipt
-                    $data = ReceiptDetail::with(['getMaster','getPurchaseOrderDetail'])->find($tempApprove->art_receipt_det_id);
+                    $data = ReceiptDetail::with(['getMaster', 'getPurchaseOrderDetail.getMaster'])->find($tempApprove->art_receipt_det_id);
                     $getMaster = $data->getMaster;
                     $getPurchaseOrderDetail = $data->getPurchaseOrderDetail;
-                     // Transaction History
-                        $newTransactionHistory = new TransactionHistory();
-                        $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
-                        $newTransactionHistory->tr_program = 'PO Approval Module';
-                        $newTransactionHistory->tr_activity = 'Reject Receipt';
-                        $newTransactionHistory->tr_user = $approver ?? '';
-                        // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
-                        $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
-                        $newTransactionHistory->tr_uom = $data->satuan ?? '';
-                        $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-                        $newTransactionHistory->tr_lot = $data->rd_batch ?? '';
-                        $newTransactionHistory->tr_qty = $data->jumlah_terima ?? '';
-                        $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                        $newTransactionHistory->tr_reference = $data->kode_cetak ?? '';
-                        $newTransactionHistory->tr_site = $data->site_penyimpanan ?? '';
-                        $newTransactionHistory->tr_location = $data->loc_penyimpanan ?? '';
-                        $newTransactionHistory->tr_warehouse = $data->building_penyimpanan ?? '';
-                        $newTransactionHistory->tr_level = $data->level_penyimpanan ?? '';
-                        $newTransactionHistory->tr_bin = $data->bin_penyimpanan ?? '';
-                        $newTransactionHistory->tr_remark = '';
-                        $newTransactionHistory->save();
+                    // Transaction History
+                    $newTransactionHistory = new TransactionHistory();
+                    $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
+                    $newTransactionHistory->tr_order = $getPurchaseOrderDetail->getMaster->po_nbr;
+                    $newTransactionHistory->tr_program = 'PO Approval Module';
+                    $newTransactionHistory->tr_activity = 'Reject Receipt';
+                    $newTransactionHistory->tr_user = $approver ?? '';
+                    // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                    $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
+                    $newTransactionHistory->tr_uom = $data->satuan ?? '';
+                    $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                    $newTransactionHistory->tr_lot = $data->rd_batch ?? '';
+                    $newTransactionHistory->tr_qty = $data->jumlah_terima ?? '';
+                    $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                    $newTransactionHistory->tr_reference = $data->kode_cetak ?? '';
+                    $newTransactionHistory->tr_site = $data->site_penyimpanan ?? '';
+                    $newTransactionHistory->tr_location = $data->loc_penyimpanan ?? '';
+                    $newTransactionHistory->tr_warehouse = $data->building_penyimpanan ?? '';
+                    $newTransactionHistory->tr_level = $data->level_penyimpanan ?? '';
+                    $newTransactionHistory->tr_bin = $data->bin_penyimpanan ?? '';
+                    $newTransactionHistory->tr_remark = '';
+                    $newTransactionHistory->save();
 
 
                     break;
@@ -168,7 +169,7 @@ class APIPurchaseOrderApprovalController extends Controller
                         ApprovalReceiptTemp::where('art_receipt_det_id', $tempApprove->art_receipt_det_id)->delete();
 
                         // Ubah Status Receipt Det -> Approved
-                        $detailReceipt = ReceiptDetail::with(['getDokumen','getKemasan'])->find($tempApprove->art_receipt_det_id);
+                        $detailReceipt = ReceiptDetail::with(['getDokumen', 'getKemasan'])->find($tempApprove->art_receipt_det_id);
                         $detailReceipt->rd_status = 'Approved';
                         $detailReceipt->save();
 
@@ -188,7 +189,7 @@ class APIPurchaseOrderApprovalController extends Controller
                         $lotserial = $dataReceipt->rd_batch ?? '';
                         $qtyPotensi = $dataReceipt->rd_qty_potensi ?? 1;
                         $ref = $dataReceipt->rd_ref ?? '';
-                        $expireddate = date('Y-m-d', strtotime($dataReceipt->rd_tgl_expire)) ;
+                        $expireddate = date('Y-m-d', strtotime($dataReceipt->rd_tgl_expire));
                         $effdate = date('Y-m-d', strtotime($dataReceipt->rd_tanggal_datang));
                         // Assign pod_um_conv sebelum receipt -> request bang dany
                         $changeUmConv = (new WSAServices())->wsaChangeUmConv($poNbr, $line, $qtyPotensi);
@@ -203,8 +204,8 @@ class APIPurchaseOrderApprovalController extends Controller
                         }
 
 
-                        
-                        $submitReceiptQxtend = (new QxtendServices())->qxPurchaseOrderReceipt($poNbr, $line, $lotserialQty, $receiptUm, $site, $location, $lotserial,$expireddate,$ref,$suratjalan,$jumlahkemasanluar,$effdate);
+
+                        $submitReceiptQxtend = (new QxtendServices())->qxPurchaseOrderReceipt($poNbr, $line, $lotserialQty, $receiptUm, $site, $location, $lotserial, $expireddate, $ref, $suratjalan, $jumlahkemasanluar, $effdate);
                         if ($submitReceiptQxtend == false) {
                             DB::rollback();
                             return response()->json([
@@ -253,30 +254,31 @@ class APIPurchaseOrderApprovalController extends Controller
                         }
                     }
                     //getDetail Receipt
-                    $data = ReceiptDetail::with('getMaster')->find($tempApprove->art_receipt_det_id);
+                    $data = ReceiptDetail::with(['getMaster', 'getPurchaseOrderDetail.getMaster'])->find($tempApprove->art_receipt_det_id);
                     $getMaster = $data->getMaster;
                     $getPurchaseOrderDetail = $data->getPurchaseOrderDetail;
-                     // Transaction History
-                        $newTransactionHistory = new TransactionHistory();
-                        $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
-                        $newTransactionHistory->tr_program = 'PO Approval Module';
-                        $newTransactionHistory->tr_activity = 'Approve Receipt';
-                        $newTransactionHistory->tr_user = $approver ?? '';
-                        // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
-                        $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
-                        $newTransactionHistory->tr_uom = $data->satuan ?? '';
-                        $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-                        $newTransactionHistory->tr_lot = $data->rd_batch ?? '';
-                        $newTransactionHistory->tr_qty = $data->jumlah_terima ?? '' ;
-                        $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                        $newTransactionHistory->tr_reference = $data->kode_cetak ?? '';
-                        $newTransactionHistory->tr_site = $data->site_penyimpanan ?? '';
-                        $newTransactionHistory->tr_location = $data->loc_penyimpanan ?? '';
-                        $newTransactionHistory->tr_warehouse = $data->building_penyimpanan ?? '';
-                        $newTransactionHistory->tr_level = $data->level_penyimpanan ?? '';
-                        $newTransactionHistory->tr_bin = $data->bin_penyimpanan ?? '';
-                        $newTransactionHistory->tr_remark = '';
-                        $newTransactionHistory->save();
+                    // Transaction History
+                    $newTransactionHistory = new TransactionHistory();
+                    $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
+                    $newTransactionHistory->tr_order = $getPurchaseOrderDetail->getMaster->po_nbr;
+                    $newTransactionHistory->tr_program = 'PO Approval Module';
+                    $newTransactionHistory->tr_activity = 'Approve Receipt';
+                    $newTransactionHistory->tr_user = $approver ?? '';
+                    // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                    $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
+                    $newTransactionHistory->tr_uom = $data->satuan ?? '';
+                    $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                    $newTransactionHistory->tr_lot = $data->rd_batch ?? '';
+                    $newTransactionHistory->tr_qty = $data->jumlah_terima ?? '';
+                    $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                    $newTransactionHistory->tr_reference = $data->kode_cetak ?? '';
+                    $newTransactionHistory->tr_site = $data->site_penyimpanan ?? '';
+                    $newTransactionHistory->tr_location = $data->loc_penyimpanan ?? '';
+                    $newTransactionHistory->tr_warehouse = $data->building_penyimpanan ?? '';
+                    $newTransactionHistory->tr_level = $data->level_penyimpanan ?? '';
+                    $newTransactionHistory->tr_bin = $data->bin_penyimpanan ?? '';
+                    $newTransactionHistory->tr_remark = '';
+                    $newTransactionHistory->save();
                     break;
             }
 

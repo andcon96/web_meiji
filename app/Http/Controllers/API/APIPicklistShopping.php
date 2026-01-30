@@ -79,7 +79,7 @@ class APIPicklistShopping extends Controller
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
                             'qtytopick' => (string)$value->t_qty_topick,
-                          
+
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -102,7 +102,7 @@ class APIPicklistShopping extends Controller
                         $wonbr[$currentWo] = [
                             'wonbrnbr' => $wonbrstring,
                             'wopart' => '',
-                             'woid' => (string)$value->t_wo_id,
+                            'woid' => (string)$value->t_wo_id,
                             'detail' => $detail
                         ];
 
@@ -119,7 +119,7 @@ class APIPicklistShopping extends Controller
                             'qtyreq' => (string)$value->t_qty_req,
                             'qtypick' => (string)$value->t_qty_pick,
                             'qtytopick' => (string)$value->t_qty_topick,
-                           
+
                             'qtykemasan' => (string)$value->t_qty_kemasan,
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
@@ -158,7 +158,7 @@ class APIPicklistShopping extends Controller
                             'dd' => (string)$value->t_duedate,
                             'od' => (string)$value->t_orddate,
                             'rd' => (string)$value->t_reldate,
-                             'ref' => (string)$value->t_ref,
+                            'ref' => (string)$value->t_ref,
                             'um' => (string)$value->t_um,
                             'qtyoh' => (string)$value->t_qty_oh,
                             'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
@@ -170,7 +170,7 @@ class APIPicklistShopping extends Controller
                         $wonbr[$currentWo] = [
                             'wonbrnbr' => $currentWo,
                             'wopart' => '',
-                             'woid' => (string)$value->t_wo_id,
+                            'woid' => (string)$value->t_wo_id,
                             'detail' => $detail
                         ];
                         $master[$currentPick] = [
@@ -224,7 +224,7 @@ class APIPicklistShopping extends Controller
                             'qtypick' => (string)$value->t_qty_pick,
                             'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
-                           
+
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -262,7 +262,7 @@ class APIPicklistShopping extends Controller
                             'qtypick' => (string)$value->t_qty_pick,
                             'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
-                         
+
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -296,7 +296,7 @@ class APIPicklistShopping extends Controller
                             'qtypick' => (string)$value->t_qty_pick,
                             'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
-                            
+
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -324,7 +324,7 @@ class APIPicklistShopping extends Controller
                         $master[$currentPick]['wonbr'][$currentWo] = [
                             'wonbrnbr' => (string)$value->t_wo_nbr,
                             'wopart' => (string)$value->t_wo_part,
-                             'woid' => (string)$value->t_wo_id,
+                            'woid' => (string)$value->t_wo_id,
                             'detail' => $detail
                         ];
                     } else {
@@ -334,7 +334,7 @@ class APIPicklistShopping extends Controller
                             'qtypick' => (string)$value->t_qty_pick,
                             'qtytopick' => (string)$value->t_qty_topick,
                             'qtykemasan' => (string)$value->t_qty_kemasan,
-                           
+
                             'lot' => (string)$value->t_lot,
                             'id' => (string)$value->t_wo_id,
                             'wrh' => (string)$value->t_wrh,
@@ -768,6 +768,7 @@ class APIPicklistShopping extends Controller
 
                 $newTransactionHistory = new TransactionHistory();
                 $newTransactionHistory->tr_nbr = $picknbr;
+                $newTransactionHistory->tr_order = $wonbr;
                 $newTransactionHistory->tr_program = 'Picklist Module';
                 $newTransactionHistory->tr_activity = 'Shopping';
                 $newTransactionHistory->tr_user =  $approver ?? '';
@@ -814,6 +815,7 @@ class APIPicklistShopping extends Controller
         $wrh = $data['wrh'] ?? '';
         $level = $data['level'] ?? '';
         $bin = $data['bin'] ?? '';
+        $wonbr = $req->input('wonbr');
         // $locto = $data['loc'];
         $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $status, $qty, $part, $lot);
         if ($hasil[0] == 'false') {
@@ -824,6 +826,7 @@ class APIPicklistShopping extends Controller
         } else {
             $newTransactionHistory = new TransactionHistory();
             $newTransactionHistory->tr_nbr = $picknbr;
+            $newTransactionHistory->tr_order = $wonbr;
             $newTransactionHistory->tr_program = 'Picklist Module';
             $newTransactionHistory->tr_activity = 'Approval';
             $newTransactionHistory->tr_user =  $approver ?? '';
@@ -1251,6 +1254,7 @@ class APIPicklistShopping extends Controller
         $wrh = $data['wrh'] ?? '';
         $level = $data['level'] ?? '';
         $bin = $data['bin'] ?? '';
+        $wonbr = $req->input('wonbr');
         // $locto = $req->query('loc');
 
 
@@ -1263,6 +1267,7 @@ class APIPicklistShopping extends Controller
         } else {
             $newTransactionHistory = new TransactionHistory();
             $newTransactionHistory->tr_nbr = $picknbr;
+            $newTransactionHistory->tr_order = $wonbr;
             $newTransactionHistory->tr_program = 'Picklist Module';
             $newTransactionHistory->tr_activity = 'Transfer';
             $newTransactionHistory->tr_user =  $user ?? '';
@@ -1359,6 +1364,7 @@ class APIPicklistShopping extends Controller
             } else {
                 $newTransactionHistory = new TransactionHistory();
                 $newTransactionHistory->tr_nbr = $picknbr;
+                $newTransactionHistory->tr_order = $wonbr;
                 $newTransactionHistory->tr_program = 'Picklist Module';
                 $newTransactionHistory->tr_activity = 'Receipt';
                 $newTransactionHistory->tr_user =  $user ?? '';
