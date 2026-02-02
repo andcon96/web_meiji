@@ -19,6 +19,8 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
+
 class ReceiptServices
 {
 
@@ -52,14 +54,21 @@ class ReceiptServices
                 //reference 
                 $reference = '';
                 if ($dataDetail->qty_potensi == 1) {
-                    if($dataDetail->kode_cetak == '-'){
+                    if ($dataDetail->kode_cetak == '-') {
                         $reference = '';
-                    }
-                    else{
+                    } else {
                         $reference = $dataDetail->kode_cetak;
                     }
                 } else {
                     $reference = $dataDetail->qty_potensi;
+                }
+                $tanggalexp = null;
+                $tanggalretest = null;
+                if ($dataDetail->exp_date != null) {
+                    $tanggalexp = Carbon::createFromFormat('d/m/Y', $dataDetail->exp_date)->format('Y/m/d');
+                }
+                if ($dataDetail->retest_date != null) {
+                    $tanggalretest = Carbon::createFromFormat('d/m/Y', $dataDetail->rd_tgl_retest)->format('Y/m/d');
                 }
                 $getPurchaseOrderDetail = PurchaseOrderDetail::with('getMaster')->find($dataDetail->id_pod_det);
                 // Receipt Detail
@@ -72,9 +81,9 @@ class ReceiptServices
                 $newReceiptDetail->rd_nama_barang_note = $dataDetail->nama_barang_note;
                 $newReceiptDetail->rd_batch = $dataDetail->batch;
                 $newReceiptDetail->rd_batch_note = $dataDetail->batch_note;
-                $newReceiptDetail->rd_tgl_expire = $dataDetail->exp_date;
+                $newReceiptDetail->rd_tgl_expire =  $tanggalexp;
                 $newReceiptDetail->rd_tgl_expire_note = $dataDetail->exp_date_note;
-                $newReceiptDetail->rd_tgl_retest = $dataDetail->retest_date;
+                $newReceiptDetail->rd_tgl_retest = $tanggalretest;
                 $newReceiptDetail->rd_tgl_retest_note = $dataDetail->retest_date_note;
                 $newReceiptDetail->rd_kode_cetak = $dataDetail->kode_cetak;
                 $newReceiptDetail->rd_kode_cetak_note = $dataDetail->kode_cetak_note;
@@ -85,6 +94,7 @@ class ReceiptServices
                 $newReceiptDetail->rd_site_penyimpanan = $dataDetail->site_penyimpanan;
                 $newReceiptDetail->rd_location_penyimpanan = $dataDetail->loc_penyimpanan;
                 $newReceiptDetail->rd_ref = $reference;
+                $newReceiptDetail->rd_pt_um = $dataDetail->pt_um;
                 //$newReceiptDetail->rd_level_penyimpanan = $dataDetail->level_penyimpanan;
                 //$newReceiptDetail->rd_bin_penyimpanan = $dataDetail->bin_penyimpanan;
                 $newReceiptDetail->rd_building_penyimpanan = $dataDetail->building_penyimpanan;
@@ -131,14 +141,14 @@ class ReceiptServices
                     // Transaction History
                     $newTransactionHistory = new TransactionHistory();
                     $newTransactionHistory->tr_nbr = $getRunningNumber;
-                     $newTransactionHistory->tr_order = $getPurchaseOrderDetail->getMaster->po_nbr;
+                    $newTransactionHistory->tr_order = $getPurchaseOrderDetail->getMaster->po_nbr;
                     $newTransactionHistory->tr_order = $getRunningNumber;
                     $newTransactionHistory->tr_program = 'PO Receipt Module';
                     $newTransactionHistory->tr_activity = 'Create Receipt';
                     $newTransactionHistory->tr_user = $creator ?? '';
                     // $newTransactionHistory->tr_part = $dataDetail->nama_barang ?? '';
                     $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
-                    
+
                     $newTransactionHistory->tr_uom = '';
                     $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                     $newTransactionHistory->tr_lot = $dataDetail->batch ?? '';
@@ -342,7 +352,7 @@ class ReceiptServices
                 // Transaction History
                 $newTransactionHistory = new TransactionHistory();
                 $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
-                 $newTransactionHistory->tr_order = $getPurchaseOrderDetail->getMaster->po_nbr;
+                $newTransactionHistory->tr_order = $getPurchaseOrderDetail->getMaster->po_nbr;
                 $newTransactionHistory->tr_program = 'PO Receipt Module';
                 $newTransactionHistory->tr_activity = 'Edit Receipt';
                 $newTransactionHistory->tr_user = $creator ?? '';

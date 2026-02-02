@@ -5,7 +5,7 @@ namespace App\Models\API;
 use App\Models\Settings\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use App\Models\API\ApprovalReceiptTempAll;
 class ApprovalReceiptTemp extends Model
 {
     use HasFactory;
@@ -30,5 +30,9 @@ class ApprovalReceiptTemp extends Model
     public function getUserApproveBy()
     {
         return $this->hasOne(User::class, 'id', 'art_approved_by');
+    }
+        public function getChildren()
+    {
+        return $this->hasMany(ApprovalReceiptTempAll::class, 'art_receipt_det_id','art_receipt_det_id');
     }
 }

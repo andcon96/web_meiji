@@ -23,6 +23,8 @@ class APIPurchaseOrderApprovalController extends Controller
     public function index(Request $req)
     {
         $data = ApprovalReceiptTemp::with([
+            'getChildren.getUserApprove:id,username,name',
+            'getChildren.getHistory.getUserApprove:id,username,name',
             'getUserApprove:id,username,name',
             'getUserApproveAlt:id,username,name',
             'getReceiptDetail.getMaster.getPurchaseOrderMaster',
