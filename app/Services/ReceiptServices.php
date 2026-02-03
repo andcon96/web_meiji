@@ -64,11 +64,15 @@ class ReceiptServices
                 }
                 $tanggalexp = null;
                 $tanggalretest = null;
+                $tanggaldatang = null;
                 if ($dataDetail->exp_date != null) {
                     $tanggalexp = Carbon::createFromFormat('d/m/Y', $dataDetail->exp_date)->format('Y/m/d');
                 }
                 if ($dataDetail->retest_date != null) {
                     $tanggalretest = Carbon::createFromFormat('d/m/Y', $dataDetail->rd_tgl_retest)->format('Y/m/d');
+                }
+                if($dataDetail->tgl_datang != null){
+                    $tanggaldatang =Carbon::parse($dataDetail->tgl_datang)->format('Y/m/d');
                 }
                 $getPurchaseOrderDetail = PurchaseOrderDetail::with('getMaster')->find($dataDetail->id_pod_det);
                 // Receipt Detail
@@ -76,7 +80,7 @@ class ReceiptServices
                 $newReceiptDetail->rd_rm_id = $newReceiptMaster->id;
                 $newReceiptDetail->rd_pod_det_id = $dataDetail->id_pod_det;
                 $newReceiptDetail->rd_nomor_buku = $getRunningNumberBuku;
-                $newReceiptDetail->rd_tanggal_datang = $dataDetail->tgl_datang;
+                $newReceiptDetail->rd_tanggal_datang = $tanggaldatang;
                 $newReceiptDetail->rd_nama_barang = $dataDetail->nama_barang;
                 $newReceiptDetail->rd_nama_barang_note = $dataDetail->nama_barang_note;
                 $newReceiptDetail->rd_batch = $dataDetail->batch;

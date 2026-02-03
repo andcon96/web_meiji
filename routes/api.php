@@ -38,7 +38,7 @@ Route::post("changepass", [APIController::class, "resetPass"]);
 // Outbound WO
 Route::post("getWorkOrderQad", [APIController::class, "getWorkOrderQad"]);
 
-// Outbound WO
+// API DKP
 Route::post("sendQxCompIssue", [APIController::class, "sendQxCompIssue"]);
 
 // Get APK Latest Version
