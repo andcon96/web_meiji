@@ -831,6 +831,7 @@ class APIPurchaseOrderController extends Controller
 
         // Prioritaskan Location yang ada di Web by order.
         $getDataQAD = collect($wsaData[1]);
+        
         // dd($getDataQAD);
         if ($levelsearch != '') {
             $grouped = $getDataQAD->groupBy(function ($item) {
@@ -846,7 +847,8 @@ class APIPurchaseOrderController extends Controller
                 $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
                 $wrh   = is_array($item['t_inv_wrh']) ? '' : (string) ($item['t_inv_wrh'] ?? '');
                 $level = is_array($item['t_inv_level']) ? '' : (string) ($item['t_inv_level'] ?? '');
-                return "{$site}-{$wrh}-{$level}";
+                $bin   = is_array($item['t_inv_bin']) ? '' : (string) ($item['t_inv_bin'] ?? '');
+                return "{$site}-{$wrh}-{$level}-{$bin}";
             });
         }
 

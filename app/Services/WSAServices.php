@@ -4418,7 +4418,7 @@ log::info($qdocResponse);
 
         $dataloop    = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-        // dd($qdocRequest,$qdocResponse);
+        //dd($qdocRequest,$qdocResponse);
         return [
             $qdocResult,
             json_decode(json_encode($dataloop), true),
