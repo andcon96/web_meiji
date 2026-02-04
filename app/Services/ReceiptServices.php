@@ -261,15 +261,28 @@ class ReceiptServices
             DB::beginTransaction();
             $creator = Auth::user()->name;
             // Receipt Detail
+
+             $tanggalexp = null;
+                $tanggalretest = null;
+                $tanggaldatang = null;
+                if ($data->rd_tgl_expire != null) {
+                    $tanggalexp = Carbon::createFromFormat('d/m/Y', $data->rd_tgl_expire)->format('Y/m/d');
+                }
+                if ($data->rd_tgl_retest != null) {
+                    $tanggalretest = Carbon::createFromFormat('d/m/Y', $data->rd_tgl_retest)->format('Y/m/d');
+                }
+                if($data->rd_tanggal_datang != null){
+                    $tanggaldatang = Carbon::createFromFormat('d/m/Y', $data->rd_tanggal_datang)->format('Y/m/d');
+                }
             $findReceiptDetail = ReceiptDetail::findOrFail($data->id);
-            $findReceiptDetail->rd_tanggal_datang = $data->rd_tanggal_datang;
+            $findReceiptDetail->rd_tanggal_datang = $tanggaldatang;
             $findReceiptDetail->rd_nama_barang = $data->rd_nama_barang;
             $findReceiptDetail->rd_nama_barang_note = $data->rd_nama_barang_note;
             $findReceiptDetail->rd_batch = $data->rd_batch;
             $findReceiptDetail->rd_batch_note = $data->rd_batch_note;
-            $findReceiptDetail->rd_tgl_expire = $data->rd_tgl_expire;
+            $findReceiptDetail->rd_tgl_expire = $tanggalexp;
             $findReceiptDetail->rd_tgl_expire_note = $data->rd_tgl_expire_note;
-            $findReceiptDetail->rd_tgl_retest = $data->rd_tgl_retest;
+            $findReceiptDetail->rd_tgl_retest = $tanggalretest;
             $findReceiptDetail->rd_tgl_retest_note = $data->rd_tgl_retest_note;
             $findReceiptDetail->rd_kode_cetak = $data->rd_kode_cetak;
             $findReceiptDetail->rd_kode_cetak_note = $data->rd_kode_cetak_note;
