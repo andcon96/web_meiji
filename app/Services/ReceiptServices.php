@@ -69,7 +69,7 @@ class ReceiptServices
                     $tanggalexp = Carbon::createFromFormat('d/m/Y', $dataDetail->exp_date)->format('Y/m/d');
                 }
                 if ($dataDetail->retest_date != null) {
-                    $tanggalretest = Carbon::createFromFormat('d/m/Y', $dataDetail->rd_tgl_retest)->format('Y/m/d');
+                    $tanggalretest = Carbon::createFromFormat('d/m/Y', $dataDetail->retest_date)->format('Y/m/d');
                 }
                 if($dataDetail->tgl_datang != null){
                     $tanggaldatang = Carbon::createFromFormat('d/m/Y', $dataDetail->tgl_datang)->format('Y/m/d');
