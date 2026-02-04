@@ -111,9 +111,11 @@ class APIPurchaseOrderApprovalController extends Controller
                     $detailReceipt->save();
 
                     //getDetail Receipt
-                    $data = ReceiptDetail::with(['getMaster', 'getPurchaseOrderDetail.getMaster'])->find($tempApprove->art_receipt_det_id);
+                    $data = ReceiptDetail::with(['getMaster', 'getPurchaseOrderDetail.getMaster','getPallet'])->find($tempApprove->art_receipt_det_id);
                     $getMaster = $data->getMaster;
                     $getPurchaseOrderDetail = $data->getPurchaseOrderDetail;
+                    $pallet = $data->getPallet;
+                    foreach ($pallet as $plt) {
                     // Transaction History
                     $newTransactionHistory = new TransactionHistory();
                     $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
@@ -123,19 +125,20 @@ class APIPurchaseOrderApprovalController extends Controller
                     $newTransactionHistory->tr_user = $approver ?? '';
                     // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
                     $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
-                    $newTransactionHistory->tr_uom = $data->satuan ?? '';
+                    $newTransactionHistory->tr_uom = $data->rd_pt_um ?? '';
                     $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                     $newTransactionHistory->tr_lot = $data->rd_batch ?? '';
-                    $newTransactionHistory->tr_qty = $data->jumlah_terima ?? '';
+                    $newTransactionHistory->tr_qty = $data->rd_qty_terima ?? '';
                     $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                    $newTransactionHistory->tr_reference = $data->kode_cetak ?? '';
-                    $newTransactionHistory->tr_site = $data->site_penyimpanan ?? '';
-                    $newTransactionHistory->tr_location = $data->loc_penyimpanan ?? '';
-                    $newTransactionHistory->tr_warehouse = $data->building_penyimpanan ?? '';
-                    $newTransactionHistory->tr_level = $data->level_penyimpanan ?? '';
-                    $newTransactionHistory->tr_bin = $data->bin_penyimpanan ?? '';
+                    $newTransactionHistory->tr_reference = $data->rd_kode_cetak ?? '';
+                    $newTransactionHistory->tr_site = $data->rd_site_penyimpanan ?? '';
+                    $newTransactionHistory->tr_location = $data->rd_location_penyimpanan ?? '';
+                    $newTransactionHistory->tr_warehouse = $data->rd_building_penyimpanan ?? '';
+                    $newTransactionHistory->tr_level = $plt->rdp_level_penyimpanan ?? '';
+                    $newTransactionHistory->tr_bin = $plt->rdp_bin_penyimpanan ?? '';
                     $newTransactionHistory->tr_remark = '';
                     $newTransactionHistory->save();
+                    }
 
 
                     break;
@@ -256,9 +259,11 @@ class APIPurchaseOrderApprovalController extends Controller
                         }
                     }
                     //getDetail Receipt
-                    $data = ReceiptDetail::with(['getMaster', 'getPurchaseOrderDetail.getMaster'])->find($tempApprove->art_receipt_det_id);
+                    $data = ReceiptDetail::with(['getMaster', 'getPurchaseOrderDetail.getMaster','getPallet'])->find($tempApprove->art_receipt_det_id);
                     $getMaster = $data->getMaster;
                     $getPurchaseOrderDetail = $data->getPurchaseOrderDetail;
+                    $pallet = $data->getPallet;
+                    foreach ($pallet as $plt) {
                     // Transaction History
                     $newTransactionHistory = new TransactionHistory();
                     $newTransactionHistory->tr_nbr = $getMaster->rm_rn_number;
@@ -268,19 +273,20 @@ class APIPurchaseOrderApprovalController extends Controller
                     $newTransactionHistory->tr_user = $approver ?? '';
                     // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
                     $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
-                    $newTransactionHistory->tr_uom = $data->satuan ?? '';
+                    $newTransactionHistory->tr_uom = $data->rd_pt_um ?? '';
                     $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                     $newTransactionHistory->tr_lot = $data->rd_batch ?? '';
-                    $newTransactionHistory->tr_qty = $data->jumlah_terima ?? '';
+                    $newTransactionHistory->tr_qty = $data->rd_qty_terima ?? '';
                     $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                    $newTransactionHistory->tr_reference = $data->kode_cetak ?? '';
-                    $newTransactionHistory->tr_site = $data->site_penyimpanan ?? '';
-                    $newTransactionHistory->tr_location = $data->loc_penyimpanan ?? '';
-                    $newTransactionHistory->tr_warehouse = $data->building_penyimpanan ?? '';
-                    $newTransactionHistory->tr_level = $data->level_penyimpanan ?? '';
-                    $newTransactionHistory->tr_bin = $data->bin_penyimpanan ?? '';
+                    $newTransactionHistory->tr_reference = $data->rd_kode_cetak ?? '';
+                    $newTransactionHistory->tr_site = $data->rd_site_penyimpanan ?? '';
+                    $newTransactionHistory->tr_location = $data->rd_location_penyimpanan ?? '';
+                    $newTransactionHistory->tr_warehouse = $data->rd_building_penyimpanan ?? '';
+                    $newTransactionHistory->tr_level = $plt->rdp_level_penyimpanan ?? '';
+                    $newTransactionHistory->tr_bin = $plt->rdp_bin_penyimpanan ?? '';
                     $newTransactionHistory->tr_remark = '';
                     $newTransactionHistory->save();
+                    }
                     break;
             }
 

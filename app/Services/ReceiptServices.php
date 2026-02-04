@@ -162,8 +162,8 @@ class ReceiptServices
                     $newTransactionHistory->tr_site = $dataDetail->site_penyimpanan ?? '';
                     $newTransactionHistory->tr_location = $dataDetail->loc_penyimpanan ?? '';
                     $newTransactionHistory->tr_warehouse = $dataDetail->building_penyimpanan ?? '';
-                    $newTransactionHistory->tr_level = $dataDetail->level_penyimpanan ?? '';
-                    $newTransactionHistory->tr_bin = $dataDetail->bin_penyimpanan ?? '';
+                    $newTransactionHistory->tr_level = $pallet->level_penyimpanan ?? '';
+                    $newTransactionHistory->tr_bin = $pallet->bin_penyimpanan ?? '';
                     $newTransactionHistory->tr_remark = '';
                     $newTransactionHistory->save();
                 }
@@ -383,9 +383,9 @@ class ReceiptServices
                 $newTransactionHistory->tr_reference = $data->kode_cetak ?? '';
                 $newTransactionHistory->tr_site = $data->site_penyimpanan ?? '';
                 $newTransactionHistory->tr_location = $data->loc_penyimpanan ?? '';
-                $newTransactionHistory->tr_warehouse = $data->building_penyimpanan ?? '';
-                $newTransactionHistory->tr_level = $data->level_penyimpanan ?? '';
-                $newTransactionHistory->tr_bin = $data->bin_penyimpanan ?? '';
+                $newTransactionHistory->tr_warehouse = $data->rd_building_penyimpanan ?? '';
+                $newTransactionHistory->tr_level = $pallet->rdp_level_penyimpanan ?? '';
+                $newTransactionHistory->tr_bin = $pallet->rdp_bin_penyimpanan ?? '';
                 $newTransactionHistory->tr_remark = '';
                 $newTransactionHistory->save();
             }

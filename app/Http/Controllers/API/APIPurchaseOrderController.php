@@ -831,7 +831,7 @@ class APIPurchaseOrderController extends Controller
 
         // Prioritaskan Location yang ada di Web by order.
         $getDataQAD = collect($wsaData[1]);
-        
+
         // dd($getDataQAD);
         if ($levelsearch != '') {
             $grouped = $getDataQAD->groupBy(function ($item) {
@@ -903,30 +903,36 @@ class APIPurchaseOrderController extends Controller
         try {
             $id = $req->id;
 
-            $data = ReceiptDetail::with(['getMaster', 'getPurchaseOrderDetail.getMaster'])->findOrFail($id);
+            $data = ReceiptDetail::with(['getMaster', 'getPurchaseOrderDetail.getMaster', 'getPallet'])->findOrFail($id);
             $master = ReceiptMaster::findOrFail($data->rd_rm_id);
             $getPurchaseOrderDetail = $data->getPurchaseOrderDetail;
-            $newTransactionHistory = new TransactionHistory();
-            $newTransactionHistory->tr_nbr = $master->rm_rn_number;
-            $newTransactionHistory->tr_order = $getPurchaseOrderDetail->getMaster->po_nbr;
-            $newTransactionHistory->tr_program = 'PO Approval Module';
-            $newTransactionHistory->tr_activity = 'Delete Receipt';
-            $newTransactionHistory->tr_user =  '';
-            // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
-            $newTransactionHistory->tr_part = $data->getPurchaseOrderDetail->pod_part ?? '';
-            $newTransactionHistory->tr_uom = $data->getPurchaseOrderDetail->pod_um ?? '';
-            $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-            $newTransactionHistory->tr_lot =  '';
-            $newTransactionHistory->tr_qty =  '';
-            $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-            $newTransactionHistory->tr_reference =  '';
-            $newTransactionHistory->tr_site =  '';
-            $newTransactionHistory->tr_location = '';
-            $newTransactionHistory->tr_warehouse =  '';
-            $newTransactionHistory->tr_level = '';
-            $newTransactionHistory->tr_bin =  '';
-            $newTransactionHistory->tr_remark = '';
-            $newTransactionHistory->save();
+            $getPallet = $data->getPallet;
+            foreach ($getPallet as $plt) {
+
+
+                $newTransactionHistory = new TransactionHistory();
+                $newTransactionHistory->tr_nbr = $data->getMaster->rm_rn_number;
+                $newTransactionHistory->tr_order = $getPurchaseOrderDetail->getMaster->po_nbr;
+                $newTransactionHistory->tr_program = 'PO Approval Module';
+                $newTransactionHistory->tr_activity = 'Delete Receipt';
+                $newTransactionHistory->tr_user = $approver ?? '';
+                // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
+                $newTransactionHistory->tr_uom = $data->rd_pt_um ?? '';
+                $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                $newTransactionHistory->tr_lot = $data->rd_batch ?? '';
+                $newTransactionHistory->tr_qty = $data->rd_qty_terima ?? '';
+                $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                $newTransactionHistory->tr_reference = $data->rd_kode_cetak ?? '';
+                $newTransactionHistory->tr_site = $data->rd_site_penyimpanan ?? '';
+                $newTransactionHistory->tr_location = $data->rd_location_penyimpanan ?? '';
+                $newTransactionHistory->tr_warehouse = $data->rd_building_penyimpanan ?? '';
+                $newTransactionHistory->tr_level = $plt->rdp_level_penyimpanan ?? '';
+                $newTransactionHistory->tr_bin = $plt->rdp_bin_penyimpanan ?? '';
+                $newTransactionHistory->tr_remark = '';
+                $newTransactionHistory->save();
+            }
+
 
             // Delete all related records using query builder (more efficient)
             $data->getAttachment()->delete();
