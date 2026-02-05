@@ -257,6 +257,7 @@ class ReceiptServices
 
     public function editDataReceipt($data, $approval)
     {
+        log::info($data);
         try {
             DB::beginTransaction();
             $creator = Auth::user()->name;
