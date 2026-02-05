@@ -265,17 +265,17 @@ class ReceiptServices
              $tanggalexp = null;
                 $tanggalretest = null;
                 $tanggaldatang = null;
-                if ($data->rd_tgl_expire != null) {
+                if ($data->rd_tgl_expire != null && $data->rd_tgl_expire != '') {
                     $tanggalexp = Carbon::createFromFormat('d/m/Y', $data->rd_tgl_expire)->format('Y/m/d');
                 }
-                if ($data->rd_tgl_retest != null) {
+                if ($data->rd_tgl_retest != null && $data->rd_tgl_retest != '') {
                     $tanggalretest = Carbon::createFromFormat('d/m/Y', $data->rd_tgl_retest)->format('Y/m/d');
                 }
-                if($data->rd_tanggal_datang != null){
-                    $tanggaldatang = Carbon::createFromFormat('d/m/Y', $data->rd_tanggal_datang)->format('Y/m/d');
-                }
+                // if($data->rd_tanggal_datang != null){
+                //     $tanggaldatang = Carbon::createFromFormat('d/m/Y', $data->rd_tanggal_datang)->format('Y/m/d');
+                // }
             $findReceiptDetail = ReceiptDetail::findOrFail($data->id);
-            $findReceiptDetail->rd_tanggal_datang = $tanggaldatang;
+            $findReceiptDetail->rd_tanggal_datang = $data->rd_tanggal_datang;
             $findReceiptDetail->rd_nama_barang = $data->rd_nama_barang;
             $findReceiptDetail->rd_nama_barang_note = $data->rd_nama_barang_note;
             $findReceiptDetail->rd_batch = $data->rd_batch;
