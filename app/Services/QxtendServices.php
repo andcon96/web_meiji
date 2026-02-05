@@ -2364,14 +2364,17 @@ public function qxWorkOrderComponentIssue(
         } else {
             $xmlResp->registerXPathNamespace("ns3", "urn:schemas-qad-com:xml-services:common");
             $qdocMsgDesc = $xmlResp->xpath("//ns3:tt_msg_desc");
+            
             $output = "";
             foreach ($qdocMsgDesc as $datas) {
                 if (str_contains($datas, "ERROR:")) {
                     $output .= $datas . " - ";
                 }
             }
+            
             $output = substr($output, 0, -3);
 
+            
             return [false, $output];
         }
 

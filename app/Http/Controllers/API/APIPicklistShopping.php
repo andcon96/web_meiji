@@ -1816,45 +1816,73 @@ class APIPicklistShopping extends Controller
 
     public function issueWorkOrder(Request $req)
     {
+        $data = $req->all();
 
-        $data = $req->data;
         
         $datawo = $data['wonbr'];
         //  $detail = $datawo['detail'];
         foreach ($datawo as $dw) {
             $datadetail = $dw['detail'];
-            foreach ($datadetail as $dd) {
-                $part = $dd['wodpart'];
-                $lotserial = $dd['lot'] ?? '';
-                $site = $data['site'];
-                $wonbr = $data['wonbrnbr'];
-                $effdate = Carbon::today()->format('Y-m-d');
+
+
+
+
+            $picknbr = $data['picknbr'] ?? '';
+            $part = $data['part'] ?? '';
+            $lotserial = $data['lot'] ?? '';
+            $qty = $data['qtypick'] ?? '';
+            $site = $data['site'] ?? '';
+            $wonbr = $data['wonbrnbr'] ?? '';
+            $lot = $data['woid'] ?? '';
+            $effdate = Carbon::today()->format('Y-m-d');
+            $location = $dw['loc'] ?? '';
+            $user = $data['approver'] ?? '';
+            
+
+            $qxtendWoIssue = (new QxtendServices())->qxWorkOrderComponentIssue($wonbr, $location, $lot, $effdate, $part, $qty, $site, $lotserial);
+            // $effdata =
+            if ($qxtendWoIssue[0] == false) {
+                Log::channel('Picklist')->info("Wo issue failed for picklist : " . $picknbr . " WO : " . $wonbr. " Part : " . $part);
                 
-                $qty = $dd['qtypick'];
-                $location = $dw['loc'] ?? '';
-                $lot = $data['woid'] ?? '';
+                return response()->json([
+                    'Status' => 'Error',
+                    
+                    'Message' => $qxtendWoIssue[1] ?? 'Unknown error occurred'
+                ], 422);
+                //'Message' => "Wo issue failed for picklist : " . $picknbr . " WO : " . $wonbr. " Part : " . $part
+            } else {
+                dd('c');
+                $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, 'Issued', $qty, $part, $lot);
 
-                $qxtendWoIssue = (new QxtendServices())->qxWorkOrderComponentIssue($wonbr, $location, $lot, $effdate, $part, $qty, $site, $lotserial);
-
-                // $effdata =
-                if ($qxtendWoIssue[0] == 'false') {
-                    Log::channel('Picklist')->info("Wo issue failed for picklist : " . $data['picknbr'] . " WO : " . $datawo['wonbrnbr']);
+                if ($hasil[0] == 'false') {
+                    Log::channel('Picklist')->info("Update status wo issue failed for picklist : " . $picknbr . " WO : " . $wonbr. " Part : " . $part);
                     return response()->json([
                         'Status' => 'Error',
-                        'Message' => "Wo issue failed for picklist : " . $data['picknbr'] . " WO : " . $datawo['wonbrnbr']
-                        //'Message'=> $qxtendsingleitem[1];
+                        'Message' => "Update status wo issue failed for picklist : " . $picknbr . " WO : " . $wonbr. " Part : " . $part
                     ], 422);
                 } else {
-                    $hasil = (new WSAServices())->wsaUpdateStatusPick($data['picknbr'], 'Issued', $qty, $part, $lot);
-
-                    if ($hasil[0] == 'false') {
-                        Log::channel('Picklist')->info("Update status wo issue failed for picklist : " . $data['picknbr'] . " WO : " . $datawo['wonbrnbr']);
-                        return response()->json([
-                            'Status' => 'Error',
-                            'Message' => "Update status wo issue failed for picklist : " . $data['picknbr'] . " WO : " . $datawo['wonbrnbr']
-                        ], 422);
-                    } else {
-                    }
+                    
+                    $newTransactionHistory = new TransactionHistory();
+                    $newTransactionHistory->tr_nbr = $picknbr;
+                    $newTransactionHistory->tr_order = $wonbr;
+                    $newTransactionHistory->tr_program = 'Picklist Module';
+                    $newTransactionHistory->tr_activity = 'WO Issue';
+                    $newTransactionHistory->tr_user =  $user ?? '';
+                    // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                    $newTransactionHistory->tr_part = $part ?? '';
+                    $newTransactionHistory->tr_uom =  '';
+                    $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                    $newTransactionHistory->tr_lot =  $lot ?? '';
+                    $newTransactionHistory->tr_qty =  $qty ?? '';
+                    $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                    $newTransactionHistory->tr_reference =  '';
+                    $newTransactionHistory->tr_site =  $site ?? '';
+                    $newTransactionHistory->tr_location = $loc ?? '';
+                    $newTransactionHistory->tr_warehouse =  $wrh ?? '';
+                    $newTransactionHistory->tr_level = $level ?? '';
+                    $newTransactionHistory->tr_bin =  $bin ?? '';
+                    $newTransactionHistory->tr_remark = '';
+                    $newTransactionHistory->save();
                 }
             }
         }
@@ -1862,7 +1890,6 @@ class APIPicklistShopping extends Controller
             'success',
             200
         );
-       
     }
     public function getApproverList(Request $req)
     {

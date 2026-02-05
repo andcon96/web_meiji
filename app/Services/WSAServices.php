@@ -462,7 +462,7 @@ class WSAServices
             }
             curl_close($curl);
         }
-//  dd($qdocRequest,$qdocResponse);
+        //  dd($qdocRequest,$qdocResponse);
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
@@ -511,6 +511,7 @@ class WSAServices
             $newDataDetail->pod_part_desc2 = (string)$listDatas->t_partDesc2;
             $newDataDetail->pod_qty_ord = (string)$listDatas->t_podQtyOrd;
             $newDataDetail->pod_qty_rcpt = (string)$listDatas->t_podQtyRcpt;
+            $newDataDetail->pod_qty_potensi = (string)$listDatas->t_potensi;
             $newDataDetail->pod_um = (string)$listDatas->t_podUm;
             $newDataDetail->pod_pt_um = (string)$listDatas->t_ptUm;
             $newDataDetail->pod_pallete = (string)$listDatas->t_ptPallete;
@@ -527,6 +528,7 @@ class WSAServices
                 'pod_qty_ord' => (string)$listDatas->t_podQtyOrd,
                 'pod_qty_rcpt' => (string)$listDatas->t_podQtyRcpt,
                 'pod_qty_ongoing' => '0',
+                'pod_qty_potensi' =>(string)$listDatas->t_potensi ?? '1',
                 'pod_um' => (string)$listDatas->t_podUm,
                 'pt_um' => (string)$listDatas->t_ptUm,
                 'pt_pallete' => (string)$listDatas->t_ptPallete,

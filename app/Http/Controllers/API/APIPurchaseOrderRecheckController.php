@@ -10,6 +10,7 @@ use App\Models\API\ReceiptMaster;
 use App\Models\API\ReceiptDetail;
 use App\Models\API\ReceiptAttachment;
 use App\Models\API\ApprovalReceiptTemp;
+use App\Models\API\TransactionHistory;
 use App\Models\Settings\ItemLocation;
 use App\Models\Settings\LocationDetail;
 use App\Models\Settings\User;
@@ -83,7 +84,7 @@ class APIPurchaseOrderRecheckController extends Controller
         $receiptnbr = $req->receiptnbr;
         $status = $req->status;
         $nomorbuku = $req->nomorbuku;
-
+        $creator = $req->approver;
         DB::beginTransaction();
         try {
             $receiptMstr = ReceiptMaster::where('rm_rn_number', $receiptnbr)->first();
@@ -93,7 +94,7 @@ class APIPurchaseOrderRecheckController extends Controller
                     'Message' => 'Receipt Number Not Found.'
                 ], 422);
             } else {
-                $receiptDetail = ReceiptDetail::where('rd_rm_id', $receiptMstr->id)
+                $receiptDetail = ReceiptDetail::with(['getPurchaseOrderDetail.getMaster','getPallet'])->where('rd_rm_id', $receiptMstr->id)
                     ->where('rd_nomor_buku', $nomorbuku)
                     ->first();
                 if (!$receiptMstr) {
@@ -121,6 +122,34 @@ class APIPurchaseOrderRecheckController extends Controller
                     $receiptMstr->rm_status = $status;
                     $receiptMstr->save();
                 }
+                $getPurchaseOrderDetail = $receiptDetail->getPurchaseOrderDetail;
+                $getPallet = $receiptDetail->getPallet;
+                foreach($getPallet as $pallet){
+                    // Transaction History
+                    $newTransactionHistory = new TransactionHistory();
+                    $newTransactionHistory->tr_nbr = $receiptnbr;
+                    $newTransactionHistory->tr_order = $getPurchaseOrderDetail->getMaster->po_nbr;
+                    $newTransactionHistory->tr_program = 'PO Receipt Module';
+                    $newTransactionHistory->tr_activity = 'Verify Receipt';
+                    $newTransactionHistory->tr_user = $creator ?? '';
+                    // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                    $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
+                    $newTransactionHistory->tr_uom = '';
+                    $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                    $newTransactionHistory->tr_lot = $receiptDetail->rd_batch ?? '';
+                    $newTransactionHistory->tr_qty = str_replace(',', '', $receiptDetail->rd_qty_terima) ?? '';
+                    $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                    $newTransactionHistory->tr_reference = $receiptDetail->rd_kode_cetak ?? '';
+                    $newTransactionHistory->tr_site = $receiptDetail->rd_site_penyimpanan ?? '';
+                    $newTransactionHistory->tr_location = $receiptDetail->rd_location_penyimpanan ?? '';
+                    $newTransactionHistory->tr_warehouse = $receiptDetail->rd_building_penyimpanan ?? '';
+                    $newTransactionHistory->tr_level = $pallet->rdp_level_penyimpanan ?? '';
+                    $newTransactionHistory->tr_bin = $pallet->rdp_bin_penyimpanan ?? '';
+                    $newTransactionHistory->tr_remark = '';
+                    $newTransactionHistory->save();
+                }
+
+
                 
                 
             }

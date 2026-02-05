@@ -1563,10 +1563,13 @@ class APISingleTransfer extends Controller
 
     public function getWlbData(Request $req)
     {
-        $part = $req->part ?? '';
-        $lot = $req->lot ?? '';
-        $site = $req->site ?? '';
+        //$part = $req->part ?? '';
+        // $site = $req->site ?? '';
+        // $lot = $req->lot ?? '';
+        $lot = '';
         $loc = $req->loc ?? '';
+        $site = '';
+        $part = '';
         $wrh = $req->wrh ?? '';
         $level = $req->level ?? '';
         $bin = $req->bin ?? '';
