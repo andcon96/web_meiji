@@ -91,10 +91,10 @@ class ReceiptServices
                 $newReceiptDetail->rd_tgl_retest_note = $dataDetail->retest_date_note;
                 $newReceiptDetail->rd_kode_cetak = $dataDetail->kode_cetak;
                 $newReceiptDetail->rd_kode_cetak_note = $dataDetail->kode_cetak_note;
-                $newReceiptDetail->rd_qty_terima = $dataDetail->jumlah_terima;
+                $newReceiptDetail->rd_qty_terima = str_replace(',','',$dataDetail->jumlah_terima);
                 $newReceiptDetail->rd_qty_terima_note = $dataDetail->jumlah_terima_note;
-                $newReceiptDetail->rd_qty_potensi = $dataDetail->qty_potensi;
-                $newReceiptDetail->rd_qty_pallete = $dataDetail->qty_pallete;
+                $newReceiptDetail->rd_qty_potensi = str_replace(',','',$dataDetail->qty_potensi);
+                $newReceiptDetail->rd_qty_pallete = str_replace(',','',$dataDetail->qty_pallete);
                 $newReceiptDetail->rd_site_penyimpanan = $dataDetail->site_penyimpanan;
                 $newReceiptDetail->rd_location_penyimpanan = $dataDetail->loc_penyimpanan;
                 $newReceiptDetail->rd_ref = $reference;
@@ -140,7 +140,7 @@ class ReceiptServices
                     $newReceiptPallet->rdp_rd_det_id = $newReceiptDetail->id;
                     $newReceiptPallet->rdp_level_penyimpanan = $pallet->level_penyimpanan;
                     $newReceiptPallet->rdp_bin_penyimpanan = $pallet->bin_penyimpanan;
-                    $newReceiptPallet->rdp_qty_penyimpanan = $pallet->qty_pallet;
+                    $newReceiptPallet->rdp_qty_penyimpanan = str_replace(',','',$pallet->qty_pallet);
                     $newReceiptPallet->save();
                     // Transaction History
                     $newTransactionHistory = new TransactionHistory();
@@ -156,7 +156,7 @@ class ReceiptServices
                     $newTransactionHistory->tr_uom = '';
                     $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                     $newTransactionHistory->tr_lot = $dataDetail->batch ?? '';
-                    $newTransactionHistory->tr_qty = $dataDetail->jumlah_terima ?? '';
+                    $newTransactionHistory->tr_qty = str_replace(',','',$dataDetail->jumlah_terima) ?? '';
                     $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
                     $newTransactionHistory->tr_reference = $dataDetail->kode_cetak ?? '';
                     $newTransactionHistory->tr_site = $dataDetail->site_penyimpanan ?? '';
@@ -286,10 +286,10 @@ class ReceiptServices
             $findReceiptDetail->rd_tgl_retest_note = $data->rd_tgl_retest_note;
             $findReceiptDetail->rd_kode_cetak = $data->rd_kode_cetak;
             $findReceiptDetail->rd_kode_cetak_note = $data->rd_kode_cetak_note;
-            $findReceiptDetail->rd_qty_terima = $data->rd_qty_terima;
+            $findReceiptDetail->rd_qty_terima = str_replace(',','',$data->rd_qty_terima);
             $findReceiptDetail->rd_qty_terima_note = $data->rd_qty_terima_note;
-            $findReceiptDetail->rd_qty_potensi = $data->rd_qty_potensi;
-            $findReceiptDetail->rd_qty_pallete = $data->rd_qty_pallete;
+            $findReceiptDetail->rd_qty_potensi = str_replace(',','',$data->rd_qty_potensi);
+            $findReceiptDetail->rd_qty_pallete = str_replace(',','',$data->rd_qty_pallete);
             $findReceiptDetail->rd_site_penyimpanan = $data->rd_site_penyimpanan;
             $findReceiptDetail->rd_location_penyimpanan = $data->rd_location_penyimpanan;
             $findReceiptDetail->rd_level_penyimpanan = $data->rd_level_penyimpanan;
@@ -378,7 +378,7 @@ class ReceiptServices
                 $newTransactionHistory->tr_uom = '';
                 $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                 $newTransactionHistory->tr_lot = $data->rd_batch ?? '';
-                $newTransactionHistory->tr_qty = $data->jumlah_terima ?? '';
+                $newTransactionHistory->tr_qty = str_replace(',', '', $data->jumlah_terima) ?? '';
                 $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
                 $newTransactionHistory->tr_reference = $data->kode_cetak ?? '';
                 $newTransactionHistory->tr_site = $data->site_penyimpanan ?? '';
