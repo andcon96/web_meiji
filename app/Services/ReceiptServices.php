@@ -257,7 +257,7 @@ class ReceiptServices
 
     public function editDataReceipt($data, $approval)
     {
-        log::info($data);
+        
         try {
             DB::beginTransaction();
             $creator = Auth::user()->name;
@@ -426,6 +426,7 @@ class ReceiptServices
             return true;
         } catch (Exception $e) {
             Log::info($e);
+            log::info($data);
             DB::rollBack();
 
             return false;
