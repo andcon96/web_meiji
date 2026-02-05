@@ -393,11 +393,11 @@ class ReceiptServices
                 $newTransactionHistory->tr_uom = '';
                 $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                 $newTransactionHistory->tr_lot = $data->rd_batch ?? '';
-                $newTransactionHistory->tr_qty = str_replace(',', '', $data->jumlah_terima) ?? '';
+                $newTransactionHistory->tr_qty = str_replace(',', '', $data->rd_qty_terima) ?? '';
                 $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                $newTransactionHistory->tr_reference = $data->kode_cetak ?? '';
-                $newTransactionHistory->tr_site = $data->site_penyimpanan ?? '';
-                $newTransactionHistory->tr_location = $data->loc_penyimpanan ?? '';
+                $newTransactionHistory->tr_reference = $data->rd_kode_cetak ?? '';
+                $newTransactionHistory->tr_site = $data->rd_site_penyimpanan ?? '';
+                $newTransactionHistory->tr_location = $data->rd_location_penyimpanan ?? '';
                 $newTransactionHistory->tr_warehouse = $data->rd_building_penyimpanan ?? '';
                 $newTransactionHistory->tr_level = $pallet->rdp_level_penyimpanan ?? '';
                 $newTransactionHistory->tr_bin = $pallet->rdp_bin_penyimpanan ?? '';
