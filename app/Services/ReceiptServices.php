@@ -426,7 +426,8 @@ class ReceiptServices
             return true;
         } catch (Exception $e) {
             Log::info($e);
-            log::info($data);
+            log::info($data->rd_tgl_expire);
+            log::info($data->rd_tgl_retest);
             DB::rollBack();
 
             return false;
