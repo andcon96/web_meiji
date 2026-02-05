@@ -267,10 +267,24 @@ class ReceiptServices
                 $tanggalretest = null;
                 $tanggaldatang = null;
                 if ($data->rd_tgl_expire != null && $data->rd_tgl_expire != '') {
-                    $tanggalexp = Carbon::createFromFormat('d/m/Y', $data->rd_tgl_expire)->format('Y/m/d');
+                    if (str_contains($data->rd_tgl_expire, '-')) {
+                      
+                        $tanggalexp = Carbon::createFromFormat('Y-m-d', $data->rd_tgl_expire)->format('Y/m/d');
+                    }
+                    else{
+                        $tanggalexp = Carbon::createFromFormat('d/m/Y', $data->rd_tgl_expire)->format('Y/m/d');
+                    }
+                    
                 }
                 if ($data->rd_tgl_retest != null && $data->rd_tgl_retest != '') {
-                    $tanggalretest = Carbon::createFromFormat('d/m/Y', $data->rd_tgl_retest)->format('Y/m/d');
+                      if (str_contains($data->rd_tgl_retest, '-')) {
+                        // Character found
+                        $tanggalretest = Carbon::createFromFormat('Y-m-d', $data->rd_tgl_retest)->format('Y/m/d');
+                    }
+                    else{
+                        $tanggalretest = Carbon::createFromFormat('d/m/Y', $data->rd_tgl_retest)->format('Y/m/d');    
+                    }
+                    
                 }
                 // if($data->rd_tanggal_datang != null){
                 //     $tanggaldatang = Carbon::createFromFormat('d/m/Y', $data->rd_tanggal_datang)->format('Y/m/d');
@@ -426,8 +440,7 @@ class ReceiptServices
             return true;
         } catch (Exception $e) {
             Log::info($e);
-            log::info($data->rd_tgl_expire);
-            log::info($data->rd_tgl_retest);
+
             DB::rollBack();
 
             return false;
