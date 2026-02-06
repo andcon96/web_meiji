@@ -146,7 +146,7 @@ class ReceiptServices
                     $newTransactionHistory = new TransactionHistory();
                     $newTransactionHistory->tr_nbr = $getRunningNumber;
                     $newTransactionHistory->tr_order = $getPurchaseOrderDetail->getMaster->po_nbr;
-                    $newTransactionHistory->tr_order = $getRunningNumber;
+
                     $newTransactionHistory->tr_program = 'PO Receipt Module';
                     $newTransactionHistory->tr_activity = 'Create Receipt';
                     $newTransactionHistory->tr_user = $creator ?? '';

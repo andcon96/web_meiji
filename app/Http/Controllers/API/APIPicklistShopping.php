@@ -1816,8 +1816,11 @@ class APIPicklistShopping extends Controller
 
     public function issueWorkOrder(Request $req)
     {
-        $data = $req->all();
+        log::info($req->all());
+        $data = $req->data[0];
+        $dataall = $req->all();
 
+        
         
         $datawo = $data['wonbr'];
         //  $detail = $datawo['detail'];
@@ -1827,16 +1830,16 @@ class APIPicklistShopping extends Controller
 
 
 
-            $picknbr = $data['picknbr'] ?? '';
-            $part = $data['part'] ?? '';
-            $lotserial = $data['lot'] ?? '';
-            $qty = $data['qtypick'] ?? '';
+            $picknbr = $req->picknbr ?? '';
+            $part = $req->part ?? '';
+            $lotserial = $req->lot ?? '';
+            $qty = $req->qtypick ?? '';
             $site = $data['site'] ?? '';
             $wonbr = $data['wonbrnbr'] ?? '';
             $lot = $data['woid'] ?? '';
             $effdate = Carbon::today()->format('Y-m-d');
             $location = $dw['loc'] ?? '';
-            $user = $data['approver'] ?? '';
+            $user = $req->approver ?? '';
             
 
             $qxtendWoIssue = (new QxtendServices())->qxWorkOrderComponentIssue($wonbr, $location, $lot, $effdate, $part, $qty, $site, $lotserial);
@@ -1851,9 +1854,10 @@ class APIPicklistShopping extends Controller
                 ], 422);
                 //'Message' => "Wo issue failed for picklist : " . $picknbr . " WO : " . $wonbr. " Part : " . $part
             } else {
-                dd('c');
+                
                 $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, 'Issued', $qty, $part, $lot);
-
+                
+               
                 if ($hasil[0] == 'false') {
                     Log::channel('Picklist')->info("Update status wo issue failed for picklist : " . $picknbr . " WO : " . $wonbr. " Part : " . $part);
                     return response()->json([
@@ -1861,7 +1865,6 @@ class APIPicklistShopping extends Controller
                         'Message' => "Update status wo issue failed for picklist : " . $picknbr . " WO : " . $wonbr. " Part : " . $part
                     ], 422);
                 } else {
-                    
                     $newTransactionHistory = new TransactionHistory();
                     $newTransactionHistory->tr_nbr = $picknbr;
                     $newTransactionHistory->tr_order = $wonbr;
