@@ -74,12 +74,12 @@
                                 <input type="checkbox" class="custom-control-input form-check-input" id="cbPOApproval"
                                     name="data[]" value="PO02" />
                             </div>
-                            <div class="form-check d-flex form-switch mb-4">
+                            {{-- <div class="form-check d-flex form-switch mb-4">
                                 <label for="level" class="form-check-label col-8">Receipt Report</label>
 
                                 <input type="checkbox" class="custom-control-input form-check-input" id="cbReceiptReport"
                                     name="data[]" value="PO03" />
-                            </div>
+                            </div> --}}
                             <div class="form-check d-flex form-switch mb-4">
                                 <label for="level" class="form-check-label col-8">Print QR</label>
 
