@@ -8,6 +8,7 @@ use App\Models\API\PurchaseOrderDetail;
 use App\Models\API\PurchaseOrderMaster;
 use App\Models\API\ReceiptAttachment;
 use App\Models\API\ReceiptDetail;
+use App\Models\API\ReceiptPallet;
 use App\Models\API\ReceiptMaster;
 use App\Models\Settings\ItemLocation;
 use App\Models\Settings\LocationDetail;
@@ -804,7 +805,7 @@ class APIPurchaseOrderController extends Controller
         // }
         // $getAllItemLocation = $getAllItemLocation->get();
 
-        $receiptDetail = ReceiptDetail::query()->where('rd_status', '!=', 'Approved')->where('rd_status', '!=', 'Reject');
+        // $receiptDetail = ReceiptDetail::with('getPallet')->query()->where('rd_status', '!=', 'Approved')->where('rd_status', '!=', 'Reject');
         // if ($warehouse != '') {
         //     $receiptDetail->where('rd_building_penyimpanan', $warehouse);
         // }
@@ -815,11 +816,15 @@ class APIPurchaseOrderController extends Controller
         //     $receiptDetail->where('rd_bin_penyimpanan', $binSearch);
         // }
 
-        $receiptDetail = $receiptDetail
-            ->select('rd_building_penyimpanan', 'rd_level_penyimpanan', 'rd_bin_penyimpanan')
+        // $receiptDetail = $receiptDetail
+        //     ->select('rd_building_penyimpanan', 'rd_level_penyimpanan', 'rd_bin_penyimpanan')
+        //     ->distinct()
+        //     ->get();
+        $receiptDetail = ReceiptPallet::with('getDetail')
+            ->whereRelation('getDetail', 'rd_status', '!=', 'Approved')
+            ->whereRelation('getDetail', 'rd_status', '!=', 'Reject')
             ->distinct()
             ->get();
-
 
         $wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse, $levelsearch);
         if ($wsaData[0] == 'false') {
@@ -873,16 +878,33 @@ class APIPurchaseOrderController extends Controller
         // return response()->json($dataQAD);
 
 
+        // $dataQAD = $merged->map(function ($item) use ($receiptDetail) {
+        //     foreach ($receiptDetail as $datas) {
+        //         if (
+        //             $item['t_inv_wrh'] == $datas->rd_building_penyimpanan &&
+        //             $item['t_inv_level'] == $datas->rd_level_penyimpanan &&
+        //             $item['t_inv_bin'] == $datas->rd_bin_penyimpanan
+
+        //         ) {
+        //             $item['t_is_prioritize'] = '1';
+        //             break;
+        //         }
+        //     }
+        //     return $item;
+        // });
+
         $dataQAD = $merged->map(function ($item) use ($receiptDetail) {
             foreach ($receiptDetail as $datas) {
-                if (
-                    $item['t_inv_wrh'] == $datas->rd_building_penyimpanan &&
-                    $item['t_inv_level'] == $datas->rd_level_penyimpanan &&
-                    $item['t_inv_bin'] == $datas->rd_bin_penyimpanan
+                foreach ($datas->getDetail as $dataDetail) {
+                    if (
+                        $item['t_inv_wrh'] == $dataDetail->rd_building_penyimpanan &&
+                        $item['t_inv_level'] == $datas->rdp_level_penyimpanan &&
+                        $item['t_inv_bin'] == $datas->rdp_bin_penyimpanan
 
-                ) {
-                    $item['t_is_prioritize'] = '1';
-                    break;
+                    ) {
+                        $item['t_is_prioritize'] = '1';
+                        break;
+                    }
                 }
             }
             return $item;

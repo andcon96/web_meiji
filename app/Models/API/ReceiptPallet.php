@@ -10,4 +10,9 @@ class ReceiptPallet extends Model
     use HasFactory;
 
     protected $table = 'receipt_det_pallet';
+
+    public function getReceiptDetail()
+    {
+        return $this->belongsTo(ReceiptDetail::class, 'rdp_rd_det_id', 'id');
+    }
 }
