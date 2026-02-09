@@ -826,6 +826,8 @@ class APIPurchaseOrderController extends Controller
             ->distinct()
             ->get();
 
+            log::info('receiptDetail', [$receiptDetail]);
+
         $wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse, $levelsearch);
         if ($wsaData[0] == 'false') {
             return response()->json([
@@ -895,17 +897,16 @@ class APIPurchaseOrderController extends Controller
 
         $dataQAD = $merged->map(function ($item) use ($receiptDetail) {
             foreach ($receiptDetail as $datas) {
-                foreach ($datas->getDetail as $dataDetail) {
+                
                     if (
-                        $item['t_inv_wrh'] == $dataDetail->rd_building_penyimpanan &&
+                        $item['t_inv_wrh'] == $datas->getDetail->rd_building_penyimpanan &&
                         $item['t_inv_level'] == $datas->rdp_level_penyimpanan &&
                         $item['t_inv_bin'] == $datas->rdp_bin_penyimpanan
-
                     ) {
                         $item['t_is_prioritize'] = '1';
                         break;
                     }
-                }
+                
             }
             return $item;
         });
