@@ -805,15 +805,15 @@ class APIPurchaseOrderController extends Controller
         // $getAllItemLocation = $getAllItemLocation->get();
 
         $receiptDetail = ReceiptDetail::query()->where('rd_status', '!=', 'Approved')->where('rd_status', '!=', 'Reject');
-        if ($warehouse != '') {
-            $receiptDetail->where('rd_building_penyimpanan', $warehouse);
-        }
-        if ($levelsearch != '') {
-            $receiptDetail->where('rd_level_penyimpanan', $levelsearch);
-        }
-        if ($binSearch != '') {
-            $receiptDetail->where('rd_bin_penyimpanan', $binSearch);
-        }
+        // if ($warehouse != '') {
+        //     $receiptDetail->where('rd_building_penyimpanan', $warehouse);
+        // }
+        // if ($levelsearch != '') {
+        //     $receiptDetail->where('rd_level_penyimpanan', $levelsearch);
+        // }
+        // if ($binSearch != '') {
+        //     $receiptDetail->where('rd_bin_penyimpanan', $binSearch);
+        // }
 
         $receiptDetail = $receiptDetail
             ->select('rd_building_penyimpanan', 'rd_level_penyimpanan', 'rd_bin_penyimpanan')

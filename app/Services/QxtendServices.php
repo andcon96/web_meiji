@@ -421,7 +421,7 @@ class QxtendServices
                                     <lotserial>' .
             $lotserial .
             '</lotserial>
-            <lotref>'.$ref.'</lotref>
+            <lotref>'.$ref == '-' ? '' : $ref.'</lotref>
                                     <multiEntry>false</multiEntry>
                                     <chgAttr>true</chgAttr>
                                     <chgExpire>' .
