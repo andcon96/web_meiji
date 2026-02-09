@@ -11,7 +11,7 @@ class ReceiptPallet extends Model
 
     protected $table = 'receipt_det_pallet';
 
-    public function getReceiptDetail()
+    public function getDetail()
     {
         return $this->belongsTo(ReceiptDetail::class, 'rdp_rd_det_id', 'id');
     }
