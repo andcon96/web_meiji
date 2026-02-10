@@ -29,7 +29,8 @@ class LocationController extends Controller
     public function edit($id)
     {
         $data = Location::with('getDetailLocation')->where('id', $id)->first();
-        $dataDetail = $data->getDetailLocation->toArray();
+        $paginated = $data->getDetailLocation()->simplePaginate(15);
+        $dataDetail = $paginated->toArray();
 
         return view('setting.location.edit', compact('data', 'dataDetail'));
     }

@@ -1280,286 +1280,286 @@ class APISingleTransfer extends Controller
         ]);
     }
 
-    public function issueWorkOrder(Request $req)
-    {
+    // public function issueWorkOrder(Request $req)
+    // {
 
-        $data = $req->data;
-        $datawo = $data['wonbr'];
+    //     $data = $req->data;
+    //     $datawo = $data['wonbr'];
 
-        $picknbr = $req->picknbr;
-        $statusreq = $req->status;
-        $status = str_replace('_', ' ', $statusreq);
-        // $hasil = (new WSAServices())->wsaGetPickIssue($status,$picknbr);
+    //     $picknbr = $req->picknbr;
+    //     $statusreq = $req->status;
+    //     $status = str_replace('_', ' ', $statusreq);
+    //     // $hasil = (new WSAServices())->wsaGetPickIssue($status,$picknbr);
 
-        // $currentPick = '';
-        // $currentWo = '';
-        // $detail = [];
-        // $master = [];
-        // $wonbr = [];
-        // $wonbrstring = '';
-        // if ($hasil[0] == 'false') {
-        //     return response()->json([
-        //         'Status' => 'Error',
-        //         'Message' => "Data Not Found."
-        //     ], 422);
-        // } else {
-        //     $listData = $hasil[1];
-        // }
+    //     // $currentPick = '';
+    //     // $currentWo = '';
+    //     // $detail = [];
+    //     // $master = [];
+    //     // $wonbr = [];
+    //     // $wonbrstring = '';
+    //     // if ($hasil[0] == 'false') {
+    //     //     return response()->json([
+    //     //         'Status' => 'Error',
+    //     //         'Message' => "Data Not Found."
+    //     //     ], 422);
+    //     // } else {
+    //     //     $listData = $hasil[1];
+    //     // }
 
-        // foreach ($listData as $key => $value) {
-
-
-        //     $wonbrstring = (string)$value->t_wo_nbr;
-
-        //     if (strlen($wonbrstring) == 0) {
-        //         $wonbrstring = 'manual';
-
-        //         if ($currentPick != (string)$value->t_pick_nbr) {
-        //             $wonbrstring = 'manual';
-        //             $currentWo = '';
-
-        //             $detail = [];
-        //             $wonbr = [];
-        //             $currentPick = (string)$value->t_pick_nbr;
-
-        //             if ($currentWo != $wonbrstring) {
-        //                 $currentWo = $wonbrstring;
+    //     // foreach ($listData as $key => $value) {
 
 
-        //                 $detail[] = [
-        //                     'wodpart' => (string)$value->t_wod_part,
-        //                     'qtyreq' => (string)$value->t_qty_req,
-        //                     'qtypick' => (string)$value->t_qty_pick,
-        //'qtytopick' => (string)$value->t_qty_topick,
-        //                     'qtykemasan' => (string)$value->t_qty_kemasan,
-        //                     'lot' => (string)$value->t_lot,
-        //                     'id' => (string)$value->t_wo_id,
-        //                     'wrh' => (string)$value->t_wrh,
-        //                     'level' => (string)$value->t_level,
-        //                     'bin' => (string)$value->t_bin,
-        //                     'dd' => (string)$value->t_duedate,
-        //                     'od' => (string)$value->t_orddate,
-        //                     'rd' => (string)$value->t_reldate,
-        //                 ];
+    //     //     $wonbrstring = (string)$value->t_wo_nbr;
 
-        //                 $wonbr[$currentWo] = [
-        //                     'wonbrnbr' => $wonbrstring,
-        //                     'wopart' => '',
-        //                     'detail' => $detail
-        //                 ];
+    //     //     if (strlen($wonbrstring) == 0) {
+    //     //         $wonbrstring = 'manual';
 
-        //                 $master[$currentPick] = [
-        //                     'picknbr' => (string)$value->t_pick_nbr,
-        //                     'site' => (string)$value->t_site,
-        //                     'status' => (string)$value->t_status,
-        //                     'loc' => (string)$value->t_loc,
-        //                     'wonbr' => $wonbr,
-        //                 ];
-        //             } else {
-        //                 $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-        //                     'wodpart' => (string)$value->t_wod_part,
-        //                     'qtyreq' => (string)$value->t_qty_req,
-        //                     'qtypick' => (string)$value->t_qty_pick,
-        //'qtytopick' => (string)$value->t_qty_topick,
-        //                     'qtykemasan' => (string)$value->t_qty_kemasan,
-        //                     'lot' => (string)$value->t_lot,
-        //                     'id' => (string)$value->t_wo_id,
-        //                     'wrh' => (string)$value->t_wrh,
-        //                     'level' => (string)$value->t_level,
-        //                     'bin' => (string)$value->t_bin,
-        //                     'dd' => (string)$value->t_duedate,
-        //                     'od' => (string)$value->t_orddate,
-        //                     'rd' => (string)$value->t_reldate,
-        //                 ];
-        //             }
-        //         } else {
-        //             $wonbrstring = 'manual';
-        //             if ($currentWo != $wonbrstring) {
-        //                 $currentWo = $wonbrstring;
+    //     //         if ($currentPick != (string)$value->t_pick_nbr) {
+    //     //             $wonbrstring = 'manual';
+    //     //             $currentWo = '';
 
-        //                 $detail[] = [
-        //                     'wodpart' => (string)$value->t_wod_part,
-        //                     'qtyreq' => (string)$value->t_qty_req,
-        //                     'qtypick' => (string)$value->t_qty_pick,
-        //'qtytopick' => (string)$value->t_qty_topick,
-        //                     'qtykemasan' => (string)$value->t_qty_kemasan,
-        //                     'lot' => (string)$value->t_lot,
-        //                     'id' => (string)$value->t_wo_id,
-        //                     'wrh' => (string)$value->t_wrh,
-        //                     'level' => (string)$value->t_level,
-        //                     'bin' => (string)$value->t_bin,
-        //                     'dd' => (string)$value->t_duedate,
-        //                     'od' => (string)$value->t_orddate,
-        //                     'rd' => (string)$value->t_reldate,
-        //                 ];
-        //                 $wonbr[$currentWo] = [
-        //                     'wonbrnbr' => $currentWo,
-        //                     'wopart' => '',
-        //                     'woid'=> '',
-        //                     'detail' => $detail
-        //                 ];
-        //                 $master[$currentPick] = [
-        //                     'picknbr' => (string)$value->t_pick_nbr,
-        //                     'site' => (string)$value->t_site,
-        //                     'status' => (string)$value->t_status,
-        //                     'loc' => (string)$value->t_loc,
-        //                     'wonbr' => $wonbr
-        //                 ];
-        //             } else {
-        //                 $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-        //                     'wodpart' => (string)$value->t_wod_part,
-        //                     'qtyreq' => (string)$value->t_qty_req,
-        //                     'qtypick' => (string)$value->t_qty_pick,
-        //'qtytopick' => (string)$value->t_qty_topick,
-        //                     'qtykemasan' => (string)$value->t_qty_kemasan,
-        //                     'lot' => (string)$value->t_lot,
-        //                     'id' => (string)$value->t_wo_id,
-        //                     'wrh' => (string)$value->t_wrh,
-        //                     'level' => (string)$value->t_level,
-        //                     'bin' => (string)$value->t_bin,
-        //                     'dd' => (string)$value->t_duedate,
-        //                     'od' => (string)$value->t_orddate,
-        //                     'rd' => (string)$value->t_reldate,
-        //                 ];
-        //             }
-        //         }
-        //     } else {
-        //         if ($currentPick != (string)$value->t_pick_nbr) {
+    //     //             $detail = [];
+    //     //             $wonbr = [];
+    //     //             $currentPick = (string)$value->t_pick_nbr;
 
-        //             $currentWo = '';
-        //             $detail = [];
-        //             $wonbr = [];
-        //             $currentPick = (string)$value->t_pick_nbr;
-
-        //             if ($currentWo != (string)$value->t_wo_nbr) {
-        //                 $currentWo = (string)$value->t_wo_nbr;
-
-        //                 $detail[] = [
-        //                     'wodpart' => (string)$value->t_wod_part,
-        //                     'qtyreq' => (string)$value->t_qty_req,
-        //                     'qtypick' => (string)$value->t_qty_pick,
-        //'qtytopick' => (string)$value->t_qty_topick,
-        //                     'qtykemasan' => (string)$value->t_qty_kemasan,
-        //                     'lot' => (string)$value->t_lot,
-        //                     'id' => (string)$value->t_wo_id,
-        //                     'wrh' => (string)$value->t_wrh,
-        //                     'level' => (string)$value->t_level,
-        //                     'bin' => (string)$value->t_bin,
-        //                     'dd' => (string)$value->t_duedate,
-        //                     'od' => (string)$value->t_orddate,
-        //                     'rd' => (string)$value->t_reldate,
-        //                 ];
-        //                 $wonbr[$currentWo] = [
-        //                     'wonbrnbr' => (string)$value->t_wo_nbr,
-        //                     'wopart' => (string)$value->t_wo_part,
-        //                     'woid' => (string)$value->t_wo_id,
-        //                     'detail' => $detail
-        //                 ];
-        //                 $master[$currentPick] = [
-        //                     'picknbr' => (string)$value->t_pick_nbr,
-        //                     'site' => (string)$value->t_site,
-        //                     'status' => (string)$value->t_status,
-        //                     'loc' => (string)$value->t_loc,
-        //                     'wonbr' => $wonbr
-        //                 ];
-        //             } else {
-        //                 $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-        //                     'wodpart' => (string)$value->t_wod_part,
-        //                     'qtyreq' => (string)$value->t_qty_req,
-        //                     'qtypick' => (string)$value->t_qty_pick,
-        //'qtytopick' => (string)$value->t_qty_topick,
-        //                     'qtykemasan' => (string)$value->t_qty_kemasan,
-        //                     'lot' => (string)$value->t_lot,
-        //                     'id' => (string)$value->t_wo_id,
-        //                     'wrh' => (string)$value->t_wrh,
-        //                     'level' => (string)$value->t_level,
-        //                     'bin' => (string)$value->t_bin,
-        //                     'dd' => (string)$value->t_duedate,
-        //                     'od' => (string)$value->t_orddate,
-        //                     'rd' => (string)$value->t_reldate,
-        //                 ];
-        //             }
-        //         } else {
-        //             if ($currentWo != (string)$value->t_wo_nbr) {
-        //                 $currentWo = (string)$value->t_wo_nbr;
-
-        //                 $detail[] = [
-        //                     'wodpart' => (string)$value->t_wod_part,
-        //                     'qtyreq' => (string)$value->t_qty_req,
-        //                     'qtypick' => (string)$value->t_qty_pick,
-        //'qtytopick' => (string)$value->t_qty_topick,
-        //                     'qtykemasan' => (string)$value->t_qty_kemasan,
-        //                     'lot' => (string)$value->t_lot,
-        //                     'id' => (string)$value->t_wo_id,
-        //                     'wrh' => (string)$value->t_wrh,
-        //                     'level' => (string)$value->t_level,
-        //                     'bin' => (string)$value->t_bin,
-        //                     'dd' => (string)$value->t_duedate,
-        //                     'od' => (string)$value->t_orddate,
-        //                     'rd' => (string)$value->t_reldate,
-        //                 ];
-        //                 $wonbr[$currentWo] = [
-        //                     'wonbrnbr' => (string)$value->t_wo_nbr,
-        //                     'wopart' => (string)$value->t_wo_part,
-        //                     'detail' => $detail
-        //                 ];
-        //                 $master[$currentPick] = [
-        //                     'picknbr' => (string)$value->t_pick_nbr,
-        //                     'site' => (string)$value->t_site,
-        //                     'status' => (string)$value->t_status,
-        //                     'loc' => (string)$value->t_loc,
-        //                     'wonbr' => $wonbr
-        //                 ];
-        //             } else {
-        //                 $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-        //                     'wodpart' => (string)$value->t_wod_part,
-        //                     'qtyreq' => (string)$value->t_qty_req,
-        //                     'qtypick' => (string)$value->t_qty_pick,
-        //'qtytopick' => (string)$value->t_qty_topick,
-        //                     'qtykemasan' => (string)$value->t_qty_kemasan,
-        //                     'lot' => (string)$value->t_lot,
-        //                     'id' => (string)$value->t_wo_id,
-        //                     'wrh' => (string)$value->t_wrh,
-        //                     'level' => (string)$value->t_level,
-        //                     'bin' => (string)$value->t_bin,
-        //                     'dd' => (string)$value->t_duedate,
-        //                     'od' => (string)$value->t_orddate,
-        //                     'rd' => (string)$value->t_reldate,
-        //                 ];
-        //             }
-        //         }
-        //     }
-        // }
-        // dd($master);
-
-        $qxtendWoIssue = (new QxtendServices())->qxWorkOrderIssue($data, $datawo);
-        if ($qxtendWoIssue[0] == 'false') {
-            Log::channel('Picklist')->info("Wo issue failed for picklist : " . $data['picknbr'] . " WO : " . $datawo['wonbrnbr']);
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "Wo issue failed for picklist : " . $data['picknbr'] . " WO : " . $datawo['wonbrnbr']
-                //'Message'=> $qxtendsingleitem[1];
-            ], 422);
-        } else {
-            $hasil = (new WSAServices())->wsaUpdateStatusPick($data['picknbr'], 'Issued');
-
-            if ($hasil[0] == 'false') {
-                Log::channel('Picklist')->info("Update status wo issue failed for picklist : " . $data['picknbr'] . " WO : " . $datawo['wonbrnbr']);
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "Update status wo issue failed for picklist : " . $data['picknbr'] . " WO : " . $datawo['wonbrnbr']
-                ], 422);
-            } else {
-                return response()->json(
-                    'success',
-                    200
-                );
-            }
-        }
+    //     //             if ($currentWo != $wonbrstring) {
+    //     //                 $currentWo = $wonbrstring;
 
 
-        // return GeneralResources::collection($data);
-    }
+    //     //                 $detail[] = [
+    //     //                     'wodpart' => (string)$value->t_wod_part,
+    //     //                     'qtyreq' => (string)$value->t_qty_req,
+    //     //                     'qtypick' => (string)$value->t_qty_pick,
+    //     //'qtytopick' => (string)$value->t_qty_topick,
+    //     //                     'qtykemasan' => (string)$value->t_qty_kemasan,
+    //     //                     'lot' => (string)$value->t_lot,
+    //     //                     'id' => (string)$value->t_wo_id,
+    //     //                     'wrh' => (string)$value->t_wrh,
+    //     //                     'level' => (string)$value->t_level,
+    //     //                     'bin' => (string)$value->t_bin,
+    //     //                     'dd' => (string)$value->t_duedate,
+    //     //                     'od' => (string)$value->t_orddate,
+    //     //                     'rd' => (string)$value->t_reldate,
+    //     //                 ];
+
+    //     //                 $wonbr[$currentWo] = [
+    //     //                     'wonbrnbr' => $wonbrstring,
+    //     //                     'wopart' => '',
+    //     //                     'detail' => $detail
+    //     //                 ];
+
+    //     //                 $master[$currentPick] = [
+    //     //                     'picknbr' => (string)$value->t_pick_nbr,
+    //     //                     'site' => (string)$value->t_site,
+    //     //                     'status' => (string)$value->t_status,
+    //     //                     'loc' => (string)$value->t_loc,
+    //     //                     'wonbr' => $wonbr,
+    //     //                 ];
+    //     //             } else {
+    //     //                 $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
+    //     //                     'wodpart' => (string)$value->t_wod_part,
+    //     //                     'qtyreq' => (string)$value->t_qty_req,
+    //     //                     'qtypick' => (string)$value->t_qty_pick,
+    //     //'qtytopick' => (string)$value->t_qty_topick,
+    //     //                     'qtykemasan' => (string)$value->t_qty_kemasan,
+    //     //                     'lot' => (string)$value->t_lot,
+    //     //                     'id' => (string)$value->t_wo_id,
+    //     //                     'wrh' => (string)$value->t_wrh,
+    //     //                     'level' => (string)$value->t_level,
+    //     //                     'bin' => (string)$value->t_bin,
+    //     //                     'dd' => (string)$value->t_duedate,
+    //     //                     'od' => (string)$value->t_orddate,
+    //     //                     'rd' => (string)$value->t_reldate,
+    //     //                 ];
+    //     //             }
+    //     //         } else {
+    //     //             $wonbrstring = 'manual';
+    //     //             if ($currentWo != $wonbrstring) {
+    //     //                 $currentWo = $wonbrstring;
+
+    //     //                 $detail[] = [
+    //     //                     'wodpart' => (string)$value->t_wod_part,
+    //     //                     'qtyreq' => (string)$value->t_qty_req,
+    //     //                     'qtypick' => (string)$value->t_qty_pick,
+    //     //'qtytopick' => (string)$value->t_qty_topick,
+    //     //                     'qtykemasan' => (string)$value->t_qty_kemasan,
+    //     //                     'lot' => (string)$value->t_lot,
+    //     //                     'id' => (string)$value->t_wo_id,
+    //     //                     'wrh' => (string)$value->t_wrh,
+    //     //                     'level' => (string)$value->t_level,
+    //     //                     'bin' => (string)$value->t_bin,
+    //     //                     'dd' => (string)$value->t_duedate,
+    //     //                     'od' => (string)$value->t_orddate,
+    //     //                     'rd' => (string)$value->t_reldate,
+    //     //                 ];
+    //     //                 $wonbr[$currentWo] = [
+    //     //                     'wonbrnbr' => $currentWo,
+    //     //                     'wopart' => '',
+    //     //                     'woid'=> '',
+    //     //                     'detail' => $detail
+    //     //                 ];
+    //     //                 $master[$currentPick] = [
+    //     //                     'picknbr' => (string)$value->t_pick_nbr,
+    //     //                     'site' => (string)$value->t_site,
+    //     //                     'status' => (string)$value->t_status,
+    //     //                     'loc' => (string)$value->t_loc,
+    //     //                     'wonbr' => $wonbr
+    //     //                 ];
+    //     //             } else {
+    //     //                 $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
+    //     //                     'wodpart' => (string)$value->t_wod_part,
+    //     //                     'qtyreq' => (string)$value->t_qty_req,
+    //     //                     'qtypick' => (string)$value->t_qty_pick,
+    //     //'qtytopick' => (string)$value->t_qty_topick,
+    //     //                     'qtykemasan' => (string)$value->t_qty_kemasan,
+    //     //                     'lot' => (string)$value->t_lot,
+    //     //                     'id' => (string)$value->t_wo_id,
+    //     //                     'wrh' => (string)$value->t_wrh,
+    //     //                     'level' => (string)$value->t_level,
+    //     //                     'bin' => (string)$value->t_bin,
+    //     //                     'dd' => (string)$value->t_duedate,
+    //     //                     'od' => (string)$value->t_orddate,
+    //     //                     'rd' => (string)$value->t_reldate,
+    //     //                 ];
+    //     //             }
+    //     //         }
+    //     //     } else {
+    //     //         if ($currentPick != (string)$value->t_pick_nbr) {
+
+    //     //             $currentWo = '';
+    //     //             $detail = [];
+    //     //             $wonbr = [];
+    //     //             $currentPick = (string)$value->t_pick_nbr;
+
+    //     //             if ($currentWo != (string)$value->t_wo_nbr) {
+    //     //                 $currentWo = (string)$value->t_wo_nbr;
+
+    //     //                 $detail[] = [
+    //     //                     'wodpart' => (string)$value->t_wod_part,
+    //     //                     'qtyreq' => (string)$value->t_qty_req,
+    //     //                     'qtypick' => (string)$value->t_qty_pick,
+    //     //'qtytopick' => (string)$value->t_qty_topick,
+    //     //                     'qtykemasan' => (string)$value->t_qty_kemasan,
+    //     //                     'lot' => (string)$value->t_lot,
+    //     //                     'id' => (string)$value->t_wo_id,
+    //     //                     'wrh' => (string)$value->t_wrh,
+    //     //                     'level' => (string)$value->t_level,
+    //     //                     'bin' => (string)$value->t_bin,
+    //     //                     'dd' => (string)$value->t_duedate,
+    //     //                     'od' => (string)$value->t_orddate,
+    //     //                     'rd' => (string)$value->t_reldate,
+    //     //                 ];
+    //     //                 $wonbr[$currentWo] = [
+    //     //                     'wonbrnbr' => (string)$value->t_wo_nbr,
+    //     //                     'wopart' => (string)$value->t_wo_part,
+    //     //                     'woid' => (string)$value->t_wo_id,
+    //     //                     'detail' => $detail
+    //     //                 ];
+    //     //                 $master[$currentPick] = [
+    //     //                     'picknbr' => (string)$value->t_pick_nbr,
+    //     //                     'site' => (string)$value->t_site,
+    //     //                     'status' => (string)$value->t_status,
+    //     //                     'loc' => (string)$value->t_loc,
+    //     //                     'wonbr' => $wonbr
+    //     //                 ];
+    //     //             } else {
+    //     //                 $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
+    //     //                     'wodpart' => (string)$value->t_wod_part,
+    //     //                     'qtyreq' => (string)$value->t_qty_req,
+    //     //                     'qtypick' => (string)$value->t_qty_pick,
+    //     //'qtytopick' => (string)$value->t_qty_topick,
+    //     //                     'qtykemasan' => (string)$value->t_qty_kemasan,
+    //     //                     'lot' => (string)$value->t_lot,
+    //     //                     'id' => (string)$value->t_wo_id,
+    //     //                     'wrh' => (string)$value->t_wrh,
+    //     //                     'level' => (string)$value->t_level,
+    //     //                     'bin' => (string)$value->t_bin,
+    //     //                     'dd' => (string)$value->t_duedate,
+    //     //                     'od' => (string)$value->t_orddate,
+    //     //                     'rd' => (string)$value->t_reldate,
+    //     //                 ];
+    //     //             }
+    //     //         } else {
+    //     //             if ($currentWo != (string)$value->t_wo_nbr) {
+    //     //                 $currentWo = (string)$value->t_wo_nbr;
+
+    //     //                 $detail[] = [
+    //     //                     'wodpart' => (string)$value->t_wod_part,
+    //     //                     'qtyreq' => (string)$value->t_qty_req,
+    //     //                     'qtypick' => (string)$value->t_qty_pick,
+    //     //'qtytopick' => (string)$value->t_qty_topick,
+    //     //                     'qtykemasan' => (string)$value->t_qty_kemasan,
+    //     //                     'lot' => (string)$value->t_lot,
+    //     //                     'id' => (string)$value->t_wo_id,
+    //     //                     'wrh' => (string)$value->t_wrh,
+    //     //                     'level' => (string)$value->t_level,
+    //     //                     'bin' => (string)$value->t_bin,
+    //     //                     'dd' => (string)$value->t_duedate,
+    //     //                     'od' => (string)$value->t_orddate,
+    //     //                     'rd' => (string)$value->t_reldate,
+    //     //                 ];
+    //     //                 $wonbr[$currentWo] = [
+    //     //                     'wonbrnbr' => (string)$value->t_wo_nbr,
+    //     //                     'wopart' => (string)$value->t_wo_part,
+    //     //                     'detail' => $detail
+    //     //                 ];
+    //     //                 $master[$currentPick] = [
+    //     //                     'picknbr' => (string)$value->t_pick_nbr,
+    //     //                     'site' => (string)$value->t_site,
+    //     //                     'status' => (string)$value->t_status,
+    //     //                     'loc' => (string)$value->t_loc,
+    //     //                     'wonbr' => $wonbr
+    //     //                 ];
+    //     //             } else {
+    //     //                 $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
+    //     //                     'wodpart' => (string)$value->t_wod_part,
+    //     //                     'qtyreq' => (string)$value->t_qty_req,
+    //     //                     'qtypick' => (string)$value->t_qty_pick,
+    //     //'qtytopick' => (string)$value->t_qty_topick,
+    //     //                     'qtykemasan' => (string)$value->t_qty_kemasan,
+    //     //                     'lot' => (string)$value->t_lot,
+    //     //                     'id' => (string)$value->t_wo_id,
+    //     //                     'wrh' => (string)$value->t_wrh,
+    //     //                     'level' => (string)$value->t_level,
+    //     //                     'bin' => (string)$value->t_bin,
+    //     //                     'dd' => (string)$value->t_duedate,
+    //     //                     'od' => (string)$value->t_orddate,
+    //     //                     'rd' => (string)$value->t_reldate,
+    //     //                 ];
+    //     //             }
+    //     //         }
+    //     //     }
+    //     // }
+    //     // dd($master);
+
+    //     $qxtendWoIssue = (new QxtendServices())->qxWorkOrderIssue($data, $datawo);
+    //     if ($qxtendWoIssue[0] == 'false') {
+    //         Log::channel('Picklist')->info("Wo issue failed for picklist : " . $data['picknbr'] . " WO : " . $datawo['wonbrnbr']);
+    //         return response()->json([
+    //             'Status' => 'Error',
+    //             'Message' => "Wo issue failed for picklist : " . $data['picknbr'] . " WO : " . $datawo['wonbrnbr']
+    //             //'Message'=> $qxtendsingleitem[1];
+    //         ], 422);
+    //     } else {
+    //         $hasil = (new WSAServices())->wsaUpdateStatusPick($data['picknbr'], 'Issued');
+    //     $picknbr, $status, $qty, $part, $lot
+    //         if ($hasil[0] == 'false') {
+    //             Log::channel('Picklist')->info("Update status wo issue failed for picklist : " . $data['picknbr'] . " WO : " . $datawo['wonbrnbr']);
+    //             return response()->json([
+    //                 'Status' => 'Error',
+    //                 'Message' => "Update status wo issue failed for picklist : " . $data['picknbr'] . " WO : " . $datawo['wonbrnbr']
+    //             ], 422);
+    //         } else {
+    //             return response()->json(
+    //                 'success',
+    //                 200
+    //             );
+    //         }
+    //     }
+
+
+    //     // return GeneralResources::collection($data);
+    // }
 
     public function getWlbData(Request $req)
     {
