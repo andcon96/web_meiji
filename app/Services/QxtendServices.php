@@ -317,7 +317,9 @@ class QxtendServices
         $domain = Domain::first();
         $domainCode = $domain->domain ?? "";
         $qxwsa = Qxwsa::firstOrFail();
-
+        if($ref == '-'){
+            $ref = '';
+        }
         // Var Qxtend
         $qxUrl = $qxwsa->qx_url;
         $receiver = "QADERP";
@@ -421,7 +423,7 @@ class QxtendServices
                                     <lotserial>' .
             $lotserial .
             '</lotserial>
-            <lotref>'.$ref == '-' ? '' : $ref.'</lotref>
+            <lotref>'.$ref.'</lotref>
                                     <multiEntry>false</multiEntry>
                                     <chgAttr>true</chgAttr>
                                     <chgExpire>' .
