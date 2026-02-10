@@ -1197,12 +1197,12 @@ class APISingleTransfer extends Controller
             $data = $req->all();
             $item = $data['item'];
             $sitefrom = $data['sitefrom'];
-            $siteto = $data['siteto'];
+            $siteto = $this->nullConversion($data['siteto']);
             $locfrom = $data['locfrom'];
-            $locto = $data['locto'];
-            $whfrom = $data['whfrom'];
-            $levelfrom = $data['levelfrom'];
-            $binfrom = $data['binfrom'];
+            $locto = $this->nullConversion($data['locto']);
+            $whfrom = $this->nullConversion($data['whfrom']);
+            $levelfrom = $this->nullConversion($data['levelfrom']);
+            $binfrom = $this->nullConversion($data['binfrom']);
             $qty = $data['qty'];
             $wh = $this->nullConversion($data['wh']);
             $ref = $this->nullConversion($data['ref']);
@@ -1249,35 +1249,35 @@ class APISingleTransfer extends Controller
             Log::channel('SingleTransfer')->info($e);
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Single Transfer Input Error"
+                'Message' => $e->getMessage()
             ], 422);
         }
 
-        $hasil = (new QxtendServices())->qxTransferSingleItemTransfer($item, $qty, $sitefrom, $siteto, $locfrom, $locto, $lot, '', '', $wh, '', $level, '', $bin);
-        if ($hasil == 'false') {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "Transfer Item Failed for Item : " . $item
-            ], 422);
-        } else {
-            return response()->json([
-                'Status' => 'Success',
-                'Message' => "Transfer Item Success for Item : " . $item
-            ], 200);
-        }
-        return response()->json([
-            $item,
-            $sitefrom,
-            $siteto,
-            $locfrom,
-            $locto,
-            $qty,
-            $wh,
-            $ref,
-            $level,
-            $bin,
-            $lot
-        ]);
+        // $hasil = (new QxtendServices())->qxTransferSingleItemTransfer($item, $qty, $sitefrom, $siteto, $locfrom, $locto, $lot, '', '', $wh, '', $level, '', $bin);
+        // if ($hasil == 'false') {
+        //     return response()->json([
+        //         'Status' => 'Error',
+        //         'Message' => "Transfer Item Failed for Item : " . $item
+        //     ], 422);
+        // } else {
+        //     return response()->json([
+        //         'Status' => 'Success',
+        //         'Message' => "Transfer Item Success for Item : " . $item
+        //     ], 200);
+        // }
+        // return response()->json([
+        //     $item,
+        //     $sitefrom,
+        //     $siteto,
+        //     $locfrom,
+        //     $locto,
+        //     $qty,
+        //     $wh,
+        //     $ref,
+        //     $level,
+        //     $bin,
+        //     $lot
+        // ]);
     }
 
     // public function issueWorkOrder(Request $req)
