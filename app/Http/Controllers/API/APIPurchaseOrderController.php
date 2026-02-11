@@ -354,7 +354,7 @@ class APIPurchaseOrderController extends Controller
 
         // Prioritaskan Location yang ada di Web by order.
         $getDataQAD = collect($wsaData[1]);
-
+        log::info($getDataQAD);
         $grouped = $getDataQAD->groupBy(function ($item) {
             $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
             $loc   = is_array($item['t_inv_loc']) ? '' : (string)($item['t_inv_loc'] ?? '');
@@ -377,7 +377,7 @@ class APIPurchaseOrderController extends Controller
                 return (int) $item['t_inv_qtyoh'] <= 0;
             })
             ->values();
-
+        log::info($merged);
         //$dataQAD = $merged->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
 
         // //return response()->json($dataQAD);
@@ -414,6 +414,7 @@ class APIPurchaseOrderController extends Controller
             ->values();
 
         $dataQAD = $dataQAD->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
+        log::info('dataqad final: '.$dataQAD);
         // $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
 
         return response()->json($dataQAD);
