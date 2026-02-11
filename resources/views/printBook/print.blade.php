@@ -229,7 +229,7 @@
         <tr>
             <td>Kode Cetak / Potensi</td>
 
-            <td>{{ $kode_cetak }}</td>
+            
             @if ($kode_cetak != null || $kode_cetak != '')
                  <td>{{ $kode_cetak }}</td>
             @else
