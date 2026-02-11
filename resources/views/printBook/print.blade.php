@@ -185,7 +185,7 @@
         <tr>
             <td>Expire Date</td>
             @if ($expire_date != null || $expire_date != '')
-                <td>{{ isset($expire_date) ? (new DateTime($expire_date))->format('d-m-Y H:i:s') : '-'}}</td>
+                <td>{{ isset($expire_date) ? (new DateTime($expire_date))->format('d-m-Y') : '-'}}</td>
             @else
                 <td style="text-align:center">-</td>
             @endif
@@ -207,7 +207,7 @@
         <tr>
             <td>Re-Test Date</td>
             @if ($retest_date != null || $retest_date != '')
-                <td>{{ isset($retest_date) ? (new DateTime($retest_date))->format('d-m-Y H:i:s') : '-'  }}</td>
+                <td>{{ isset($retest_date) ? (new DateTime($retest_date))->format('d-m-Y') : '-'  }}</td>
             @else
                 <td style="text-align:center">-</td>
             @endif
@@ -371,13 +371,13 @@
         <tr>
             <td>Expiry Date</td>
 
-            <td>{{ isset($expire_date_penanda) ? (new DateTime($expire_date_penanda))->format('d-m-Y H:i:s') : '-' }}</td>
+            <td>{{ isset($expire_date_penanda) ? (new DateTime($expire_date_penanda))->format('d-m-Y') : '-' }}</td>
 
         </tr>
         <tr>
             <td>Mfg. Date</td>
 
-            <td>{{ isset($mfg_date_penanda) ? (new DateTime($mfg_date_penanda))->format('d-m-Y H:i:s') : '-'}}</td>
+            <td>{{ isset($mfg_date_penanda) ? (new DateTime($mfg_date_penanda))->format('d-m-Y') : '-'}}</td>
 
         </tr>
         <tr>
