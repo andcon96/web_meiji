@@ -243,7 +243,8 @@ class APIPurchaseOrderController extends Controller
 
         // Prioritaskan Location yang ada di Web by order.
         $getDataQAD = collect($wsaData[1]);
-
+        log::info('dataqad: '.$getDataQAD);
+        log::info('dataweb: '.$getAllItemLocation);
         $grouped = $getDataQAD->groupBy(function ($item) {
             $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
             $loc   = is_array($item['t_inv_loc']) ? '' : (string)($item['t_inv_loc'] ?? '');
