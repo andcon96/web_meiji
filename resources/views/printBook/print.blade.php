@@ -444,9 +444,9 @@
         </tr>
         <tr class="center">
             <td>Tanggal</td>
-            <td>{{ $approver[0][2][0] ? (new DateTime($approver[0][2][0]))->format('d-m-Y H:i:s') : '' }}</td>
-            <td>{{ $approver[2][2][0] ? (new DateTime($approver[2][2][0]))->format('d-m-Y H:i:s') : '' }}</td>
-            <td>{{ $approver[1][2][0] ? (new DateTime($approver[1][2][0]))->format('d-m-Y H:i:s') : '' }}</td>
+            <td>{{ isset($approver[0][2][0]) ? (new DateTime($approver[0][2][0]))->format('d-m-Y H:i:s') : '' }}</td>
+            <td>{{ isset($approver[2][2][0]) ? (new DateTime($approver[2][2][0]))->format('d-m-Y H:i:s') : '' }}</td>
+            <td>{{ isset($approver[1][2][0]) ? (new DateTime($approver[1][2][0]))->format('d-m-Y H:i:s') : '' }}</td>
         </tr>
     </table>
 </body>
