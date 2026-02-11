@@ -185,7 +185,7 @@
         <tr>
             <td>Expire Date</td>
             @if ($expire_date != null || $expire_date != '')
-                <td>{{ (new DateTime($expire_date))->format('d-m-Y') }}</td>
+                <td>{{ isset($expire_date) ? (new DateTime($expire_date))->format('d-m-Y H:i:s') : '-'}}</td>
             @else
                 <td style="text-align:center">-</td>
             @endif
@@ -207,7 +207,7 @@
         <tr>
             <td>Re-Test Date</td>
             @if ($retest_date != null || $retest_date != '')
-                <td>{{ (new DateTime($retest_date))->format('d-m-Y') }}</td>
+                <td>{{ isset($retest_date) ? (new DateTime($retest_date))->format('d-m-Y H:i:s') : '-'  }}</td>
             @else
                 <td style="text-align:center">-</td>
             @endif
@@ -371,13 +371,13 @@
         <tr>
             <td>Expiry Date</td>
 
-            <td>{{ $expire_date_penanda != null ? (new DateTime($expire_date_penanda))->format('d-m-Y') : '-' }}</td>
+            <td>{{ isset($expire_date_penanda) ? (new DateTime($expire_date_penanda))->format('d-m-Y H:i:s') : '-' }}</td>
 
         </tr>
         <tr>
             <td>Mfg. Date</td>
 
-            <td>{{ $mfg_date_penanda != null ? (new DateTime($mfg_date_penanda))->format('d-m-Y') : '-' }}</td>
+            <td>{{ isset($mfg_date_penanda) ? (new DateTime($mfg_date_penanda))->format('d-m-Y H:i:s') : '-'}}</td>
 
         </tr>
         <tr>
@@ -444,9 +444,9 @@
         </tr>
         <tr class="center">
             <td>Tanggal</td>
-            <td>{{ isset($approver[0][2][0]) ? (new DateTime($approver[0][2][0]))->format('d-m-Y H:i:s') : '' }}</td>
-            <td>{{ isset($approver[2][2][0]) ? (new DateTime($approver[2][2][0]))->format('d-m-Y H:i:s') : '' }}</td>
-            <td>{{ isset($approver[1][2][0]) ? (new DateTime($approver[1][2][0]))->format('d-m-Y H:i:s') : '' }}</td>
+            <td>{{ isset($approver[0][2][0]) ? (new DateTime($approver[0][2][0]))->format('d-m-Y H:i:s') : '-' }}</td>
+            <td>{{ isset($approver[2][2][0]) ? (new DateTime($approver[2][2][0]))->format('d-m-Y H:i:s') : '-' }}</td>
+            <td>{{ isset($approver[1][2][0]) ? (new DateTime($approver[1][2][0]))->format('d-m-Y H:i:s') : '-' }}</td>
         </tr>
     </table>
 </body>
