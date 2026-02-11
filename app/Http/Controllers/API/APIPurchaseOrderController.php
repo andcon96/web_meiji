@@ -415,6 +415,7 @@ class APIPurchaseOrderController extends Controller
 
         $dataQAD = $dataQAD->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
         log::info('dataqad final: '.$dataQAD);
+        log::info($getAllItemLocation);
         // $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
 
         return response()->json($dataQAD);
