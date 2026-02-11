@@ -27,7 +27,7 @@ class ReceiptBookController extends Controller
 
     public function printBook(Request $request, $id)
     {
-        $dataReceipt = ReceiptDetail::with(['getMaster.getPurchaseOrderMaster', 'getDokumen', 'getKemasan', 'getKendaraan', 'getPenanda', 'getPallet', 'getApprovalHist.getUserApprove', 'getApprovalHist.getUserApproveAlt'])->findOrFail($id);
+        $dataReceipt = ReceiptDetail::with(['getPurchaseOrderDetail','getMaster.getPurchaseOrderMaster', 'getDokumen', 'getKemasan', 'getKendaraan', 'getPenanda', 'getPallet', 'getApprovalHist.getUserApprove', 'getApprovalHist.getUserApproveAlt'])->findOrFail($id);
         $receiptnumber = $dataReceipt->getMaster->rm_rn_number;
         $transactionHist = TransactionHistory::where('tr_program', 'PO Receipt Module')->where('tr_activity', 'Create Receipt')->where('tr_nbr', $receiptnumber)->first();
         $approverReceipt = ReceiptDetail::with(['getApprovalHist' => function ($query) {
@@ -68,6 +68,7 @@ class ReceiptBookController extends Controller
             'is_packing_list' => $dataReceipt->getDokumen->rdd_is_packing_list,
             'is_msds' => $dataReceipt->getDokumen->rdd_is_msds,
             'is_coa' => $dataReceipt->getDokumen->rdd_is_coa,
+            'no_surat_jalan' => $dataReceipt->getDokumen->rdd_surat_jalan,
 
             'note_namabarang' => $dataReceipt->rd_nama_barang_note,
             'note_batch' => $dataReceipt->rd_batch_note,
@@ -75,7 +76,7 @@ class ReceiptBookController extends Controller
             'note_retestdate' => $dataReceipt->rd_tgl_retest_note,
             'note_kodecetak' => $dataReceipt->rd_kode_cetak_note,
             'note_jumlahterima' => $dataReceipt->rd_qty_terima_note_note,
-
+            'jumlahterima_um' => $dataReceipt->getPurchaseOrderDetail->pod_um,
             'is_pabrikpembuat' => $dataReceipt->getKemasan->rdk_is_pabrik_pembuat,
             'is_alamatpembuat' => $dataReceipt->getKemasan->rdk_is_alamat_pembuat,
             'is_agenpemasok' => $dataReceipt->getKemasan->rdk_is_agen_pemasuk,
@@ -103,7 +104,8 @@ class ReceiptBookController extends Controller
             'kendaraan_is_serangga' => $dataReceipt->getKendaraan->rdken_is_ada_serangga,
 
             'rd_keterangan_tambahan' => $dataReceipt->rd_keterangan_tambahan,
-            'approver' => $approver
+            'approver' => $approver,
+            
         ];
 
         $pdf = Pdf::loadView('printBook.print', $data)

@@ -105,13 +105,9 @@
                     (<s>Ada</s> / Tidak ada)
                 @endif
             </td>
-            <td>Certificate of Analysis</td>
+            <td>No. Surat Jalan/surat kirim/invoice</td>
             <td>
-                @if ($is_coa == 1)
-                    (Ada / <s>Tidak ada</s>)
-                @else
-                    (<s>Ada</s> / Tidak ada)
-                @endif
+               {{$no_surat_jalan ?? '-'}}
             </td>
         </tr>
         <tr>
@@ -123,7 +119,15 @@
                     (<s>Ada</s> / Tidak ada)
                 @endif
             </td>
-            <td colspan="2"></td>
+             <td>Certificate of Analysis</td>
+            <td>
+                @if ($is_coa == 1)
+                    (Ada / <s>Tidak ada</s>)
+                @else
+                    (<s>Ada</s> / Tidak ada)
+                @endif
+            </td>
+            {{-- <td colspan="2"></td> --}}
         </tr>
     </table>
 
@@ -181,7 +185,7 @@
         <tr>
             <td>Expire Date</td>
              @if ($expire_date != null || $expire_date != '')
-             <td>{{ $expire_date }}</td>
+             <td>{{ (new DateTime($expire_date))->format('d-m-Y') }}</td>
              @else
                 <td style="text-align:center">-</td>
             @endif
@@ -203,7 +207,7 @@
         <tr>
             <td>Re-Test Date</td>
             @if ($retest_date != null || $retest_date != '')
-                <td>{{ $retest_date }}</td>
+                <td>{{ (new DateTime($retest_date))->format('d-m-Y') }}</td>
             @else
                 <td style="text-align:center">-</td>
             @endif
@@ -245,7 +249,7 @@
             @if( $jumlah_terima == null || $jumlah_terima == '' )
                 <td style="text-align:center">-</td>
             @else
-            <td>{{ $jumlah_terima }}</td>
+            <td>{{ $jumlah_terima . ' '. $jumlahterima_um}}</td>
             @endif
 
             @if ($note_jumlahterima == '')
@@ -367,13 +371,13 @@
         <tr>
             <td>Expiry Date</td>
            
-            <td>{{ $expire_date_penanda }}</td>
+            <td>{{ $expire_date_penanda != null ? (new DateTime($expire_date_penanda))->format('d-m-Y') : '-' }}</td>
             
         </tr>
         <tr>
             <td>Mfg. Date</td>
            
-            <td>{{ $mfg_date_penanda ?? '-' }}</td>
+            <td>{{ $mfg_date_penanda != null ? (new DateTime($mfg_date_penanda))->format('d-m-Y') : '-' }}</td>
             
         </tr>
         <tr>
@@ -440,9 +444,9 @@
         </tr>
         <tr class="center">
             <td>Tanggal</td>
-             <td>{{$approver[0][2][0] ?? ''}}</td>
-            <td>{{$approver[2][2][0] ?? ''}}</td>
-            <td>{{$approver[1][2][0] ?? ''}}</td>
+             <td>{{ $approver[0][2][0] != null ? (new DateTime($approver[0][2][0]))->format('d-m-Y H:i:s') : '-' }}</td>
+            <td>{{$approver[2][2][0] != null ? (new DateTime($approver[2][2][0]))->format('d-m-Y H:i:s') : '-'}}</td>
+            <td>{{$approver[1][2][0] != null ? (new DateTime($approver[1][2][0]))->format('d-m-Y H:i:s') : '-'}}</td>
         </tr>
     </table>
 </body>
