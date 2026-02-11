@@ -52,27 +52,41 @@ class APIZebraPrinterController extends Controller
         foreach ($data as $datas) {
             for ($i = 1; $i <= $datas->qty_print; $i++) {
                 // Assign Value to Template
-                $template = file_get_contents(public_path('templateZebra/template1.prn'));
-
+                //$template = file_get_contents(public_path('templateZebra/template1.prn'));
+                $template = file_get_contents(public_path('templateZebra/6x6.prn'));
                 $qrCodeLabel = $datas->get_purchase_order_detail->pod_part . '|' . $datas->rd_batch . '|' . $datas->rd_ref . '|'
                     . $datas->get_master->get_purchase_order_master->po_nbr . '|' . $datas->rd_tanggal_datang . '|' . $datas->rd_tgl_expire;
 
+                // $replacements = [
+                    // "ItemNumber"   => $datas->get_purchase_order_detail->pod_part,
+                    // "itemDesc"     => $datas->get_purchase_order_detail->pod_part_desc1,
+                    // "itemDes2"     => $datas->get_purchase_order_detail->pod_part_desc2,
+                    // "lotSerial"    => $datas->rd_batch,
+                    // // "itemRef"      => $datas->rd_ref,
+                    // // "supplierCode" => $datas->get_master->get_purchase_order_master->po_vend,
+                    // // "supplierDesc" => $datas->get_master->get_purchase_order_master->po_vend_desc,
+                    // "itemRef"      => $datas->rd_kode_cetak,
+                    // "supplierCode" => '',
+                    // "supplierDesc" => '',
+                    // "receiptDate"  => $datas->rd_tanggal_datang,
+                    // "expDate"      => $datas->rd_tgl_expire,
+                    // "CurP"         => $i,
+                    // "TotP"         => $datas->qty_print,
+                    // "qrCodeLabel"  => $qrCodeLabel,
+
+                // ];
+
                 $replacements = [
-                    "ItemNumber"   => $datas->get_purchase_order_detail->pod_part,
-                    "itemDesc"     => $datas->get_purchase_order_detail->pod_part_desc1,
-                    "itemDes2"     => $datas->get_purchase_order_detail->pod_part_desc2,
-                    "lotSerial"    => $datas->rd_batch,
-                    // "itemRef"      => $datas->rd_ref,
-                    // "supplierCode" => $datas->get_master->get_purchase_order_master->po_vend,
-                    // "supplierDesc" => $datas->get_master->get_purchase_order_master->po_vend_desc,
-                    "itemRef"      => $datas->rd_kode_cetak,
-                    "supplierCode" => '',
-                    "supplierDesc" => '',
-                    "receiptDate"  => $datas->rd_tanggal_datang,
-                    "expDate"      => $datas->rd_tgl_expire,
-                    "CurP"         => $i,
-                    "TotP"         => $datas->qty_print,
-                    "qrCodeLabel"  => $qrCodeLabel,
+                    "xxITEM" => $datas->get_purchase_order_detail->pod_part,
+                    "xxDescription1" => $datas->get_purchase_order_detail->pod_part_desc1,
+                    "xxlot1234" => $datas->rd_batch,
+                    "xxDescription2" => $datas->get_purchase_order_detail->pod_part_desc2,
+                    "qrCodeLabel" => $qrCodeLabel,
+                    "xxRCP02-10-2026" => $datas->rd_tanggal_datang->format('d-m-Y'),
+                    "xxEXP02-10-2026" => $datas->rd_tgl_exp->format('d-m-Y'),
+                    "xhal1" => $i,
+                    "xhal2" => $datas->qty_print,
+                    "xxRTS02-12-2026" => $datas->rd_tgl_retest->format('d-m-Y')
                 ];
 
                 // Replace all placeholders in the template
