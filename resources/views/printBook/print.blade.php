@@ -230,7 +230,7 @@
             <td>Kode Cetak / Potensi</td>
 
             
-            @if ($kode_cetak != null || $kode_cetak != '' || $kode_cetak != '-')
+            @if ($kode_cetak != null && $kode_cetak != '' && $kode_cetak != '-')
                  <td>{{ $kode_cetak }}</td>
             @else
                 <td style="text-align:center">{{ '-' }}</td>
