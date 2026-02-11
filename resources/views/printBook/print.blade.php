@@ -107,7 +107,7 @@
             </td>
             <td>No. Surat Jalan/surat kirim/invoice</td>
             <td>
-               {{$no_surat_jalan ?? '-'}}
+                {{ $no_surat_jalan ?? '-' }}
             </td>
         </tr>
         <tr>
@@ -119,7 +119,7 @@
                     (<s>Ada</s> / Tidak ada)
                 @endif
             </td>
-             <td>Certificate of Analysis</td>
+            <td>Certificate of Analysis</td>
             <td>
                 @if ($is_coa == 1)
                     (Ada / <s>Tidak ada</s>)
@@ -141,10 +141,10 @@
         </tr>
         <tr>
             <td>Nama Barang</td>
-            @if( $nama_barang == null || $nama_barang == '' )
+            @if ($nama_barang == null || $nama_barang == '')
                 <td style="text-align:center">-</td>
             @else
-            <td>{{ $nama_barang }}</td>
+                <td>{{ $nama_barang }}</td>
             @endif
 
             @if ($note_namabarang == '')
@@ -162,10 +162,10 @@
         </tr>
         <tr>
             <td>No. Batch/No. Lot</td>
-            @if( $no_batch == null || $no_batch == '' )
+            @if ($no_batch == null || $no_batch == '')
                 <td style="text-align:center">-</td>
             @else
-            <td>{{ $no_batch }}</td>
+                <td>{{ $no_batch }}</td>
             @endif
 
             @if ($note_batch == '')
@@ -184,12 +184,12 @@
         </tr>
         <tr>
             <td>Expire Date</td>
-             @if ($expire_date != null || $expire_date != '')
-             <td>{{ (new DateTime($expire_date))->format('d-m-Y') }}</td>
-             @else
+            @if ($expire_date != null || $expire_date != '')
+                <td>{{ new DateTime($expire_date)->format('d-m-Y') }}</td>
+            @else
                 <td style="text-align:center">-</td>
             @endif
-            
+
 
             @if ($note_expdate == '')
                 <td>
@@ -207,11 +207,11 @@
         <tr>
             <td>Re-Test Date</td>
             @if ($retest_date != null || $retest_date != '')
-                <td>{{ (new DateTime($retest_date))->format('d-m-Y') }}</td>
+                <td>{{ new DateTime($retest_date)->format('d-m-Y') }}</td>
             @else
                 <td style="text-align:center">-</td>
             @endif
-            
+
 
             @if ($note_retestdate == '')
                 <td>
@@ -228,9 +228,9 @@
         </tr>
         <tr>
             <td>Kode Cetak</td>
-            
+
             <td>{{ $kode_cetak }}</td>
-           
+
             @if ($note_kodecetak == '')
                 <td>
                     (Sesuai / <s>Tidak Sesuai</s>)
@@ -246,10 +246,10 @@
         </tr>
         <tr>
             <td>Jumlah Terima</td>
-            @if( $jumlah_terima == null || $jumlah_terima == '' )
+            @if ($jumlah_terima == null || $jumlah_terima == '')
                 <td style="text-align:center">-</td>
             @else
-            <td>{{ $jumlah_terima . ' '. $jumlahterima_um}}</td>
+                <td>{{ $jumlah_terima . ' ' . $jumlahterima_um }}</td>
             @endif
 
             @if ($note_jumlahterima == '')
@@ -280,9 +280,9 @@
             </td>
             <td rowspan="2" style="width: 15%; vertical-align:middle;">JUMLAH KEMASAN</td>
             <td style="width: 28%; vertical-align:middle;">Kemasan Luar</td>
-           
+
             <td style="width: 16%; vertical-align:middle;">{{ $qty_jumlahkemasanluar }}</td>
-            
+
         </tr>
         <tr>
             <td>Alamat Pembuat </td>
@@ -294,9 +294,9 @@
                 @endif
             </td>
             <td>Kemasan Dalam</td>
-          
+
             <td>{{ $qty_jumlahkemasandalam }}</td>
-           
+
         </tr>
         <tr>
             <td>Pemasok / Agent </td>
@@ -309,47 +309,47 @@
             </td>
             <td rowspan="4">KONDISI & JUMLAH</td>
             <td>Kemasan Luar Baik</td>
-            
+
             <td>{{ $qty_kondisikemasanluarbaik }}</td>
-            
+
         </tr>
         <tr>
             <td rowspan="2" style="width: 15%; vertical-align:middle;">JENIS KEMASAN</td>
             <td style="width: 20%; vertical-align:middle;">Luar</td>
-          
+
             <td>{{ $qty_jeniskemasanluar }}</td>
-           
+
             <td>Kemasan Luar Tak Baik</td>
-          
+
             <td>{{ $qty_kondisikemasanluartidakbaik }}</td>
-            
+
         </tr>
         <tr>
             <td>Dalam</td>
-           
+
             <td>{{ $qty_jeniskemasandalam }}</td>
-           
+
             <td>Kemasan Dalam Baik</td>
-           
+
             <td>{{ $qty_kondisikemasandalambaik }}</td>
-           
+
         </tr>
         <tr>
             <td rowspan="2" style="width: 15%; vertical-align:middle;">ISI/BERAT</td>
             <td style="width: 20%; vertical-align:middle;">Per Kemasan</td>
-           
+
             <td>{{ $qty_isiberatperkemasan }}</td>
-            
+
             <td>Kemasan Dalam Tak Baik</td>
-            
+
             <td>{{ $qty_kondisikemasandalamtidakbaik }}</td>
-            
+
         </tr>
         <tr>
             <td>Total Kemasan</td>
-            
+
             <td>{{ $qty_isiberattotalkemasan }}</td>
-            
+
             <td colspan="3"></td>
         </tr>
     </table>
@@ -358,33 +358,33 @@
     <table>
         <tr>
             <td width="25%">Nama Barang</td>
-           
+
             <td>{{ $nama_barang_penanda }}</td>
-           
+
         </tr>
         <tr>
             <td>Nomor Lot</td>
-           
+
             <td>{{ $no_batch_penanda }}</td>
-           
+
         </tr>
         <tr>
             <td>Expiry Date</td>
-           
-            <td>{{ $expire_date_penanda != null ? (new DateTime($expire_date_penanda))->format('d-m-Y') : '-' }}</td>
-            
+
+            <td>{{ $expire_date_penanda != null ? new DateTime($expire_date_penanda)->format('d-m-Y') : '-' }}</td>
+
         </tr>
         <tr>
             <td>Mfg. Date</td>
-           
-            <td>{{ $mfg_date_penanda != null ? (new DateTime($mfg_date_penanda))->format('d-m-Y') : '-' }}</td>
-            
+
+            <td>{{ $mfg_date_penanda != null ? new DateTime($mfg_date_penanda)->format('d-m-Y') : '-' }}</td>
+
         </tr>
         <tr>
             <td>Suhu Penyimpanan</td>
-            
+
             <td>{{ $suhu_penanda ?? '-' }}</td>
-           
+
         </tr>
     </table>
 
@@ -432,21 +432,21 @@
         </tr>
         <tr class="center">
             <td>Approval</td>
-            <td>{{$approver[0][0][0] ?? ''}}</td>
-            <td>{{$approver[2][0][0] ?? ''}}</td>
-            <td>{{$approver[1][0][0] ?? ''}}</td>
+            <td>{{ $approver[0][0][0] ?? '' }}</td>
+            <td>{{ $approver[2][0][0] ?? '' }}</td>
+            <td>{{ $approver[1][0][0] ?? '' }}</td>
         </tr>
         <tr class="center">
             <td>Nama</td>
-             <td>{{$approver[0][1][0] ?? ''}}</td>
-            <td>{{$approver[2][1][0] ?? ''}}</td>
-            <td>{{$approver[1][1][0] ?? ''}}</td>
+            <td>{{ $approver[0][1][0] ?? '' }}</td>
+            <td>{{ $approver[2][1][0] ?? '' }}</td>
+            <td>{{ $approver[1][1][0] ?? '' }}</td>
         </tr>
         <tr class="center">
             <td>Tanggal</td>
-             <td>{{ $approver[0][2][0] != null ? (new DateTime($approver[0][2][0]))->format('d-m-Y H:i:s') : '-' }}</td>
-            <td>{{$approver[2][2][0] != null ? (new DateTime($approver[2][2][0]))->format('d-m-Y H:i:s') : '-'}}</td>
-            <td>{{$approver[1][2][0] != null ? (new DateTime($approver[1][2][0]))->format('d-m-Y H:i:s') : '-'}}</td>
+            <td>{{ new DateTime($approver[0][2][0])->format('d-m-Y H:i:s') ?? '' }}</td>
+            <td>{{ new DateTime($approver[2][2][0])->format('d-m-Y H:i:s') ?? '' }}</td>
+            <td>{{ new DateTime($approver[1][2][0])->format('d-m-Y H:i:s') ?? '' }}</td>
         </tr>
     </table>
 </body>
