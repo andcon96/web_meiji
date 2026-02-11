@@ -371,13 +371,13 @@
         <tr>
             <td>Expiry Date</td>
 
-            <td>{{  $expire_date_penanda != null ? (new DateTime($expire_date_penanda))->format('d-m-Y') : '-' }}</td>
+            <td>{{  $expire_date_penanda}}</td>
 
         </tr>
         <tr>
             <td>Mfg. Date</td>
 
-            <td>{{ isset($mfg_date_penanda) ? (new DateTime($mfg_date_penanda))->format('d-m-Y') : '-'}}</td>
+            <td>{{ $mfg_date_penanda}}</td>
 
         </tr>
         <tr>
