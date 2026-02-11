@@ -227,7 +227,7 @@
 
         </tr>
         <tr>
-            <td>Kode Cetak</td>
+            <td>Kode Cetak / Potensi</td>
 
             <td>{{ $kode_cetak }}</td>
 
