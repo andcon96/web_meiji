@@ -203,6 +203,7 @@ class APIPurchaseOrderController extends Controller
 
     public function wsaPenyimpanan(Request $req)
     {
+        log::info('masuk');
         // $itemCode = $req->search; 
         // Request Xena 1609
         $itemCode = '';
@@ -217,7 +218,7 @@ class APIPurchaseOrderController extends Controller
         if ($req->item) {
             $itemCode = $req->item;
         }
-
+        log::info('getdata');
         // Ambil Relati Item ke Location di Web
         $getAllItemLocation = LocationDetail::query()->with(['getListItem.getItem', 'getMaster']);
         if ($itemCode) {
@@ -227,7 +228,7 @@ class APIPurchaseOrderController extends Controller
             $getAllItemLocation->where('ld_building', $warehouse);
         }
         $getAllItemLocation = $getAllItemLocation->get();
-
+        log::info('gettable');
         // Ambil List Location di QAD untuk dibanding ke Web
         // $wsaData = Cache::remember('wsaPenyimpanan', 60, function () use ($itemCode) {
         //     return (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', '', '');
@@ -243,7 +244,7 @@ class APIPurchaseOrderController extends Controller
 
         // Prioritaskan Location yang ada di Web by order.
         $getDataQAD = collect($wsaData[1]);
-
+        log::info('getwsa');
         $grouped = $getDataQAD->groupBy(function ($item) {
             $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
             $loc   = is_array($item['t_inv_loc']) ? '' : (string)($item['t_inv_loc'] ?? '');
