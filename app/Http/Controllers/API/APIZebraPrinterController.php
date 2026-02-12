@@ -82,11 +82,11 @@ class APIZebraPrinterController extends Controller
                     "xxlot1234" => $datas->rd_batch,
                     "xxDescription2" => $datas->get_purchase_order_detail->pod_part_desc2,
                     "qrCodeLabel" => $qrCodeLabel,
-                    "xxRCP02-10-2026" => $datas->rd_tanggal_datang->format('d-m-Y'),
-                    "xxEXP02-10-2026" => $datas->rd_tgl_exp->format('d-m-Y'),
+                    "xxRCP02-10-2026" => isset($datas->rd_tanggal_datang) ? $datas->rd_tanggal_datang->format('d-m-Y') : '',
+                    "xxEXP02-10-2026" => isset($datas->rd_tgl_exp) ? $datas->rd_tgl_exp->format('d-m-Y') : '',
                     "xhal1" => $i,
                     "xhal2" => $datas->qty_print,
-                    "xxRTS02-12-2026" => $datas->rd_tgl_retest->format('d-m-Y')
+                    "xxRTS02-12-2026" => isset($datas->rd_tgl_retest) ? $datas->rd_tgl_retest->format('d-m-Y') : ''
                 ];
 
                 // Replace all placeholders in the template
@@ -127,12 +127,12 @@ class APIZebraPrinterController extends Controller
 
     public function getBookPrint(Request $request)
     {
-        $data = ReceiptDetail::select('rd_nomor_buku')->query();
+        $data = ReceiptDetail::query();
 
         if ($request->search) {
             $data->where('rd_nomor_buku', 'like', '%' . $request->search . '%');
         }
-        $data = $data->groupBy('rd_nomor_buku')->orderBy('rd_nomor_buku')->get();
+        $data = $data->select('rd_nomor_buku')->groupBy('rd_nomor_buku')->orderBy('rd_nomor_buku')->get();
         //$data = $data->groupBy('rd_nomor_buku')->orderBy('rd_nomor_buku')->get();
 
         return GeneralResources::collection($data);
@@ -141,11 +141,11 @@ class APIZebraPrinterController extends Controller
     public function getItemPrint(Request $request)
     {
 
-        $data = ReceiptDetail::select('rd_nama_barang')->query();
+        $data = ReceiptDetail::query();
         if ($request->search) {
             $data->where('rd_nama_barang', 'like', '%' . $request->search . '%');
         }
-        $data = $data
+        $data = $data->select('rd_nama_barang')
             ->groupBy('rd_nama_barang')->orderBy('rd_nama_barang')->get();
         log:info($data);
         //$data = $data->groupBy('rd_nama_barang')->orderBy('rd_nama_barang')->get();
