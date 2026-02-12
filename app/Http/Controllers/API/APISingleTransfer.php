@@ -16,6 +16,8 @@ use App\Models\API\picklistWoDet;
 use App\Models\API\prefixWorkOrder;
 use App\Models\API\picklistHistory;
 use App\Models\API\picklistLocationTo;
+use App\Models\Settings\PenyerahanBarangPrefix;
+use App\Models\API\PenyerahanBarang;
 use App\Models\Settings\Item;
 use App\Models\Settings\Location;
 use App\Models\Settings\SingleTransferPrefix;
@@ -1673,5 +1675,95 @@ class APISingleTransfer extends Controller
             });
         }
         return response()->json($getAllItemLocation);
+    }
+
+     public function sendPenyerahanBarang(Request $req)
+    {
+        DB::beginTransaction();
+        try {
+            $data = $req->all();
+            $item = $data['item'];
+            $sitefrom = $data['sitefrom'];
+            $siteto = $this->nullConversion($data['siteto']);
+            $locfrom = $data['locfrom'];
+            $locto = $this->nullConversion($data['locto']);
+            $whfrom = $this->nullConversion($data['whfrom']);
+            $levelfrom = $this->nullConversion($data['levelfrom']);
+            $binfrom = $this->nullConversion($data['binfrom']);
+            $qty = $data['qty'];
+            $wh = $this->nullConversion($data['wh']);
+            $ref = $this->nullConversion($data['ref']);
+            $level = $this->nullConversion($data['level']);
+            $bin = $this->nullConversion($data['bin']);
+            $lot = $this->nullConversion($data['lot']);
+            $prefixTable = penyerahanBarangPrefix::first();
+            $prefix = $prefixTable->pbp_prefix;
+            $runningnbr = $prefixTable->pbp_running_nbr;
+            $nextrunningnbr = (int) $runningnbr + 1;
+            $newRunningNbr = str_pad($nextrunningnbr, 6, '0', STR_PAD_LEFT);
+            $newPrefix = $prefix . $newRunningNbr;
+
+            $newTransferData = new PenyerahanBarang();
+            $newTransferData->pb_trfid = $newPrefix;
+            $newTransferData->pb_item = $item;
+            $newTransferData->pb_site_from = $sitefrom;
+            $newTransferData->pb_site_to = $siteto;
+            $newTransferData->pb_loc_from = $locfrom;
+            $newTransferData->pb_loc_to = $locto;
+            $newTransferData->pb_wh_from = $whfrom;
+            $newTransferData->pb_level_from = $levelfrom;
+            $newTransferData->pb_bin_from = $binfrom;
+            $newTransferData->pb_qty = $qty;
+            $newTransferData->pb_wh = $wh;
+            $newTransferData->pb_ref = $ref;
+            $newTransferData->pb_level = $level;
+            $newTransferData->pb_bin = $bin;
+            $newTransferData->pb_lot = $lot;
+            $newTransferData->pb_status = 'Open';
+            $newTransferData->save();
+
+            $prefixTable->stp_running_nbr = $newRunningNbr;
+            $prefixTable->save();
+
+            DB::commit();
+
+            return response()->json([
+                'Status' => 'Success',
+                'Message' => "Transfer Item Success for Item : " . $item
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::channel('SingleTransfer')->info($e);
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => $e->getMessage()
+            ], 422);
+        }
+
+        // $hasil = (new QxtendServices())->qxTransferSingleItemTransfer($item, $qty, $sitefrom, $siteto, $locfrom, $locto, $lot, '', '', $wh, '', $level, '', $bin);
+        // if ($hasil == 'false') {
+        //     return response()->json([
+        //         'Status' => 'Error',
+        //         'Message' => "Transfer Item Failed for Item : " . $item
+        //     ], 422);
+        // } else {
+        //     return response()->json([
+        //         'Status' => 'Success',
+        //         'Message' => "Transfer Item Success for Item : " . $item
+        //     ], 200);
+        // }
+        // return response()->json([
+        //     $item,
+        //     $sitefrom,
+        //     $siteto,
+        //     $locfrom,
+        //     $locto,
+        //     $qty,
+        //     $wh,
+        //     $ref,
+        //     $level,
+        //     $bin,
+        //     $lot
+        // ]);
     }
 }

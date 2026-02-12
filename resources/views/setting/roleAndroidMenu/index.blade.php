@@ -108,6 +108,30 @@
                                     name="data[]" value="TS03" />
                             </div>
                             <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Penyerahan Barang Jadi</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPenyerahanBarangJadi"
+                                    name="data[]" value="TS04" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Penerimaan Barang Jadi</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPenerimaanBarangJadi"
+                                    name="data[]" value="TS05" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Pengembalian Material</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPengembalianMaterial"
+                                    name="data[]" value="TS06" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
+                                <label for="level" class="form-check-label col-8">Penerimaan Material</label>
+
+                                <input type="checkbox" class="custom-control-input form-check-input" id="cbPenerimaanMaterial"
+                                    name="data[]" value="TS07" />
+                            </div>
+                            <div class="form-check d-flex form-switch mt-3 mb-4">
                                 <label for="level" class="form-check-label col-8">Issue Unplanned</label>
 
                                 <input type="checkbox" class="custom-control-input form-check-input" id="cbIssueUnplanned"
@@ -294,6 +318,18 @@
                 }
                 if (parts.includes("TS03")) {
                     $('#cbSingleTransferReceipt').prop('checked', 'true');
+                }
+                 if (parts.includes("TS04")) {
+                    $('#cbPenyerahanBarangJadi').prop('checked', 'true');
+                }
+                if (parts.includes("TS05")) {
+                    $('#cbPenerimaanBarangJadi').prop('checked', 'true');
+                }
+                  if (parts.includes("TS06")) {
+                    $('#cbPengembalianMaterial').prop('checked', 'true');
+                }
+                if (parts.includes("TS07")) {
+                    $('#cbPenerimaanMaterial').prop('checked', 'true');
                 }
                 if (parts.includes("OT01")) {
                     $('#cbIssueUnplanned').prop('checked', 'true');

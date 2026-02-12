@@ -147,7 +147,7 @@ class APIZebraPrinterController extends Controller
         }
         $data = $data
             ->groupBy('rd_nama_barang')->orderBy('rd_nama_barang')->get();
-
+        log:info($data);
         //$data = $data->groupBy('rd_nama_barang')->orderBy('rd_nama_barang')->get();
 
         return GeneralResources::collection($data);
