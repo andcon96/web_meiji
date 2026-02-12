@@ -305,14 +305,14 @@ class APIPurchaseOrderController extends Controller
 
         $dataQAD = $dataQAD->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
         // $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
-        log::info('dataqad: '.$getDataQAD);
-        log::info('dataweb: '.$getAllItemLocation);
-        log::info('merged: '.$merged);
-        log::info('dataqad final: '.$dataQAD);
+        log::info('dataqad: ' . $getDataQAD);
+        log::info('dataweb: ' . $getAllItemLocation);
+        log::info('merged: ' . $merged);
+        log::info('dataqad final: ' . $dataQAD);
         return response()->json($dataQAD);
     }
 
-     public function wsaPenyimpananWarehouse(Request $req)
+    public function wsaPenyimpananWarehouse(Request $req)
     {
         // $itemCode = $req->search; 
         // Request Xena 1609
@@ -414,7 +414,7 @@ class APIPurchaseOrderController extends Controller
             ->values();
 
         $dataQAD = $dataQAD->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
-        log::info('dataqad final: '.$dataQAD);
+        log::info('dataqad final: ' . $dataQAD);
         log::info($getAllItemLocation);
         // $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
 
@@ -939,7 +939,7 @@ class APIPurchaseOrderController extends Controller
             ->distinct()
             ->get();
 
-            log::info('receiptDetail', [$receiptDetail]);
+        log::info('receiptDetail', [$receiptDetail]);
 
         $wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse, $levelsearch);
         if ($wsaData[0] == 'false') {
@@ -1010,16 +1010,15 @@ class APIPurchaseOrderController extends Controller
 
         $dataQAD = $merged->map(function ($item) use ($receiptDetail) {
             foreach ($receiptDetail as $datas) {
-                
-                    if (
-                        $item['t_inv_wrh'] == $datas->getDetail->rd_building_penyimpanan &&
-                        $item['t_inv_level'] == $datas->rdp_level_penyimpanan &&
-                        $item['t_inv_bin'] == $datas->rdp_bin_penyimpanan
-                    ) {
-                        $item['t_is_prioritize'] = '1';
-                        break;
-                    }
-                
+
+                if (
+                    $item['t_inv_wrh'] == $datas->getDetail->rd_building_penyimpanan &&
+                    $item['t_inv_level'] == $datas->rdp_level_penyimpanan &&
+                    $item['t_inv_bin'] == $datas->rdp_bin_penyimpanan
+                ) {
+                    $item['t_is_prioritize'] = '1';
+                    break;
+                }
             }
             return $item;
         });
@@ -1039,7 +1038,20 @@ class APIPurchaseOrderController extends Controller
         try {
             $id = $req->id;
 
-            $data = ReceiptDetail::with(['getMaster', 'getPurchaseOrderDetail.getMaster', 'getPallet'])->findOrFail($id);
+            $data = ReceiptDetail::with([
+                'getMaster',
+                'getPurchaseOrderDetail.getMaster',
+                'getPallet',
+                'getAttachment',
+                'getDokumen',
+                'getKemasan',
+                'getKendaraan',
+                'getPenanda',
+                
+                'getUserSeenBy',
+                'getApprovalTemp',
+                'getApprovalHist'
+            ])->findOrFail($id);
             $master = ReceiptMaster::findOrFail($data->rd_rm_id);
             $getPurchaseOrderDetail = $data->getPurchaseOrderDetail;
             $getPallet = $data->getPallet;
