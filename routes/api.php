@@ -15,6 +15,7 @@ use App\Http\Controllers\API\APISingleTransfer;
 use App\Http\Controllers\API\APIZebraPrinterController;
 use App\Http\Controllers\API\PackingReplenishment\APIPackingReplenishmentController;
 use App\Http\Controllers\API\ShipperConfirm\APIShipperConfirmController;
+use App\Http\Controllers\API\APIBarangJadi;
 use App\Http\Controllers\API\APITransIssUnpController;
 use App\Http\Controllers\API\APITransRctUnpController;
 use App\Http\Controllers\API\APISampling;
@@ -53,7 +54,7 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::get("wsaPenyimpananPalet", [APIPurchaseOrderController::class, "wsaPenyimpananPaletSearch"]);
     //delete po
     Route::post("deleteDraftPo", [APIPurchaseOrderController::class, "deleteDraft"]);
-    
+
     Route::get("getDataPORecheck", [APIPurchaseOrderRecheckController::class, "index"]);
     Route::post("submitRecheckReceipt", [APIPurchaseOrderRecheckController::class, "saveReceiptRecheck"]);
 
@@ -85,7 +86,7 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::post("wsaDataPO", [APIPurchaseOrderController::class, "wsaDataPO"]);
     Route::post("wsaLotBatch", [APIPurchaseOrderController::class, "wsaLotBatch"]);
     Route::post("wsaPenyimpanan", [APIPurchaseOrderController::class, "wsaPenyimpanan"]);
-   Route::post("wsaPenyimpananWarehouse", [APIPurchaseOrderController::class, "wsaPenyimpananWarehouse"]);
+    Route::post("wsaPenyimpananWarehouse", [APIPurchaseOrderController::class, "wsaPenyimpananWarehouse"]);
     Route::post("wsaWarehouse", [APIPurchaseOrderController::class, "wsaWarehouse"]);
     Route::post("wsaLevel", [APIPurchaseOrderController::class, "wsaPenyimpananPalet"]);
     Route::post("wsaBin", [APIPurchaseOrderController::class, "wsaPenyimpananPalet"]);
@@ -193,15 +194,10 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     // Route::post("sendTransferItem", [APIPicklistShopping::class, "sendTransferItem"]);
     Route::get("getLocationData", [APISingleTransfer::class, "getLocationData"]);
     Route::post("getWebLocationDataTransfer", [APISingleTransfer::class, "getWebLocationDataTransfer"]);
-
-
     Route::get("getSiteData", [APISingleTransfer::class, "getSiteData"]);
-
-
     Route::get("wsaWarehousePick", [APISingleTransfer::class, "wsaWarehouse"]);
     Route::get("getSearchLocation", [APISingleTransfer::class, "wsainvdet"]);
     Route::post("sendTransferItem", [APISingleTransfer::class, "sendTransferItem"]);
-
     Route::get("getTransferData", [APISingleTransfer::class, "getTransferData"]);
     Route::post("receiptItem", [APISingleTransfer::class, "receiptItem"]);
     Route::get("getSingleTransferData", [APISingleTransfer::class, "getSingleTransferData"]);
@@ -250,5 +246,21 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::get("getHistoryData", [APIController::class, "getHistoryData"]);
 
     Route::get("cekItemLot", [APIController::class, "cekItemLot"]);
+
+ // Penyerahan Barang
+    // Route::get("getLocationData", [APIPicklistShopping::class, "getLocationData"]);
+    // Route::get("wsaWarehousePick", [APIPicklistShopping::class, "wsaWarehouse"]);
+    // Route::get("getSearchLocation", [APIPicklistShopping::class, "wsainvdet"]);
+    // Route::post("sendTransferItem", [APIPicklistShopping::class, "sendTransferItem"]);
+    Route::get("getLocationBarangJadi", [APIBarangJadi::class, "getLocationBarangJadi"]);
+    Route::post("getWebLocationDataTransfer", [APIBarangJadi::class, "getWebLocationBarangJadi"]);
+    Route::get("getSiteBarangJadi", [APIBarangJadi::class, "getSiteBarangJadi"]);
+    Route::get("wsaWarehousePick", [APIBarangJadi::class, "wsaWarehouseBarangJadi"]);
+    Route::get("getSearchLocation", [APIBarangJadi::class, "wsainvdetBarangJadi"]);
+    Route::post("sendBarangJadi", [APIBarangJadi::class, "sendBarangJadi"]);
+    Route::get("getTransferData", [APIBarangJadi::class, "getTransferBarangJadi"]);
+    Route::post("receiptItem", [APIBarangJadi::class, "receiptItem"]);
+    Route::get("getBarangJadiData", [APIBarangJadi::class, "getSingleBarangJadi"]);
+    Route::post("getWlbBarangJadi", [APIBarangJadi::class, "getWlbBarangJadi"]);
 });
 // WSA Picklist
