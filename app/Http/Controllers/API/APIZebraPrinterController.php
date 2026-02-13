@@ -39,7 +39,7 @@ class APIZebraPrinterController extends Controller
             $data->whereRelation('getPurchaseOrderDetail', 'pod_part', '=', $itemNumber);
         }
 
-        $data = $data->get();
+        $data = $data->orderBy('created_at','desc')->get();
 
         return GeneralResources::collection($data);
     }
