@@ -894,6 +894,7 @@ class APIPurchaseOrderController extends Controller
         $warehouse = '';
         $levelsearch = '';
         $binSearch = '';
+        $search = '';
 
         if ($req->wh) {
             $warehouse = $req->wh ?? '';
@@ -906,6 +907,9 @@ class APIPurchaseOrderController extends Controller
         }
         if ($req->bin) {
             $binSearch = $req->bin ?? '';
+        }
+        if ($req->search) {
+            $search = $req->search; // Capture the search parameter
         }
 
         // Ambil Relati Item ke Location di Web
@@ -1023,7 +1027,16 @@ class APIPurchaseOrderController extends Controller
             return $item;
         });
 
+        // Add search filter for level OR bin
+        if ($search != '') {
+            $dataQAD = $dataQAD->filter(function ($item) use ($search) {
+                $level = is_array($item['t_inv_level']) ? '' : (string)($item['t_inv_level'] ?? '');
+                $bin = is_array($item['t_inv_bin']) ? '' : (string)($item['t_inv_bin'] ?? '');
 
+                // Search in both level and bin (case-insensitive partial match)
+                return stripos($level, $search) !== false || stripos($bin, $search) !== false;
+            });
+        }
         // $dataQAD = $dataQAD->where('t_is_prioritize','0')->values();
         $dataQAD = $dataQAD->where('t_is_prioritize', '0')
             ->sortBy('t_inv_wrh')
@@ -1047,7 +1060,7 @@ class APIPurchaseOrderController extends Controller
                 'getKemasan',
                 'getKendaraan',
                 'getPenanda',
-                
+
                 'getUserSeenBy',
                 'getApprovalTemp',
                 'getApprovalHist'
