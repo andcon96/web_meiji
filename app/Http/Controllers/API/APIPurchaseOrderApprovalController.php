@@ -86,7 +86,7 @@ class APIPurchaseOrderApprovalController extends Controller
                     $tempApprove->save();
 
                     // Ambil semua approval receipt det yang bukan waiting & pindain ke hist.
-                    $getAllApproval = ApprovalReceiptTemp::where('art_receipt_det_id', $tempApprove->art_receipt_det_id)->where('art_status', '!=', 'Waiting')->get();
+                    $getAllApproval = ApprovalReceiptTemp::where('art_receipt_det_id', $tempApprove->art_receipt_det_id)->where('art_status', '!=', 'Waiting')->where('art_status', '!=', 'Approved')->get();
                     foreach ($getAllApproval as $datas) {
                         $newHistoryApproval = new ApprovalReceiptHistory();
                         $newHistoryApproval->arh_receipt_det_id = $datas->art_receipt_det_id;
