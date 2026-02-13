@@ -769,9 +769,20 @@ class APIPurchaseOrderController extends Controller
         $loc = $req->location ?? '';
         $item = $req->item ?? '';
         $lot = $req->lot ?? '';
-
+        $search = $req->search ?? '';
         $location = Location::where('location_site', $site)->where('location_code', $loc)->first();
-        $warehouse = LocationDetail::where('ld_location_id', $location->id)->groupBy('ld_building')->orderBy('ld_building')->select('ld_building')->get();
+        $warehouse = LocationDetail::query()
+            ->where('ld_location_id', $location->id);
+
+        if ($search != '') {
+            $warehouse->where('ld_building', 'like', '%' . $search . '%');
+        }
+
+        $warehouse = $warehouse
+            ->select('ld_building')
+            ->groupBy('ld_building')
+            ->orderBy('ld_building')
+            ->get();
         return response()->json($warehouse);
     }
     public function getAllLevel(Request $req)
@@ -784,9 +795,18 @@ class APIPurchaseOrderController extends Controller
         $loc = $req->location ?? '';
         $item = $req->item ?? '';
         $lot = $req->lot ?? '';
+        $search = $req->search ?? '';
 
         $location = Location::where('location_site', $site)->where('location_code', $loc)->first();
-        $level = LocationDetail::where('ld_location_id', $location->id)->where('ld_building', $warehouse)->groupBy('ld_rak')->orderBy('ld_rak')->select('ld_rak')->get();
+        $level = LocationDetail::query()
+            ->where('ld_location_id', $location->id)
+            ->where('ld_building', $warehouse);
+
+        if ($search != '') {
+            $level = $level->where('ld_rak', 'like', '%' . $search . '%');
+        }
+
+        $level = $level->groupBy('ld_rak')->orderBy('ld_rak')->select('ld_rak')->get();
 
         return response()->json($level);
     }
@@ -801,9 +821,17 @@ class APIPurchaseOrderController extends Controller
         $loc = $req->location ?? '';
         $item = $req->item ?? '';
         $lot = $req->lot ?? '';
+        $search = $req->search ?? '';
 
         $location = Location::where('location_site', $site)->where('location_code', $loc)->first();
-        $bin = LocationDetail::where('ld_location_id', $location->id)->where('ld_building', $warehouse)->where('ld_rak', $level)->groupBy('ld_bin')->orderBy('ld_bin')->select('ld_bin')->get();
+        $bin = LocationDetail::query()
+            ->where('ld_location_id', $location->id)
+            ->where('ld_building', $warehouse)
+            ->where('ld_rak', $level);
+            if($search != ''){
+                $bin = $bin->where('ld_bin','like','%'.$search.'%');
+            }
+        $bin = $bin->groupBy('ld_bin')->orderBy('ld_bin')->select('ld_bin')->get();
 
         return response()->json($bin);
     }
