@@ -86,8 +86,14 @@ class APIPurchaseOrderApprovalController extends Controller
                     $tempApprove->save();
 
                     // Ambil semua approval receipt det yang bukan waiting & pindain ke hist.
-                    $getAllApproval = ApprovalReceiptTemp::where('art_receipt_det_id', $tempApprove->art_receipt_det_id)->where('art_status', '!=', 'Waiting')->where('art_status', '!=', 'Approved')->get();
+                    $getAllApproval = ApprovalReceiptTemp::where('art_receipt_det_id', $tempApprove->art_receipt_det_id)->where('art_status', '!=', 'Waiting')->get();
+
                     foreach ($getAllApproval as $datas) {
+                        if($datas->art_status == 'Approved'){
+                            $status = 'Approved';
+                        } else {
+                            $status = 'Reject';
+                        }
                         $newHistoryApproval = new ApprovalReceiptHistory();
                         $newHistoryApproval->arh_receipt_det_id = $datas->art_receipt_det_id;
                         $newHistoryApproval->arh_user_approve = $datas->art_user_approve;
@@ -95,7 +101,7 @@ class APIPurchaseOrderApprovalController extends Controller
                         $newHistoryApproval->arh_sequence = $datas->art_sequence;
                         $newHistoryApproval->arh_approved_by = $datas->art_approved_by;
                         // $newHistoryApproval->arh_status = $datas->art_status;
-                        $newHistoryApproval->arh_status = 'Reject';
+                        $newHistoryApproval->arh_status = $status;
                         $newHistoryApproval->arh_reason = $datas->art_reason;
                         $newHistoryApproval->created_at = $datas->created_at;
                         $newHistoryApproval->updated_at = $datas->updated_at;
