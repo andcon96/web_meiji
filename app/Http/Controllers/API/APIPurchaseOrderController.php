@@ -775,7 +775,8 @@ class APIPurchaseOrderController extends Controller
             ->where('ld_location_id', $location->id);
 
         if ($search != '') {
-            $warehouse->where('ld_building', 'like', '%' . $search . '%');
+            $warehouse = $warehouse->whereRaw('LOWER(ld_building) LIKE ?', ['%' . strtolower($search) . '%']);
+            // $warehouse->where('ld_building', 'like', '%' . $search . '%');
         }
 
         $warehouse = $warehouse
@@ -803,7 +804,8 @@ class APIPurchaseOrderController extends Controller
             ->where('ld_building', $warehouse);
 
         if ($search != '') {
-            $level = $level->where('ld_rak', 'like', '%' . $search . '%');
+            $level = $level->whereRaw('LOWER(ld_rak) LIKE ?', ['%' . strtolower($search) . '%']);
+            //$level = $level->where('ld_rak', 'like', '%' . $search . '%');
         }
 
         $level = $level->groupBy('ld_rak')->orderBy('ld_rak')->select('ld_rak')->get();
@@ -829,7 +831,8 @@ class APIPurchaseOrderController extends Controller
             ->where('ld_building', $warehouse)
             ->where('ld_rak', $level);
             if($search != ''){
-                $bin = $bin->where('ld_bin','like','%'.$search.'%');
+                $bin = $bin->whereRaw('LOWER(ld_bin) LIKE ?', ['%' . strtolower($search) . '%']);
+                // $bin = $bin->where('ld_bin','like','%'.$search.'%');
             }
         $bin = $bin->groupBy('ld_bin')->orderBy('ld_bin')->select('ld_bin')->get();
 
