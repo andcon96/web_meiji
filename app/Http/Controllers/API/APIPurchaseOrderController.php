@@ -537,8 +537,6 @@ class APIPurchaseOrderController extends Controller
             ], 422);
         }
 
-
-
         return response()->json($wsaData[1]);
     }
 
@@ -884,6 +882,45 @@ class APIPurchaseOrderController extends Controller
         }
 
         return response()->json($getAllItemLocation);
+    }
+
+    //mira
+    public function wsaWOPrint(Request $req)
+    {
+        $wo = $req->query('wo');
+        $site = $req->query('site');
+        $part = $req->query('part');
+        $lot = $req->query('lot');
+
+        $wsaData = (new WSAServices())->wsaGetWOPrint($wo, $site, $part, $lot);
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+
+        return response()->json($wsaData[1]);
+    }
+
+    //mira
+    public function wsaWOMaster(Request $req)
+    {
+        // $wo = $req->query('wo');
+        // $site = $req->query('site');
+        // $part = $req->query('part');
+        // $lot = $req->query('lot');
+        $$wonbr = $req->query('wonbr');
+
+        $wsaData = (new WSAServices())->wsaGetWOMstr($wonbr);
+        if ($wsaData[0] == 'false') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        }
+
+        return response()->json($wsaData[1]);
     }
 
     public function wsaPenyimpananPaletSearch(Request $req)

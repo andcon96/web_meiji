@@ -72,8 +72,6 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::get("getStockItemBin", [APITrasnferStockController::class, "getStockItemBin"]);
     Route::post("saveTransfer", [APITrasnferStockController::class, "saveTransfer"]);
 
-
-
     // Print QR
     Route::get("getDataPrintQR", [APIZebraPrinterController::class, "getDataPrintQR"]);
     Route::post("getPoPrint", [APIZebraPrinterController::class, "getPoPrint"]);
@@ -81,8 +79,13 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::post("getItemPrint", [APIZebraPrinterController::class, "getItemPrint"]);
     Route::post("getPrinterPrint", [APIZebraPrinterController::class, "getPrinterPrint"]);
     Route::post("printQRItem", [APIZebraPrinterController::class, "printQRItem"]);
+    
+    // Print WO QR
+    Route::post("printQRItemWO", [APIZebraPrinterController::class, "printQRItemWO"]);
 
     // WSA PO
+    Route::get("wsaWOPrint", [APIPurchaseOrderController::class, "wsaWOPrint"]); //mira
+    Route::get("wsaWOMaster", [APIPurchaseOrderController::class, "wsaWOMaster"]); //mira
     Route::post("wsaDataPO", [APIPurchaseOrderController::class, "wsaDataPO"]);
     Route::post("wsaLotBatch", [APIPurchaseOrderController::class, "wsaLotBatch"]);
     Route::post("wsaPenyimpanan", [APIPurchaseOrderController::class, "wsaPenyimpanan"]);
