@@ -4454,12 +4454,13 @@ class WSAServices
             '<inplot>' . $lot . '</inplot>' .
             '<inpbin>' . $bin . '</inpbin>' .
             '<inpwrh>' . $warehouse . '</inpwrh>' .
+            '<inplocation>' . $location . '</inplocation>' .
             '<inplevel>' . $level . '</inplevel>' .
             
             '</meiji_xxinv_det_palet>' .
             '</Body>' .
             '</Envelope>';
-log::info($qdocRequest);
+
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
