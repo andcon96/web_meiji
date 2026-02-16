@@ -22,9 +22,12 @@ return new class extends Migration
             $table->string('pb_loc_to')->nullable();
             $table->string('pb_ref')->nullable();
             $table->integer('pb_qty')->nullable();
-            $table->string('pb_wh')->nullable();
-            $table->string('pb_level')->nullable();
-            $table->string('pb_bin')->nullable();
+            $table->string('pb_wh_from')->nullable();
+            $table->string('pb_wh_to')->nullable();
+            $table->string('pb_level_from')->nullable();
+            $table->string('pb_level_to')->nullable();
+            $table->string('pb_bin_from')->nullable();
+            $table->string('pb_bin_to')->nullable();
             $table->string('pb_status')->nullable();
             $table->timestamps();
         });

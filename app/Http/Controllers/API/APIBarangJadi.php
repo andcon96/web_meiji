@@ -22,6 +22,7 @@ use App\Models\Settings\Item;
 use App\Models\Settings\Location;
 use App\Models\Settings\SingleTransferPrefix;
 use App\Models\API\SingleTransfer;
+
 use App\Services\WSAServices;
 use App\Services\QxtendServices;
 use Exception;
@@ -58,19 +59,19 @@ class APIBarangJadi extends Controller
         }
     }
 
-    public function getSingleTransferBarangJadi(Request $req)
+    public function getPenerimaanBarangData(Request $req)
     {
-        $search = $req->search;
 
-        $trfdata = singleTransfer::where('st_status', 'Open');
+        $search = $req->search;
+        $trfdata = penyerahanBarang::where('pb_status', 'Open');
         if ($search) {
-            $trfdata =  $trfdata->where('st_trfid', 'LIKE', '%' . $search . '%')
-                ->orWhere('st_item', 'LIKE', '%' . $search . '%')
-                ->orWhere('st_lot', 'LIKE', '%' . $search . '%')
+            $trfdata =  $trfdata->where('pb_trfid', 'LIKE', '%' . $search . '%')
+                ->orWhere('pb_item', 'LIKE', '%' . $search . '%')
+                ->orWhere('pb_lot', 'LIKE', '%' . $search . '%')
                 ->get();
         }
         $trfdata = $trfdata->get();
-
+   
         if (!$trfdata) {
             return response()->json([
                 'Status' => 'Error',
@@ -89,59 +90,83 @@ class APIBarangJadi extends Controller
 
     public function receiptItem(Request $req)
     {
-
         $trfid = $req->trfid;
-        $data = singleTransfer::where('st_trfid', $trfid)->first();
-        $part = $data->st_item;
-        $qtyoh = $data->st_qty;
-        $sitefrom = $data->st_site_from;
-        $siteto = $data->st_site_to;
-        $locfrom = $data->st_loc_from;
-        $locto = $data->st_loc_to;
-        $lotfrom = $data->st_lot;
-        $lotto = $data->st_lot;
-        $buildingfrom = $data->st_wh_from ?? '';
-        $buildingto = $data->st_wh;
-        $levelfrom = $data->st_level_from ?? '';
-        $levelto = $data->st_level;
-        $binfrom = $data->st_bin_from ?? '';
-        $binto = $data->st_bin;
-
-        $qxreceipt = (new QxtendServices())->qxTransferSingleItemTransfer(
+        $locto = $req->locto;
+        $whto = $req->whto;
+        $levelto = $req->levelto;
+        $binto = $req->binto;
+        
+        $data = penyerahanBarang::where('pb_trfid', $trfid)->first();
+        
+        $part = $data->pb_item;
+        $qtyoh = $data->pb_qty;
+        $sitefrom = $data->pb_site_from;
+        $siteto = $data->pb_site_to;
+        $locfrom = $data->pb_loc_from;
+        // $locto = $data->pb_loc_to;
+        $lotfrom = $data->pb_lot;
+        $lotto = $data->pb_lot;
+        $buildingfrom = $data->pb_wh_from ?? '';
+        // $buildingto = $data->pb_wh_to ?? '';
+        $levelfrom = $data->pb_level_from ?? '';
+        // $levelto = $data->pb_level_to ?? '';
+        $binfrom = $data->pb_bin_from ?? '';
+        // $binto = $data->pb_bin_to ?? '';
+        $wsaUpdate = (new WsaServices())->wsaUpdatePenerimaanBarang(
             $part,
-            $qtyoh,
-            $sitefrom,
-            $siteto,
             $locfrom,
             $locto,
             $lotfrom,
-            $lotto,
-            $buildingfrom,
-            $buildingto,
+            $sitefrom,
+            $siteto,
             $levelfrom,
             $levelto,
             $binfrom,
-            $binto
+            $binto,
+            $buildingfrom,
+            $whto,
+            $qtyoh
         );
-        if ($qxreceipt[0] == false) {
+        // log::info($wsaUpdate);
+        // $qxreceipt = (new QxtendServices())->qxTransferSingleItemTransfer(
+        //     $part,
+        //     $qtyoh,
+        //     $sitefrom,
+        //     $siteto,
+        //     $locfrom,
+        //     $locto,
+        //     $lotfrom,
+        //     $lotto,
+        //     $buildingfrom,
+        //     $buildingto,
+        //     $levelfrom,
+        //     $levelto,
+        //     $binfrom,
+        //     $binto
+        // );
+        if ($wsaUpdate[0] == false) {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Transfer Item Failed "
+                'Message' => "Penerimaan barang gagal "
             ], 422);
         } else {
             DB::beginTransaction();
             try {
-                $dataupdate = singleTransfer::where('st_trfid', $trfid)->first();
-                $dataupdate->st_status = 'Received';
+                $dataupdate = penyerahanBarang::where('pb_trfid', $trfid)->first();
+                $dataupdate->pb_status = 'Received';
+                $dataupdate->pb_loc_to = $locto;
+                $dataupdate->pb_wh_to = $whto;
+                $dataupdate->pb_level_to = $levelto;
+                $dataupdate->pb_bin_to = $binto;
                 $dataupdate->save();
 
                 $user = Auth::user()->name;
                 // Transaction History
 
                 $newTransactionHistoryfrom = new TransactionHistory();
-                $newTransactionHistoryfrom->tr_nbr = 'Sampling';
-                $newTransactionHistoryfrom->tr_program = 'Single Transfer Module';
-                $newTransactionHistoryfrom->tr_activity = 'Single Transfer From';
+                $newTransactionHistoryfrom->tr_nbr = $trfid;
+                $newTransactionHistoryfrom->tr_program = 'Barang Jadi Module';
+                $newTransactionHistoryfrom->tr_activity = 'Penerimaan Barang Jadi From';
                 $newTransactionHistoryfrom->tr_user = $user ?? '';
                 $newTransactionHistoryfrom->tr_part = $part ?? '';
                 $newTransactionHistoryfrom->tr_uom = '';
@@ -159,10 +184,10 @@ class APIBarangJadi extends Controller
                 $newTransactionHistoryfrom->save();
 
                 $newTransactionHistory = new TransactionHistory();
-                $newTransactionHistory->tr_nbr = 'Sampling';
+                $newTransactionHistory->tr_nbr = $trfid;
                 $newTransactionHistory->tr_order = '';
-                $newTransactionHistory->tr_program = 'Single Transfer Module';
-                $newTransactionHistory->tr_activity = 'Single Transfer To';
+                $newTransactionHistory->tr_program = 'Barang Jadi Module';
+                $newTransactionHistory->tr_activity = 'Penerimaan Barang Jadi To';
                 $newTransactionHistory->tr_user = $user ?? '';
                 $newTransactionHistory->tr_part = $part ?? '';
                 $newTransactionHistory->tr_uom = '';
@@ -814,8 +839,18 @@ class APIBarangJadi extends Controller
             $bin = $this->nullConversion($data['bin']);
             $lot = $this->nullConversion($data['lot']);
             $prefixTable = penyerahanBarangPrefix::first();
-            $prefix = $prefixTable->pbp_prefix;
-            $runningnbr = $prefixTable->pbp_running_nbr;
+           
+            if ($prefixTable) {
+                $prefix = $prefixTable->pbp_prefix;
+                $runningnbr = $prefixTable->pbp_running_nbr;
+            } else {
+                // Handle when no record found
+                
+                $prefix = 'PB';
+                $runningnbr = 0;
+               
+            }
+           
             $nextrunningnbr = (int) $runningnbr + 1;
             $newRunningNbr = str_pad($nextrunningnbr, 6, '0', STR_PAD_LEFT);
             $newPrefix = $prefix . $newRunningNbr;
@@ -828,19 +863,25 @@ class APIBarangJadi extends Controller
             $newPenyerahanBarang->pb_loc_from = $locfrom;
             $newPenyerahanBarang->pb_loc_to = $locto;
             $newPenyerahanBarang->pb_wh_from = $whfrom;
-            $newPenyerahanBarang->pb_level_from = $levelfrom;
-            $newPenyerahanBarang->pb_bin_from = $binfrom;
+
             $newPenyerahanBarang->pb_qty = $qty;
-            $newPenyerahanBarang->pb_wh = $wh;
+            $newPenyerahanBarang->pb_wh_to = $wh;
             $newPenyerahanBarang->pb_ref = $ref;
-            $newPenyerahanBarang->pb_level = $level;
-            $newPenyerahanBarang->pb_bin = $bin;
+            $newPenyerahanBarang->pb_level_from = $levelfrom;
+            $newPenyerahanBarang->pb_level_to = $level;
+            $newPenyerahanBarang->pb_bin_from = $binfrom;
+            $newPenyerahanBarang->pb_bin_to = $bin;
             $newPenyerahanBarang->pb_lot = $lot;
             $newPenyerahanBarang->pb_status = 'Open';
             $newPenyerahanBarang->save();
-
-            $prefixTable->stp_running_nbr = $newRunningNbr;
-            $prefixTable->save();
+            if(!$prefixTable){
+                $insertprefix = new penyerahanBarangPrefix();
+                $insertprefix->pbp_prefix = $prefix;
+                $insertprefix->pbp_running_nbr = $newRunningNbr;
+                $insertprefix->save();
+            }
+            // $prefixTable->pbp_running_nbr = $newRunningNbr;
+            // $prefixTable->save();
 
             DB::commit();
 

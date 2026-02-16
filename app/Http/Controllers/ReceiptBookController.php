@@ -24,7 +24,22 @@ class ReceiptBookController extends Controller
 
         return view('printBook.index', compact('data', 'menuMaster'));
     }
-
+function formatNumberCustom($number, $minDecimals = 2, $maxDecimals = 5) {
+    $formatted = number_format($number, $maxDecimals, '.', ',');
+    
+    // Remove trailing zeros but keep minimum decimals
+    $parts = explode('.', $formatted);
+    if (isset($parts[1])) {
+        // Remove trailing zeros
+        $decimals = rtrim($parts[1], '0');
+        // Ensure minimum decimal places
+        $decimals = str_pad($decimals, $minDecimals, '0');
+        return $parts[0] . '.' . $decimals;
+    }
+    
+    // No decimals, add minimum
+    return $parts[0] . '.' . str_repeat('0', $minDecimals);
+}
     public function printBook(Request $request, $id)
     {
         $dataReceipt = ReceiptDetail::with(['getPurchaseOrderDetail','getMaster.getPurchaseOrderMaster', 'getDokumen', 'getKemasan', 'getKendaraan', 'getPenanda', 'getPallet', 'getApprovalHist.getUserApprove', 'getApprovalHist.getUserApproveAlt'])->findOrFail($id);
@@ -61,7 +76,7 @@ class ReceiptBookController extends Controller
             'expire_date' => $dataReceipt->rd_tgl_expire,
             'retest_date' => $dataReceipt->rd_tgl_retest,
             'kode_cetak' => $dataReceipt->rd_kode_cetak,
-            'jumlah_terima' => $dataReceipt->rd_qty_terima,
+            'jumlah_terima' => $this->formatNumberCustom($dataReceipt->rd_qty_terima),
 
             'is_po' => $dataReceipt->getDokumen->rdd_is_purchase_order,
             'is_sj' => $dataReceipt->getDokumen->rdd_is_surat_jalan,
