@@ -201,6 +201,9 @@ class APIPurchaseOrderApprovalController extends Controller
                         $qtyPotensi = $dataReceipt->rd_qty_potensi ?? 1;
                         // $ref = $dataReceipt->rd_ref ?? '';
                         $ref = $dataReceipt->rd_kode_cetak ?? '';
+                        if($ref == '-'){
+                            $ref = '';
+                        }
                         $expireddate = date('Y-m-d', strtotime($dataReceipt->rd_tgl_expire));
                         $effdate = date('Y-m-d', strtotime($dataReceipt->rd_tanggal_datang));
                         // Assign pod_um_conv sebelum receipt -> request bang dany
