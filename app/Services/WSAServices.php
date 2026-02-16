@@ -4454,7 +4454,7 @@ class WSAServices
             '<inplot>' . $lot . '</inplot>' .
             '<inpbin>' . $bin . '</inpbin>' .
             '<inpwrh>' . $warehouse . '</inpwrh>' .
-            '<inplocation>' . $location . '</inplocation>' .
+            '<inploc>' . $location . '</inploc>' .
             '<inplevel>' . $level . '</inplevel>' .
             
             '</meiji_xxinv_det_palet>' .
