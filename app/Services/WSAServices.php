@@ -649,7 +649,7 @@ class WSAServices
             '</meiji_update_xxinv_det>' .
             '</Body>' .
             '</Envelope>';
-        Log::info($qdocRequest);
+        // Log::info($qdocRequest);
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
@@ -686,8 +686,8 @@ class WSAServices
             }
             curl_close($curl);
         }
-        log::info($qdocResponse);
-         log::info($qdocRequest);
+        // log::info($qdocResponse);
+        //  log::info($qdocRequest);
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
@@ -842,8 +842,8 @@ class WSAServices
             }
             curl_close($curl);
         }
-        log::info($qdocResponse);
-         log::info($qdocRequest);
+        // log::info($qdocResponse);
+        //  log::info($qdocRequest);
         $xmlResp = simplexml_load_string($qdocResponse);
         // dd($qdocRequest,$qdocResponse);
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
@@ -1983,8 +1983,8 @@ class WSAServices
             }
             curl_close($curl);
         }
-log::info($qdocRequest);
-log::info($qdocResponse);
+// log::info($qdocRequest);
+// log::info($qdocResponse);
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
@@ -4428,7 +4428,7 @@ log::info($qdocResponse);
         ];
     }
 
-      public function wsaPenyimpananPalet($site, $itemCode, $lot, $bin, $warehouse, $level)
+      public function wsaPenyimpananPalet($site, $itemCode, $lot, $bin, $warehouse, $level,$location)
     {
         $wsa = qxwsa::first();
 
@@ -4835,8 +4835,8 @@ log::info($qdocResponse);
             }
             curl_close($curl);
         }
-        log::info($qdocRequest);
-        log::info($qdocResponse);
+        // log::info($qdocRequest);
+        // log::info($qdocResponse);
         $xmlResp = simplexml_load_string($qdocResponse);
         
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);

@@ -244,7 +244,7 @@ class APIPurchaseOrderController extends Controller
 
         // Prioritaskan Location yang ada di Web by order.
         $getDataQAD = collect($wsaData[1]);
-        log::info('getwsa');
+        //log::info('getwsa');
         $grouped = $getDataQAD->groupBy(function ($item) {
             $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
             $loc   = is_array($item['t_inv_loc']) ? '' : (string)($item['t_inv_loc'] ?? '');
@@ -305,10 +305,10 @@ class APIPurchaseOrderController extends Controller
 
         $dataQAD = $dataQAD->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
         // $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
-        log::info('dataqad: ' . $getDataQAD);
-        log::info('dataweb: ' . $getAllItemLocation);
-        log::info('merged: ' . $merged);
-        log::info('dataqad final: ' . $dataQAD);
+        // log::info('dataqad: ' . $getDataQAD);
+        // log::info('dataweb: ' . $getAllItemLocation);
+        // log::info('merged: ' . $merged);
+        // log::info('dataqad final: ' . $dataQAD);
         return response()->json($dataQAD);
     }
 
@@ -354,7 +354,7 @@ class APIPurchaseOrderController extends Controller
 
         // Prioritaskan Location yang ada di Web by order.
         $getDataQAD = collect($wsaData[1]);
-        log::info($getDataQAD);
+        //log::info($getDataQAD);
         $grouped = $getDataQAD->groupBy(function ($item) {
             $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
             $loc   = is_array($item['t_inv_loc']) ? '' : (string)($item['t_inv_loc'] ?? '');
@@ -429,7 +429,7 @@ class APIPurchaseOrderController extends Controller
         $warehouse = '';
         $levelsearch = '';
         $binSearch = '';
-
+        $location = '';
         if ($req->wh) {
             $warehouse = $req->wh;
         }
@@ -442,8 +442,11 @@ class APIPurchaseOrderController extends Controller
         if ($req->bin) {
             $binSearch = $req->bin;
         }
+        if( $req->location) {
+            $location = $req->location; 
+        }
 
-        $wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse, $levelsearch);
+        $wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse, $levelsearch,$location);
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
@@ -926,7 +929,7 @@ class APIPurchaseOrderController extends Controller
         $levelsearch = '';
         $binSearch = '';
         $search = '';
-
+        $location = '';
         if ($req->wh) {
             $warehouse = $req->wh ?? '';
         }
@@ -941,6 +944,9 @@ class APIPurchaseOrderController extends Controller
         }
         if ($req->search) {
             $search = $req->search; // Capture the search parameter
+        }
+        if($req->location){
+            $location = $req->location; // Capture the location parameter
         }
 
         // Ambil Relati Item ke Location di Web
@@ -976,7 +982,7 @@ class APIPurchaseOrderController extends Controller
 
         log::info('receiptDetail', [$receiptDetail]);
 
-        $wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse, $levelsearch);
+        $wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse, $levelsearch,$location);
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
@@ -1023,25 +1029,7 @@ class APIPurchaseOrderController extends Controller
             // })
             ->values();
 
-        // $dataQAD = $merged->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
 
-        // return response()->json($dataQAD);
-
-
-        // $dataQAD = $merged->map(function ($item) use ($receiptDetail) {
-        //     foreach ($receiptDetail as $datas) {
-        //         if (
-        //             $item['t_inv_wrh'] == $datas->rd_building_penyimpanan &&
-        //             $item['t_inv_level'] == $datas->rd_level_penyimpanan &&
-        //             $item['t_inv_bin'] == $datas->rd_bin_penyimpanan
-
-        //         ) {
-        //             $item['t_is_prioritize'] = '1';
-        //             break;
-        //         }
-        //     }
-        //     return $item;
-        // });
 
         $dataQAD = $merged->map(function ($item) use ($receiptDetail) {
             foreach ($receiptDetail as $datas) {

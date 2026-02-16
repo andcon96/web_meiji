@@ -1816,7 +1816,7 @@ class APIPicklistShopping extends Controller
 
     public function issueWorkOrder(Request $req)
     {
-        log::info($req->all());
+        // log::info($req->all());
         $data = $req->data[0];
         $dataall = $req->all();
 

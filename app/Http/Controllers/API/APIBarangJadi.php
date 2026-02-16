@@ -127,7 +127,7 @@ class APIBarangJadi extends Controller
             $whto,
             $qtyoh
         );
-        log::info($wsaUpdate);
+        // log::info($wsaUpdate);
         // $qxreceipt = (new QxtendServices())->qxTransferSingleItemTransfer(
         //     $part,
         //     $qtyoh,
