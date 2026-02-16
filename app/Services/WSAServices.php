@@ -4460,7 +4460,7 @@ class WSAServices
             '</meiji_xxinv_det_palet>' .
             '</Body>' .
             '</Envelope>';
-
+log::info($qdocRequest);
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.

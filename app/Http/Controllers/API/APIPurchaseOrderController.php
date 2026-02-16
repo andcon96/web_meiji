@@ -377,7 +377,7 @@ class APIPurchaseOrderController extends Controller
                 return (int) $item['t_inv_qtyoh'] <= 0;
             })
             ->values();
-        log::info($merged);
+        // log::info($merged);
         //$dataQAD = $merged->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
 
         // //return response()->json($dataQAD);
@@ -414,8 +414,8 @@ class APIPurchaseOrderController extends Controller
             ->values();
 
         $dataQAD = $dataQAD->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
-        log::info('dataqad final: ' . $dataQAD);
-        log::info($getAllItemLocation);
+        // log::info('dataqad final: ' . $dataQAD);
+        // log::info($getAllItemLocation);
         // $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
 
         return response()->json($dataQAD);
@@ -980,7 +980,7 @@ class APIPurchaseOrderController extends Controller
             ->distinct()
             ->get();
 
-        log::info('receiptDetail', [$receiptDetail]);
+        // log::info('receiptDetail', [$receiptDetail]);
 
         $wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse, $levelsearch,$location);
         if ($wsaData[0] == 'false') {
