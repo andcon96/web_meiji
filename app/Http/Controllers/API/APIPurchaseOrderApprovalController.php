@@ -61,11 +61,15 @@ class APIPurchaseOrderApprovalController extends Controller
                             ->where('prev.art_status', 'approved');
                     });
             })
-            ->orderBy('id', 'desc')
+            ->orderBy('art_receipt_det_id', 'desc')
             ->paginate(10);
 
 
         return GeneralResources::collection($data);
+        /*
+            118  A
+            119  B
+        */
     }
 
     public function approveRejectReceipt(Request $req)
@@ -74,12 +78,21 @@ class APIPurchaseOrderApprovalController extends Controller
         try {
             DB::beginTransaction();
             $approver = Auth::user()->name;
-
+            $user = $req->userid;
+            
+            $tempApprove = ApprovalReceiptTemp::where('art_receipt_det_id', $req->receiptid)->where('art_status','checked')->orderBy('art_sequence', 'asc')->first();
+            if($tempApprove->art_user_approve != $user && $tempApprove->art_user_approve_alt != $user){
+                DB::rollback();
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "You don't have access to approve/reject this receipt"
+                ], 422);
+            }
             switch ($req->action) {
 
                 case 'Reject':
                     // Update Status Current
-                    $tempApprove = ApprovalReceiptTemp::find($req->idApproval);
+                    //$tempApprove = ApprovalReceiptTemp::find($req->idApproval);
                     $tempApprove->art_status = 'Reject';
                     $tempApprove->art_reason = $req->reason;
                     $tempApprove->art_approved_by = Auth::user()->id;
@@ -89,10 +102,12 @@ class APIPurchaseOrderApprovalController extends Controller
                     $getAllApproval = ApprovalReceiptTemp::where('art_receipt_det_id', $tempApprove->art_receipt_det_id)->where('art_status', '!=', 'Waiting')->get();
 
                     foreach ($getAllApproval as $datas) {
-                        if($datas->art_status == 'Approved'){
-                            $status = 'Approved';
-                        } else {
-                            $status = 'Reject';
+                        if($datas->id != $req->idApproval){
+                            if($datas->art_status == 'Approved'){
+                                $status = 'Approved';
+                            } else {
+                                $status = 'Reject';
+                            }
                         }
                         $newHistoryApproval = new ApprovalReceiptHistory();
                         $newHistoryApproval->arh_receipt_det_id = $datas->art_receipt_det_id;
@@ -151,7 +166,7 @@ class APIPurchaseOrderApprovalController extends Controller
 
                 case 'Approve':
                     // Update Status Current
-                    $tempApprove = ApprovalReceiptTemp::find($req->idApproval);
+                    //$tempApprove = ApprovalReceiptTemp::find($req->idApproval);
                     $tempApprove->art_status = 'Approved';
                     $tempApprove->art_approved_by = Auth::user()->id;
                     $tempApprove->save();

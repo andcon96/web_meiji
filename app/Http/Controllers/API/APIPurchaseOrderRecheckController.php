@@ -28,7 +28,12 @@ class APIPurchaseOrderRecheckController extends Controller
     {
         $data = PurchaseOrderMaster::query()->with([
             'getDetail',
-            'getReceipt.getDetailReceipt',
+            'getReceipt' => function ($query) {
+                $query->orderBy('created_at', 'desc'); // order receipts
+            },
+            'getReceipt.getDetailReceipt' => function ($query) {
+                $query->orderBy('created_at', 'desc'); // order receipt details
+            },
             'getReceipt.getDetailReceipt.getPurchaseOrderDetail',
             'getReceipt.getDetailReceipt.getDokumen',
             'getReceipt.getDetailReceipt.getKemasan',
@@ -39,7 +44,6 @@ class APIPurchaseOrderRecheckController extends Controller
             'getReceipt.getDetailReceipt.getApprovalTemp.getUserApprove:id,username,name',
             'getReceipt.getDetailReceipt.getApprovalTemp.getUserApproveAlt:id,username,name',
             'getReceipt.getDetailReceipt.getApprovalTemp.getUserApproveBy:id,username,name',
-
             'getReceipt.getDetailReceipt.getApprovalHist.getUserApprove:id,username,name',
             'getReceipt.getDetailReceipt.getApprovalHist.getUserApproveAlt:id,username,name',
             'getReceipt.getDetailReceipt.getApprovalHist.getUserApproveBy:id,username,name',
@@ -94,7 +98,7 @@ class APIPurchaseOrderRecheckController extends Controller
                     'Message' => 'Receipt Number Not Found.'
                 ], 422);
             } else {
-                $receiptDetail = ReceiptDetail::with(['getPurchaseOrderDetail.getMaster','getPallet'])->where('rd_rm_id', $receiptMstr->id)
+                $receiptDetail = ReceiptDetail::with(['getPurchaseOrderDetail.getMaster', 'getPallet'])->where('rd_rm_id', $receiptMstr->id)
                     ->where('rd_nomor_buku', $nomorbuku)
                     ->first();
                 if (!$receiptMstr) {
@@ -107,13 +111,12 @@ class APIPurchaseOrderRecheckController extends Controller
                     $receiptDetail->save();
                     $receiptTemp = ApprovalReceiptTemp::where('art_receipt_det_id', $receiptDetail->id)
                         ->get();
-                        if($receiptTemp){
-                            foreach($receiptTemp as $temp){
-                                $temp->art_status = 'Checked';
-                                $temp->save();
-                            }
+                    if ($receiptTemp) {
+                        foreach ($receiptTemp as $temp) {
+                            $temp->art_status = 'Checked';
+                            $temp->save();
                         }
-                   
+                    }
                 }
                 $checkOtherDetail = ReceiptDetail::where('rd_rm_id', $receiptMstr->id)
                     ->where('rd_status', '!=', 'Checked')
@@ -124,7 +127,7 @@ class APIPurchaseOrderRecheckController extends Controller
                 }
                 $getPurchaseOrderDetail = $receiptDetail->getPurchaseOrderDetail;
                 $getPallet = $receiptDetail->getPallet;
-                foreach($getPallet as $pallet){
+                foreach ($getPallet as $pallet) {
                     // Transaction History
                     $newTransactionHistory = new TransactionHistory();
                     $newTransactionHistory->tr_nbr = $receiptnbr;
@@ -148,10 +151,6 @@ class APIPurchaseOrderRecheckController extends Controller
                     $newTransactionHistory->tr_remark = '';
                     $newTransactionHistory->save();
                 }
-
-
-                
-                
             }
 
 

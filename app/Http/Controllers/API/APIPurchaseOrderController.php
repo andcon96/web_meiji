@@ -30,7 +30,12 @@ class APIPurchaseOrderController extends Controller
     {
         $data = PurchaseOrderMaster::query()->with([
             'getDetail',
-            'getReceipt.getDetailReceipt',
+            'getReceipt' => function ($query) {
+                $query->orderBy('created_at', 'desc'); // order receipts
+            },
+            'getReceipt.getDetailReceipt' => function ($query) {
+                $query->orderBy('created_at', 'desc'); // order receipt details
+            },
             'getReceipt.getDetailReceipt.getPurchaseOrderDetail',
             'getReceipt.getDetailReceipt.getDokumen',
             'getReceipt.getDetailReceipt.getKemasan',
@@ -41,7 +46,6 @@ class APIPurchaseOrderController extends Controller
             'getReceipt.getDetailReceipt.getApprovalTemp.getUserApprove:id,username,name',
             'getReceipt.getDetailReceipt.getApprovalTemp.getUserApproveAlt:id,username,name',
             'getReceipt.getDetailReceipt.getApprovalTemp.getUserApproveBy:id,username,name',
-
             'getReceipt.getDetailReceipt.getApprovalHist.getUserApprove:id,username,name',
             'getReceipt.getDetailReceipt.getApprovalHist.getUserApproveAlt:id,username,name',
             'getReceipt.getDetailReceipt.getApprovalHist.getUserApproveBy:id,username,name',
@@ -442,11 +446,11 @@ class APIPurchaseOrderController extends Controller
         if ($req->bin) {
             $binSearch = $req->bin;
         }
-        if( $req->location) {
-            $location = $req->location; 
+        if ($req->location) {
+            $location = $req->location;
         }
 
-        $wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse, $levelsearch,$location);
+        $wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse, $levelsearch, $location);
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
@@ -831,10 +835,10 @@ class APIPurchaseOrderController extends Controller
             ->where('ld_location_id', $location->id)
             ->where('ld_building', $warehouse)
             ->where('ld_rak', $level);
-            if($search != ''){
-                $bin = $bin->whereRaw('LOWER(ld_bin) LIKE ?', ['%' . strtolower($search) . '%']);
-                // $bin = $bin->where('ld_bin','like','%'.$search.'%');
-            }
+        if ($search != '') {
+            $bin = $bin->whereRaw('LOWER(ld_bin) LIKE ?', ['%' . strtolower($search) . '%']);
+            // $bin = $bin->where('ld_bin','like','%'.$search.'%');
+        }
         $bin = $bin->groupBy('ld_bin')->orderBy('ld_bin')->select('ld_bin')->get();
 
         return response()->json($bin);
@@ -982,7 +986,7 @@ class APIPurchaseOrderController extends Controller
         if ($req->search) {
             $search = $req->search; // Capture the search parameter
         }
-        if($req->location){
+        if ($req->location) {
             $location = $req->location; // Capture the location parameter
         }
 
@@ -1019,7 +1023,7 @@ class APIPurchaseOrderController extends Controller
 
         // log::info('receiptDetail', [$receiptDetail]);
 
-        $wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse, $levelsearch,$location);
+        $wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse, $levelsearch, $location);
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
