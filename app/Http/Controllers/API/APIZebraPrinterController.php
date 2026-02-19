@@ -81,14 +81,15 @@ class APIZebraPrinterController extends Controller
                     "xxDescription1" => $datas->get_purchase_order_detail->pod_part_desc1,
                     "xxlot1234" => $datas->rd_batch,
                     "xxDescription2" => $datas->get_purchase_order_detail->pod_part_desc2,
-                    "qrCodeLabel" => $qrCodeLabel,
                     "xxRCP02-10-2026" => isset($datas->rd_tanggal_datang) ? (new \DateTime($datas->rd_tanggal_datang))->format('d-m-Y') : '',
                     "xxEXP402-10-2028" => isset($datas->rd_tgl_exp) ? (new \DateTime($datas->rd_tgl_exp))->format('d-m-Y') : '',
                     "xhal1" => $i,
                     "xhal2" => $datas->qty_print,
-                    "xxRT9S02-12-2026" => isset($datas->rd_tgl_retest) ? (new \DateTime($datas->rd_tgl_retest))->format('d-m-Y') : ''
-                ];
-
+                    "xxRT9S02-12-2026" => isset($datas->rd_tgl_retest) ? (new \DateTime($datas->rd_tgl_retest))->format('d-m-Y') : '',
+                    "12345678901234567890123456789012345678901234567890123456789012345" => $qrCodeLabel
+                    ];
+                    //"qrCodeLabel" => $qrCodeLabel,
+                    
                 // Replace all placeholders in the template
                 foreach ($replacements as $key => $value) {
                     $template = str_replace($key, $value, $template);
