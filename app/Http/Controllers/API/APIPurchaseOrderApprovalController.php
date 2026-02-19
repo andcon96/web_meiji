@@ -102,13 +102,13 @@ class APIPurchaseOrderApprovalController extends Controller
                     $getAllApproval = ApprovalReceiptTemp::where('art_receipt_det_id', $tempApprove->art_receipt_det_id)->where('art_status', '!=', 'Waiting')->get();
 
                     foreach ($getAllApproval as $datas) {
-                        if($datas->id != $req->idApproval){
+                       
                             if($datas->art_status == 'Approved'){
                                 $status = 'Approved';
                             } else {
                                 $status = 'Reject';
                             }
-                        }
+                        
                         $newHistoryApproval = new ApprovalReceiptHistory();
                         $newHistoryApproval->arh_receipt_det_id = $datas->art_receipt_det_id;
                         $newHistoryApproval->arh_user_approve = $datas->art_user_approve;
