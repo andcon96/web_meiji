@@ -83,10 +83,10 @@ class APIZebraPrinterController extends Controller
                     "xxDescription2" => $datas->get_purchase_order_detail->pod_part_desc2,
                     "qrCodeLabel" => $qrCodeLabel,
                     "xxRCP02-10-2026" => isset($datas->rd_tanggal_datang) ? (new \DateTime($datas->rd_tanggal_datang))->format('d-m-Y') : '',
-                    "xxEXP02-10-2026" => isset($datas->rd_tgl_exp) ? (new \DateTime($datas->rd_tgl_exp))->format('d-m-Y') : '',
+                    "xxEXP402-10-2028" => isset($datas->rd_tgl_exp) ? (new \DateTime($datas->rd_tgl_exp))->format('d-m-Y') : '',
                     "xhal1" => $i,
                     "xhal2" => $datas->qty_print,
-                    "xxRTS02-12-2026" => isset($datas->rd_tgl_retest) ? (new \DateTime($datas->rd_tgl_retest))->format('d-m-Y') : ''
+                    "xxRT9S02-12-2026" => isset($datas->rd_tgl_retest) ? (new \DateTime($datas->rd_tgl_retest))->format('d-m-Y') : ''
                 ];
 
                 // Replace all placeholders in the template
