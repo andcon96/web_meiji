@@ -58,7 +58,7 @@ class APIZebraPrinterController extends Controller
             for ($i = 1; $i <= $datas->qty_print; $i++) {
                 // Assign Value to Template
                 //$template = file_get_contents(public_path('templateZebra/template1.prn'));
-                $template = file_get_contents(public_path('templateZebra/2.prn'));
+                $template = file_get_contents(public_path('templateZebra/3.prn'));
                 $qrCodeLabel = $datas->get_purchase_order_detail->pod_part . '|' . $datas->rd_batch . '|' . $datas->rd_ref . '|'
                     . $datas->get_master->get_purchase_order_master->po_nbr . '|' . $datas->rd_tanggal_datang . '|' . $datas->rd_tgl_expire;
 
@@ -91,7 +91,7 @@ class APIZebraPrinterController extends Controller
                     "hal1" => $i,
                     "hal2" => $datas->qty_print,
                     "xxRT9S02-12-2026" => isset($datas->rd_tgl_retest) ? (new \DateTime($datas->rd_tgl_retest))->format('d-m-Y') : '',
-                    "1234567890121231221312321123123123123213123eqweqwe" => $qrCodeLabel
+                    "qclabel" => $qrCodeLabel
                     ];
                     //"qrCodeLabel" => $qrCodeLabel,
                     
