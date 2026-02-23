@@ -71,7 +71,7 @@ class ReceiptServices
                 if ($dataDetail->retest_date != null) {
                     $tanggalretest = Carbon::createFromFormat('d/m/Y', $dataDetail->retest_date)->format('Y/m/d');
                 }
-                if($dataDetail->tgl_datang != null){
+                if ($dataDetail->tgl_datang != null) {
                     $tanggaldatang = Carbon::createFromFormat('d/m/Y', $dataDetail->tgl_datang)->format('Y/m/d');
                 }
                 $getPurchaseOrderDetail = PurchaseOrderDetail::with('getMaster')->find($dataDetail->id_pod_det);
@@ -91,10 +91,10 @@ class ReceiptServices
                 $newReceiptDetail->rd_tgl_retest_note = $dataDetail->retest_date_note;
                 $newReceiptDetail->rd_kode_cetak = $dataDetail->kode_cetak;
                 $newReceiptDetail->rd_kode_cetak_note = $dataDetail->kode_cetak_note;
-                $newReceiptDetail->rd_qty_terima = str_replace(',','',$dataDetail->jumlah_terima);
+                $newReceiptDetail->rd_qty_terima = str_replace(',', '', $dataDetail->jumlah_terima);
                 $newReceiptDetail->rd_qty_terima_note = $dataDetail->jumlah_terima_note;
-                $newReceiptDetail->rd_qty_potensi = str_replace(',','',$dataDetail->qty_potensi);
-                $newReceiptDetail->rd_qty_pallete = str_replace(',','',$dataDetail->qty_pallete);
+                $newReceiptDetail->rd_qty_potensi = str_replace(',', '', $dataDetail->qty_potensi);
+                $newReceiptDetail->rd_qty_pallete = str_replace(',', '', $dataDetail->qty_pallete);
                 $newReceiptDetail->rd_site_penyimpanan = $dataDetail->site_penyimpanan;
                 $newReceiptDetail->rd_location_penyimpanan = $dataDetail->loc_penyimpanan;
                 $newReceiptDetail->rd_ref = $reference;
@@ -140,7 +140,7 @@ class ReceiptServices
                     $newReceiptPallet->rdp_rd_det_id = $newReceiptDetail->id;
                     $newReceiptPallet->rdp_level_penyimpanan = $pallet->level_penyimpanan;
                     $newReceiptPallet->rdp_bin_penyimpanan = $pallet->bin_penyimpanan;
-                    $newReceiptPallet->rdp_qty_penyimpanan = str_replace(',','',$pallet->qty_pallet);
+                    $newReceiptPallet->rdp_qty_penyimpanan = str_replace(',', '', $pallet->qty_pallet);
                     $newReceiptPallet->save();
                     // Transaction History
                     $newTransactionHistory = new TransactionHistory();
@@ -156,7 +156,8 @@ class ReceiptServices
                     $newTransactionHistory->tr_uom = '';
                     $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                     $newTransactionHistory->tr_lot = $dataDetail->batch ?? '';
-                    $newTransactionHistory->tr_qty = str_replace(',','',$dataDetail->jumlah_terima) ?? '';
+                    // $newTransactionHistory->tr_qty = str_replace(',','',$dataDetail->jumlah_terima) ?? '';
+                    $newTransactionHistory->tr_qty = str_replace(',', '', $pallet->qty_pallet) ?? '';
                     $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
                     $newTransactionHistory->tr_reference = $dataDetail->kode_cetak ?? '';
                     $newTransactionHistory->tr_site = $dataDetail->site_penyimpanan ?? '';
@@ -257,38 +258,34 @@ class ReceiptServices
 
     public function editDataReceipt($data, $approval)
     {
-        
+
         try {
             DB::beginTransaction();
             $creator = Auth::user()->name;
             // Receipt Detail
 
-             $tanggalexp = null;
-                $tanggalretest = null;
-                $tanggaldatang = null;
-                if ($data->rd_tgl_expire != null && $data->rd_tgl_expire != '') {
-                    if (str_contains($data->rd_tgl_expire, '-')) {
-                      
-                        $tanggalexp = Carbon::createFromFormat('Y-m-d', $data->rd_tgl_expire)->format('Y/m/d');
-                    }
-                    else{
-                        $tanggalexp = Carbon::createFromFormat('d/m/Y', $data->rd_tgl_expire)->format('Y/m/d');
-                    }
-                    
+            $tanggalexp = null;
+            $tanggalretest = null;
+            $tanggaldatang = null;
+            if ($data->rd_tgl_expire != null && $data->rd_tgl_expire != '') {
+                if (str_contains($data->rd_tgl_expire, '-')) {
+
+                    $tanggalexp = Carbon::createFromFormat('Y-m-d', $data->rd_tgl_expire)->format('Y/m/d');
+                } else {
+                    $tanggalexp = Carbon::createFromFormat('d/m/Y', $data->rd_tgl_expire)->format('Y/m/d');
                 }
-                if ($data->rd_tgl_retest != null && $data->rd_tgl_retest != '') {
-                      if (str_contains($data->rd_tgl_retest, '-')) {
-                        // Character found
-                        $tanggalretest = Carbon::createFromFormat('Y-m-d', $data->rd_tgl_retest)->format('Y/m/d');
-                    }
-                    else{
-                        $tanggalretest = Carbon::createFromFormat('d/m/Y', $data->rd_tgl_retest)->format('Y/m/d');    
-                    }
-                    
+            }
+            if ($data->rd_tgl_retest != null && $data->rd_tgl_retest != '') {
+                if (str_contains($data->rd_tgl_retest, '-')) {
+                    // Character found
+                    $tanggalretest = Carbon::createFromFormat('Y-m-d', $data->rd_tgl_retest)->format('Y/m/d');
+                } else {
+                    $tanggalretest = Carbon::createFromFormat('d/m/Y', $data->rd_tgl_retest)->format('Y/m/d');
                 }
-                // if($data->rd_tanggal_datang != null){
-                //     $tanggaldatang = Carbon::createFromFormat('d/m/Y', $data->rd_tanggal_datang)->format('Y/m/d');
-                // }
+            }
+            // if($data->rd_tanggal_datang != null){
+            //     $tanggaldatang = Carbon::createFromFormat('d/m/Y', $data->rd_tanggal_datang)->format('Y/m/d');
+            // }
             $findReceiptDetail = ReceiptDetail::findOrFail($data->id);
             $findReceiptDetail->rd_tanggal_datang = $data->rd_tanggal_datang;
             $findReceiptDetail->rd_nama_barang = $data->rd_nama_barang;
@@ -301,10 +298,10 @@ class ReceiptServices
             $findReceiptDetail->rd_tgl_retest_note = $data->rd_tgl_retest_note;
             $findReceiptDetail->rd_kode_cetak = $data->rd_kode_cetak;
             $findReceiptDetail->rd_kode_cetak_note = $data->rd_kode_cetak_note;
-            $findReceiptDetail->rd_qty_terima = str_replace(',','',$data->rd_qty_terima);
+            $findReceiptDetail->rd_qty_terima = str_replace(',', '', $data->rd_qty_terima);
             $findReceiptDetail->rd_qty_terima_note = $data->rd_qty_terima_note;
-            $findReceiptDetail->rd_qty_potensi = str_replace(',','',$data->rd_qty_potensi);
-            $findReceiptDetail->rd_qty_pallete = str_replace(',','',$data->rd_qty_pallete);
+            $findReceiptDetail->rd_qty_potensi = str_replace(',', '', $data->rd_qty_potensi);
+            $findReceiptDetail->rd_qty_pallete = str_replace(',', '', $data->rd_qty_pallete);
             $findReceiptDetail->rd_site_penyimpanan = $data->rd_site_penyimpanan;
             $findReceiptDetail->rd_location_penyimpanan = $data->rd_location_penyimpanan;
             $findReceiptDetail->rd_level_penyimpanan = $data->rd_level_penyimpanan;
@@ -393,7 +390,8 @@ class ReceiptServices
                 $newTransactionHistory->tr_uom = '';
                 $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                 $newTransactionHistory->tr_lot = $data->rd_batch ?? '';
-                $newTransactionHistory->tr_qty = str_replace(',', '', $data->rd_qty_terima) ?? '';
+                // $newTransactionHistory->tr_qty = str_replace(',', '', $data->rd_qty_terima) ?? '';
+                $newTransactionHistory->tr_qty = str_replace(',', '', $pallet->rdp_qty_penyimpanan) ?? '';
                 $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
                 $newTransactionHistory->tr_reference = $data->rd_kode_cetak ?? '';
                 $newTransactionHistory->tr_site = $data->rd_site_penyimpanan ?? '';

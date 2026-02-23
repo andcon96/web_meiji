@@ -19,6 +19,7 @@ class APIZebraPrinterController extends Controller
         $receiverNumber = $request->receiverNumber;
         $bookNumber = $request->bookNumber;
         $itemNumber = $request->itemNumber;
+        $lotNumber = $request->lotNumber;
 
         $data = ReceiptDetail::query()
             ->with(['getMaster.getPurchaseOrderMaster', 'getPurchaseOrderDetail']);
@@ -38,6 +39,10 @@ class APIZebraPrinterController extends Controller
             // $data->where('rd_nama_barang', '=', $itemNumber);
             $data->whereRelation('getPurchaseOrderDetail', 'pod_part', '=', $itemNumber);
         }
+        if ($lotNumber) {
+            // $data->where('rd_nama_barang', '=', $itemNumber);
+            $data->where('rd_batch', '=', $lotNumber);
+        }
 
         $data = $data->orderBy('created_at','desc')->get();
 
@@ -53,7 +58,7 @@ class APIZebraPrinterController extends Controller
             for ($i = 1; $i <= $datas->qty_print; $i++) {
                 // Assign Value to Template
                 //$template = file_get_contents(public_path('templateZebra/template1.prn'));
-                $template = file_get_contents(public_path('templateZebra/70.prn'));
+                $template = file_get_contents(public_path('templateZebra/1.prn'));
                 $qrCodeLabel = $datas->get_purchase_order_detail->pod_part . '|' . $datas->rd_batch . '|' . $datas->rd_ref . '|'
                     . $datas->get_master->get_purchase_order_master->po_nbr . '|' . $datas->rd_tanggal_datang . '|' . $datas->rd_tgl_expire;
 
@@ -86,7 +91,7 @@ class APIZebraPrinterController extends Controller
                     "hal1" => $i,
                     "hal2" => $datas->qty_print,
                     "xxRT9S02-12-2026" => isset($datas->rd_tgl_retest) ? (new \DateTime($datas->rd_tgl_retest))->format('d-m-Y') : '',
-                    "12345678901234567890123456789012345678901234567890123456789012345" => $qrCodeLabel
+                    "1234567890121231221312321123123123123213123eqweqwe" => $qrCodeLabel
                     ];
                     //"qrCodeLabel" => $qrCodeLabel,
                     
@@ -248,6 +253,19 @@ class APIZebraPrinterController extends Controller
             ->orderBy('ps_printer_name')->get();
 
         //$data = $data->groupBy('rd_nama_barang')->orderBy('rd_nama_barang')->get();
+
+        return GeneralResources::collection($data);
+    }
+
+        public function getLotPrint(Request $request)
+    {
+        $data = ReceiptDetail::query();
+
+        if ($request->search) {
+            $data->where('rd_batch', 'like', '%' . $request->search . '%');
+        }
+        $data = $data->select('rd_batch')->groupBy('rd_batch')->orderBy('rd_batch')->get();
+        //$data = $data->groupBy('rd_nomor_buku')->orderBy('rd_nomor_buku')->get();
 
         return GeneralResources::collection($data);
     }

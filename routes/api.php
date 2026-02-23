@@ -76,6 +76,7 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::get("getDataPrintQR", [APIZebraPrinterController::class, "getDataPrintQR"]);
     Route::post("getPoPrint", [APIZebraPrinterController::class, "getPoPrint"]);
     Route::post("getBookPrint", [APIZebraPrinterController::class, "getBookPrint"]);
+    Route::post("getLotPrint", [APIZebraPrinterController::class, "getLotPrint"]);
     Route::post("getItemPrint", [APIZebraPrinterController::class, "getItemPrint"]);
     Route::post("getPrinterPrint", [APIZebraPrinterController::class, "getPrinterPrint"]);
     Route::post("printQRItem", [APIZebraPrinterController::class, "printQRItem"]);

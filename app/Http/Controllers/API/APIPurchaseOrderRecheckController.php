@@ -140,7 +140,8 @@ class APIPurchaseOrderRecheckController extends Controller
                     $newTransactionHistory->tr_uom = '';
                     $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                     $newTransactionHistory->tr_lot = $receiptDetail->rd_batch ?? '';
-                    $newTransactionHistory->tr_qty = str_replace(',', '', $receiptDetail->rd_qty_terima) ?? '';
+                    // $newTransactionHistory->tr_qty = str_replace(',', '', $receiptDetail->rd_qty_terima) ?? '';
+                    $newTransactionHistory->tr_qty = str_replace(',', '', $pallet->rdp_qty_penyimpanan) ?? '';
                     $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
                     $newTransactionHistory->tr_reference = $receiptDetail->rd_kode_cetak ?? '';
                     $newTransactionHistory->tr_site = $receiptDetail->rd_site_penyimpanan ?? '';
