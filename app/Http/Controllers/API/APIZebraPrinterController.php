@@ -80,17 +80,19 @@ class APIZebraPrinterController extends Controller
                 // "qrCodeLabel"  => $qrCodeLabel,
 
                 // ];
-
+                $dataExpired = isset($datas->rd_tgl_exp) ? (new \DateTime($datas->rd_tgl_exp))->format('d-m-Y') : '';
+                $dataReceipt = isset($datas->rd_tanggal_datang) ? (new \DateTime($datas->rd_tanggal_datang))->format('d-m-Y') : '';
+                $dataretest = isset($datas->rd_tgl_retest) ? (new \DateTime($datas->rd_tgl_retest))->format('d-m-Y') : '';
                 $replacements = [
                     "xxITEM" => $datas->get_purchase_order_detail->pod_part,
                     "xxDescription1" => $datas->get_purchase_order_detail->pod_part_desc1,
                     "xxlot1234" => $datas->rd_batch,
                     "xxDescription2" => $datas->get_purchase_order_detail->pod_part_desc2,
-                    "xxRCP02-10-2026" => isset($datas->rd_tanggal_datang) ? (new \DateTime($datas->rd_tanggal_datang))->format('d-m-Y') : '',
-                    "xxEXP402-10-2028" => isset($datas->rd_tgl_exp) ? (new \DateTime($datas->rd_tgl_exp))->format('d-m-Y') : '',
+                    "xxRCPDate" => $dataReceipt,
+                    "xxExpDate" => $dataExpired,
                     "hal1" => $i,
                     "hal2" => $datas->qty_print,
-                    "xxRT9S02-12-2026" => isset($datas->rd_tgl_retest) ? (new \DateTime($datas->rd_tgl_retest))->format('d-m-Y') : '',
+                    "xxRTDate" => $dataretest,
                     "qclabel" => $qrCodeLabel
                     ];
                     //"qrCodeLabel" => $qrCodeLabel,
