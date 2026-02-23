@@ -80,7 +80,7 @@ class APIZebraPrinterController extends Controller
                 // "qrCodeLabel"  => $qrCodeLabel,
 
                 // ];
-                $dataExpired = isset($datas->rd_tgl_exp) ? (new \DateTime($datas->rd_tgl_exp))->format('d-m-Y') : '';
+                $dataExpired = isset($datas->rd_tgl_expire) ? (new \DateTime($datas->rd_tgl_expire))->format('d-m-Y') : '';
                 $dataReceipt = isset($datas->rd_tanggal_datang) ? (new \DateTime($datas->rd_tanggal_datang))->format('d-m-Y') : '';
                 $dataretest = isset($datas->rd_tgl_retest) ? (new \DateTime($datas->rd_tgl_retest))->format('d-m-Y') : '';
                 $replacements = [
