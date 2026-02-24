@@ -2290,7 +2290,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_sites xmlns='urn:imi.co.id:wsaweb'>
+                    <meiji_get_sites xmlns='".  $wsa->wsa_path ."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
@@ -2371,7 +2371,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_loc_data xmlns='urn:imi.co.id:wsaweb'>
+                    <meiji_get_loc_data xmlns='".  $wsa->wsa_path ."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
@@ -3767,7 +3767,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_wrh_data xmlns='urn:imi.co.id:wsaweb'>
+                    <meiji_get_wrh_data xmlns='".  $wsa->wsa_path ."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
@@ -3856,7 +3856,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_level_data xmlns='urn:imi.co.id:wsaweb'>
+                    <meiji_get_level_data xmlns='".  $wsa->wsa_path ."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
@@ -3947,7 +3947,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_bin_data xmlns='urn:imi.co.id:wsaweb'>
+                    <meiji_get_bin_data xmlns='".  $wsa->wsa_path ."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
@@ -4204,7 +4204,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_cek_itemlot xmlns='urn:imi.co.id:wsaweb'>
+                    <meiji_cek_itemlot xmlns='".  $wsa->wsa_path ."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
