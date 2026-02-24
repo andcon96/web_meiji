@@ -655,7 +655,8 @@ class APIController extends Controller
         /* dd($req->loc); */
 
         $hasil = (new WSAServices())->wsaCekItemLot($req->query('inppart') ?? '', $req->query('inplot') ?? '');
-
+        log::info($hasil);
+        
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
