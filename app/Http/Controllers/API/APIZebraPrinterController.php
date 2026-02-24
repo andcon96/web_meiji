@@ -22,7 +22,7 @@ class APIZebraPrinterController extends Controller
         $lotNumber = $request->lotNumber;
 
         $data = ReceiptDetail::query()
-            ->with(['getMaster.getPurchaseOrderMaster', 'getPurchaseOrderDetail']);
+            ->with(['getMaster.getPurchaseOrderMaster', 'getPurchaseOrderDetail','getKemasan']);
 
         if ($poNumber) {
             $data->whereRelation('getMaster.getPurchaseOrderMaster', 'po_nbr', '=', $poNumber);
