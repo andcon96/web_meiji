@@ -58,7 +58,7 @@ class APIZebraPrinterController extends Controller
             for ($i = 1; $i <= $datas->qty_print; $i++) {
                 // Assign Value to Template
                 //$template = file_get_contents(public_path('templateZebra/template1.prn'));
-                $template = file_get_contents(public_path('templateZebra/4.prn'));
+                $template = file_get_contents(public_path('templateZebra/printbar.prn'));
                 $qrCodeLabel = $datas->get_purchase_order_detail->pod_part . '|' . $datas->rd_batch . '|' . $datas->rd_ref . '|'
                     . $datas->get_master->get_purchase_order_master->po_nbr . '|' . $datas->rd_tanggal_datang . '|' . $datas->rd_tgl_expire;
 
@@ -88,13 +88,18 @@ class APIZebraPrinterController extends Controller
                     "xxDescription1" => $datas->get_purchase_order_detail->pod_part_desc1,
                     "xxlot1234" => $datas->rd_batch,
                     "xxDescription2" => $datas->get_purchase_order_detail->pod_part_desc2,
-                    "xxRCPDate" => $dataReceipt,
-                    "xxExpDate" => $dataExpired,
                     "hal1" => $i,
                     "hal2" => $datas->qty_print,
-                    "xxRTDate" => $dataretest,
-                    "qclabel" => $qrCodeLabel
+                    "1234567890121231221312321123123123123213123eqweqwe" => $qrCodeLabel,
+                    "xxRT9S02-12-2026" => $dataretest,
+                    "xxRCP02-10-2026" => $dataReceipt,
+                    "xxEXP402-10-2028" => $dataExpired,
+                    
                     ];
+                    // "xxRTDate" => $dataretest,
+                    // "xxRCPDate" => $dataReceipt,
+                    // "xxExpDate" => $dataExpired,
+                    // "qclabel" => $qrCodeLabel
                     //"qrCodeLabel" => $qrCodeLabel,
                     
                 // Replace all placeholders in the template
