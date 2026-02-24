@@ -4253,7 +4253,8 @@ class WSAServices
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
-
+ log::info($qdocRequest);
+ log::info($qdocResponse);
         // $dataloop    = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
         $qdocMsg = (string) $xmlResp->xpath('//ns1:outMsg')[0];
