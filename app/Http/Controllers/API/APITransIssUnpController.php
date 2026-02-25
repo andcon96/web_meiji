@@ -79,13 +79,14 @@ class APITransIssUnpController extends Controller
                 $newTransfer->created_by = Auth::user()->id;
                 $newTransfer->save();
             }
+            
 
             $newTransactionHistory = new TransactionHistory();
             $newTransactionHistory->tr_nbr = '';
             $newTransactionHistory->tr_order = '';
             $newTransactionHistory->tr_program = 'Issue Unplanned Module';
             $newTransactionHistory->tr_activity = 'Submit Issue';
-            $newTransactionHistory->tr_user = Auth::user()->id ?? '';
+            $newTransactionHistory->tr_user =  Auth::user()->username ?? '';
             // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
             $newTransactionHistory->tr_part = $part ?? '';
             $newTransactionHistory->tr_uom =  '';

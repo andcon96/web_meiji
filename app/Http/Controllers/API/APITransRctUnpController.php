@@ -73,7 +73,7 @@ class APITransRctUnpController extends Controller
             $newTransactionHistory->tr_order = '';
             $newTransactionHistory->tr_program = 'Receipt Unplanned Module';
             $newTransactionHistory->tr_activity = 'Submit Receipt';
-            $newTransactionHistory->tr_user = Auth::user()->id ?? '';
+            $newTransactionHistory->tr_user =  Auth::user()->username ?? '';
             // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
             $newTransactionHistory->tr_part = $req->part ?? '';
             $newTransactionHistory->tr_uom =  '';
