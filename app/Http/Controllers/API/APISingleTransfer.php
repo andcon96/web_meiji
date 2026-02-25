@@ -139,7 +139,7 @@ class APISingleTransfer extends Controller
                 // Transaction History
 
                 $newTransactionHistoryfrom = new TransactionHistory();
-                $newTransactionHistoryfrom->tr_nbr = 'Sampling';
+                $newTransactionHistoryfrom->tr_nbr = '';
                 $newTransactionHistoryfrom->tr_program = 'Single Transfer Module';
                 $newTransactionHistoryfrom->tr_activity = 'Single Transfer From';
                 $newTransactionHistoryfrom->tr_user = $user ?? '';
@@ -764,27 +764,27 @@ class APISingleTransfer extends Controller
             'Message' => "Update Qty Pick Success"
         ], 200);
     }
-    public function wsaUpdateStatusPick(Request $req)
-    {
-        //$data = $req->all();
-        $picknbr = $req->query('picknbr');
-        $status = $req->query('status');
+    // public function wsaUpdateStatusPick(Request $req)
+    // {
+    //     //$data = $req->all();
+    //     $picknbr = $req->query('picknbr');
+    //     $status = $req->query('status');
 
-        $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $status);
-        if ($hasil[0] == 'false') {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "Update Qty Pick Failed for Picklist : " . $picknbr
-            ], 422);
-        } else {
-        }
+    //     $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $status);
+    //     if ($hasil[0] == 'false') {
+    //         return response()->json([
+    //             'Status' => 'Error',
+    //             'Message' => "Update Qty Pick Failed for Picklist : " . $picknbr
+    //         ], 422);
+    //     } else {
+    //     }
 
 
-        return response()->json([
-            'Status' => 'Success',
-            'Message' => "Update Qty Pick Success"
-        ], 200);
-    }
+    //     return response()->json([
+    //         'Status' => 'Success',
+    //         'Message' => "Update Qty Pick Success"
+    //     ], 200);
+    // }
 
     public function getPicklistDetAppr(Request $req)
     {
@@ -962,129 +962,129 @@ class APISingleTransfer extends Controller
             200
         );
     }
-    public function submitPicklistTransfer(Request $req)
-    {
-        $locto = $req->loc;
-        $picknbr = $req->picknbr;
-        $status = $req->status;
+    // public function submitPicklistTransfer(Request $req)
+    // {
+    //     $locto = $req->loc;
+    //     $picknbr = $req->picknbr;
+    //     $status = $req->status;
 
-        $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $status);
-        if ($hasil[0] == 'false') {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "Update Qty Pick Failed for Picklist : " . $picknbr
-            ], 422);
-        } else {
-            try {
-                DB::beginTransaction();
-                $hasil = PicklistLocationTo::firstOrNew(
-                    ['picklist_number' => $picknbr],
+    //     $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $status);
+    //     if ($hasil[0] == 'false') {
+    //         return response()->json([
+    //             'Status' => 'Error',
+    //             'Message' => "Update Qty Pick Failed for Picklist : " . $picknbr
+    //         ], 422);
+    //     } else {
+    //         try {
+    //             DB::beginTransaction();
+    //             $hasil = PicklistLocationTo::firstOrNew(
+    //                 ['picklist_number' => $picknbr],
 
-                );
-                $hasil->location_to = $locto;
+    //             );
+    //             $hasil->location_to = $locto;
 
-                $hasil->save();
-                DB::commit();
-                return response()->json(
-                    'success',
-                    200
-                );
-            } catch (\Exception $e) {
-                DB::rollBack();
-                Log::channel('Picklist')->info($e);
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "Picklist Transfer Input Error"
-                ], 422);
-            }
-        }
-    }
+    //             $hasil->save();
+    //             DB::commit();
+    //             return response()->json(
+    //                 'success',
+    //                 200
+    //             );
+    //         } catch (\Exception $e) {
+    //             DB::rollBack();
+    //             Log::channel('Picklist')->info($e);
+    //             return response()->json([
+    //                 'Status' => 'Error',
+    //                 'Message' => "Picklist Transfer Input Error"
+    //             ], 422);
+    //         }
+    //     }
+    // }
 
-    public function submitPicklistReceipt(Request $req)
-    {
+    // public function submitPicklistReceipt(Request $req)
+    // {
 
-        $data = $req->data;
-        $picknbr = $req->picknbr;
-        $status = $req->status;
+    //     $data = $req->data;
+    //     $picknbr = $req->picknbr;
+    //     $status = $req->status;
 
-        $picknbr = $data['picknbr'];
-        $site = $data['site'];
+    //     $picknbr = $data['picknbr'];
+    //     $site = $data['site'];
 
-        $loc = $data['loc'];
+    //     $loc = $data['loc'];
 
-        if ($status == 'Receipt') {
-            $pickloctodata = PicklistLocationTo::where('picklist_number', $picknbr)->first();
-            if ($pickloctodata == null) {
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "Location To for Picklist : " . $picknbr . " Not Found. Please do Transfer Process First."
-                ], 422);
-            }
-            $picklocto = $pickloctodata->location_to;
+    //     if ($status == 'Receipt') {
+    //         $pickloctodata = PicklistLocationTo::where('picklist_number', $picknbr)->first();
+    //         if ($pickloctodata == null) {
+    //             return response()->json([
+    //                 'Status' => 'Error',
+    //                 'Message' => "Location To for Picklist : " . $picknbr . " Not Found. Please do Transfer Process First."
+    //             ], 422);
+    //         }
+    //         $picklocto = $pickloctodata->location_to;
 
-            $wonbr = $data['wonbr'];
-            foreach ($wonbr as $wo) {
-                foreach ($wo['detail'] as $det) {
-                    if ($wo['wonbrnbr'] == 'manual') {
-                        $wonbr = '';
-                    } else {
-                        $wonbr = $wo['wonbrnbr'];
-                    }
-                    $wodpart = $det['wodpart'];
-                    $lot = $det['lot'];
-                    $wrh = $det['wrh'];
-                    $level = $det['level'];
-                    $bin = $det['bin'];
-                    $qtypick = $det['qtypick'];
-                    $qxtendsingleitem = (new QxtendServices())->qxTransferSingleItemWo($wodpart, $wonbr, $site, $site, $loc, $picklocto, $qtypick, '', '', '', $lot);
-                    if ($qxtendsingleitem == 'false') {
-                        return response()->json([
-                            'Status' => 'Error',
-                            'Message' => "Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
-                        ], 422);
-                    } /*else {
-                    $hasil = (new WSAServices())->wsaUpdateQtyPick($picknbr, $qtypick, $wonbr, $wodpart, $site, $loc, $lot, $wrh, $level, $bin);
-                    if ($hasil == 'false') {
-                        return response()->json([
-                            'Status' => 'Error',
-                            'Message' => "Update Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
-                        ], 422);
-                    }
-                }*/
-                }
-            }
+    //         $wonbr = $data['wonbr'];
+    //         foreach ($wonbr as $wo) {
+    //             foreach ($wo['detail'] as $det) {
+    //                 if ($wo['wonbrnbr'] == 'manual') {
+    //                     $wonbr = '';
+    //                 } else {
+    //                     $wonbr = $wo['wonbrnbr'];
+    //                 }
+    //                 $wodpart = $det['wodpart'];
+    //                 $lot = $det['lot'];
+    //                 $wrh = $det['wrh'];
+    //                 $level = $det['level'];
+    //                 $bin = $det['bin'];
+    //                 $qtypick = $det['qtypick'];
+    //                 $qxtendsingleitem = (new QxtendServices())->qxTransferSingleItemWo($wodpart, $wonbr, $site, $site, $loc, $picklocto, $qtypick, '', '', '', $lot);
+    //                 if ($qxtendsingleitem == 'false') {
+    //                     return response()->json([
+    //                         'Status' => 'Error',
+    //                         'Message' => "Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
+    //                     ], 422);
+    //                 } /*else {
+    //                 $hasil = (new WSAServices())->wsaUpdateQtyPick($picknbr, $qtypick, $wonbr, $wodpart, $site, $loc, $lot, $wrh, $level, $bin);
+    //                 if ($hasil == 'false') {
+    //                     return response()->json([
+    //                         'Status' => 'Error',
+    //                         'Message' => "Update Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
+    //                     ], 422);
+    //                 }
+    //             }*/
+    //             }
+    //         }
 
-            $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $status);
-            if ($hasil[0] == 'false') {
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "Receipt Picklist Failed for Picklist : " . $picknbr
-                ], 422);
-            } else {
+    //         $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $status);
+    //         if ($hasil[0] == 'false') {
+    //             return response()->json([
+    //                 'Status' => 'Error',
+    //                 'Message' => "Receipt Picklist Failed for Picklist : " . $picknbr
+    //             ], 422);
+    //         } else {
 
-                return response()->json(
-                    'success',
-                    200
-                );
-            }
-        } else if ($status == 'Deny') {
+    //             return response()->json(
+    //                 'success',
+    //                 200
+    //             );
+    //         }
+    //     } else if ($status == 'Deny') {
 
-            //return to previous status
-            $status = 'Approve';
-            $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $status);
-            if ($hasil[0] == 'false') {
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "Deny Picklist Failed for Picklist : " . $picknbr
-                ], 422);
-            } else {
-                return response()->json(
-                    'success',
-                    200
-                );
-            }
-        }
-    }
+    //         //return to previous status
+    //         $status = 'Approve';
+    //         $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $status);
+    //         if ($hasil[0] == 'false') {
+    //             return response()->json([
+    //                 'Status' => 'Error',
+    //                 'Message' => "Deny Picklist Failed for Picklist : " . $picknbr
+    //             ], 422);
+    //         } else {
+    //             return response()->json(
+    //                 'success',
+    //                 200
+    //             );
+    //         }
+    //     }
+    // }
     public function getLocationData(Request $req)
     {
 
@@ -1239,6 +1239,28 @@ class APISingleTransfer extends Controller
 
             $prefixTable->stp_running_nbr = $newRunningNbr;
             $prefixTable->save();
+
+            $newTransactionHistory = new TransactionHistory();
+            $newTransactionHistory->tr_nbr = $newPrefix;
+            $newTransactionHistory->tr_order = '';
+            $newTransactionHistory->tr_program = 'Single Transfer Module';
+            $newTransactionHistory->tr_activity = 'Create Single Transfer';
+            $newTransactionHistory->tr_user =  Auth::user()->username ?? '';
+            // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+            $newTransactionHistory->tr_part = $item ?? '';
+            $newTransactionHistory->tr_uom = '';
+            $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+            $newTransactionHistory->tr_lot = $lot ?? '';
+            $newTransactionHistory->tr_qty = $qty ?? '';
+            $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+            $newTransactionHistory->tr_reference = $ref ?? '';
+            $newTransactionHistory->tr_site = $sitefrom ?? '';
+            $newTransactionHistory->tr_location = $locfrom ?? '';
+            $newTransactionHistory->tr_warehouse = $whfrom ?? '';
+            $newTransactionHistory->tr_level = $level ?? '';
+            $newTransactionHistory->tr_bin = $bin ?? '';
+            $newTransactionHistory->tr_remark = '';
+            $newTransactionHistory->save();
 
             DB::commit();
 
@@ -1677,7 +1699,7 @@ class APISingleTransfer extends Controller
         return response()->json($getAllItemLocation);
     }
 
-     public function sendPenyerahanBarang(Request $req)
+    public function sendPenyerahanBarang(Request $req)
     {
         DB::beginTransaction();
         try {
@@ -1724,6 +1746,28 @@ class APISingleTransfer extends Controller
 
             $prefixTable->stp_running_nbr = $newRunningNbr;
             $prefixTable->save();
+
+            $newTransactionHistory = new TransactionHistory();
+            $newTransactionHistory->tr_nbr = $newPrefix;
+            $newTransactionHistory->tr_order = '';
+            $newTransactionHistory->tr_program = 'Single Transfer Module';
+            $newTransactionHistory->tr_activity = 'Receipt Single Transfer';
+            $newTransactionHistory->tr_user =  Auth::user()->username ?? '';
+            // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+            $newTransactionHistory->tr_part = $item ?? '';
+            $newTransactionHistory->tr_uom = '';
+            $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+            $newTransactionHistory->tr_lot = $lot ?? '';
+            $newTransactionHistory->tr_qty = $qty ?? '';
+            $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+            $newTransactionHistory->tr_reference = $ref ?? '';
+            $newTransactionHistory->tr_site = $siteto ?? '';
+            $newTransactionHistory->tr_location = $locto ?? '';
+            $newTransactionHistory->tr_warehouse = $wh ?? '';
+            $newTransactionHistory->tr_level = $level ?? '';
+            $newTransactionHistory->tr_bin = $bin ?? '';
+            $newTransactionHistory->tr_remark = '';
+            $newTransactionHistory->save();
 
             DB::commit();
 
