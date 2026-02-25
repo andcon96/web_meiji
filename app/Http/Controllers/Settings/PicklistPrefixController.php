@@ -16,12 +16,12 @@ class PicklistPrefixController extends Controller
         $menuMaster = (new ServerURL())->currentURL($request);
         $prefixes = PicklistPrefix::get();
 
-        return view('setting.PicklistPrefix.index', compact('menuMaster', 'prefixes'));
+        return view('setting.picklistPrefix.index', compact('menuMaster', 'prefixes'));
     }
 
     public function create()
     {
-        return view('setting.PicklistPrefix.create');
+        return view('setting.picklistPrefix.create');
     }
 
     public function store(Request $request)
@@ -61,7 +61,7 @@ class PicklistPrefixController extends Controller
     {
         $prefix = PicklistPrefix::find($id);
 
-        return view('setting.PicklistPrefix.edit', compact('prefix'));
+        return view('setting.picklistPrefix.edit', compact('prefix'));
     }
 
     public function update(Request $request)
