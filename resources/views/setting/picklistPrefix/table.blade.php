@@ -6,7 +6,7 @@
     <td data-label="Sequence">{{ $prefix->running_nbr_wo }}</td>
     
     <td data-label="Action">
-        <a href="{{ route('PicklistPrefix.edit', $prefix->id) }}" class="editdata" id='editdata'>
+        <a href="{{ route('picklistPrefix.edit', $prefix->id) }}" class="editdata" id='editdata'>
             <i class="icon-table fa fa-edit fa-lg"></i>
         </a>
         <a href="javascript:void(0)" class="deletedata" data-toggle="tooltip" title="Delete Data"
