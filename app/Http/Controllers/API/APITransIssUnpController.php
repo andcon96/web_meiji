@@ -96,7 +96,7 @@ class APITransIssUnpController extends Controller
             $newTransactionHistory->tr_qty = str_replace(',', '', $qty) ?? '';
             $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
             $newTransactionHistory->tr_reference =  '';
-            $newTransactionHistory->tr_site =  '';
+            $newTransactionHistory->tr_site =  $req->site ?? '';
             $newTransactionHistory->tr_location = $location ?? '';
             $newTransactionHistory->tr_warehouse = $warehouse ?? '';
             $newTransactionHistory->tr_level = $level ?? '';
