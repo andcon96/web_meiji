@@ -36,7 +36,7 @@ class APITransIssUnpController extends Controller
             $warehouse = $request->warehouse ?? '';
             $level = $request->level ?? '';
             $bin = $request->bin ?? '';
-
+            $qty = str_replace(',', '', $qty); // Remove commas from the quantity
             $submitQxtendIssunp = (new InbServices())->inbissunp([
                 'part' => $part,
                 'qty' => $qty,

@@ -24,7 +24,8 @@ class APITransRctUnpController extends Controller
             DB::beginTransaction();
 
             $rctunp = (new InbServices)->inbrctunp($req->all());
-
+            $qty = str_replace(',', '', $req->qty);
+            
             if ($rctunp == false) { //jika error koneksi qxtend
                 DB::rollback();
                 return response()->json([
@@ -62,7 +63,7 @@ class APITransRctUnpController extends Controller
             $newTransfer->location     = $req->location;
             $newTransfer->pallet_no    = $req->lotserial; // pallet number
             $newTransfer->batch_no     = $req->lotref; // batch
-            $newTransfer->quantity     = $req->qty;
+            $newTransfer->quantity     = $qty;
             $newTransfer->created_by   = Auth::user()->id;
             $newTransfer->save();
 
@@ -79,7 +80,7 @@ class APITransRctUnpController extends Controller
             $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
             $newTransactionHistory->tr_lot = $req->lotserial ?? '';
             // $newTransactionHistory->tr_qty = $data->rd_qty_terima ?? '';
-            $newTransactionHistory->tr_qty = str_replace(',', '', $req->qty) ?? '';
+            $newTransactionHistory->tr_qty = str_replace(',', '', $qty) ?? '';
             $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
             $newTransactionHistory->tr_reference =  '';
             $newTransactionHistory->tr_site = $req->site ?? '';
