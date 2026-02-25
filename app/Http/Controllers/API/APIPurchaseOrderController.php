@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\ReceiptServices;
 use Illuminate\Support\Facades\Cache;
-
+use Illuminate\Support\Facades\Auth;
 class APIPurchaseOrderController extends Controller
 {
     public function index(Request $req)
@@ -1136,7 +1136,7 @@ class APIPurchaseOrderController extends Controller
                 $newTransactionHistory->tr_order = $getPurchaseOrderDetail->getMaster->po_nbr;
                 $newTransactionHistory->tr_program = 'PO Approval Module';
                 $newTransactionHistory->tr_activity = 'Delete Receipt';
-                $newTransactionHistory->tr_user = $approver ?? '';
+                $newTransactionHistory->tr_user =  Auth::user()->username ?? '';
                 // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
                 $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
                 $newTransactionHistory->tr_uom = $data->rd_pt_um ?? '';
