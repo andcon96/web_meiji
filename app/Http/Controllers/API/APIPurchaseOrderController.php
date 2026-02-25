@@ -1154,22 +1154,37 @@ class APIPurchaseOrderController extends Controller
                 $newTransactionHistory->save();
             }
 
+            $allDetails = ReceiptDetail::where('rd_rm_id', $master->id)->get();
 
-            // Delete all related records using query builder (more efficient)
-            $data->getAttachment()->delete();
-            $data->getDokumen()->delete();
-            $data->getKemasan()->delete();
-            $data->getKendaraan()->delete();
-            $data->getPenanda()->delete();
-            $data->getPallet()->delete();
-            $data->getUserSeenBy()->delete();
-            $data->getApprovalTemp()->delete();
-            $data->getApprovalHist()->delete();
+            foreach ($allDetails as $detail) {
+                $detail->getAttachment()->delete();
+                $detail->getDokumen()->delete();
+                $detail->getKemasan()->delete();
+                $detail->getKendaraan()->delete();
+                $detail->getPenanda()->delete();
+                $detail->getPallet()->delete();
+                $detail->getUserSeenBy()->delete();
+                $detail->getApprovalTemp()->delete();
+                $detail->getApprovalHist()->delete();
+                $detail->delete(); // delete this detail after all its children
+            }
+
+            $master->delete(); // delete master only after all details are gone
+            // // Delete all related records using query builder (more efficient)
+            // $data->getAttachment()->delete();
+            // $data->getDokumen()->delete();
+            // $data->getKemasan()->delete();
+            // $data->getKendaraan()->delete();
+            // $data->getPenanda()->delete();
+            // $data->getPallet()->delete();
+            // $data->getUserSeenBy()->delete();
+            // $data->getApprovalTemp()->delete();
+            // $data->getApprovalHist()->delete();
 
 
-            // Delete the main record
-            $data->delete();
-            $master->delete();
+            // // Delete the main record
+            // $data->delete();
+            // $master->delete();
 
             DB::commit();
 
