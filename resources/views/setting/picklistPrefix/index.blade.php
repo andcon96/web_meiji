@@ -11,7 +11,7 @@
                     </div>
                     <div class="dt-action-buttons text-end pt-3 pt-md-0">
                         <div class="dt-buttons btn-group flex-wrap">
-                            <form action="{{ route('picklistPrefix.create') }}" method="GET" enctype="multipart/form-data">
+                            <form action="{{ route('PicklistPrefix.create') }}" method="GET" enctype="multipart/form-data">
                                 <button class="btn btn-secondary create-new btn-primary" tabindex="0" type="submit">
                                     <span>
                                         <i class="bx bx-plus me-sm-1"></i>
