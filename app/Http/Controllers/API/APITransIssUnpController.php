@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\API\TransactionHistory;
 
 class APITransIssUnpController extends Controller
 {
@@ -21,7 +22,7 @@ class APITransIssUnpController extends Controller
         try {
 
             // throw new Exception('test exception');
-        
+
             DB::beginTransaction();
 
             $part = $request->part;
@@ -79,22 +80,41 @@ class APITransIssUnpController extends Controller
                 $newTransfer->save();
             }
 
-
+            $newTransactionHistory = new TransactionHistory();
+            $newTransactionHistory->tr_nbr = '';
+            $newTransactionHistory->tr_order = '';
+            $newTransactionHistory->tr_program = 'Issue Unplanned Module';
+            $newTransactionHistory->tr_activity = 'Submit Issue';
+            $newTransactionHistory->tr_user = Auth::user()->id ?? '';
+            // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+            $newTransactionHistory->tr_part = $part ?? '';
+            $newTransactionHistory->tr_uom =  '';
+            $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+            $newTransactionHistory->tr_lot = $lotserial ?? '';
+            // $newTransactionHistory->tr_qty = $data->rd_qty_terima ?? '';
+            $newTransactionHistory->tr_qty = str_replace(',', '', $qty) ?? '';
+            $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+            $newTransactionHistory->tr_reference =  '';
+            $newTransactionHistory->tr_site =  '';
+            $newTransactionHistory->tr_location = $location ?? '';
+            $newTransactionHistory->tr_warehouse = $warehouse ?? '';
+            $newTransactionHistory->tr_level = $level ?? '';
+            $newTransactionHistory->tr_bin = $bin ?? '';
+            $newTransactionHistory->tr_remark = '';
+            $newTransactionHistory->save();
             DB::commit();
+
             return response()->json([
                 'Status' => 'success',
                 'Message' => 'Transaction Out Successfully'
             ], 200);
-
         } catch (Exception $e) {
             DB::rollBack();
-
             Log::error($e);
-
             return response()->json([
                 'Status' => 'error',
                 'Message' => 'Internal server error' /* 'Failed to submit transaction' */,
-            ],422);
+            ], 422);
         }
     }
 }

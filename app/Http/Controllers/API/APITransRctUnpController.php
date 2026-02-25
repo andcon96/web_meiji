@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
+use App\Models\API\TransactionHistory;
 class APITransRctUnpController extends Controller
 {
     public function submitRctUnp(Request $req)
@@ -33,7 +33,7 @@ class APITransRctUnpController extends Controller
                 ], 500);
             }
 
-            if($rctunp[0] == false){ //jika error dari response qxtend
+            if ($rctunp[0] == false) { //jika error dari response qxtend
                 DB::rollBack();
 
                 return response()->json([
@@ -45,11 +45,11 @@ class APITransRctUnpController extends Controller
             $inputSupplier = (new WSAServices)->wsaInputSupplier($req->part, $req->lotserial, $req->supplier);
             $message = '';
 
-            if($inputSupplier == false){
+            if ($inputSupplier == false) {
                 $message = 'Error Connection: WSA input supplier ';
             }
 
-            if($inputSupplier == 'false'){
+            if ($inputSupplier == 'false') {
                 $message = 'Error Response: WSA input supplier ';
             }
 
@@ -66,6 +66,29 @@ class APITransRctUnpController extends Controller
             $newTransfer->created_by   = Auth::user()->id;
             $newTransfer->save();
 
+
+            $newTransactionHistory = new TransactionHistory();
+            $newTransactionHistory->tr_nbr = '';
+            $newTransactionHistory->tr_order = '';
+            $newTransactionHistory->tr_program = 'Receipt Unplanned Module';
+            $newTransactionHistory->tr_activity = 'Submit Receipt';
+            $newTransactionHistory->tr_user = Auth::user()->id ?? '';
+            // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+            $newTransactionHistory->tr_part = $req->part ?? '';
+            $newTransactionHistory->tr_uom =  '';
+            $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+            $newTransactionHistory->tr_lot = $req->lotserial ?? '';
+            // $newTransactionHistory->tr_qty = $data->rd_qty_terima ?? '';
+            $newTransactionHistory->tr_qty = str_replace(',', '', $req->qty) ?? '';
+            $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+            $newTransactionHistory->tr_reference =  '';
+            $newTransactionHistory->tr_site = $req->site ?? '';
+            $newTransactionHistory->tr_location = $req->location ?? '';
+            $newTransactionHistory->tr_warehouse = $req->warehouse ?? '';
+            $newTransactionHistory->tr_level = $req->level ?? '';
+            $newTransactionHistory->tr_bin = $req->bin ?? '';
+            $newTransactionHistory->tr_remark = '';
+            $newTransactionHistory->save();
             DB::commit();
             return response()->json([
                 'Status' => 'success',
