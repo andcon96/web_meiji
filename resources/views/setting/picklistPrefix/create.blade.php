@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container">
-    <form action="{{ route('PicklistPrefix.store') }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('picklistPrefix.store') }}" method="POST" enctype="multipart/form-data">
         @method('POST')
         @csrf
         <div class="card mb-4">
@@ -49,7 +49,7 @@
                     </div>
                 </div>
                 <div class="mt-1" style="float: inline-end;">
-                    <a href="{{ route('PicklistPrefix.index') }}"
+                    <a href="{{ route('picklistPrefix.index') }}"
                         class="btn btn-label-secondary cancel">Cancel</a>
                     <button type="submit" class="btn btn-primary me-sm-2 me-1 submitButton">Save</button>
                     <button style="display: none;" class="btn btn-secondary loading-btn btn-primary" type="button">

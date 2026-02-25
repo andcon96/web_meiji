@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container">
-    <form action="{{ route('PicklistPrefix.update', $prefix->id) }}" method="POST"
+    <form action="{{ route('picklistPrefix.update', $prefix->id) }}" method="POST"
         enctype="multipart/form-data">
         @method('PUT')
         @csrf
@@ -51,7 +51,7 @@
                     </div>
                 </div>
                 <div class="mt-1" style="float: inline-end;">
-                    <a href="{{ route('PicklistPrefix.index') }}"
+                    <a href="{{ route('picklistPrefix.index') }}"
                         class="btn btn-label-secondary cancel">Cancel</a>
                     <button type="submit" class="btn btn-warning me-sm-2 me-1 submitButton">Update</button>
                     <button style="display: none;" class="btn btn-secondary loading-btn btn-primary" type="button">
