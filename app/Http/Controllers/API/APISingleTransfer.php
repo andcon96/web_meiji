@@ -89,7 +89,7 @@ class APISingleTransfer extends Controller
 
     public function receiptItem(Request $req)
     {
-
+  log::info('f');
         $trfid = $req->trfid;
         $data = singleTransfer::where('st_trfid', $trfid)->first();
         $part = $data->st_item;
@@ -97,16 +97,21 @@ class APISingleTransfer extends Controller
         $sitefrom = $data->st_site_from;
         $siteto = $data->st_site_to;
         $locfrom = $data->st_loc_from;
-        $locto = $data->st_loc_to;
         $lotfrom = $data->st_lot;
         $lotto = $data->st_lot;
         $buildingfrom = $data->st_wh_from ?? '';
-        $buildingto = $data->st_wh;
         $levelfrom = $data->st_level_from ?? '';
-        $levelto = $data->st_level;
         $binfrom = $data->st_bin_from ?? '';
-        $binto = $data->st_bin;
+        // $locto = $data->st_loc_to;
+        // $buildingto = $data->st_wh;
+        // $levelto = $data->st_level;
+        // $binto = $data->st_bin;
+        $locto = $req->locto ?? '';
+        $buildingto = $req->whto ?? '';
+        $levelto = $req->levelto ?? '';
+        $binto  = $req->binto ?? '';
 
+        log::info('a');
         $qxreceipt = (new QxtendServices())->qxTransferSingleItemTransfer(
             $part,
             $qtyoh,
@@ -129,6 +134,7 @@ class APISingleTransfer extends Controller
                 'Message' => "Transfer Item Failed "
             ], 422);
         } else {
+              log::info('b');
             DB::beginTransaction();
             try {
                 $dataupdate = singleTransfer::where('st_trfid', $trfid)->first();
@@ -137,7 +143,7 @@ class APISingleTransfer extends Controller
 
                 $user = Auth::user()->name;
                 // Transaction History
-
+  log::info('c');
                 $newTransactionHistoryfrom = new TransactionHistory();
                 $newTransactionHistoryfrom->tr_nbr = '';
                 $newTransactionHistoryfrom->tr_program = 'Single Transfer Module';
@@ -157,9 +163,9 @@ class APISingleTransfer extends Controller
                 $newTransactionHistoryfrom->tr_bin = $binfrom ?? '';
                 $newTransactionHistoryfrom->tr_remark = '';
                 $newTransactionHistoryfrom->save();
-
+  log::info('d');
                 $newTransactionHistory = new TransactionHistory();
-                $newTransactionHistory->tr_nbr = 'Sampling';
+                $newTransactionHistory->tr_nbr = '';
                 $newTransactionHistory->tr_order = '';
                 $newTransactionHistory->tr_program = 'Single Transfer Module';
                 $newTransactionHistory->tr_activity = 'Single Transfer To';
@@ -178,7 +184,7 @@ class APISingleTransfer extends Controller
                 $newTransactionHistory->tr_bin = $binto ?? '';
                 $newTransactionHistory->tr_remark = '';
                 $newTransactionHistory->save();
-
+  log::info('e');
                 DB::commit();
                 return response()->json([
                     'Status' => 'Success',
@@ -1194,6 +1200,7 @@ class APISingleTransfer extends Controller
 
     public function sendTransferItem(Request $req)
     {
+        log::info('a');
         DB::beginTransaction();
         try {
             $data = $req->all();
@@ -1217,7 +1224,7 @@ class APISingleTransfer extends Controller
             $nextrunningnbr = (int) $runningnbr + 1;
             $newRunningNbr = str_pad($nextrunningnbr, 6, '0', STR_PAD_LEFT);
             $newPrefix = $prefix . $newRunningNbr;
-
+log::info('b');
             $newTransferData = new SingleTransfer();
             $newTransferData->st_trfid = $newPrefix;
             $newTransferData->st_item = $item;
@@ -1236,10 +1243,10 @@ class APISingleTransfer extends Controller
             $newTransferData->st_lot = $lot;
             $newTransferData->st_status = 'Open';
             $newTransferData->save();
-
+log::info('c');
             $prefixTable->stp_running_nbr = $newRunningNbr;
             $prefixTable->save();
-
+log::info('d');
             $newTransactionHistory = new TransactionHistory();
             $newTransactionHistory->tr_nbr = $newPrefix;
             $newTransactionHistory->tr_order = '';
@@ -1261,7 +1268,7 @@ class APISingleTransfer extends Controller
             $newTransactionHistory->tr_bin = $bin ?? '';
             $newTransactionHistory->tr_remark = '';
             $newTransactionHistory->save();
-
+log::info('e');
             DB::commit();
 
             return response()->json([
@@ -1701,6 +1708,7 @@ class APISingleTransfer extends Controller
 
     public function sendPenyerahanBarang(Request $req)
     {
+        log::info('error');
         DB::beginTransaction();
         try {
             $data = $req->all();

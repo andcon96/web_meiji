@@ -263,7 +263,7 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::get("getSearchLocation", [APIBarangJadi::class, "wsainvdetBarangJadi"]);
     Route::post("sendBarangJadi", [APIBarangJadi::class, "sendBarangJadi"]);
     Route::get("getTransferData", [APIBarangJadi::class, "getTransferBarangJadi"]);
-    Route::post("receiptItem", [APIBarangJadi::class, "receiptItem"]);
+    Route::post("receiptItempb", [APIBarangJadi::class, "receiptItempb"]);
     Route::get("getPenerimaanBarangData", [APIBarangJadi::class, "getPenerimaanBarangData"]);
     Route::post("getWlbBarangJadi", [APIBarangJadi::class, "getWlbBarangJadi"]);
 });
