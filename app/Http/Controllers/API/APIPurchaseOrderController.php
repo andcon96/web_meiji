@@ -321,6 +321,7 @@ class APIPurchaseOrderController extends Controller
     {
         // $itemCode = $req->search; 
         // Request Xena 1609
+        log::info(carbon::now());
         $itemCode = '';
         $warehouse = '';
         $type = 'input';
