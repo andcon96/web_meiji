@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Log;
 use App\Services\ReceiptServices;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 class APIPurchaseOrderController extends Controller
 {
     public function index(Request $req)
@@ -349,6 +350,7 @@ class APIPurchaseOrderController extends Controller
         // });
 
         $wsaData = (new WSAServices())->wsaPenyimpananWrh('', $itemCode, '', '', $warehouse, '');
+
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
@@ -358,6 +360,7 @@ class APIPurchaseOrderController extends Controller
 
         // Prioritaskan Location yang ada di Web by order.
         $getDataQAD = collect($wsaData[1]);
+        log::info($getDataQAD);
         //log::info($getDataQAD);
         $grouped = $getDataQAD->groupBy(function ($item) {
             $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
@@ -369,7 +372,7 @@ class APIPurchaseOrderController extends Controller
             return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
             // return $item['t_inv_site'] . '-' . $item['t_inv_loc'] . '-' . $item['t_inv_bin'] . '-' . $item['t_inv_wrh'] . '-' . $item['t_inv_level'];
         });
-
+        log::info(carbon::now());
         $merged = $grouped->map(function ($items) {
             $first = $items->first(); // take base data from the first item
             $first['t_inv_qtyoh'] = $items->sum(function ($i) {
@@ -381,6 +384,7 @@ class APIPurchaseOrderController extends Controller
                 return (int) $item['t_inv_qtyoh'] <= 0;
             })
             ->values();
+            log::info(carbon::now());
         // log::info($merged);
         //$dataQAD = $merged->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
 
@@ -418,6 +422,7 @@ class APIPurchaseOrderController extends Controller
             ->values();
 
         $dataQAD = $dataQAD->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
+        log::info(carbon::now());
         // log::info('dataqad final: ' . $dataQAD);
         // log::info($getAllItemLocation);
         // $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
