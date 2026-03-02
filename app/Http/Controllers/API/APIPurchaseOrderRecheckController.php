@@ -420,4 +420,56 @@ class APIPurchaseOrderRecheckController extends Controller
 
         return response()->json($wsaData[0], 422);
     }
+
+    public function validateRecheck(Request $req)
+    {
+        $receiptnbr = $req->receiptnbr;
+        $status = $req->status;
+        $nomorbuku = $req->nomorbuku;
+        $creator = $req->approver;
+        $duplicate = false;
+
+        
+        try {
+            $receiptMstr = ReceiptMaster::where('rm_rn_number', $receiptnbr)->first();
+            $receiptDetail = ReceiptDetail::with('getPallet')
+                ->where('rd_rm_id', $receiptMstr->id)
+                ->where('rd_nomor_buku', $nomorbuku)
+                ->first();
+            $receiptDetailCheck = ReceiptDetail::with('getPallet') // fixed casing
+                ->where('id', '!=', $receiptDetail->id)
+                ->where('rd_site_penyimpanan', $receiptDetail->rd_site_penyimpanan)
+                ->where('rd_location_penyimpanan', $receiptDetail->rd_location_penyimpanan)
+                ->whereIn('rd_status', ['checked', 'draft'])
+                ->get();
+
+            foreach ($receiptDetail->getPallet as $rp) {
+                foreach ($receiptDetailCheck as $rdc) {
+                    foreach ($rdc->getPallet as $rp2) {
+                        if (
+                            $rp->rdp_bin_penyimpanan == $rp2->rdp_bin_penyimpanan &&
+                            $rp->rdp_level_penyimpanan == $rp2->rdp_level_penyimpanan &&
+                            $rp->rdp_warehouse_penyimpanan == $rp2->rdp_warehouse_penyimpanan
+                        ) {
+                            $duplicate = true;
+                            break 3; // fixed: breaks all 3 loops
+                        }
+                    }
+                }
+            }
+
+            return response()->json([
+                'Status' => 'Success',
+                'Message' => 'Data Receipt Saved, Receipt Number : ' . $receiptnbr,
+                'duplicate' => $duplicate
+            ], 200);
+        } catch (Exception $e) {
+            
+            Log::error('Error validating Receipt Recheck: ' . $e->getMessage());
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => $e->getMessage()
+            ], 422);
+        }
+    }
 }

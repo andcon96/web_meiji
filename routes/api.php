@@ -57,6 +57,7 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
 
     Route::get("getDataPORecheck", [APIPurchaseOrderRecheckController::class, "index"]);
     Route::post("submitRecheckReceipt", [APIPurchaseOrderRecheckController::class, "saveReceiptRecheck"]);
+    Route::post("validateRecheck", [APIPurchaseOrderRecheckController::class, "validateRecheck"]);
 
     // PO Approval
     Route::get("getPoApproval", [APIPurchaseOrderApprovalController::class, "getPoApproval"]);
