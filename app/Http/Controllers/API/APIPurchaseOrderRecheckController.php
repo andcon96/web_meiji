@@ -457,7 +457,7 @@ class APIPurchaseOrderRecheckController extends Controller
                     }
                 }
             }
-            log::info('duplicate:'.(string)$duplicate);
+            Log::info('duplicate:' . var_export($duplicate, true)); // "true" or "false"
             return response()->json([
                 'Status' => 'Success',
                 'Message' => 'Data Receipt Saved, Receipt Number : ' . $receiptnbr,
