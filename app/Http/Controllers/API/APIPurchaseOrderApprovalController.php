@@ -220,8 +220,15 @@ class APIPurchaseOrderApprovalController extends Controller
                         if ($ref == '-') {
                             $ref = '';
                         }
-                        $expireddate = date('Y-m-d', strtotime($dataReceipt->rd_tgl_expire));
-                        $effdate = date('Y-m-d', strtotime($dataReceipt->rd_tanggal_datang));
+                        $expireddate = !empty($dataReceipt->rd_tgl_expire)
+                            ? date('Y-m-d', strtotime($dataReceipt->rd_tgl_expire))
+                            : '';
+                            $retestdate = !empty($dataReceipt->rd_tgl_retest)
+                            ? date('Y-m-d', strtotime($dataReceipt->rd_tgl_retest))
+                            : '';
+                        $effdate = !empty($dataReceipt->rd_tanggal_datang)
+                            ? date('Y-m-d', strtotime($dataReceipt->rd_tanggal_datang))
+                            : '';
                         // Assign pod_um_conv sebelum receipt -> request bang dany
                         $changeUmConv = (new WSAServices())->wsaChangeUmConv($poNbr, $line, $qtyPotensi);
                         $suratjalan = $dataReceipt->getDokumen->rdd_surat_jalan ?? '';
@@ -236,7 +243,7 @@ class APIPurchaseOrderApprovalController extends Controller
 
 
 
-                        $submitReceiptQxtend = (new QxtendServices())->qxPurchaseOrderReceipt($poNbr, $line, $lotserialQty, $receiptUm, $site, $location, $lotserial, $expireddate, $ref, $suratjalan, $jumlahkemasanluar, $effdate);
+                        $submitReceiptQxtend = (new QxtendServices())->qxPurchaseOrderReceipt($poNbr, $line, $lotserialQty, $receiptUm, $site, $location, $lotserial, $expireddate != '' ? $expireddate : $retestdate, $ref, $suratjalan, $jumlahkemasanluar, $effdate);
                         if ($submitReceiptQxtend == false) {
                             DB::rollback();
                             return response()->json([
