@@ -629,8 +629,9 @@ class APIController extends Controller
         $part = $req->query('part') ?? '';
         $program = $req->query('program') ?? '';
         $lot = $req->query('lot') ?? '';
+        $page    = $req->query('page')    ?? 1;
+        $perPage = $req->query('per_page') ?? 100; // let frontend control this
         $data = TransactionHistory::query();
-
         if (!empty($number)) {
             $data->where('tr_nbr', 'LIKE', '%' . $number . '%');
         }
@@ -644,7 +645,8 @@ class APIController extends Controller
             $data->where('tr_lot', 'LIKE', '%' . $lot . '%');
         }
 
-        $data = $data->orderBy('id', 'DESC')->paginate(100);
+        // $data = $data->orderBy('id', 'DESC')->get();
+        $data = $data->orderBy('id', 'DESC')->paginate($perPage, ['*'], 'page', $page);
         // dd($data); // Remove this when done debugging
 
         return GeneralResources::collection($data);
@@ -655,8 +657,8 @@ class APIController extends Controller
         /* dd($req->loc); */
 
         $hasil = (new WSAServices())->wsaCekItemLot($req->query('inppart') ?? '', $req->query('inplot') ?? '');
-       
-        
+
+
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
