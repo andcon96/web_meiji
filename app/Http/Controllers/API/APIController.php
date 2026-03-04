@@ -630,7 +630,7 @@ class APIController extends Controller
         $program = $req->query('program') ?? '';
         $lot = $req->query('lot') ?? '';
         $page    = $req->query('page')    ?? 1;
-        $perPage = $req->query('per_page') ?? 100; // let frontend control this
+        $perPage = $req->query('per_page') ?? 20; // let frontend control this
         $data = TransactionHistory::query();
         if (!empty($number)) {
             $data->where('tr_nbr', 'LIKE', '%' . $number . '%');
