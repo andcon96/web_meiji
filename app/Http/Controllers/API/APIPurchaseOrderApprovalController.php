@@ -203,7 +203,7 @@ class APIPurchaseOrderApprovalController extends Controller
                         // Ambil Qty Ongoing jadi Qty Receipt
                         $dataReceipt = ReceiptDetail::find($tempApprove->art_receipt_det_id);
                         $totalReceipt = $dataReceipt->rd_qty_terima * $dataReceipt->rd_qty_potensi;
-
+                        
                         // Qxtend Po Receipt
                         $dataPurchaseOrderDetail = PurchaseOrderDetail::with('getMaster')->find($dataReceipt->rd_pod_det_id);
                         $poNbr = $dataPurchaseOrderDetail->getMaster->po_nbr ?? '';
@@ -242,7 +242,7 @@ class APIPurchaseOrderApprovalController extends Controller
                         }
 
 
-
+                        /*
                         $submitReceiptQxtend = (new QxtendServices())->qxPurchaseOrderReceipt($poNbr, $line, $lotserialQty, $receiptUm, $site, $location, $lotserial, $expireddate != '' ? $expireddate : $retestdate, $ref, $suratjalan, $jumlahkemasanluar, $effdate);
                         if ($submitReceiptQxtend == false) {
                             DB::rollback();
@@ -291,6 +291,7 @@ class APIPurchaseOrderApprovalController extends Controller
                                 }
                             }
                         }
+                            */
                     }
                     //getDetail Receipt
                     $data = ReceiptDetail::with(['getMaster', 'getPurchaseOrderDetail.getMaster', 'getPallet'])->find($tempApprove->art_receipt_det_id);

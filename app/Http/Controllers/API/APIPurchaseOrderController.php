@@ -10,6 +10,9 @@ use App\Models\API\ReceiptAttachment;
 use App\Models\API\ReceiptDetail;
 use App\Models\API\ReceiptPallet;
 use App\Models\API\ReceiptMaster;
+use App\Models\API\xxinvDet;
+use App\Models\Settings\Domain;
+use App\Models\Settings\qxwsa;
 use App\Models\Settings\ItemLocation;
 use App\Models\Settings\LocationDetail;
 use App\Models\Settings\Location;
@@ -25,6 +28,7 @@ use App\Services\ReceiptServices;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+
 class APIPurchaseOrderController extends Controller
 {
     public function index(Request $req)
@@ -238,7 +242,56 @@ class APIPurchaseOrderController extends Controller
         // $wsaData = Cache::remember('wsaPenyimpanan', 60, function () use ($itemCode) {
         //     return (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', '', '');
         // });
+        $wsa = qxwsa::first();
+        $qxUrl = $wsa->wsa_url;
 
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+
+        $getDataQAD = xxinvDet::where('xxinv_domain', $domainCode)
+            ->where('xxinv_part', $itemCode)
+            ->where('xxinv_wrh', $warehouse)
+            ->get();
+
+        $grouped = $getDataQAD->groupBy(function ($item) {
+            $site  = (string) ($item->xxinv_site ?? '');
+            $loc   = (string) ($item->xxinv_loc ?? '');
+            $bin   = (string) ($item->xxinv_bin ?? '');
+            $wrh   = (string) ($item->xxinv_wrh ?? '');
+            $level = (string) ($item->xxinv_level ?? '');
+
+            return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
+        });
+
+        $merged = $grouped->map(function ($items) {
+            $first = $items->first();
+            $first->xxinv_qtyoh = $items->sum(fn($i) => (int) $i->xxinv_qtyoh);
+            return $first;
+        })
+            ->filter(function ($item) {
+                return (int) $item->xxinv_qtyoh <= 0;
+            })
+            ->values();
+
+        $dataQAD = $merged->filter(function ($item) use ($getAllItemLocation) {
+            foreach ($getAllItemLocation as $datas) {
+                if (
+                    $item->xxinv_level == $datas->ld_rak &&
+                    $item->xxinv_wrh   == $datas->ld_building &&
+                    $item->xxinv_bin   == $datas->ld_bin &&
+                    $item->xxinv_loc   == $datas->getMaster->location_code
+                ) {
+                    return true;
+                }
+            }
+            return false;
+        })
+            ->values();
+
+        $dataQAD = $dataQAD->sortBy('xxinv_qtyoh')->sortBy('xxinv_wrh')->values();
+
+        return response()->json($dataQAD);
+        /*
         $wsaData = (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', $warehouse, '');
         if ($wsaData[0] == 'false') {
             return response()->json([
@@ -249,6 +302,7 @@ class APIPurchaseOrderController extends Controller
 
         // Prioritaskan Location yang ada di Web by order.
         $getDataQAD = collect($wsaData[1]);
+        
         //log::info('getwsa');
         $grouped = $getDataQAD->groupBy(function ($item) {
             $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
@@ -315,6 +369,7 @@ class APIPurchaseOrderController extends Controller
         // log::info('merged: ' . $merged);
         // log::info('dataqad final: ' . $dataQAD);
         return response()->json($dataQAD);
+        */
     }
 
     public function wsaPenyimpananWarehouse(Request $req)
@@ -350,6 +405,10 @@ class APIPurchaseOrderController extends Controller
         //     return (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', '', '');
         // });
 
+
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+        /*
         $wsaData = (new WSAServices())->wsaPenyimpananWrh('', $itemCode, '', '', $warehouse, '');
 
         if ($wsaData[0] == 'false') {
@@ -373,7 +432,7 @@ class APIPurchaseOrderController extends Controller
             return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
             // return $item['t_inv_site'] . '-' . $item['t_inv_loc'] . '-' . $item['t_inv_bin'] . '-' . $item['t_inv_wrh'] . '-' . $item['t_inv_level'];
         });
-        log::info(carbon::now());
+       
         $merged = $grouped->map(function ($items) {
             $first = $items->first(); // take base data from the first item
             $first['t_inv_qtyoh'] = $items->sum(function ($i) {
@@ -385,7 +444,7 @@ class APIPurchaseOrderController extends Controller
                 return (int) $item['t_inv_qtyoh'] <= 0;
             })
             ->values();
-            log::info(carbon::now());
+       
         // log::info($merged);
         //$dataQAD = $merged->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
 
@@ -423,11 +482,62 @@ class APIPurchaseOrderController extends Controller
             ->values();
 
         $dataQAD = $dataQAD->sortBy('t_inv_qtyoh')->sortBy('t_inv_wrh')->values();
-        log::info(carbon::now());
+        //log::info(carbon::now());
         // log::info('dataqad final: ' . $dataQAD);
         // log::info($getAllItemLocation);
         // $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
-        log::info($dataQAD);
+   
+        return response()->json($dataQAD);
+        */
+        /**get daata from sql   */
+        $xxinvDet = xxinvDet::query()
+            ->where('xxinv_domain', $domainCode)
+            ->when($itemCode !== '', fn($q) => $q->where('xxinv_part', $itemCode))
+            ->when($warehouse !== '', fn($q) => $q->where('xxinv_wrh', $warehouse))
+            ->get();
+        $getDataQAD = $xxinvDet;
+
+        dd($xxinvDet);
+        $grouped = $getDataQAD->groupBy(function ($item) {
+            $site  = (string) ($item['xxinv_site'] ?? '');
+            $loc   = (string) ($item['xxinv_loc'] ?? '');
+            $bin   = (string) ($item['xxinv_bin'] ?? '');
+            $wrh   = (string) ($item['xxinv_wrh'] ?? '');
+            $level = (string) ($item['xxinv_level'] ?? '');
+
+            return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
+        });
+
+        $merged = $grouped->map(function ($items) {
+            $first = $items->first();
+            $first['xxinv_qtyoh'] = $items->sum(function ($i) {
+                return (int) $i['xxinv_qtyoh'];
+            });
+            return $first;
+        })
+            ->filter(function ($item) {
+                return (int) $item['xxinv_qtyoh'] <= 0;
+            })
+            ->values();
+
+        $dataQAD = $merged->filter(function ($item) use ($getAllItemLocation) {
+            foreach ($getAllItemLocation as $datas) {
+                if (
+                    $item['xxinv_level'] == $datas->ld_rak &&
+                    $item['xxinv_wrh'] == $datas->ld_building &&
+                    $item['xxinv_bin'] == $datas->ld_bin &&
+                    $item['xxinv_loc'] == $datas->getMaster->location_code
+                ) {
+                    return true; // Keep this item
+                }
+            }
+
+            return false; // Exclude this item
+        })
+            ->values();
+
+        $dataQAD = $dataQAD->sortBy('xxinv_qtyoh')->sortBy('xxinv_wrh')->values();
+
         return response()->json($dataQAD);
     }
 
@@ -455,7 +565,7 @@ class APIPurchaseOrderController extends Controller
         if ($req->location) {
             $location = $req->location;
         }
-
+        /*
         $wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse, $levelsearch, $location);
         if ($wsaData[0] == 'false') {
             return response()->json([
@@ -522,6 +632,54 @@ class APIPurchaseOrderController extends Controller
         $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
 
         return response()->json($dataQAD);
+        */
+        //$wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse, $levelsearch, $location);
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+
+        $xxinvDet = xxinvDet::query()
+            ->where('xxinv_domain', $domainCode)
+            ->where('xxinv_part', $itemCode)
+            ->where('xxinv_wrh', $warehouse)
+            ->when($location !== '', fn($q) => $q->where('xxinv_loc', $location))
+            ->when($binSearch !== '', fn($q) => $q->where('xxinv_bin', $binSearch))
+            ->when($levelsearch !== '', fn($q) => $q->where('xxinv_level', $levelsearch))
+            ->orderBy('xxinv_level')
+            ->orderBy('xxinv_bin')
+            ->get();
+
+
+        $getDataQAD = $xxinvDet;
+
+        if ($levelsearch != '') {
+            $grouped = $getDataQAD->groupBy(function ($item) {
+                $site  = is_array($item['xxinv_site'])  ? '' : (string)($item['xxinv_site']  ?? '');
+                $loc   = is_array($item['xxinv_loc'])   ? '' : (string)($item['xxinv_loc']   ?? '');
+                $bin   = is_array($item['xxinv_bin'])   ? '' : (string)($item['xxinv_bin']   ?? '');
+                $wrh   = is_array($item['xxinv_wrh'])   ? '' : (string)($item['xxinv_wrh']   ?? '');
+                $level = is_array($item['xxinv_level']) ? '' : (string)($item['xxinv_level'] ?? '');
+                return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
+            });
+        } else {
+            $grouped = $getDataQAD->groupBy(function ($item) {
+                $site  = is_array($item['xxinv_site'])  ? '' : (string)($item['xxinv_site']  ?? '');
+                $wrh   = is_array($item['xxinv_wrh'])   ? '' : (string)($item['xxinv_wrh']   ?? '');
+                $level = is_array($item['xxinv_level']) ? '' : (string)($item['xxinv_level'] ?? '');
+                return "{$site}-{$wrh}-{$level}";
+            });
+        }
+
+        $merged = $grouped->map(function ($items) {
+            $first = $items->first();
+            $first['xxinv_qtyoh'] = $items->sum(function ($i) {
+                return (int)$i['xxinv_qtyoh'];
+            });
+            return $first;
+        })->values();
+
+        $dataQAD = $merged->sortBy('xxinv_qtyoh')->sortBy('xxinv_wrh')->values();
+
+        return response()->json($dataQAD);
     }
 
     public function wsaWarehouse(Request $req)
@@ -541,7 +699,16 @@ class APIPurchaseOrderController extends Controller
         if ($req->lot) {
             $lot = $req->lot ?? '';
         }
-
+        // $domain = Domain::first();
+        // $domainCode = $domain->domain ?? '';
+        // $xxinvDet = xxinvDet::query()
+        //     ->where('xxinv_domain', $domainCode)
+        //     ->where('xxinv_part', $itemCode)
+        //     ->when($warehouse !== '', fn($q) => $q->where('xxinv_wrh', $warehouse))
+        //     ->orderBy('xxinv_level')
+        //     ->orderBy('xxinv_bin')
+        //     ->get();
+        /*
         $wsaData = (new WSAServices())->wsaWarehouse('', $itemCode, $lot, '', $warehouse, '');
         if ($wsaData[0] == 'false') {
             return response()->json([
@@ -551,6 +718,19 @@ class APIPurchaseOrderController extends Controller
         }
 
         return response()->json($wsaData[1]);
+        */
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+
+        $xxinvDet = xxinvDet::query()
+            ->where('xxinv_domain', $domainCode)
+            ->where('xxinv_part', $itemCode)
+
+            ->when($warehouse !== '', fn($q) => $q->where('xxinv_wrh', $warehouse))
+            ->groupBy('xxinv_wrh')
+            ->get();
+
+        return response()->json($xxinvDet);
     }
 
     public function wsaLevel(Request $req)
@@ -682,6 +862,8 @@ class APIPurchaseOrderController extends Controller
         $wrh = $req->wh ?? '';
         $loc = $req->location ?? '';
         $level = $req->level ?? '';
+
+        /*
         $wsaData = (new WSAServices())->wsaGetLevelForPo($part, $lot, $site, $wrh, $loc, $level);
         if ($wsaData[0] == 'false') {
             return response()->json([
@@ -690,25 +872,20 @@ class APIPurchaseOrderController extends Controller
             ], 422);
         }
         return response()->json($wsaData[1]);
-        // $locationDetail = Location::query()->with(['getDetailLocation' => function($query){
-        //     $query->select('ld_location_id','ld_building','ld_level')->groupBy('ld_level')->orderBy('ld_level');}])
-        //     ->where('location_site', $site)
-        //     ->where('location_code', $loc)
-        //     ->whereRelation('getDetailLocation', 'ld_building', '=', $wrh);
-        //     if ($level != '') {
-        //         $locationDetail->whereRelation('getDetailLocation', 'ld_level', '=', $level);
-        //     }
-
-        //     $getAllItemLocation = $locationDetail->get();
-
-        //     if (count($getAllItemLocation) == 0) {
-        //         return response()->json([
-        //             'Status' => 'Error',
-        //             'Message' => "No Data Available"
-        //         ], 422);
-        //     }
-        //     return response()->json($getAllItemLocation);
-
+        */
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+        $xxinvDet = xxinvDet::query()
+            ->where('xxinv_domain', $domainCode)
+            ->when($part !== '', fn($q) => $q->where('xxinv_part', $part))
+            ->when($lot !== '', fn($q) => $q->where('xxinv_lot', $lot))
+            ->when($level !== '', fn($q) => $q->where('xxinv_level', $level))
+            ->where('xxinv_site', $site)
+            ->where('xxinv_loc', $loc)
+            ->where('xxinv_wrh', $wrh)
+            ->orderBy('xxinv_level')
+            ->get();
+        return response()->json($xxinvDet);
     }
 
     public function wsaNewBin(Request $req)
@@ -720,16 +897,29 @@ class APIPurchaseOrderController extends Controller
         $loc = $req->loc ?? '';
         $level = $req->level ?? '';
         $bin = $req->bin ?? '';
-        $wsaData = (new WSAServices())->wsaGetBinForPo($part, $lot, $site, $wrh, $loc, $level, $bin);
+        // $wsaData = (new WSAServices())->wsaGetBinForPo($part, $lot, $site, $wrh, $loc, $level, $bin);
 
-        if ($wsaData[0] == 'false') {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "No Data Available"
-            ], 422);
-        }
-
-        return response()->json($wsaData[1]);
+        // if ($wsaData[0] == 'false') {
+        //     return response()->json([
+        //         'Status' => 'Error',
+        //         'Message' => "No Data Available"
+        //     ], 422);
+        // }
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+        $xxinvDet = xxinvDet::query()
+            ->where('xxinv_domain', $domainCode)
+            ->when($part !== '', fn($q) => $q->where('xxinv_part', $part))
+            ->when($lot !== '', fn($q) => $q->where('xxinv_lot', $lot))
+            ->where('xxinv_site', $site)
+            ->where('xxinv_loc', $loc)
+            ->where('xxinv_wrh', $wrh)
+            ->where('xxinv_level', $level)
+            ->when($bin !== '', fn($q) => $q->where('xxinv_bin', $bin))
+            ->where('xxinv_qtyoh', '=', 0)
+            ->orderBy('xxinv_bin')
+            ->get();
+        return response()->json($xxinvDet);
         //     $locationDetail = Location::query()->with(['getDetailLocation' => function($query){
         // $query->select('ld_location_id','ld_building','ld_level','ld_bin')->groupBy('ld_bin')->orderBy('ld_bin');}])
         // ->where('location_site', $site)
@@ -758,16 +948,24 @@ class APIPurchaseOrderController extends Controller
         $wrh = $req->wrh ?? '';
         $loc = $req->loc ?? '';
         $level = $req->level ?? '';
-        $wsaData = (new WSAServices())->wsaGetPotensi($part, $lot, $site, $loc);
+        // $wsaData = (new WSAServices())->wsaGetPotensi($part, $lot, $site, $loc);
 
-        if ($wsaData[0] == 'false') {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "No Data Available"
-            ], 422);
-        }
+        // if ($wsaData[0] == 'false') {
+        //     return response()->json([
+        //         'Status' => 'Error',
+        //         'Message' => "No Data Available"
+        //     ], 422);
+        // }
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+        $xxinvDet = xxinvDet::query()
+            ->where('xxinv_domain', $domainCode)
+            ->where('xxinv_part', $part)
+            ->where('xxinv_lot', $lot)
+            ->where('xxinv_site', $site)
+            ->first();
 
-        return response()->json($wsaData[1]);
+        return response()->json($xxinvDet);
     }
 
 
@@ -898,16 +1096,28 @@ class APIPurchaseOrderController extends Controller
                 'Message' => "No Data Available"
             ], 422);
         }
-        $hasil = (new WSAServices())->wsaGetWlb($item, $lot, $site, $loc, $warehouse, $level, $bin);
+        //$hasil = (new WSAServices())->wsaGetWlb($item, $lot, $site, $loc, $warehouse, $level, $bin);
         // if ($hasil[0] == 'false') {
         //     return response()->json([
         //         'Status' => 'Error',
         //         'Message' => "Data Not Found."
         //     ], 422);
         // } 
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+        $xxinvDet = xxinvDet::query()
+            ->where('xxinv_domain', $domainCode)
+            ->when($item !== '', fn($q) => $q->where('xxinv_part', $item))
+            ->when($lot !== '', fn($q) => $q->where('xxinv_lot', $lot))
+            ->when($site !== '', fn($q) => $q->where('xxinv_site', $site))
+            ->when($loc !== '', fn($q) => $q->where('xxinv_loc', $loc))
+            ->when($warehouse !== '', fn($q) => $q->where('xxinv_wrh', $warehouse))
+            ->when($level !== '', fn($q) => $q->where('xxinv_level', $level))
+            ->when($bin  !== '', fn($q) => $q->where('xxinv_bin',  $bin))
+            ->get();
 
-        if ($hasil[0] == 'true') {
-            $wsaData = collect($hasil[1]);
+        if ($xxinvDet->isNotEmpty()) {
+            $wsaData = $xxinvDet;
 
             // Add qty to each locationDetail
             $getAllItemLocation->transform(function ($location) use ($wsaData) {
@@ -1029,62 +1239,169 @@ class APIPurchaseOrderController extends Controller
 
         // log::info('receiptDetail', [$receiptDetail]);
 
-        $wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse, $levelsearch, $location);
-        if ($wsaData[0] == 'false') {
+        // $wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse, $levelsearch, $location);
+        // if ($wsaData[0] == 'false') {
+        //     return response()->json([
+        //         'Status' => 'Error',
+        //         'Message' => "No Data Available"
+        //     ], 422);
+        // }
+
+        // // Prioritaskan Location yang ada di Web by order.
+        // $getDataQAD = collect($wsaData[1]);
+
+        // // dd($getDataQAD);
+        // if ($levelsearch != '') {
+        //     $grouped = $getDataQAD->groupBy(function ($item) {
+        //         $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
+        //         $loc   = is_array($item['t_inv_loc']) ? '' : (string)($item['t_inv_loc'] ?? '');
+        //         $bin   = is_array($item['t_inv_bin']) ? '' : (string) ($item['t_inv_bin'] ?? '');
+        //         $wrh   = is_array($item['t_inv_wrh']) ? '' : (string) ($item['t_inv_wrh'] ?? '');
+        //         $level = is_array($item['t_inv_level']) ? '' : (string) ($item['t_inv_level'] ?? '');
+        //         return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
+        //     });
+        // } else {
+        //     $grouped = $getDataQAD->groupBy(function ($item) {
+        //         $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
+        //         $wrh   = is_array($item['t_inv_wrh']) ? '' : (string) ($item['t_inv_wrh'] ?? '');
+        //         $level = is_array($item['t_inv_level']) ? '' : (string) ($item['t_inv_level'] ?? '');
+        //         $bin   = is_array($item['t_inv_bin']) ? '' : (string) ($item['t_inv_bin'] ?? '');
+        //         return "{$site}-{$wrh}-{$level}-{$bin}";
+        //     });
+        // }
+
+
+
+
+
+        // $merged = $grouped->map(function ($items) {
+        //     $first = $items->first(); // take base data from the first item
+        //     $first['t_inv_qtyoh'] = $items->sum(function ($i) {
+        //         return (int)$i['t_inv_qtyoh'];
+        //     });
+        //     return $first;
+        // })
+        //     // ->filter(function ($item) {
+        //     //     return (int) $item['t_inv_qtyoh'] <= 0;
+        //     // })
+        //     ->values();
+
+
+
+        // $dataQAD = $merged->map(function ($item) use ($receiptDetail) {
+        //     foreach ($receiptDetail as $datas) {
+
+        //         if (
+        //             $item['t_inv_wrh'] == $datas->getDetail->rd_building_penyimpanan &&
+        //             $item['t_inv_level'] == $datas->rdp_level_penyimpanan &&
+        //             $item['t_inv_bin'] == $datas->rdp_bin_penyimpanan
+        //         ) {
+        //             $item['t_is_prioritize'] = '1';
+        //             break;
+        //         }
+        //     }
+        //     return $item;
+        // });
+
+        // // Add search filter for level OR bin
+        // if ($search != '') {
+        //     $dataQAD = $dataQAD->filter(function ($item) use ($search) {
+        //         $level = is_array($item['t_inv_level']) ? '' : (string)($item['t_inv_level'] ?? '');
+        //         $bin = is_array($item['t_inv_bin']) ? '' : (string)($item['t_inv_bin'] ?? '');
+
+        //         // Search in both level and bin (case-insensitive partial match)
+        //         return stripos($level, $search) !== false || stripos($bin, $search) !== false;
+        //     });
+        // }
+        // // $dataQAD = $dataQAD->where('t_is_prioritize','0')->values();
+        // $dataQAD = $dataQAD->where('t_is_prioritize', '0')
+        //     ->sortBy('t_inv_wrh')
+        //     ->sortBy('t_inv_qtyoh')
+        //     ->values();
+        // return response()->json($dataQAD);
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+        $results = xxinvDet::query()
+            ->where('xxinv_domain', $domainCode)
+            ->where('xxinv_part', $itemCode)
+            ->where('xxinv_wrh', $warehouse)
+            ->when($location   !== '', fn($q) => $q->where('xxinv_loc',   $location))
+            ->when($binSearch   !== '', fn($q) => $q->where('xxinv_bin',   $binSearch))
+            ->when($levelsearch !== '', fn($q) => $q->where('xxinv_level', $levelsearch))
+            ->orderBy('xxinv_level')
+            ->orderBy('xxinv_bin')
+            ->get();
+
+        if ($results->isEmpty()) {
             return response()->json([
-                'Status' => 'Error',
-                'Message' => "No Data Available"
+                'Status'  => 'Error',
+                'Message' => 'No Data Available'
             ], 422);
         }
 
-        // Prioritaskan Location yang ada di Web by order.
-        $getDataQAD = collect($wsaData[1]);
+        $temp       = collect();
+        $totalQtyoh = 0;
 
-        // dd($getDataQAD);
+        foreach ($results as $row) {
+            $totalQtyoh += $row->xxinv_qtyoh;
+
+            $isLastOfBin = $results->last(fn($r) => $r->xxinv_bin === $row->xxinv_bin) === $row;
+
+            if ($isLastOfBin) {
+                // Push as ARRAY to match downstream [] access
+                $temp->push([
+                    't_domain'        => $domainCode,
+                    't_inv_part'      => $row->xxinv_part,
+                    't_inv_part_desc' => '',
+                    't_inv_loc'       => $row->xxinv_loc,
+                    't_inv_lot'       => $row->xxinv_lot,
+                    't_inv_bin'       => $row->xxinv_bin,
+                    't_inv_level'     => $row->xxinv_level,
+                    't_inv_site'      => $row->xxinv_site,
+                    't_inv_wrh'       => $row->xxinv_wrh,
+                    't_inv_qty_pick'  => $row->xxinv_qty_pick,
+                    't_inv_qtyoh'     => $totalQtyoh,
+                    't_is_prioritize' => '0',
+                ]);
+
+                $totalQtyoh = 0;
+            }
+        }
+
+        // Use $temp (processed) instead of $results (raw DB rows)
+        $getDataQAD = $temp;
+
         if ($levelsearch != '') {
             $grouped = $getDataQAD->groupBy(function ($item) {
-                $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
-                $loc   = is_array($item['t_inv_loc']) ? '' : (string)($item['t_inv_loc'] ?? '');
-                $bin   = is_array($item['t_inv_bin']) ? '' : (string) ($item['t_inv_bin'] ?? '');
-                $wrh   = is_array($item['t_inv_wrh']) ? '' : (string) ($item['t_inv_wrh'] ?? '');
-                $level = is_array($item['t_inv_level']) ? '' : (string) ($item['t_inv_level'] ?? '');
+                $site  = (string)($item['t_inv_site']  ?? '');
+                $loc   = (string)($item['t_inv_loc']   ?? '');
+                $bin   = (string)($item['t_inv_bin']   ?? '');
+                $wrh   = (string)($item['t_inv_wrh']   ?? '');
+                $level = (string)($item['t_inv_level'] ?? '');
                 return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
             });
         } else {
             $grouped = $getDataQAD->groupBy(function ($item) {
-                $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
-                $wrh   = is_array($item['t_inv_wrh']) ? '' : (string) ($item['t_inv_wrh'] ?? '');
-                $level = is_array($item['t_inv_level']) ? '' : (string) ($item['t_inv_level'] ?? '');
-                $bin   = is_array($item['t_inv_bin']) ? '' : (string) ($item['t_inv_bin'] ?? '');
+                $site  = (string)($item['t_inv_site']  ?? '');
+                $wrh   = (string)($item['t_inv_wrh']   ?? '');
+                $level = (string)($item['t_inv_level'] ?? '');
+                $bin   = (string)($item['t_inv_bin']   ?? '');
                 return "{$site}-{$wrh}-{$level}-{$bin}";
             });
         }
 
-
-
-
-
         $merged = $grouped->map(function ($items) {
-            $first = $items->first(); // take base data from the first item
-            $first['t_inv_qtyoh'] = $items->sum(function ($i) {
-                return (int)$i['t_inv_qtyoh'];
-            });
+            $first = $items->first();
+            $first['t_inv_qtyoh'] = $items->sum(fn($i) => (int)$i['t_inv_qtyoh']);
             return $first;
-        })
-            // ->filter(function ($item) {
-            //     return (int) $item['t_inv_qtyoh'] <= 0;
-            // })
-            ->values();
-
-
+        })->values();
 
         $dataQAD = $merged->map(function ($item) use ($receiptDetail) {
             foreach ($receiptDetail as $datas) {
-
                 if (
-                    $item['t_inv_wrh'] == $datas->getDetail->rd_building_penyimpanan &&
+                    $item['t_inv_wrh']   == $datas->getDetail->rd_building_penyimpanan &&
                     $item['t_inv_level'] == $datas->rdp_level_penyimpanan &&
-                    $item['t_inv_bin'] == $datas->rdp_bin_penyimpanan
+                    $item['t_inv_bin']   == $datas->rdp_bin_penyimpanan
                 ) {
                     $item['t_is_prioritize'] = '1';
                     break;
@@ -1093,21 +1410,19 @@ class APIPurchaseOrderController extends Controller
             return $item;
         });
 
-        // Add search filter for level OR bin
         if ($search != '') {
             $dataQAD = $dataQAD->filter(function ($item) use ($search) {
-                $level = is_array($item['t_inv_level']) ? '' : (string)($item['t_inv_level'] ?? '');
-                $bin = is_array($item['t_inv_bin']) ? '' : (string)($item['t_inv_bin'] ?? '');
-
-                // Search in both level and bin (case-insensitive partial match)
+                $level = (string)($item['t_inv_level'] ?? '');
+                $bin   = (string)($item['t_inv_bin']   ?? '');
                 return stripos($level, $search) !== false || stripos($bin, $search) !== false;
             });
         }
-        // $dataQAD = $dataQAD->where('t_is_prioritize','0')->values();
+
         $dataQAD = $dataQAD->where('t_is_prioritize', '0')
             ->sortBy('t_inv_wrh')
             ->sortBy('t_inv_qtyoh')
             ->values();
+
         return response()->json($dataQAD);
     }
     public function deleteDraft(Request $req)

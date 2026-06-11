@@ -12,6 +12,8 @@ use App\Models\API\ReceiptAttachment;
 use App\Models\API\ApprovalReceiptTemp;
 use App\Models\API\TransactionHistory;
 use App\Models\Settings\ItemLocation;
+use App\Models\API\xxinvDet;
+use App\Models\Settings\Domain;
 use App\Models\Settings\LocationDetail;
 use App\Models\Settings\User;
 use App\Services\WSAServices;
@@ -264,56 +266,99 @@ class APIPurchaseOrderRecheckController extends Controller
         //     return (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', '', '');
         // });
 
-        $wsaData = (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', $warehouse, '');
-        if ($wsaData[0] == 'false') {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "No Data Available"
-            ], 422);
-        }
-
+        // $wsaData = (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', $warehouse, '');
+        // if ($wsaData[0] == 'false') {
+        //     return response()->json([
+        //         'Status' => 'Error',
+        //         'Message' => "No Data Available"
+        //     ], 422);
+        // }
 
         // Prioritaskan Location yang ada di Web by order.
-        $getDataQAD = collect($wsaData[1]);
+        // $getDataQAD = collect($wsaData[1]);
+        // $grouped = $getDataQAD->groupBy(function ($item) {
+        //     $site  = (string) ($item['t_inv_site'] ?? '');
+        //     $loc   = (string) ($item['t_inv_loc'] ?? '');
+        //     $bin   = is_array($item['t_inv_bin']) ? '' : (string) ($item['t_inv_bin'] ?? '');
+        //     $wrh   = is_array($item['t_inv_wrh']) ? '' : (string) ($item['t_inv_wrh'] ?? '');
+        //     $level = is_array($item['t_inv_level']) ? '' : (string) ($item['t_inv_level'] ?? '');
+
+        //     return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
+        //     // return $item['t_inv_site'] . '-' . $item['t_inv_loc'] . '-' . $item['t_inv_bin'] . '-' . $item['t_inv_wrh'] . '-' . $item['t_inv_level'];
+        // });
+
+        // $merged = $grouped->map(function ($items) {
+        //     $first = $items->first(); // take base data from the first item
+        //     $first['t_inv_qtyoh'] = $items->sum(function ($i) {
+        //         return (int)$i['t_inv_qtyoh'];
+        //     });
+        //     return $first;
+        // })
+        //     ->filter(function ($item) {
+        //         return (int) $item['t_inv_qtyoh'] <= 0;
+        //     })
+        //     ->values();
+
+        // $dataQAD = $merged->map(function ($item) use ($getAllItemLocation) {
+        //     foreach ($getAllItemLocation as $datas) {
+        //         if (
+        //             $item['t_inv_level'] == $datas->ld_rak &&
+        //             $item['t_inv_wrh'] == $datas->ld_building &&
+        //             $item['t_inv_bin'] == $datas->ld_bin &&
+        //             $item['t_inv_loc'] == $datas->getMaster->location_code
+        //         ) {
+        //             $item['t_is_prioritize'] = '1';
+        //             break;
+        //         }
+        //     }
+        //     return $item;
+        // });
+
+        // $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
+        //save point
+            $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+        $getDataQAD = xxinvDet::where('xxinv_domain', $domainCode)
+            ->where('xxinv_part', $itemCode)
+            ->where('xxinv_wrh', $warehouse)
+            ->get();
+
         $grouped = $getDataQAD->groupBy(function ($item) {
-            $site  = (string) ($item['t_inv_site'] ?? '');
-            $loc   = (string) ($item['t_inv_loc'] ?? '');
-            $bin   = is_array($item['t_inv_bin']) ? '' : (string) ($item['t_inv_bin'] ?? '');
-            $wrh   = is_array($item['t_inv_wrh']) ? '' : (string) ($item['t_inv_wrh'] ?? '');
-            $level = is_array($item['t_inv_level']) ? '' : (string) ($item['t_inv_level'] ?? '');
+            $site  = (string) ($item->xxinv_site ?? '');
+            $loc   = (string) ($item->xxinv_loc ?? '');
+            $bin   = (string) ($item->xxinv_bin ?? '');
+            $wrh   = (string) ($item->xxinv_wrh ?? '');
+            $level = (string) ($item->xxinv_level ?? '');
 
             return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
-            // return $item['t_inv_site'] . '-' . $item['t_inv_loc'] . '-' . $item['t_inv_bin'] . '-' . $item['t_inv_wrh'] . '-' . $item['t_inv_level'];
         });
 
         $merged = $grouped->map(function ($items) {
-            $first = $items->first(); // take base data from the first item
-            $first['t_inv_qtyoh'] = $items->sum(function ($i) {
-                return (int)$i['t_inv_qtyoh'];
-            });
+            $first = $items->first();
+            $first->xxinv_qtyoh = $items->sum(fn($i) => (int) $i->xxinv_qtyoh);
             return $first;
         })
             ->filter(function ($item) {
-                return (int) $item['t_inv_qtyoh'] <= 0;
+                return (int) $item->xxinv_qtyoh <= 0;
             })
             ->values();
 
-        $dataQAD = $merged->map(function ($item) use ($getAllItemLocation) {
+        $dataQAD = $merged->filter(function ($item) use ($getAllItemLocation) {
             foreach ($getAllItemLocation as $datas) {
                 if (
-                    $item['t_inv_level'] == $datas->ld_rak &&
-                    $item['t_inv_wrh'] == $datas->ld_building &&
-                    $item['t_inv_bin'] == $datas->ld_bin &&
-                    $item['t_inv_loc'] == $datas->getMaster->location_code
+                    $item->xxinv_level == $datas->ld_rak &&
+                    $item->xxinv_wrh   == $datas->ld_building &&
+                    $item->xxinv_bin   == $datas->ld_bin &&
+                    $item->xxinv_loc   == $datas->getMaster->location_code
                 ) {
-                    $item['t_is_prioritize'] = '1';
-                    break;
+                    return true;
                 }
             }
-            return $item;
-        });
+            return false;
+        })
+            ->values();
 
-        $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
+        $dataQAD = $dataQAD->sortBy('xxinv_qtyoh')->sortBy('xxinv_wrh')->values();
 
         return response()->json($dataQAD);
     }
