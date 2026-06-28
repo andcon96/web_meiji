@@ -20,6 +20,8 @@ use App\Models\Settings\SingleTransferPrefix;
 use App\Models\API\SingleTransfer;
 use App\Services\WSAServices;
 use App\Models\API\TransactionHistory;
+use App\Models\API\xxinvDet;
+use App\Models\Settings\Domain;
 use App\Services\QxtendServices;
 use Exception;
 use Illuminate\Http\Request;
@@ -37,86 +39,167 @@ class APISampling extends Controller
     public function getSamplingData(Request $req)
     {
 
-        $item = $req->item?? '';
-        $lot = $req->lot ?? ''; 
+        $item = $req->item ?? '';
+        $lot = $req->lot ?? '';
         $search = $req->query('search') ?? '';
-        
-       if($lot != ''){
-        if($item != ''){
-            
-            $wsaData = (new WSAServices())->wsaGetWarehouseSampling($item,  $lot,'QC-QRT');
-            if ($wsaData[0] == 'false') {
+        // dd('a');
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+        if ($lot != '') {
+            if ($item != '') {
+                $xxinvdet = xxinvDet::where('xxinv_domain', $domainCode)
+                    ->where('xxinv_loc', 'QC-QRT')
+                    ->when($item !== '', fn($query) => $query->where('xxinv_part', $item))
+                    ->when($lot !== '', fn($query) => $query->where('xxinv_lot', $lot))
+                    ->select([
+                        'xxinv_domain  as inv_domain',
+                        'xxinv_part    as inv_part',
+                        'xxinv_lot     as inv_lot',
+                        'xxinv_wrh     as inv_wh',
+                        'xxinv_level   as inv_level',
+                        'xxinv_bin     as inv_bin',
+                        'xxinv_qtyoh   as inv_qtyoh',
+                        'xxinv_qty_smp as inv_qtysmp',
+                        'xxinv_site    as inv_site',
+                    ])
+                    ->get()
+                    ->values();
+                if ($xxinvdet->isEmpty()) {
+                    return response()->json([
+                        'Status' => 'Error',
+                        'Message' => "No Data Available"
+                    ], 422);
+                } else {
+                    return response()->json(
+                        [
+                            'DataWSA' => $xxinvdet
+                        ],
+                        200
+                    );
+                }
+                // // $wsaData = (new WSAServices())->wsaGetWarehouseSampling($item,  $lot, 'QC-QRT');
+                // if ($wsaData[0] == 'false') {
+                //     return response()->json([
+                //         'Status' => 'Error',
+                //         'Message' => "No Data Available"
+                //     ], 422);
+                // } else {
+                //     $listData = $wsaData[1];
+
+                //     return response()->json(
+                //         [
+                //             'DataWSA' => $listData
+                //         ],
+                //         200
+                //     );
+                // }
+
+                // return response()->json($wsaData[1]);
+            }
+        } else {
+
+            $xxinvdet = xxinvDet::where('xxinv_domain', $domainCode)
+                ->where('xxinv_loc', 'QC-QRT')
+                ->when($item !== '', fn($query) => $query->where('xxinv_part', $item))
+                ->select([
+                    'xxinv_domain as inv_domain',
+                    'xxinv_part   as inv_part',
+                    'xxinv_lot    as inv_lot',
+                    'xxinv_wrh    as inv_wh',
+                    'xxinv_level  as inv_level',
+                    'xxinv_bin    as inv_bin',
+                    'xxinv_qtyoh  as inv_qtyoh',
+                ])
+                ->orderBy('xxinv_part')
+                ->get()
+                ->unique('inv_part') // first row per part, same as FIRST-OF
+                ->values();
+            if ($xxinvdet->isEmpty()) {
                 return response()->json([
                     'Status' => 'Error',
                     'Message' => "No Data Available"
                 ], 422);
+            } else {
+                return response()->json(
+                    [
+                        'DataWSA' => $xxinvdet
+                    ],
+                    200
+                );
             }
-            else {
-            $listData = $wsaData[1];
+            // dd($xxinvdet);
+            // $wsaData = (new WSAServices())->wsaGetSamplingData($item,  $lot, 'QC-QRT');
+            // if ($wsaData[0] == 'false') {
+            //     return response()->json([
+            //         'Status' => 'Error',
+            //         'Message' => "No Data Available"
+            //     ], 422);
+            // } else {
+            //     $listData = $wsaData[1];
 
-            return response()->json(
-            [
-                'DataWSA' => $listData
-            ],
-            200
-        );
+            //     return response()->json(
+            //         [
+            //             'DataWSA' => $listData
+            //         ],
+            //         200
+            //     );
+            // }
+
+            return response()->json($wsaData[1]);
         }
-
-        return response()->json($wsaData[1]);
-        }
-       }
-       else{
-       
-         $wsaData = (new WSAServices())->wsaGetSamplingData($item,  $lot,'QC-QRT');
-        if ($wsaData[0] == 'false') {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "No Data Available"
-            ], 422);
-        }
-        else {
-            $listData = $wsaData[1];
-
-            return response()->json(
-            [
-                'DataWSA' => $listData
-            ],
-            200
-        );
-        }
-
-        return response()->json($wsaData[1]);
-       }
-       
-
     }
 
-     public function getLotSampling(Request $req)
+    public function getLotSampling(Request $req)
     {
 
         $item = $req->item ?? '';
-        $lot = $req->search ?? ''; 
-       
-        $wsaData = (new WSAServices())->wsaGetLotSampling($item,  $lot,'QC-QRT');
-        if ($wsaData[0] == 'false') {
+        $lot = $req->search ?? '';
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+        $xxinvDet = xxinvDet::where('xxinv_domain', $domainCode)
+            ->where('xxinv_loc', 'QC-QRT')
+            ->where('xxinv_part', $item)
+            ->when($lot !== '', fn($query) => $query->where('xxinv_lot', $lot))
+            ->select([
+                'xxinv_domain as inv_domain',
+                'xxinv_lot    as inv_lot',
+                'xxinv_site   as inv_site',
+            ])
+            ->orderBy('xxinv_lot')
+            ->get()
+            ->unique('inv_lot') // first row per xxinv_lot, same as FIRST-OF
+            ->values();
+        if ($xxinvDet->isEmpty()) {
             return response()->json([
                 'Status' => 'Error',
                 'Message' => "No Data Available"
             ], 422);
-        }
-        else {
-            $listData = $wsaData[1];
-
+        } else {
             return response()->json(
-            [
-                'DataWSA' => $listData
-            ],
-            200
-        );
+                [
+                    'DataWSA' => $xxinvDet
+                ],
+                200
+            );
         }
+        // $wsaData = (new WSAServices())->wsaGetLotSampling($item,  $lot, 'QC-QRT');
+        // if ($wsaData[0] == 'false') {
+        //     return response()->json([
+        //         'Status' => 'Error',
+        //         'Message' => "No Data Available"
+        //     ], 422);
+        // } else {
+        //     $listData = $wsaData[1];
 
-        return response()->json($wsaData[1]);
+        //     return response()->json(
+        //         [
+        //             'DataWSA' => $listData
+        //         ],
+        //         200
+        //     );
+        // }
 
+        // return response()->json($wsaData[1]);
     }
 
     public function transferSampling(Request $req)
@@ -144,61 +227,97 @@ class APISampling extends Controller
         $newRunningNbr = str_pad($nextrunningnbr, 6, '0', STR_PAD_LEFT);
         $newPrefix = $prefix . $newRunningNbr;
         */
-            $data = $req->all();
-            $item = $req->item;
-            $lot = $req->lot;
-            $sitefrom = $req->sitefrom;
-            $siteto = $req->siteto;
-            $locfrom = $req->locfrom;
-            $locto = $req->locto;
-            $whfrom = $req->whfrom;
-            $levelfrom = $req->levelfrom;
-            $binfrom = $req->binfrom;   
-            $qty = $req->qty;
-            DB::commit();
-            $hasil = (new WSAServices())->wsaTransferSamplingData($item, $lot,$sitefrom,$locto,'QC-QRT',$whfrom,$levelfrom,$binfrom,$qty);
-            
-            if ($hasil == false) {
+        $data = $req->all();
+        $item = $req->item;
+        $lot = $req->lot;
+        $sitefrom = $req->sitefrom;
+        $siteto = $req->siteto;
+        $locfrom = $req->locfrom;
+        $locto = $req->locto;
+        $whfrom = $req->whfrom;
+        $levelfrom = $req->levelfrom;
+        $binfrom = $req->binfrom;
+        $qty = $req->qty;
+        DB::beginTransaction();
+        try {
+            $domain = Domain::first();
+            $domainCode = $domain->domain ?? '';
+            $xxinvdet = xxinvDet::where('xxinv_domain', $domainCode)
+                ->where('xxinv_part', $item)
+                ->where('xxinv_lot', $lot)
+                ->where('xxinv_site', $sitefrom)
+                ->where('xxinv_loc', 'QC-QRT')
+                ->where('xxinv_wrh', $whfrom)
+                ->where('xxinv_level', $levelfrom)
+                ->where('xxinv_bin', $binfrom)
+                ->first();
+
+
+            if (!$xxinvdet) {
                 return response()->json([
                     'Status' => 'Error',
                     'Message' => "Transfer sampling Item Failed for Item : " . $item
                 ], 422);
             } else {
+                //     if xxinv_det.xxinv_qty_wrh = 0 then lvc_sumqty = xxinv_qtyoh.
+                // else lvc_sumqty = xxinv_qty_wrh.
+                // lvc_sumqty = lvc_sumqty - inpqtyoh.
+                // assign
+                // xxinv_det.xxinv_qty_smp = xxinv_det.xxinv_qty_smp + inpqtyoh
+                // xxinv_det.xxinv_qty_wrh = lvc_sumqty. 
+                // outOk = true.
+                // $lvc_sumqty = 0;
+                if ($xxinvdet->xxinv_qty_wrh == 0) {
+                    $lvc_sumqty = $xxinvdet->xxinv_qtyoh;
+                } else {
+                    $lvc_sumqty = $xxinvdet->xxinv_qty_wrh;
+                }
+                $lvc_sumqty = $lvc_sumqty - $qty;
+                $xxinvdet->xxinv_qty_smp = $xxinvdet->xxinv_qty_smp + $qty;
+                $xxinvdet->xxinv_qty_wrh = $lvc_sumqty;
+                $xxinvdet->save();
+
 
                 //getDetail Receipt
 
-                    $user = Auth::user()->name;
-                     // Transaction History
-                        $newTransactionHistory = new TransactionHistory();
-                        $newTransactionHistory->tr_nbr = 'Sampling';
-                        $newTransactionHistory->tr_order = '';
-                        $newTransactionHistory->tr_program = 'Sampling Module';
-                        $newTransactionHistory->tr_activity = 'Insert Sampling From';
-                        $newTransactionHistory->tr_user = $user ?? '';
-                        $newTransactionHistory->tr_part = $item ?? '';
-                        $newTransactionHistory->tr_uom = '';
-                        $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-                        $newTransactionHistory->tr_lot = $lot ?? '';
-                        $newTransactionHistory->tr_qty = $qty ?? '';
-                        $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
- 
-                        $newTransactionHistory->tr_site = $siteto ?? '';
-                        $newTransactionHistory->tr_location = $locto ?? '';
-                        $newTransactionHistory->tr_warehouse = $whfrom ?? '';
-                        $newTransactionHistory->tr_level = $levelfrom ?? '';
-                        $newTransactionHistory->tr_bin = $binfrom ?? '';
-                        $newTransactionHistory->tr_remark = '';
-                        $newTransactionHistory->save();
+                $user = Auth::user()->name;
+                // Transaction History
+                $newTransactionHistory = new TransactionHistory();
+                $newTransactionHistory->tr_nbr = 'Sampling';
+                $newTransactionHistory->tr_order = '';
+                $newTransactionHistory->tr_program = 'Sampling Module';
+                $newTransactionHistory->tr_activity = 'Insert Sampling From';
+                $newTransactionHistory->tr_user = $user ?? '';
+                $newTransactionHistory->tr_part = $item ?? '';
+                $newTransactionHistory->tr_uom = '';
+                $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                $newTransactionHistory->tr_lot = $lot ?? '';
+                $newTransactionHistory->tr_qty = $qty ?? '';
+                $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
 
+                $newTransactionHistory->tr_site = $siteto ?? '';
+                $newTransactionHistory->tr_location = $locto ?? '';
+                $newTransactionHistory->tr_warehouse = $whfrom ?? '';
+                $newTransactionHistory->tr_level = $levelfrom ?? '';
+                $newTransactionHistory->tr_bin = $binfrom ?? '';
+                $newTransactionHistory->tr_remark = '';
+                $newTransactionHistory->save();
+                DB::commit();
 
                 return response()->json([
                     'Status' => 'Success',
                     'Message' => "Transfer sampling Item Success for Item : " . $item
                 ], 200);
             }
-        
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Transfer sampling Item Failed for Item : " . $item . " Error : " . $e->getMessage()
+            ], 422);
+        }
+        // DB::commit();
+        // $hasil = (new WSAServices())->wsaTransferSamplingData($item, $lot,$sitefrom,$locto,'QC-QRT',$whfrom,$levelfrom,$binfrom,$qty);
+
     }
-
-
-    
 }

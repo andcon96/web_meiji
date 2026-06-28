@@ -56,6 +56,7 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::post("deleteDraftPo", [APIPurchaseOrderController::class, "deleteDraft"]);
 
     Route::get("getDataPORecheck", [APIPurchaseOrderRecheckController::class, "index"]);
+    Route::post("checkWarehouse", [APIPurchaseOrderRecheckController::class, "checkWarehouse"]);
     Route::post("submitRecheckReceipt", [APIPurchaseOrderRecheckController::class, "saveReceiptRecheck"]);
     Route::post("validateRecheck", [APIPurchaseOrderRecheckController::class, "validateRecheck"]);
     Route::post("getDuplicateKeys", [APIPurchaseOrderRecheckController::class, "getDuplicateKeys"]);
@@ -236,12 +237,14 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::get("/getSamplingData", [APISampling::class, 'getSamplingData']);
     Route::get("/getLotSampling", [APISampling::class, 'getLotSampling']);
     Route::post("/transferSampling", [APISampling::class, 'transferSampling']);
-
+    
+    
     Route::get("/getPengembalianQo", [APIPengembalian::class, 'getPengembalianQo']);
     Route::post("/checkWarehouseReturn", [APIPengembalian::class, 'checkWarehouseReturn']);
     Route::get("/getLotPengembalian", [APIPengembalian::class, 'getLotPengembalian']);
     Route::post("/transferPengembalianQo", [APIPengembalian::class, 'transferPengembalianQo']);
-
+    Route::get("getApproverSampling", [APIPengembalian::class, "getApproverSampling"]);
+    
     Route::get("getTransactionHistory", [APISingleTransfer::class, "getTransactionHistory"]);
     //lookup browse android
     Route::get("getLocData", [APIController::class, "getLocData"]);
@@ -268,5 +271,7 @@ Route::middleware(["auth:api", "token.api"])->group(function () {
     Route::post("receiptItempb", [APIBarangJadi::class, "receiptItempb"]);
     Route::get("getPenerimaanBarangData", [APIBarangJadi::class, "getPenerimaanBarangData"]);
     Route::post("getWlbBarangJadi", [APIBarangJadi::class, "getWlbBarangJadi"]);
+    
+    
 });
 // WSA Picklist
