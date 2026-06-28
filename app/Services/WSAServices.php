@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\API\PurchaseOrderDetail;
 use App\Models\API\PurchaseOrderMaster;
 use App\Models\API\ReceiptDetail;
-use App\Models\PurchaseOrder\POMstr;
 use App\Models\Settings\Domain;
 use App\Models\Settings\qxwsa;
 use Illuminate\Support\Facades\Log;
@@ -15,14 +14,14 @@ class WSAServices
 {
     private function httpHeader($req)
     {
-        return array(
+        return [
             'Content-type: text/xml;charset="utf-8"',
             'Accept: text/xml',
             'Cache-Control: no-cache',
             'Pragma: no-cache',
             'SOAPAction: ""',        // jika tidak pakai SOAPAction, isinya harus ada tanda petik 2 --> ""
-            'Content-length: ' . strlen(preg_replace("/\s+/", " ", $req))
-        );
+            'Content-length: '.strlen(preg_replace("/\s+/", ' ', $req)),
+        ];
     }
 
     private function sendQdocRequest($qdocRequest, $activeConnectionType)
@@ -34,17 +33,17 @@ class WSAServices
 
         $timeout = 0;
         $wsaUrl = $wsa_url;
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $wsaUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -56,16 +55,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -77,7 +80,7 @@ class WSAServices
 
         $xmlResp = simplexml_load_string($qdocResponse);
         $xmlResp->registerXPathNamespace('ns1', $wsa_path);
-        $dataloop   = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [$qdocResult, $dataloop];
@@ -100,27 +103,27 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_last_batch xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpbatch>' . $batch . '</inpbatch>' .
-            '<inpitem>' . $item . '</inpitem>' .
-            '</meiji_last_batch>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_last_batch xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpbatch>'.$batch.'</inpbatch>'.
+            '<inpitem>'.$item.'</inpitem>'.
+            '</meiji_last_batch>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -132,16 +135,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -151,23 +158,24 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
         $dataBatchWeb = ReceiptDetail::where('rd_status', '!=', 'Approved')->get();
 
         foreach ($dataBatchWeb as $datas) {
             if ($batch === '' || Str::contains(Str::lower($datas->rd_batch), Str::lower($batch))) {
                 $dataloop[] = (object) [
-                    't_domain'    => $domainCode,
-                    't_site'      => $datas->rd_site_penyimpanan,
-                    't_loc'       => $datas->rd_location_penyimpanan,
+                    't_domain' => $domainCode,
+                    't_site' => $datas->rd_site_penyimpanan,
+                    't_loc' => $datas->rd_location_penyimpanan,
                     't_warehouse' => $datas->rd_building_penyimpanan,
-                    't_level'     => $datas->rd_level_penyimpanan,
-                    't_bin'       => $datas->rd_bin_penyimpanan,
-                    't_lot'       => $datas->rd_batch,
+                    't_level' => $datas->rd_level_penyimpanan,
+                    't_bin' => $datas->rd_bin_penyimpanan,
+                    't_lot' => $datas->rd_batch,
                 ];
             }
         }
+
         return [
             $qdocResult,
             json_decode(json_encode($dataloop), true),
@@ -191,26 +199,26 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_gen_code xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpfldname>' . $fldname . '</inpfldname>' .
-            '</meiji_gen_code>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_gen_code xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpfldname>'.$fldname.'</inpfldname>'.
+            '</meiji_gen_code>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -222,16 +230,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -241,7 +253,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -267,25 +279,25 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_item_mstr xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '</meiji_item_mstr>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_item_mstr xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '</meiji_item_mstr>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -297,16 +309,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -316,7 +332,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -342,25 +358,25 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_loc_mstr xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '</meiji_loc_mstr>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_loc_mstr xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '</meiji_loc_mstr>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -372,16 +388,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -391,7 +411,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -417,13 +437,13 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_purchase_order xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpponbr>' . $poNbr . '</inpponbr>' .
-            '</meiji_purchase_order>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_purchase_order xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpponbr>'.$poNbr.'</inpponbr>'.
+            '</meiji_purchase_order>'.
+            '</Body>'.
             '</Envelope>';
         
         $curlOptions = array(
@@ -431,11 +451,11 @@ class WSAServices
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
+            CURLOPT_SSL_VERIFYHOST => false,
         );
 
         $getInfo = '';
@@ -448,16 +468,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -480,7 +504,7 @@ class WSAServices
             ];
         }
         $dataMaster = PurchaseOrderMaster::firstOrNew(
-            ['po_nbr' => (string)$dataloop[0]->t_poNbr]
+            ['po_nbr' => (string) $dataloop[0]->t_poNbr]
         );
         $dataMaster->po_vend = (string)$dataloop[0]->t_poVend;
         $dataMaster->po_vend_desc = (string)$dataloop[0]->t_poVendDesc;
@@ -511,7 +535,7 @@ class WSAServices
             $newDataDetail = PurchaseOrderDetail::firstOrNew(
                 [
                     'pod_po_mstr_id' => $dataMaster->id,
-                    'pod_line' => (string)$listDatas->t_podLine
+                    'pod_line' => (string) $listDatas->t_podLine,
                 ]
             );
             $newDataDetail->pod_part = (string)$listDatas->t_podPart;
@@ -539,10 +563,10 @@ class WSAServices
                 // 'pod_qty_rcpt' => (string)$listDatas->t_podQtyRcpt,
                 'pod_qty_rcpt' => (string)$newDataDetail->pod_qty_rcpt ?? '0',
                 'pod_qty_ongoing' => '0',
-                'pod_qty_potensi' =>(string)$listDatas->t_potensi ?? '1',
-                'pod_um' => (string)$listDatas->t_podUm,
-                'pt_um' => (string)$listDatas->t_ptUm,
-                'pt_pallete' => (string)$listDatas->t_ptPallete,
+                'pod_qty_potensi' => (string) $listDatas->t_potensi ?? '1',
+                'pod_um' => (string) $listDatas->t_podUm,
+                'pt_um' => (string) $listDatas->t_ptUm,
+                'pt_pallete' => (string) $listDatas->t_ptPallete,
                 'is_selected' => false, // Buat Menu Android
                 'is_expandable' => false, // Buat Menu Android
             ];
@@ -551,7 +575,7 @@ class WSAServices
         return [
             $qdocResult,
             $dataHeader,
-            $dataDetail
+            $dataDetail,
         ];
     }
 
@@ -572,28 +596,28 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_update_pod_um_conv xmlns="' . $wsa->wsa_path . '">' .
-            '<inpDomain>' . $domainCode . '</inpDomain>' .
-            '<inpPoNbr>' . $poNbr . '</inpPoNbr>' .
-            '<inpLine>' . $podLine . '</inpLine>' .
-            '<inpQtyUmConv>' . $qtyUmConv . '</inpQtyUmConv>' .
-            '</meiji_update_pod_um_conv>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_update_pod_um_conv xmlns="'.$wsa->wsa_path.'">'.
+            '<inpDomain>'.$domainCode.'</inpDomain>'.
+            '<inpPoNbr>'.$poNbr.'</inpPoNbr>'.
+            '<inpLine>'.$podLine.'</inpLine>'.
+            '<inpQtyUmConv>'.$qtyUmConv.'</inpQtyUmConv>'.
+            '</meiji_update_pod_um_conv>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -605,16 +629,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -631,7 +659,7 @@ class WSAServices
         return $qdocResult;
     }
 
-    public function wsaUpdateStockTableCustom($part, $loc, $lot, $bin, $lvl, $site, $building, $qty, $entryDate, $expDate,$potensi,$ref,$testDate)
+    public function wsaUpdateStockTableCustom($part, $loc, $lot, $bin, $lvl, $site, $building, $qty, $entryDate, $expDate, $potensi, $ref, $testDate)
     {
         $wsa = qxwsa::first();
 
@@ -642,38 +670,38 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_update_xxinv_det xmlns="' . $wsa->wsa_path . '">' .
-            '<inpDomain>' . $domainCode . '</inpDomain>' .
-            '<inpPart>' . $part . '</inpPart>' .
-            '<inpLoc>' . $loc . '</inpLoc>' .
-            '<inpLot>' . $lot . '</inpLot>' .
-            '<inpSite>' . $site . '</inpSite>' .
-            '<inpLvl>' . $lvl . '</inpLvl>' .
-            '<inpBin>' . $bin . '</inpBin>' .
-            '<inpWrh>' . $building . '</inpWrh>' .
-            '<inpQty>' . $qty . '</inpQty>' .
-            '<inpEntryDate>' . $entryDate . '</inpEntryDate>' .
-            '<inpExpDate>' . $expDate . '</inpExpDate>' .
-            '<inpTestDate>' . $testDate . '</inpTestDate>' .
-            '<inpPotensi>' . $potensi . '</inpPotensi>' .
-            '<inpRef>' . $ref . '</inpRef>' .
-            '</meiji_update_xxinv_det>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_update_xxinv_det xmlns="'.$wsa->wsa_path.'">'.
+            '<inpDomain>'.$domainCode.'</inpDomain>'.
+            '<inpPart>'.$part.'</inpPart>'.
+            '<inpLoc>'.$loc.'</inpLoc>'.
+            '<inpLot>'.$lot.'</inpLot>'.
+            '<inpSite>'.$site.'</inpSite>'.
+            '<inpLvl>'.$lvl.'</inpLvl>'.
+            '<inpBin>'.$bin.'</inpBin>'.
+            '<inpWrh>'.$building.'</inpWrh>'.
+            '<inpQty>'.$qty.'</inpQty>'.
+            '<inpEntryDate>'.$entryDate.'</inpEntryDate>'.
+            '<inpExpDate>'.$expDate.'</inpExpDate>'.
+            '<inpTestDate>'.$testDate.'</inpTestDate>'.
+            '<inpPotensi>'.$potensi.'</inpPotensi>'.
+            '<inpRef>'.$ref.'</inpRef>'.
+            '</meiji_update_xxinv_det>'.
+            '</Body>'.
             '</Envelope>';
         // Log::info($qdocRequest);
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -685,16 +713,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -706,7 +738,6 @@ class WSAServices
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-
 
         return $qdocResult;
     }
@@ -728,26 +759,26 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_ld_det xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inppart>' . $itemCode . '</inppart>' .
-            '</meiji_ld_det>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_ld_det xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inppart>'.$itemCode.'</inppart>'.
+            '</meiji_ld_det>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -759,16 +790,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -778,7 +813,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -804,32 +839,32 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_xxinv_det_wrh xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inppart>' . $itemCode . '</inppart>' .
-            '<inplot>' . $lot . '</inplot>' .
-            '<inpbin>' . $bin . '</inpbin>' .
-            '<inpwrh>' . $warehouse . '</inpwrh>' .
-            '<inplevel>' . $level . '</inplevel>' .
-            
-            '</meiji_xxinv_det_wrh>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_xxinv_det_wrh xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inppart>'.$itemCode.'</inppart>'.
+            '<inplot>'.$lot.'</inplot>'.
+            '<inpbin>'.$bin.'</inpbin>'.
+            '<inpwrh>'.$warehouse.'</inpwrh>'.
+            '<inplevel>'.$level.'</inplevel>'.
+
+            '</meiji_xxinv_det_wrh>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -841,16 +876,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -861,16 +900,16 @@ class WSAServices
         // dd($qdocRequest,$qdocResponse);
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-        
+
         return [
             $qdocResult,
             json_decode(json_encode($dataloop), true),
         ];
     }
 
-      public function wsaPenyimpananWrh($site, $itemCode, $lot, $bin, $warehouse, $level)
+    public function wsaPenyimpananWrh($site, $itemCode, $lot, $bin, $warehouse, $level)
     {
         $wsa = qxwsa::first();
 
@@ -887,32 +926,32 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_xxinv_det_wrh xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inppart>' . $itemCode . '</inppart>' .
-            '<inplot>' . $lot . '</inplot>' .
-            '<inpbin>' . $bin . '</inpbin>' .
-            '<inpwrh>' . $warehouse . '</inpwrh>' .
-            '<inplevel>' . $level . '</inplevel>' .
-            
-            '</meiji_xxinv_det_wrh>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_xxinv_det_wrh xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inppart>'.$itemCode.'</inppart>'.
+            '<inplot>'.$lot.'</inplot>'.
+            '<inpbin>'.$bin.'</inpbin>'.
+            '<inpwrh>'.$warehouse.'</inpwrh>'.
+            '<inplevel>'.$level.'</inplevel>'.
+
+            '</meiji_xxinv_det_wrh>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -924,16 +963,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -943,9 +986,9 @@ class WSAServices
         // dd($qdocRequest,$qdocResponse);
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-        
+
         return [
             $qdocResult,
             json_decode(json_encode($dataloop), true),
@@ -969,31 +1012,31 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_xxinv_det_transfer xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inppart>' . $itemCode . '</inppart>' .
-            '<inplot>' . $lot . '</inplot>' .
-            '<inpbin>' . $bin . '</inpbin>' .
-            '<inpwrh>' . $warehouse . '</inpwrh>' .
-            '<inplevel>' . $level . '</inplevel>' .
-            '</meiji_xxinv_det_transfer>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_xxinv_det_transfer xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inppart>'.$itemCode.'</inppart>'.
+            '<inplot>'.$lot.'</inplot>'.
+            '<inpbin>'.$bin.'</inpbin>'.
+            '<inpwrh>'.$warehouse.'</inpwrh>'.
+            '<inplevel>'.$level.'</inplevel>'.
+            '</meiji_xxinv_det_transfer>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -1005,16 +1048,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -1024,9 +1071,9 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-        
+
         return [
             $qdocResult,
             json_decode(json_encode($dataloop), true),
@@ -1050,25 +1097,25 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_sample_desti xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '</meiji_sample_desti>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_sample_desti xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '</meiji_sample_desti>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -1080,16 +1127,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -1099,7 +1150,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -1116,8 +1167,8 @@ class WSAServices
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
                 <Body>
-                    <meiji_cust_mstr xmlns="' . $wsa->wsa_path . '">
-                        <inpdomain>' . $domainCode . '</inpdomain>
+                    <meiji_cust_mstr xmlns="'.$wsa->wsa_path.'">
+                        <inpdomain>'.$domainCode.'</inpdomain>
                     </meiji_cust_mstr>
                 </Body>
             </Envelope>';
@@ -1133,9 +1184,9 @@ class WSAServices
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
                 <Body>
-                    <meiji_get_SO xmlns="' . $wsa->wsa_path . '">
-                        <inpdomain>' . $domainCode . '</inpdomain>
-                        <inpcust>' . $customer . '</inpcust>
+                    <meiji_get_SO xmlns="'.$wsa->wsa_path.'">
+                        <inpdomain>'.$domainCode.'</inpdomain>
+                        <inpcust>'.$customer.'</inpcust>
                     </meiji_get_SO>
                 </Body>
             </Envelope>';
@@ -1149,19 +1200,19 @@ class WSAServices
         $domain = Domain::first();
         $domainCode = $domain->domain ?? '';
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_xxinv_det_fifo xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inppart>' . $itemCode . '</inppart>' .
-            '<inplot>' . $lot . '</inplot>' .
-            '<inpbin></inpbin>' .
-            '<inpwrh></inpwrh>' .
-            '<inplevel></inplevel>' .
-            '</meiji_xxinv_det_fifo>' .
-            '</Body>' .
-            '</Envelope>';
+                '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+                '<Body>'.
+                '<meiji_xxinv_det_fifo xmlns="'.$wsa->wsa_path.'">'.
+                '<inpdomain>'.$domainCode.'</inpdomain>'.
+                '<inpsite>'.$site.'</inpsite>'.
+                '<inppart>'.$itemCode.'</inppart>'.
+                '<inplot>'.$lot.'</inplot>'.
+                '<inpbin></inpbin>'.
+                '<inpwrh></inpwrh>'.
+                '<inplevel></inplevel>'.
+                '</meiji_xxinv_det_fifo>'.
+                '</Body>'.
+                '</Envelope>';
 
         Log::channel('shipmentSchedule')->info($qdocRequest);
 
@@ -1176,10 +1227,10 @@ class WSAServices
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
                 <Body>
-                    <meiji_get_shipper_number xmlns="' . $wsa->wsa_path . '">
-                        <inpdomain>' . $domainCode . '</inpdomain>
-                        <inpship>' . $site . '</inpship>
-                        <inpidref>' . $packingReplenishmentID . '</inpidref>
+                    <meiji_get_shipper_number xmlns="'.$wsa->wsa_path.'">
+                        <inpdomain>'.$domainCode.'</inpdomain>
+                        <inpship>'.$site.'</inpship>
+                        <inpidref>'.$packingReplenishmentID.'</inpidref>
                     </meiji_get_shipper_number>
                 </Body>
             </Envelope>';
@@ -1191,7 +1242,6 @@ class WSAServices
     {
 
         $wsa = qxwsa::first();
-
 
         $qxUrl = $wsa->wsa_url;
 
@@ -1207,27 +1257,27 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_wo_mstr xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpwonbr>' . $wonbr . '</inpwonbr>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_wo_mstr xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpwonbr>'.$wonbr.'</inpwonbr>'.
 
-            '</meiji_get_wo_mstr>' .
-            '</Body>' .
+            '</meiji_get_wo_mstr>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -1239,16 +1289,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -1258,21 +1312,20 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
         $dataWO = [];
         foreach ($dataloop as $listDatas) {
 
-
             $dataWO[] = [
 
-                'id' => (string)$listDatas->t_wo_id,
-                'wonbr' => (string)$listDatas->t_wo_nbr,
-                'site' => (string)$listDatas->t_wo_site,
-                'part' => (string)$listDatas->t_wo_part,
-                'part_desc' => (string)$listDatas->t_wo_part_desc ?? '',
-                'um' => (string)$listDatas->t_wo_um,
-                'qty_ord' => (string)$listDatas->t_wo_qty_ord,
+                'id' => (string) $listDatas->t_wo_id,
+                'wonbr' => (string) $listDatas->t_wo_nbr,
+                'site' => (string) $listDatas->t_wo_site,
+                'part' => (string) $listDatas->t_wo_part,
+                'part_desc' => (string) $listDatas->t_wo_part_desc ?? '',
+                'um' => (string) $listDatas->t_wo_um,
+                'qty_ord' => (string) $listDatas->t_wo_qty_ord,
 
             ];
         }
@@ -1288,7 +1341,6 @@ class WSAServices
 
         $wsa = qxwsa::first();
 
-
         $qxUrl = $wsa->wsa_url;
 
         $qxReceiver = '';
@@ -1303,27 +1355,26 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_wo_det xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpwo>' . $wonbr . '</inpwo>' .
-            '</meiji_get_wo_det>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_wo_det xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpwo>'.$wonbr.'</inpwo>'.
+            '</meiji_get_wo_det>'.
+            '</Body>'.
             '</Envelope>';
 
-
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -1335,16 +1386,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -1354,7 +1409,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
 
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
@@ -1369,7 +1424,6 @@ class WSAServices
 
         $wsa = qxwsa::first();
 
-
         $qxUrl = $wsa->wsa_url;
 
         $qxReceiver = '';
@@ -1384,26 +1438,26 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_picklist_detail xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpwo>' . $wonbr . '</inpwo>' .
-            '</meiji_get_picklist_detail>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_picklist_detail xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpwo>'.$wonbr.'</inpwo>'.
+            '</meiji_get_picklist_detail>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -1415,16 +1469,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -1434,7 +1492,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -1460,12 +1518,12 @@ class WSAServices
         $qdocRequest = '
         <Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
             <Body>
-                <meiji_update_xxinv_qtyoh xmlns="' . $wsa->wsa_path . '">
-                    <inpdomain>' . $domainCode . '</inpdomain>
-                    <inpsite>' . $site . '</inpsite>
-                    <inpitem>' . $item . '</inpitem>
-                    <inplot>' . $lot . '</inplot>
-                    <inppick>' . $qty . '</inppick>
+                <meiji_update_xxinv_qtyoh xmlns="'.$wsa->wsa_path.'">
+                    <inpdomain>'.$domainCode.'</inpdomain>
+                    <inpsite>'.$site.'</inpsite>
+                    <inpitem>'.$item.'</inpitem>
+                    <inplot>'.$lot.'</inplot>
+                    <inppick>'.$qty.'</inppick>
                 </meiji_update_xxinv_qtyoh>
             </Body>
         </Envelope>
@@ -1473,17 +1531,17 @@ class WSAServices
 
         Log::channel('confirmShipment')->info($qdocRequest);
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -1495,16 +1553,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -1516,7 +1578,6 @@ class WSAServices
 
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
-
         return $qdocResult;
     }
 
@@ -1524,7 +1585,6 @@ class WSAServices
     {
 
         $wsa = qxwsa::first();
-
 
         $qxUrl = $wsa->wsa_url;
 
@@ -1540,26 +1600,25 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_item_mstr_wo xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '</meiji_item_mstr_wo>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_item_mstr_wo xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '</meiji_item_mstr_wo>'.
+            '</Body>'.
             '</Envelope>';
 
-
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -1571,16 +1630,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -1590,9 +1653,8 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-
 
         return [
             $qdocResult,
@@ -1605,7 +1667,6 @@ class WSAServices
 
         $wsa = qxwsa::first();
 
-
         $qxUrl = $wsa->wsa_url;
 
         $qxReceiver = '';
@@ -1620,28 +1681,28 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_picklist_detail_item xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpitem>' . $item . '</inpitem>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inploc>' . $loc . '</inploc>' .
-            '</meiji_get_picklist_detail_item>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_picklist_detail_item xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpitem>'.$item.'</inpitem>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inploc>'.$loc.'</inploc>'.
+            '</meiji_get_picklist_detail_item>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -1653,16 +1714,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -1672,7 +1737,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -1686,7 +1751,6 @@ class WSAServices
 
         $wsa = qxwsa::first();
 
-
         $qxUrl = $wsa->wsa_url;
 
         $qxReceiver = '';
@@ -1701,26 +1765,26 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_xxpick_mstr xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpstatus></inpstatus>' .
-            '</meiji_get_xxpick_mstr>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_xxpick_mstr xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpstatus></inpstatus>'.
+            '</meiji_get_xxpick_mstr>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -1732,16 +1796,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -1751,7 +1819,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -1765,7 +1833,6 @@ class WSAServices
 
         $wsa = qxwsa::first();
 
-
         $qxUrl = $wsa->wsa_url;
 
         $qxReceiver = '';
@@ -1780,26 +1847,26 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_xxpick_det xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpstatus>' . $status . '</inpstatus>' .
-            '</meiji_get_xxpick_det>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_xxpick_det xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpstatus>'.$status.'</inpstatus>'.
+            '</meiji_get_xxpick_det>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -1811,16 +1878,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -1830,9 +1901,9 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-        
+
         return [
             $qdocResult,
             $dataloop,
@@ -1844,7 +1915,6 @@ class WSAServices
 
         $wsa = qxwsa::first();
 
-
         $qxUrl = $wsa->wsa_url;
 
         $qxReceiver = '';
@@ -1859,30 +1929,30 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_update_status_xxpick xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>
-            <inppick>' . $picknbr . '</inppick>
-            <inpstatus>' . $status . '</inpstatus>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_update_status_xxpick xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>
+            <inppick>'.$picknbr.'</inppick>
+            <inpstatus>'.$status.'</inpstatus>'.
             '<inpqty>'.$qty.'</inpqty>
             <inppart>'.$part.'</inppart>
             <inplot>'.$lot.'</inplot>'.
-            '</meiji_update_status_xxpick>' .
-            '</Body>' .
+            '</meiji_update_status_xxpick>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -1894,28 +1964,33 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
         }
 
         $xmlResp = simplexml_load_string($qdocResponse);
-        
+
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
-        
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
 
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
+
         return [
             $qdocResult,
             $dataloop,
@@ -1927,7 +2002,6 @@ class WSAServices
 
         $wsa = qxwsa::first();
 
-
         $qxUrl = $wsa->wsa_url;
 
         $qxReceiver = '';
@@ -1942,37 +2016,36 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_send_qtypick_xxpick xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>
-            <inppick>' . $picknbr . '</inppick>
-            <inpwo>' . $wonbr . '</inpwo>
-            <inpwodpart>' . $wodpart . '</inpwodpart>
-            <inpsite>' . $site . '</inpsite>
-            <inploc>' . $loc . '</inploc>
-            <inplot>' . $lot . '</inplot>
-            <inpwrh>' . $wrh . '</inpwrh>
-            <inplevel>' . $level . '</inplevel>
-            <inpbin>' . $bin . '</inpbin>
-            <inpqtypick>' . $qtypick . '</inpqtypick>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_send_qtypick_xxpick xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>
+            <inppick>'.$picknbr.'</inppick>
+            <inpwo>'.$wonbr.'</inpwo>
+            <inpwodpart>'.$wodpart.'</inpwodpart>
+            <inpsite>'.$site.'</inpsite>
+            <inploc>'.$loc.'</inploc>
+            <inplot>'.$lot.'</inplot>
+            <inpwrh>'.$wrh.'</inpwrh>
+            <inplevel>'.$level.'</inplevel>
+            <inpbin>'.$bin.'</inpbin>
+            <inpqtypick>'.$qtypick.'</inpqtypick>'.
 
-
-            '</meiji_send_qtypick_xxpick>' .
-            '</Body>' .
+            '</meiji_send_qtypick_xxpick>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -1984,31 +2057,34 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
         }
-// log::info($qdocRequest);
-// log::info($qdocResponse);
+        // log::info($qdocRequest);
+        // log::info($qdocResponse);
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
-        return
-            $qdocResult;
+        return $qdocResult;
     }
 
     public function wsaGetLocationPick($site)
@@ -2016,7 +2092,6 @@ class WSAServices
 
         $wsa = qxwsa::first();
 
-
         $qxUrl = $wsa->wsa_url;
 
         $qxReceiver = '';
@@ -2031,28 +2106,27 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_loc_xxpick xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>
-            <inpsite>' . $site . '</inpsite>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_loc_xxpick xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>
+            <inpsite>'.$site.'</inpsite>'.
 
-
-            '</meiji_get_loc_xxpick>' .
-            '</Body>' .
+            '</meiji_get_loc_xxpick>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -2064,16 +2138,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -2083,7 +2161,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -2102,10 +2180,10 @@ class WSAServices
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
                 <Body>
-                    <meiji_uom_conversion xmlns="' . $wsa->wsa_path . '">
-                        <inpdomain>' . $domainCode . '</inpdomain>
-                        <inpnbr>' . $sodNbr . '</inpnbr>
-                        <inpline>' . $sodLine . '</inpline>
+                    <meiji_uom_conversion xmlns="'.$wsa->wsa_path.'">
+                        <inpdomain>'.$domainCode.'</inpdomain>
+                        <inpnbr>'.$sodNbr.'</inpnbr>
+                        <inpline>'.$sodLine.'</inpline>
                     </meiji_uom_conversion>
                 </Body>
             </Envelope>';
@@ -2113,11 +2191,10 @@ class WSAServices
         return $this->sendQdocRequest($qdocRequest, $activeConnectionType);
     }
 
-    public function wsaGetLocationTransfer($wonbr,$item,$site)
+    public function wsaGetLocationTransfer($wonbr, $item, $site)
     {
 
         $wsa = qxwsa::first();
-
 
         $qxUrl = $wsa->wsa_url;
 
@@ -2133,30 +2210,29 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_loc_transfer xmlns="' . $wsa->wsa_path . '">' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_loc_transfer xmlns="'.$wsa->wsa_path.'">'.
             '<inpdomain>'.$domainCode.'</inpdomain>'.
             '<inpsite>'.$site.'</inpsite>'.
             '<inpwonbr>'.$wonbr.'</inpwonbr>'.
-            '<inpitem>'.$item.'</inpitem>' .
+            '<inpitem>'.$item.'</inpitem>'.
 
-
-            '</meiji_get_loc_transfer>' .
-            '</Body>' .
+            '</meiji_get_loc_transfer>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -2168,16 +2244,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -2187,7 +2267,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -2196,12 +2276,10 @@ class WSAServices
         ];
     }
 
-    
-    public function wsaGetSiteTransfer($site,$item,$location)
+    public function wsaGetSiteTransfer($site, $item, $location)
     {
 
         $wsa = qxwsa::first();
-
 
         $qxUrl = $wsa->wsa_url;
 
@@ -2217,31 +2295,29 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_site_transfer xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>
-            <inpsite>' . $site . '</inpsite>' .
-             '<inpitem>' . $item . '</inpitem>' .
-             '<inplocation>' . $location . '</inplocation>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_site_transfer xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>
+            <inpsite>'.$site.'</inpsite>'.
+             '<inpitem>'.$item.'</inpitem>'.
+             '<inplocation>'.$location.'</inplocation>'.
 
-
-
-            '</meiji_get_site_transfer>' .
-            '</Body>' .
+            '</meiji_get_site_transfer>'.
+            '</Body>'.
             '</Envelope>';
         // dd($qdocRequest);
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -2253,16 +2329,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -2272,20 +2352,19 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-        
+
         return [
             $qdocResult,
             $dataloop,
         ];
     }
 
-    public function wsaGetSites(String $inppart, String $inplot)
+    public function wsaGetSites(string $inppart, string $inplot)
     {
 
         $wsa = qxwsa::first();
-
 
         $qxUrl = $wsa->wsa_url;
 
@@ -2303,7 +2382,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_sites xmlns='".  $wsa->wsa_path ."'>
+                    <meiji_get_sites xmlns='".$wsa->wsa_path."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
@@ -2312,17 +2391,17 @@ class WSAServices
             </Envelope>";
 
         /* dd($qdocRequest); */
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -2334,16 +2413,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -2353,7 +2436,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -2362,11 +2445,10 @@ class WSAServices
         ];
     }
 
-    public function wsaGetLocData(String $inppart, String $inplot, String $inpsite)
+    public function wsaGetLocData(string $inppart, string $inplot, string $inpsite)
     {
 
         $wsa = qxwsa::first();
-
 
         $qxUrl = $wsa->wsa_url;
 
@@ -2384,7 +2466,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_loc_data xmlns='".  $wsa->wsa_path ."'>
+                    <meiji_get_loc_data xmlns='".$wsa->wsa_path."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
@@ -2394,17 +2476,17 @@ class WSAServices
             </Envelope>";
 
         /* dd($qdocRequest); */
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -2416,16 +2498,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -2435,7 +2521,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -2444,7 +2530,7 @@ class WSAServices
         ];
     }
 
-    public function wsaGetInvDet($site, $loc, $warehouse,$item)
+    public function wsaGetInvDet($site, $loc, $warehouse, $item)
     {
         $wsa = qxwsa::first();
 
@@ -2461,32 +2547,32 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_xxinv_det_pick xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inppart>'.$item.'</inppart>' .
-            '<inplot></inplot>' .
-            '<inpbin/>' .
-            '<inpwrh>' . $warehouse . '</inpwrh>' .
-            '<inplevel/>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_xxinv_det_pick xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inppart>'.$item.'</inppart>'.
+            '<inplot></inplot>'.
+            '<inpbin/>'.
+            '<inpwrh>'.$warehouse.'</inpwrh>'.
+            '<inplevel/>'.
             '<inploc>'.$loc.'</inploc>'.
-            '</meiji_xxinv_det_pick>' .
-            '</Body>' .
+            '</meiji_xxinv_det_pick>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -2498,16 +2584,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -2517,14 +2607,15 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-        
+
         return [
             $qdocResult,
             json_decode(json_encode($dataloop), true),
         ];
     }
+
     public function wsaInsertPallet($site, $loc, $bin, $wrh, $level, $qty)
     {
         $wsa = qxwsa::first();
@@ -2542,9 +2633,9 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_insert_xxinvdet xmlns="' . $wsa->wsa_path . '">' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_insert_xxinvdet xmlns="'.$wsa->wsa_path.'">'.
             '<inpdomain>'.$domainCode.'</inpdomain>'.
             '<inpsite>'.$site.'</inpsite>'.
             '<inploc>'.$loc.'</inploc>'.
@@ -2552,22 +2643,22 @@ class WSAServices
             '<inpbin>'.$bin.'</inpbin>'.
             '<inpwrh>'.$wrh.'</inpwrh>'.
             '<inplevel>'.$level.'</inplevel>'.
-            '<inpqty>'.$qty.'</inpqty>' .
+            '<inpqty>'.$qty.'</inpqty>'.
             '</meiji_insert_xxinvdet>'.
-            '</Body>' .
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -2579,16 +2670,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -2601,9 +2696,7 @@ class WSAServices
         //$dataloop    = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
-        return
-            $qdocResult;
-
+        return $qdocResult;
 
     }
 
@@ -2612,7 +2705,6 @@ class WSAServices
 
         $wsa = qxwsa::first();
 
-
         $qxUrl = $wsa->wsa_url;
 
         $qxReceiver = '';
@@ -2627,27 +2719,26 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_womstr xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpwonbr>' . $wonbr . '</inpwonbr>' .
-            '</meiji_get_womstr>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_womstr xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpwonbr>'.$wonbr.'</inpwonbr>'.
+            '</meiji_get_womstr>'.
+            '</Body>'.
             '</Envelope>';
 
-
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -2659,16 +2750,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -2678,7 +2773,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
 
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
@@ -2688,12 +2783,11 @@ class WSAServices
         ];
     }
 
-    public function wsaGetPickIssue($status,$picknbr)
+    public function wsaGetPickIssue($status, $picknbr)
     {
 
         $wsa = qxwsa::first();
 
-
         $qxUrl = $wsa->wsa_url;
 
         $qxReceiver = '';
@@ -2708,27 +2802,27 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_pick_issue xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpstatus>' . $status . '</inpstatus>' .
-            '<inppick>' . $picknbr . '</inppick>' .
-            '</meiji_get_pick_issue>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_pick_issue xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpstatus>'.$status.'</inpstatus>'.
+            '<inppick>'.$picknbr.'</inppick>'.
+            '</meiji_get_pick_issue>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -2740,16 +2834,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -2759,7 +2857,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -2768,7 +2866,7 @@ class WSAServices
         ];
     }
 
-    public function wsaInvWms(String $inppart, String $inplot)
+    public function wsaInvWms(string $inppart, string $inplot)
     {
         $wsa = qxwsa::first();
 
@@ -2794,17 +2892,17 @@ class WSAServices
                             </Body>
                         </Envelope>";
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -2816,16 +2914,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -2839,8 +2941,8 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop   = $xmlResp->xpath('//ns1:tempRow');
-        $qdocResult = (string) $xmlResp->xpath('//ns1:outOK') [0];
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
+        $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         //ubah {} pada data kosong jadi ""
         $dataloop = array_map(function ($data) {
@@ -2848,15 +2950,16 @@ class WSAServices
             foreach ($data as $key => $value) {
                 $row[$key] = (string) $value;
             }
+
             return $row;
         }, $dataloop);
-        
+
         return [
             $qdocResult,
             $dataloop,
         ];
     }
-    
+
     //     public function wsaLotSerialLdDetail($lotpallet)
     // {
     //     $wsa = qxwsa::first();
@@ -2953,28 +3056,28 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<rdi_update_supp_ld_det xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inppart>' . $part . '</inppart>' .
-            '<inplot>' . $lot . '</inplot>' .
-            '<inpsupplier>' . $inpsupplier . '</inpsupplier>' .
-            '</rdi_update_supp_ld_det>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<rdi_update_supp_ld_det xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inppart>'.$part.'</inppart>'.
+            '<inplot>'.$lot.'</inplot>'.
+            '<inpsupplier>'.$inpsupplier.'</inpsupplier>'.
+            '</rdi_update_supp_ld_det>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -2986,16 +3089,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -3009,7 +3116,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return $qdocResult;
@@ -3033,26 +3140,26 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<rdi_check_location xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inploc>' . $location . '</inploc>' .
-            '</rdi_check_location>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<rdi_check_location xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inploc>'.$location.'</inploc>'.
+            '</rdi_check_location>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -3064,16 +3171,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -3087,7 +3198,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -3099,7 +3210,6 @@ class WSAServices
     public function wsaCheckItem($item) //check item nya ada di qad atau tidak + menampilkan balancen stok
     {
         $wsa = qxwsa::first();
-
 
         $qxUrl = $wsa->wsa_url;
 
@@ -3115,26 +3225,26 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<rdi_check_item xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpPart>' . $item . '</inpPart>' .
-            '</rdi_check_item>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<rdi_check_item xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpPart>'.$item.'</inpPart>'.
+            '</rdi_check_item>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -3146,16 +3256,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -3169,7 +3283,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -3196,26 +3310,26 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<rdi_check_supplier xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpSupp>' . $supplier . '</inpSupp>' .
-            '</rdi_check_supplier>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<rdi_check_supplier xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpSupp>'.$supplier.'</inpSupp>'.
+            '</rdi_check_supplier>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -3227,16 +3341,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -3250,7 +3368,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -3277,25 +3395,25 @@ class WSAServices
 
         $qdocRequest = '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
                     <Body>
-                        <rdi_check_item_data_inquiry xmlns="' . $wsa->wsa_path . '">
-                            <inpdomain>' . $domainCode . '</inpdomain>
-                            <inpitem>' . $item . '</inpitem>
-                            <inploc>' . $location . '</inploc>
+                        <rdi_check_item_data_inquiry xmlns="'.$wsa->wsa_path.'">
+                            <inpdomain>'.$domainCode.'</inpdomain>
+                            <inpitem>'.$item.'</inpitem>
+                            <inploc>'.$location.'</inploc>
                         </rdi_check_item_data_inquiry>
                     </Body>
                 </Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -3307,16 +3425,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -3330,7 +3452,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
         $itemCode = (string) $xmlResp->xpath('//ns1:ItemCode')[0];
         $itemDesc = (string) $xmlResp->xpath('//ns1:ItemDesc')[0];
@@ -3341,7 +3463,7 @@ class WSAServices
             $itemCode,
             $itemDesc,
             $totalQty,
-            $dataloop
+            $dataloop,
         ];
     }
 
@@ -3363,25 +3485,25 @@ class WSAServices
 
         $qdocRequest = '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
                     <Body>
-                        <rdi_check_loc_lot xmlns="' . $wsa->wsa_path . '">
-                            <inpdomain>' . $domainCode . '</inpdomain>
-                            <inplot>' . $lotpallet . '</inplot>
-                            <inploc>' .$location. '</inploc>
+                        <rdi_check_loc_lot xmlns="'.$wsa->wsa_path.'">
+                            <inpdomain>'.$domainCode.'</inpdomain>
+                            <inplot>'.$lotpallet.'</inplot>
+                            <inploc>'.$location.'</inploc>
                         </rdi_check_loc_lot>
                     </Body>
                 </Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -3393,16 +3515,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -3416,16 +3542,16 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
             $qdocResult,
-            $dataloop
+            $dataloop,
         ];
     }
 
-    public function wsaGetSamplingData($item, $lot,$status)
+    public function wsaGetSamplingData($item, $lot, $status)
     {
         $wsa = qxwsa::first();
 
@@ -3442,29 +3568,29 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_sampling_data xmlns="' . $wsa->wsa_path . '">
-                <inpdomain>' . $domainCode . '</inpdomain>
-                <inploc>' . $status . '</inploc>
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_sampling_data xmlns="'.$wsa->wsa_path.'">
+                <inpdomain>'.$domainCode.'</inpdomain>
+                <inploc>'.$status.'</inploc>
                 <inppart>'.$item.'</inppart>
                 <inplot>'.$lot.'</inplot>
             </meiji_get_sampling_data>'.
-           
-            '</Body>' .
+
+            '</Body>'.
             '</Envelope>';
-        
-        $curlOptions = array(
+
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -3476,26 +3602,30 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
         }
-        dd($qdocRequest, $qdocResponse);
+
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -3504,7 +3634,7 @@ class WSAServices
         ];
     }
 
-     public function wsaGetWarehouseSampling($item, $lot,$status)
+    public function wsaGetWarehouseSampling($item, $lot, $status)
     {
         $wsa = qxwsa::first();
 
@@ -3521,29 +3651,29 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_warehouse_sampling xmlns="' . $wsa->wsa_path . '">
-                <inpdomain>' . $domainCode . '</inpdomain>
-                <inploc>' . $status . '</inploc>
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_warehouse_sampling xmlns="'.$wsa->wsa_path.'">
+                <inpdomain>'.$domainCode.'</inpdomain>
+                <inploc>'.$status.'</inploc>
                 <inppart>'.$item.'</inppart>
                 <inplot>'.$lot.'</inplot>
             </meiji_get_warehouse_sampling>'.
-           
-            '</Body>' .
+
+            '</Body>'.
             '</Envelope>';
-        
-        $curlOptions = array(
+
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -3555,16 +3685,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -3574,16 +3708,16 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-        
+
         return [
             $qdocResult,
             json_decode(json_encode($dataloop), true),
         ];
     }
 
-     public function wsaGetLotSampling($item, $lot,$status)
+    public function wsaGetLotSampling($item, $lot, $status)
     {
         $wsa = qxwsa::first();
 
@@ -3600,29 +3734,29 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_lot_sampling xmlns="' . $wsa->wsa_path . '">
-                <inpdomain>' . $domainCode . '</inpdomain>
-                <inploc>' . $status . '</inploc>
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_lot_sampling xmlns="'.$wsa->wsa_path.'">
+                <inpdomain>'.$domainCode.'</inpdomain>
+                <inploc>'.$status.'</inploc>
                 <inppart>'.$item.'</inppart>
                 <inplot>'.$lot.'</inplot>
             </meiji_get_lot_sampling>'.
-           
-            '</Body>' .
+
+            '</Body>'.
             '</Envelope>';
-        
-        $curlOptions = array(
+
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -3634,16 +3768,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -3653,7 +3791,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -3662,7 +3800,7 @@ class WSAServices
         ];
     }
 
-    public function wsaTransferSamplingData($item, $lot,$site,$loc,$locto,$warehouse,$level,$bin,$qtyoh)
+    public function wsaTransferSamplingData($item, $lot, $site, $loc, $locto, $warehouse, $level, $bin, $qtyoh)
     {
         $wsa = qxwsa::first();
 
@@ -3679,9 +3817,9 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_transfer_sampling xmlns="' . $wsa->wsa_path . '">
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_transfer_sampling xmlns="'.$wsa->wsa_path.'">
                 <inpdomain>'.$domainCode.'</inpdomain>
                 <inppart>'.$item.'</inppart>
                 <inplot>'.$lot.'</inplot>
@@ -3693,21 +3831,20 @@ class WSAServices
                 <inpbin>'.$bin.'</inpbin>
                 <inpqtyoh>'.$qtyoh.'</inpqtyoh>
             </meiji_transfer_sampling>'.
-            '</Body>' .
+            '</Body>'.
             '</Envelope>';
-           
-        
-        $curlOptions = array(
+
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -3719,16 +3856,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -3739,30 +3880,29 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
-        if ($qdocResult === false){
+        if ($qdocResult === false) {
             log::channel('samplingLog')->info('masuk false');
-           return 'false';
-        }
-        else{
+
+            return 'false';
+        } else {
             log::channel('samplingLog')->info('masuk true');
+
             return 'true';
         }
-        
+
     }
 
-   
     public function wsaGetWrhData(
-        String $inppart,
-        String $inplot,
-        String $inpsite,
-        String $inploc)
+        string $inppart,
+        string $inplot,
+        string $inpsite,
+        string $inploc)
     {
 
         $wsa = qxwsa::first();
-
 
         $qxUrl = $wsa->wsa_url;
 
@@ -3780,7 +3920,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_wrh_data xmlns='".  $wsa->wsa_path ."'>
+                    <meiji_get_wrh_data xmlns='".$wsa->wsa_path."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
@@ -3791,17 +3931,17 @@ class WSAServices
             </Envelope>";
 
         /* dd($qdocRequest); */
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -3813,16 +3953,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -3832,7 +3976,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -3841,17 +3985,15 @@ class WSAServices
         ];
     }
 
-
     public function wsaGetLevelData(
-        String $inppart,
-        String $inplot,
-        String $inpsite,
-        String $inploc,
-        String $inpwrh)
+        string $inppart,
+        string $inplot,
+        string $inpsite,
+        string $inploc,
+        string $inpwrh)
     {
 
         $wsa = qxwsa::first();
-
 
         $qxUrl = $wsa->wsa_url;
 
@@ -3869,7 +4011,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_level_data xmlns='".  $wsa->wsa_path ."'>
+                    <meiji_get_level_data xmlns='".$wsa->wsa_path."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
@@ -3881,17 +4023,17 @@ class WSAServices
             </Envelope>";
 
         /* dd($qdocRequest); */
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -3903,16 +4045,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -3922,7 +4068,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -3931,18 +4077,16 @@ class WSAServices
         ];
     }
 
-
     public function wsaGetBinData(
-        String $inppart,
-        String $inplot,
-        String $inpsite,
-        String $inploc,
-        String $inpwrh,
-        String $inpLevel)
+        string $inppart,
+        string $inplot,
+        string $inpsite,
+        string $inploc,
+        string $inpwrh,
+        string $inpLevel)
     {
 
         $wsa = qxwsa::first();
-
 
         $qxUrl = $wsa->wsa_url;
 
@@ -3960,7 +4104,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_bin_data xmlns='".  $wsa->wsa_path ."'>
+                    <meiji_get_bin_data xmlns='".$wsa->wsa_path."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
@@ -3973,17 +4117,17 @@ class WSAServices
             </Envelope>";
 
         /* dd($qdocRequest); */
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -3995,16 +4139,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -4014,7 +4162,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -4023,11 +4171,10 @@ class WSAServices
         ];
     }
 
-    public function wsaGetLevelForPo($part,$lot,$site,$wrh,$loc,$level)
+    public function wsaGetLevelForPo($part, $lot, $site, $wrh, $loc, $level)
     {
 
         $wsa = qxwsa::first();
-
 
         $qxUrl = $wsa->wsa_url;
 
@@ -4056,19 +4203,18 @@ class WSAServices
                     </meiji_get_level_for_po>
                 </Body>
             </Envelope>";
-        
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -4080,16 +4226,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -4099,7 +4249,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -4108,12 +4258,10 @@ class WSAServices
         ];
     }
 
-
-    public function wsaGetBinForPo($part,$lot,$site,$wrh,$loc,$level,$bin)
+    public function wsaGetBinForPo($part, $lot, $site, $wrh, $loc, $level, $bin)
     {
 
         $wsa = qxwsa::first();
-
 
         $qxUrl = $wsa->wsa_url;
 
@@ -4144,18 +4292,17 @@ class WSAServices
                 </Body>
             </Envelope>";
 
-        
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -4167,26 +4314,30 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
         }
-// dd($qdocRequest,$qdocResponse);
+        // dd($qdocRequest,$qdocResponse);
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -4195,11 +4346,10 @@ class WSAServices
         ];
     }
 
-    public function wsaCekItemLot(String $inppart, String $inplot)
+    public function wsaCekItemLot(string $inppart, string $inplot)
     {
 
         $wsa = qxwsa::first();
-
 
         $qxUrl = $wsa->wsa_url;
 
@@ -4217,7 +4367,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_cek_itemlot xmlns='".  $wsa->wsa_path ."'>
+                    <meiji_cek_itemlot xmlns='".$wsa->wsa_path."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
@@ -4226,17 +4376,17 @@ class WSAServices
             </Envelope>";
 
         /* dd($qdocRequest); */
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -4248,16 +4398,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -4273,15 +4427,15 @@ class WSAServices
 
         return [
             $qdocResult,
-            $qdocMsg
+            $qdocMsg,
             // $dataloop,
         ];
     }
-     public function wsaGetPotensi($part,$lot,$site,$loc)
+
+    public function wsaGetPotensi($part, $lot, $site, $loc)
     {
 
         $wsa = qxwsa::first();
-
 
         $qxUrl = $wsa->wsa_url;
 
@@ -4311,17 +4465,17 @@ class WSAServices
             </Envelope>";
 
         /* dd($qdocRequest); */
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -4333,16 +4487,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -4352,7 +4510,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -4378,32 +4536,32 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_warehouse xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inppart>' . $itemCode . '</inppart>' .
-            '<inplot>' . $lot . '</inplot>' .
-            '<inpbin>' . $bin . '</inpbin>' .
-            '<inpwrh>' . $warehouse . '</inpwrh>' .
-            '<inplevel>' . $level . '</inplevel>' .
-            
-            '</meiji_get_warehouse>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_warehouse xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inppart>'.$itemCode.'</inppart>'.
+            '<inplot>'.$lot.'</inplot>'.
+            '<inpbin>'.$bin.'</inpbin>'.
+            '<inpwrh>'.$warehouse.'</inpwrh>'.
+            '<inplevel>'.$level.'</inplevel>'.
+
+            '</meiji_get_warehouse>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -4415,16 +4573,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -4434,16 +4596,16 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-        
+
         return [
             $qdocResult,
             json_decode(json_encode($dataloop), true),
         ];
     }
 
-      public function wsaPenyimpananPalet($site, $itemCode, $lot, $bin, $warehouse, $level,$location)
+    public function wsaPenyimpananPalet($site, $itemCode, $lot, $bin, $warehouse, $level, $location)
     {
         $wsa = qxwsa::first();
 
@@ -4460,32 +4622,32 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_xxinv_det_palet xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inppart>' . $itemCode . '</inppart>' .
-            '<inplot>' . $lot . '</inplot>' .
-            '<inpbin>' . $bin . '</inpbin>' .
-            '<inpwrh>' . $warehouse . '</inpwrh>' .
-            '<inplevel>' . $level . '</inplevel>' .
-            '<inploc>' . $location . '</inploc>' .
-            '</meiji_xxinv_det_palet>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_xxinv_det_palet xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inppart>'.$itemCode.'</inppart>'.
+            '<inplot>'.$lot.'</inplot>'.
+            '<inpbin>'.$bin.'</inpbin>'.
+            '<inpwrh>'.$warehouse.'</inpwrh>'.
+            '<inplevel>'.$level.'</inplevel>'.
+            '<inploc>'.$location.'</inploc>'.
+            '</meiji_xxinv_det_palet>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -4497,16 +4659,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -4516,19 +4682,20 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
+
         //dd($qdocRequest,$qdocResponse);
         return [
             $qdocResult,
             json_decode(json_encode($dataloop), true),
         ];
     }
-    public function wsaGetWlb($part,$lot,$site,$loc,$wrh,$level,$bin)
+
+    public function wsaGetWlb($part, $lot, $site, $loc, $wrh, $level, $bin)
     {
 
         $wsa = qxwsa::first();
-
 
         $qxUrl = $wsa->wsa_url;
 
@@ -4558,19 +4725,18 @@ class WSAServices
                     </meiji_get_wlb_transfer>
                 </Body>
             </Envelope>";
-        
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -4582,26 +4748,30 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
         }
-        
+
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
- 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -4610,11 +4780,10 @@ class WSAServices
         ];
     }
 
-      public function wsaGetPtUm($part)
+    public function wsaGetPtUm($part)
     {
 
         $wsa = qxwsa::first();
-
 
         $qxUrl = $wsa->wsa_url;
 
@@ -4635,23 +4804,22 @@ class WSAServices
                     <meiji_get_pt_um xmlns='".$wsa->wsa_path."'>
                          <inpdomain>$domainCode</inpdomain>
                         <inppart>$part</inppart>
-                        
+
                     </meiji_get_pt_um>
                 </Body>
             </Envelope>";
-        
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -4663,26 +4831,30 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
         }
-        
+
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
- 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         return [
@@ -4691,7 +4863,7 @@ class WSAServices
         ];
     }
 
-         public function wsaGetWarehouseCheckReturn($item, $lot,$status,$warehouse,$level,$bin)
+    public function wsaGetWarehouseCheckReturn($item, $lot, $status, $warehouse, $level, $bin)
     {
         $wsa = qxwsa::first();
 
@@ -4708,32 +4880,32 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_check_warehouse_sampling xmlns="' . $wsa->wsa_path . '">
-                <inpdomain>' . $domainCode . '</inpdomain>
-                <inploc>' . $status . '</inploc>
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_check_warehouse_sampling xmlns="'.$wsa->wsa_path.'">
+                <inpdomain>'.$domainCode.'</inpdomain>
+                <inploc>'.$status.'</inploc>
                 <inppart>'.$item.'</inppart>
                 <inplot>'.$lot.'</inplot>
-                <inpwarehouse>' . $warehouse . '</inpwarehouse>
-                <inplevel>' . $level . '</inplevel>
-                <inpbin>' . $bin . '</inpbin>
+                <inpwarehouse>'.$warehouse.'</inpwarehouse>
+                <inplevel>'.$level.'</inplevel>
+                <inpbin>'.$bin.'</inpbin>
             </meiji_check_warehouse_sampling>'.
-           
-            '</Body>' .
+
+            '</Body>'.
             '</Envelope>';
-        
-        $curlOptions = array(
+
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -4745,39 +4917,42 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
         }
-        
+
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-        
+
         return [
             $qdocResult,
             json_decode(json_encode($dataloop), true),
         ];
     }
 
-     public function wsaUpdatePenerimaanBarang($part, $loc, $locto, $lot, $site, $siteto, $level, $levelto, $bin, $binto, $wrh, $wrhto, $qty)
+    public function wsaUpdatePenerimaanBarang($part, $loc, $locto, $lot, $site, $siteto, $level, $levelto, $bin, $binto, $wrh, $wrhto, $qty)
     {
 
         $wsa = qxwsa::first();
-
 
         $qxUrl = $wsa->wsa_url;
 
@@ -4793,38 +4968,38 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_update_penerimaan_barang xmlns="' . $wsa->wsa_path . '">' .
-            '<inpDomain>' . $domainCode . '</inpDomain>'.
-            '<inpPart>' . $part . '</inpPart>'.
-            '<inpLoc>' . $loc . '</inpLoc>'.
-            '<inpLocTo>' . $locto . '</inpLocTo>'.
-            '<inpLot>' . $lot . '</inpLot>'.
-            '<inpSite>' . $site . '</inpSite>'.
-            '<inpSiteTo>' . $siteto . '</inpSiteTo>'.
-            '<inpLvl>' . $level . '</inpLvl>'.
-            '<inpLvlTo>' . $levelto . '</inpLvlTo>'.
-            '<inpBin>' . $bin . '</inpBin>'.
-            '<inpBinTo>' . $binto . '</inpBinTo>'.
-            '<inpWrh>' . $wrh . '</inpWrh>'.
-            '<inpWrhTo>' . $wrhto . '</inpWrhTo>'.
-            '<inpQty>' . $qty . '</inpQty>'.
-            '</meiji_update_penerimaan_barang>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_update_penerimaan_barang xmlns="'.$wsa->wsa_path.'">'.
+            '<inpDomain>'.$domainCode.'</inpDomain>'.
+            '<inpPart>'.$part.'</inpPart>'.
+            '<inpLoc>'.$loc.'</inpLoc>'.
+            '<inpLocTo>'.$locto.'</inpLocTo>'.
+            '<inpLot>'.$lot.'</inpLot>'.
+            '<inpSite>'.$site.'</inpSite>'.
+            '<inpSiteTo>'.$siteto.'</inpSiteTo>'.
+            '<inpLvl>'.$level.'</inpLvl>'.
+            '<inpLvlTo>'.$levelto.'</inpLvlTo>'.
+            '<inpBin>'.$bin.'</inpBin>'.
+            '<inpBinTo>'.$binto.'</inpBinTo>'.
+            '<inpWrh>'.$wrh.'</inpWrh>'.
+            '<inpWrhTo>'.$wrhto.'</inpWrhTo>'.
+            '<inpQty>'.$qty.'</inpQty>'.
+            '</meiji_update_penerimaan_barang>'.
+            '</Body>'.
             '</Envelope>';
-        
-        $curlOptions = array(
+
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -4836,16 +5011,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -4853,18 +5032,18 @@ class WSAServices
         // log::info($qdocRequest);
         // log::info($qdocResponse);
         $xmlResp = simplexml_load_string($qdocResponse);
-        
+
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
-        
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
 
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
+
         return [
             $qdocResult,
             $dataloop,
         ];
     }
-
 
     public function wsaGetWOPrint($wo, $site, $part, $lot)
     {
@@ -4884,30 +5063,30 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_wo_print xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpwo>' . $wo . '</inpwo>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inppart>' . $part . '</inppart>' .
-            '<inplot>' . $lot . '</inplot>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_wo_print xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpwo>'.$wo.'</inpwo>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inppart>'.$part.'</inppart>'.
+            '<inplot>'.$lot.'</inplot>'.
 
-            '</meiji_wo_print>' .
-            '</Body>' .
+            '</meiji_wo_print>'.
+            '</Body>'.
             '</Envelope>';
 
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
             CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -4919,16 +5098,20 @@ class WSAServices
         if ($curl) {
             curl_setopt_array($curl, $curlOptions);
             $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
 
             foreach (curl_getinfo($curl) as $key => $value) {
                 if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
                 }
             }
             curl_close($curl);
@@ -4938,23 +5121,22 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
         $dataWO = [];
         foreach ($dataloop as $listDatas) {
 
-
             $dataWO[] = [
 
-                'wo' => (string)$listDatas->t_nbr,
-                'part' => (string)$listDatas->t_part,
-                'site' => (string)$listDatas->t_site,
-                'lot' => (string)$listDatas->t_lot,
-                'desc1' => (string)$listDatas->t_desc1,
-                'desc2' => (string)$listDatas->t_desc2,
-                'ref' => (string)$listDatas->t_ref,
-                'eff_date' => (string)$listDatas->t_effdate,
-                'exp_date' => (string)$listDatas->t_exp,
+                'wo' => (string) $listDatas->t_nbr,
+                'part' => (string) $listDatas->t_part,
+                'site' => (string) $listDatas->t_site,
+                'lot' => (string) $listDatas->t_lot,
+                'desc1' => (string) $listDatas->t_desc1,
+                'desc2' => (string) $listDatas->t_desc2,
+                'ref' => (string) $listDatas->t_ref,
+                'eff_date' => (string) $listDatas->t_effdate,
+                'exp_date' => (string) $listDatas->t_exp,
 
             ];
         }
@@ -4963,6 +5145,98 @@ class WSAServices
             $qdocResult,
             $dataWO,
         ];
+    }
+
+    public function listShipmentScheduleWSA($shipperNumber, $site)
+    {
+        $wsa = qxwsa::first();
+
+        if (! $wsa) {
+            return ['false', [], 'WSA configuration not found'];
+        }
+
+        $qxUrl = $wsa->wsa_url;
+        $timeout = 0;
+
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+        $qdocRequest =
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_abs_mstr xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.  // ← lowercase
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inpparid>'.$shipperNumber.'</inpparid>'.
+            '</meiji_abs_mstr>'.
+            '</Body>'.
+            '</Envelope>';
+
+        $curlOptions = [
+            CURLOPT_URL => $qxUrl,
+            CURLOPT_CONNECTTIMEOUT => $timeout,
+            CURLOPT_TIMEOUT => $timeout + 120,
+            CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
+
+        $qdocResponse = '';
+        $curlErrno = 0;
+        $curlError = '';
+        $httpCode = 0;
+
+        $curl = curl_init();
+        if ($curl) {
+            curl_setopt_array($curl, $curlOptions);
+            $qdocResponse = curl_exec($curl);
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+
+            foreach (curl_getinfo($curl) as $key => $value) {
+                if ($key === 'http_code') {
+                    $httpCode = $value;
+                }
+            }
+            curl_close($curl);
+        }
+
+        // Log untuk debugging
+        Log::info('[WSA] listShipmentScheduleWSA Request', ['payload' => $qdocRequest]);
+        Log::info('[WSA] listShipmentScheduleWSA Response', ['response' => $qdocResponse]);
+
+        // Tangani cURL error
+        if ($curlErrno !== 0) {
+            Log::error('[WSA] cURL Error', ['errno' => $curlErrno, 'error' => $curlError]);
+
+            return ['false', [], $curlError];
+        }
+
+        // Tangani HTTP error
+        if ($httpCode !== 200) {
+            Log::error('[WSA] HTTP Error', ['http_code' => $httpCode]);
+
+            return ['false', [], "HTTP Error: $httpCode"];
+        }
+
+        // Parse XML response
+        $xmlResp = simplexml_load_string($qdocResponse);
+
+        if ($xmlResp === false) {
+            Log::error('[WSA] Failed to parse XML response');
+
+            return ['false', [], 'Invalid XML response'];
+        }
+
+        $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
+
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
+        $qdocResult = (string) ($xmlResp->xpath('//ns1:outOK')[0] ?? 'false');
+        $qdocMessage = (string) ($xmlResp->xpath('//ns1:outMsg')[0] ?? '');
+
+        return [$qdocResult, $dataloop, $qdocMessage];
     }
 
     public function wsaInsertCrtWms($site, $itemCode, $lot, $ref, $qty)

@@ -6,13 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\GeneralResources;
 use App\Models\API\PackingReplenishment\PackingReplenishmentApproval;
 use App\Models\API\PackingReplenishment\PackingReplenishmentMstr;
-use App\Models\API\ShipmentSchedule\ShipmentScheduleDet;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleMstr;
 use App\Models\Settings\qxwsa;
 use App\Models\Settings\Role;
 use App\Models\Settings\User;
 use App\Services\PackingReplenishmentServices;
-use Exception;
+use App\Services\WSAServices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -22,8 +21,8 @@ class APIPackingReplenishmentController extends Controller
     public function index(Request $request)
     {
         $data = PackingReplenishmentMstr::query()->with([
-            "getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster",
-            "getCreatedBy:id,name,username",
+            'getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster',
+            'getCreatedBy:id,name,username',
         ]);
 
         if ($request->search) {
@@ -31,28 +30,28 @@ class APIPackingReplenishmentController extends Controller
 
             $data->where(function ($q) use ($search) {
                 // cari customer
-                $q->where("prm_shipper_nbr", "LIKE", "%" . $search . "%")
+                $q->where('prm_shipper_nbr', 'LIKE', '%'.$search.'%')
 
                     // cari customer
                     ->orWhereHas(
-                        "getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster",
+                        'getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster',
                         function ($query) use ($search) {
                             $query
-                                ->where("ssm_cust_code", "LIKE", "%" . $search . "%")
-                                ->orWhere("ssm_cust_desc", "LIKE", "%" . $search . "%");
+                                ->where('ssm_cust_code', 'LIKE', '%'.$search.'%')
+                                ->orWhere('ssm_cust_desc', 'LIKE', '%'.$search.'%');
                         },
                     )
 
                     // cari SO + item code
-                    ->orWhereHas("getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet", function ($query) use (
+                    ->orWhereHas('getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet', function ($query) use (
                         $search,
                     ) {
-                        $query->where("ssd_sod_nbr", "LIKE", "%" . $search . "%")->orWhere("ssd_sod_part", "LIKE", "%" . $search . "%");
+                        $query->where('ssd_sod_nbr', 'LIKE', '%'.$search.'%')->orWhere('ssd_sod_part', 'LIKE', '%'.$search.'%');
                     });
             });
         }
 
-        $data = $data->orderBy("id", "desc")->paginate(10);
+        $data = $data->orderBy('id', 'desc')->paginate(10);
 
         return GeneralResources::collection($data);
     }
@@ -60,17 +59,17 @@ class APIPackingReplenishmentController extends Controller
     public function listShipmentSchedule()
     {
         $listShipmentSchedule = ShipmentScheduleMstr::whereDoesntHave(
-            "getShipmentScheduleDetail.getShipmentScheduleLocation.getPackingReplenishmentDet",
+            'getShipmentScheduleDetail.getShipmentScheduleLocation.getPackingReplenishmentDet',
         )
-            ->with(["getShipmentScheduleDetail.getShipmentScheduleLocation"])
-            ->orderBy("ssm_number", "desc")
+            ->with(['getShipmentScheduleDetail.getShipmentScheduleLocation'])
+            ->orderBy('ssm_number', 'desc')
             ->get();
 
         if ($listShipmentSchedule->count() == 0) {
             return response()->json(
                 [
-                    "Status" => "Error",
-                    "Message" => "No Shipment Schedule found.",
+                    'Status' => 'Error',
+                    'Message' => 'No Shipment Schedule found.',
                 ],
                 422,
             );
@@ -78,10 +77,53 @@ class APIPackingReplenishmentController extends Controller
 
         return response()->json(
             [
-                "listShipmentSchedule" => $listShipmentSchedule,
+                'listShipmentSchedule' => $listShipmentSchedule,
             ],
             200,
         );
+    }
+
+    public function listShipmentScheduleWSA(Request $request)
+    {
+        $shipperNumber = $request->query('shipperNumber') ?? $request->shipperNumber;
+        $site = $request->query('site') ?? $request->site;
+
+        $shipperNumber = $request->shipperNumber;
+        $site = $request->site;
+
+        $hasil = (new WSAServices())->listShipmentScheduleWSA($shipperNumber, $site);
+
+        // Fix: destructuring 3 elemen sesuai return service
+        [$qdocResult, $dataloop, $qdocMessage] = $hasil;
+
+        if ($qdocResult !== 'true') {
+            return response()->json([
+                'success' => false,
+                'message' => $qdocMessage ?: 'Failed to fetch shipment schedule from WSA',
+                'data' => [],
+            ], 422);
+        }
+
+        $rows = [];
+        foreach ($dataloop as $row) {
+            $rows[] = [
+                'domain' => (string) $row->t_domain,
+                'site' => (string) $row->t_site,
+                'part' => (string) $row->t_part,
+                'desc' => (string) $row->t_desc,
+                'um' => (string) $row->t_um,
+                'loc' => (string) $row->t_loc,
+                'line' => (string) $row->t_line,
+                'lot' => (string) $row->t_lot,
+                'qty' => (int) $row->t_qty,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Shipment schedule fetched successfully',
+            'data' => $rows,
+        ], 200);
     }
 
     public function store(Request $request)
@@ -100,8 +142,8 @@ class APIPackingReplenishmentController extends Controller
         if ($saveData == false) {
             return response()->json(
                 [
-                    "Status" => "Error",
-                    "Message" => "Failed To Save Packing Replenishment.",
+                    'Status' => 'Error',
+                    'Message' => 'Failed To Save Packing Replenishment.',
                 ],
                 422,
             );
@@ -109,11 +151,11 @@ class APIPackingReplenishmentController extends Controller
 
         return response()->json(
             [
-                "status" => "success",
-                "message" => "Packing Replenishment has been created",
+                'status' => 'success',
+                'message' => 'Packing Replenishment has been created',
             ],
             200,
-            ["Content-Type" => "application/json"],
+            ['Content-Type' => 'application/json'],
             JSON_UNESCAPED_UNICODE,
         );
     }
@@ -121,10 +163,10 @@ class APIPackingReplenishmentController extends Controller
     public function approverList()
     {
         $users = user::with('getRole')
-        ->whereRelation('getRole','role_android_acc','like','%AP03%')
-        ->where("is_active", "Active")
-        ->orderBy('username','asc')
-        ->get(["id", "name"]);
+            ->whereRelation('getRole', 'role_android_acc', 'like', '%AP03%')
+            ->where('is_active', 'Active')
+            ->orderBy('username', 'asc')
+            ->get(['id', 'name']);
         // $role = Role::where("role_code", "SH")->first();
         // $users = User::where("role_id", $role->id)
         //     ->where("is_active", "Active")
@@ -133,8 +175,8 @@ class APIPackingReplenishmentController extends Controller
         if ($users->count() == 0) {
             return response()->json(
                 [
-                    "Status" => "Error",
-                    "Message" => "No users found.",
+                    'Status' => 'Error',
+                    'Message' => 'No users found.',
                 ],
                 422,
             );
@@ -142,7 +184,7 @@ class APIPackingReplenishmentController extends Controller
 
         return response()->json(
             [
-                "users" => $users,
+                'users' => $users,
             ],
             200,
         );
@@ -164,8 +206,8 @@ class APIPackingReplenishmentController extends Controller
         if ($rejectPackingReplenishment == false) {
             return response()->json(
                 [
-                    "Status" => "Error",
-                    "Message" => "Failed To reject shipment preparation.",
+                    'Status' => 'Error',
+                    'Message' => 'Failed To reject shipment preparation.',
                 ],
                 422,
             );
@@ -173,11 +215,11 @@ class APIPackingReplenishmentController extends Controller
 
         return response()->json(
             [
-                "status" => "success",
-                "message" => "Shipment preparation has been rejected",
+                'status' => 'success',
+                'message' => 'Shipment preparation has been rejected',
             ],
             200,
-            ["Content-Type" => "application/json"],
+            ['Content-Type' => 'application/json'],
             JSON_UNESCAPED_UNICODE,
         );
     }
@@ -201,8 +243,8 @@ class APIPackingReplenishmentController extends Controller
         if ($approvePackingReplenishment == false) {
             return response()->json(
                 [
-                    "Status" => "Error",
-                    "Message" => "Failed to approve shipment preparation.",
+                    'Status' => 'Error',
+                    'Message' => 'Failed to approve shipment preparation.',
                 ],
                 422,
             );
@@ -210,11 +252,11 @@ class APIPackingReplenishmentController extends Controller
 
         return response()->json(
             [
-                "status" => "success",
-                "message" => "Shipment preparation has been approved",
+                'status' => 'success',
+                'message' => 'Shipment preparation has been approved',
             ],
             200,
-            ["Content-Type" => "application/json"],
+            ['Content-Type' => 'application/json'],
             JSON_UNESCAPED_UNICODE,
         );
     }
@@ -222,17 +264,17 @@ class APIPackingReplenishmentController extends Controller
     public function editPackingReplenishment($id)
     {
         $packingReplenishment = PackingReplenishmentMstr::with([
-            "getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster",
+            'getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster',
         ])->find($id);
 
-        if (!$packingReplenishment) {
+        if (! $packingReplenishment) {
             return response()->json(
                 [
-                    "status" => "Error",
-                    "message" => "Failed to fetch packing replenishment data",
+                    'status' => 'Error',
+                    'message' => 'Failed to fetch packing replenishment data',
                 ],
                 422,
-                ["Content-Type" => "application/json"],
+                ['Content-Type' => 'application/json'],
                 JSON_UNESCAPED_UNICODE,
             );
         }
@@ -241,12 +283,12 @@ class APIPackingReplenishmentController extends Controller
 
         return response()->json(
             [
-                "status" => "success",
-                "packingReplenishmentData" => $packingReplenishment,
-                "shipmentScheduleData" => $shipmentScheduleDet,
+                'status' => 'success',
+                'packingReplenishmentData' => $packingReplenishment,
+                'shipmentScheduleData' => $shipmentScheduleDet,
             ],
             200,
-            ["Content-Type" => "application/json"],
+            ['Content-Type' => 'application/json'],
             JSON_UNESCAPED_UNICODE,
         );
     }
@@ -255,39 +297,39 @@ class APIPackingReplenishmentController extends Controller
     {
         $data = PackingReplenishmentApproval::query()
             ->with([
-                "getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster",
-                "getCreatedBy:id,name,username",
+                'getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster',
+                'getCreatedBy:id,name,username',
             ])
-            ->where("pra_user_approver", "LIKE", "%" . Auth::user()->id . "%");
+            ->where('pra_user_approver', 'LIKE', '%'.Auth::user()->id.'%');
 
         if ($request->search) {
             $filter = $request->search;
 
             $data->where(function ($q) use ($filter) {
                 // Cari shipper number
-                $q->whereHas("getPackingReplenishmentMstr", function ($subq) use ($filter) {
-                    $subq->where("prm_shipper_nbr", "LIKE", "%" . $filter . "%")->where("prm_status", "Shipper Created");
+                $q->whereHas('getPackingReplenishmentMstr', function ($subq) use ($filter) {
+                    $subq->where('prm_shipper_nbr', 'LIKE', '%'.$filter.'%')->where('prm_status', 'Shipper Created');
                 })
 
                     // Cari customer
                     ->orWhereHas(
-                        "getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster",
+                        'getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster',
                         function ($q) use ($filter) {
-                            $q->where("ssm_cust_code", "LIKE", "%" . $filter . "%")->orWhere("ssm_cust_desc", "LIKE", "%" . $filter . "%");
+                            $q->where('ssm_cust_code', 'LIKE', '%'.$filter.'%')->orWhere('ssm_cust_desc', 'LIKE', '%'.$filter.'%');
                         },
                     )
 
                     // cari SO + item code
                     ->orWhereHas(
-                        "getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet",
+                        'getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet',
                         function ($q) use ($filter) {
-                            $q->where("ssd_sod_part", "LIKE", "%" . $filter . "%");
+                            $q->where('ssd_sod_part', 'LIKE', '%'.$filter.'%');
                         },
                     );
             });
         }
 
-        $data = $data->where("pra_status", "Waiting for confirmation")->orderBy("created_at", "desc")->paginate(10);
+        $data = $data->where('pra_status', 'Waiting for confirmation')->orderBy('created_at', 'desc')->paginate(10);
 
         return GeneralResources::collection($data);
     }
