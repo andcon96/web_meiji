@@ -12,6 +12,8 @@ use App\Models\API\ReceiptDetail;
 use App\Models\Settings\ApprovalReceipt;
 use App\Services\QxtendServices;
 use App\Services\WSAServices;
+use App\Models\API\xxinvDet;
+use App\Models\Settings\Domain;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -230,16 +232,16 @@ class APIPurchaseOrderApprovalController extends Controller
                             ? date('Y-m-d', strtotime($dataReceipt->rd_tanggal_datang))
                             : '';
                         // Assign pod_um_conv sebelum receipt -> request bang dany
-                        $changeUmConv = (new WSAServices())->wsaChangeUmConv($poNbr, $line, $qtyPotensi);
+                        // $changeUmConv = (new WSAServices())->wsaChangeUmConv($poNbr, $line, $qtyPotensi);
                         $suratjalan = $dataReceipt->getDokumen->rdd_surat_jalan ?? '';
                         $jumlahkemasanluar = $dataReceipt->getKemasan->rdk_jumlah_kemasan_luar ?? 0;
-                        if ($changeUmConv == false) {
-                            DB::rollback();
-                            return response()->json([
-                                'Status' => 'Error',
-                                'Message' => "Failed to Update UM Conv Purchase Order"
-                            ], 422);
-                        }
+                        // if ($changeUmConv == false) {
+                        //     DB::rollback();
+                        //     return response()->json([
+                        //         'Status' => 'Error',
+                        //         'Message' => "Failed to Update UM Conv Purchase Order"
+                        //     ], 422);
+                        // }
 
 
                         /*
@@ -292,6 +294,33 @@ class APIPurchaseOrderApprovalController extends Controller
                             }
                         }
                             */
+                        $domain = Domain::first();
+                        $domainCode = $domain->domain ?? '';
+   
+                        $newxxinv = new xxinvDet();
+                        $newxxinv->xxinv_domain = $domainCode;
+                        $newxxinv->xxinv_part = $dataPurchaseOrderDetail->pod_part ?? '';
+                        $newxxinv->xxinv_loc = $location;
+                        $newxxinv->xxinv_lot = $lotserial;
+                        $newxxinv->xxinv_site = $site;
+                        $newxxinv->xxinv_level = $dataReceipt->rd_building_penyimpanan ?? '';
+                        $newxxinv->xxinv_bin = $dataReceipt->rd_location_penyimpanan ?? '';
+                        $newxxinv->xxinv_wrh = $dataReceipt->rd_building_penyimpanan ?? '';
+                        $newxxinv->xxinv_qtyoh = $dataPallet->rdp_qty_penyimpanan ?? 0;
+                        $newxxinv->xxinv_ref = $ref;
+                        $newxxinv->xxinv_entry_date = $dataReceipt->rd_tanggal_datang;
+                        $newxxinv->xxinv_exp_date = $expireddate;
+                        $newxxinv->save();
+
+                        $wsaData = (new WSAServices())->wsaInsertCrtWms($site, $dataPurchaseOrderDetail->pod_part, $lotserial, $ref, $dataReceipt->rd_qty_terima);
+                        if ($wsaData[0] == 'false') {
+                            DB::rollback();
+                            return response()->json([
+                                'Status' => 'Error',
+                                'Message' => "Failed to insert data to QAD"
+                            ], 422);
+                        }
+
                     }
                     //getDetail Receipt
                     $data = ReceiptDetail::with(['getMaster', 'getPurchaseOrderDetail.getMaster', 'getPallet'])->find($tempApprove->art_receipt_det_id);

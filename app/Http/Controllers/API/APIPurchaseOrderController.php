@@ -123,7 +123,14 @@ class APIPurchaseOrderController extends Controller
         }
 
         $saveData = (new ReceiptServices())->saveDataReceiptPerLot($inputan, $arrayKoneksiImage);
+        $poMasterID = $inputan[0]->id_po_mstr;
 
+        $poddet = PurchaseOrderDetail::where('pod_po_mstr_id', $poMasterID)->first();
+        log::info($inputan);
+        if ($poddet) {
+            $poddet->pod_qty_rcpt = $poddet->pod_qty_rcpt + $inputan[0]->total;
+            $poddet->save();
+        }
 
         if ($saveData[0] == false) {
             $msg = "Failed To Save Receipt Data.";
@@ -391,7 +398,9 @@ class APIPurchaseOrderController extends Controller
         }
 
         // Ambil Relati Item ke Location di Web
-        $getAllItemLocation = LocationDetail::query()->with(['getListItem.getItem', 'getMaster']);
+        $getAllItemLocation = LocationDetail::query()
+            // ->select('ld_building as xxinv_wrh')
+            ->with(['getListItem.getItem', 'getMaster']);
         if ($itemCode) {
             $getAllItemLocation->whereRelation('getListItem.getItem', 'im_item_part', '=', $itemCode);
         }
@@ -399,7 +408,8 @@ class APIPurchaseOrderController extends Controller
             $getAllItemLocation->where('ld_building', $warehouse);
         }
         $getAllItemLocation = $getAllItemLocation->get();
-
+        // return response()->json($getAllItemLocation);
+        // dd($getAllItemLocation);
         // Ambil List Location di QAD untuk dibanding ke Web
         // $wsaData = Cache::remember('wsaPenyimpanan', 60, function () use ($itemCode) {
         //     return (new WSAServices())->wsaPenyimpanan('', $itemCode, '', '', '', '');
@@ -489,6 +499,7 @@ class APIPurchaseOrderController extends Controller
    
         return response()->json($dataQAD);
         */
+
         /**get daata from sql   */
         $xxinvDet = xxinvDet::query()
             ->where('xxinv_domain', $domainCode)
@@ -497,7 +508,8 @@ class APIPurchaseOrderController extends Controller
             ->get();
         $getDataQAD = $xxinvDet;
 
-        dd($xxinvDet);
+
+
         $grouped = $getDataQAD->groupBy(function ($item) {
             $site  = (string) ($item['xxinv_site'] ?? '');
             $loc   = (string) ($item['xxinv_loc'] ?? '');
@@ -519,28 +531,56 @@ class APIPurchaseOrderController extends Controller
                 return (int) $item['xxinv_qtyoh'] <= 0;
             })
             ->values();
-
         $dataQAD = $merged->filter(function ($item) use ($getAllItemLocation) {
             foreach ($getAllItemLocation as $datas) {
                 if (
-                    $item['xxinv_level'] == $datas->ld_rak &&
-                    $item['xxinv_wrh'] == $datas->ld_building &&
-                    $item['xxinv_bin'] == $datas->ld_bin &&
-                    $item['xxinv_loc'] == $datas->getMaster->location_code
+                    $this->normalize($item['xxinv_level']) == $this->normalize($datas->ld_rak) &&
+                    $this->normalize($item['xxinv_wrh']) == $this->normalize($datas->ld_building) &&
+                    $this->normalize($item['xxinv_bin']) == $this->normalize($datas->ld_bin) &&
+                    $this->normalize($item['xxinv_loc']) == $this->normalize($datas->getMaster->location_code)
                 ) {
-                    return true; // Keep this item
+                    return true;
                 }
             }
+            return false;
+        })->values();
+      
 
-            return false; // Exclude this item
-        })
-            ->values();
+        // $dataQAD = $merged->filter(function ($item) use ($getAllItemLocation) {
+        //     foreach ($getAllItemLocation as $datas) {
+        //         // dd($datas->getItem);
+        //         // dd($item['xxinv_level'],$datas->ld_rak,$item['xxinv_wrh'],$datas->ld_building,$item['xxinv_bin'],$datas->ld_bin,$item['xxinv_loc'],$datas->getMaster->location_code);
+        //         if (
+        //             $item['xxinv_level'] == $datas->ld_rak &&
+        //             $item['xxinv_wrh'] == $datas->ld_building &&
+        //             $item['xxinv_bin'] == $datas->ld_bin && 
+        //             $item['xxinv_loc'] == $datas->getMaster->location_code
+        //         ) {
+        //             return true; // Keep this item
+        //         }
+        //     }
 
-        $dataQAD = $dataQAD->sortBy('xxinv_qtyoh')->sortBy('xxinv_wrh')->values();
-
+        //     return false; // Exclude this item
+        // })
+        //     ->values();
+        // dd($dataQAD);
+        // $dataQAD = $dataQAD->select('xxinv_wrh')->groupBy('xxinv_wrh')->sortBy('xxinv_qtyoh')->sortBy('xxinv_wrh')->values();
+        $dataQAD = $dataQAD
+    ->groupBy('xxinv_wrh')
+    ->map(function ($items) {
+        $first = $items->first();
+        $first['xxinv_qtyoh'] = $items->sum('xxinv_qtyoh'); // sum() accepts a key shorthand too
+        return $first;
+    })
+    ->sortBy('xxinv_wrh')
+    ->values();
+        // dd($dataQAD);
         return response()->json($dataQAD);
     }
-
+    private function normalize($value)
+    {
+        return preg_replace('/\s+/', '', (string) $value); // removes ALL whitespace
+    }
     public function wsaPenyimpananPalet(Request $req)
     {
         // $itemCode = $req->search; 

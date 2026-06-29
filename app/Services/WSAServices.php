@@ -445,8 +445,8 @@ class WSAServices
             '</meiji_purchase_order>'.
             '</Body>'.
             '</Envelope>';
-
-        $curlOptions = [
+        
+        $curlOptions = array(
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
@@ -456,7 +456,7 @@ class WSAServices
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_SSL_VERIFYHOST => false,
-        ];
+        );
 
         $getInfo = '';
         $httpCode = 0;
@@ -491,34 +491,43 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop = $xmlResp->xpath('//ns1:tempRow');
+        
+        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         $dataHeader = [];
-
+        if (count($dataloop) == 0) {
+            return [
+                $qdocResult,
+                $dataHeader,
+                []
+            ];
+        }
         $dataMaster = PurchaseOrderMaster::firstOrNew(
             ['po_nbr' => (string) $dataloop[0]->t_poNbr]
         );
-        $dataMaster->po_vend = (string) $dataloop[0]->t_poVend;
-        $dataMaster->po_vend_desc = (string) $dataloop[0]->t_poVendDesc;
-        $dataMaster->po_ord_date = (string) $dataloop[0]->t_poOrdDate;
-        $dataMaster->po_due_date = (string) $dataloop[0]->t_poDueDate;
-        $dataMaster->po_rmks = (string) $dataloop[0]->t_poRmks;
-        $dataMaster->po_stat = (string) $dataloop[0]->t_poStat;
-        $dataMaster->po_site = (string) $dataloop[0]->t_poSite;
-        $dataMaster->po_loc_def = (string) $dataloop[0]->t_poLoc;
+        $dataMaster->po_vend = (string)$dataloop[0]->t_poVend;
+        $dataMaster->po_vend_desc = (string)$dataloop[0]->t_poVendDesc;
+        $dataMaster->po_ord_date = (string)$dataloop[0]->t_poOrdDate;
+        $dataMaster->po_due_date = (string)$dataloop[0]->t_poDueDate;
+        $dataMaster->po_rmks = (string)$dataloop[0]->t_poRmks;
+        $dataMaster->po_stat = (string)$dataloop[0]->t_poStat;
+        $dataMaster->po_site = (string)$dataloop[0]->t_poSite;
+        // $dataMaster->po_loc_def = (string)$dataloop[0]->t_poLoc;
+        $dataMaster->po_loc_def = 'WH-QRT';
         $dataMaster->save();
-
+        // dd($dataloop[0]->t_poLoc);
         $dataHeader[] = [
             'id' => $dataMaster->id,
-            'po_nbr' => (string) $dataloop[0]->t_poNbr,
-            'po_vend' => (string) $dataloop[0]->t_poVend,
-            'po_vend_desc' => (string) $dataloop[0]->t_poVendDesc,
-            'po_ord_date' => (string) $dataloop[0]->t_poOrdDate,
-            'po_due_date' => (string) $dataloop[0]->t_poDueDate,
-            'po_stat' => (string) $dataloop[0]->t_poStat,
-            'po_site' => (string) $dataloop[0]->t_poSite,
-            'po_loc_def' => (string) $dataloop[0]->t_poLoc,
+            'po_nbr' => (string)$dataloop[0]->t_poNbr,
+            'po_vend' => (string)$dataloop[0]->t_poVend,
+            'po_vend_desc' => (string)$dataloop[0]->t_poVendDesc,
+            'po_ord_date' => (string)$dataloop[0]->t_poOrdDate,
+            'po_due_date' => (string)$dataloop[0]->t_poDueDate,
+            'po_stat' => (string)$dataloop[0]->t_poStat,
+            'po_site' => (string)$dataloop[0]->t_poSite,
+            // 'po_loc_def' => (string)$dataloop[0]->t_poLoc,
+            'po_loc_def' => 'WH-QRT',
         ];
 
         $dataDetail = [];
@@ -529,28 +538,30 @@ class WSAServices
                     'pod_line' => (string) $listDatas->t_podLine,
                 ]
             );
-            $newDataDetail->pod_part = (string) $listDatas->t_podPart;
-            $newDataDetail->pod_part_desc = (string) $listDatas->t_podPartDesc;
-            $newDataDetail->pod_part_desc1 = (string) $listDatas->t_partDesc1;
-            $newDataDetail->pod_part_desc2 = (string) $listDatas->t_partDesc2;
-            $newDataDetail->pod_qty_ord = (string) $listDatas->t_podQtyOrd;
-            $newDataDetail->pod_qty_rcpt = (string) $listDatas->t_podQtyRcpt;
-            $newDataDetail->pod_qty_potensi = (string) $listDatas->t_potensi;
-            $newDataDetail->pod_um = (string) $listDatas->t_podUm;
-            $newDataDetail->pod_pt_um = (string) $listDatas->t_ptUm;
-            $newDataDetail->pod_pallete = (string) $listDatas->t_ptPallete;
+            $newDataDetail->pod_part = (string)$listDatas->t_podPart;
+            $newDataDetail->pod_part_desc = (string)$listDatas->t_podPartDesc;
+            $newDataDetail->pod_part_desc1 = (string)$listDatas->t_partDesc1;
+            $newDataDetail->pod_part_desc2 = (string)$listDatas->t_partDesc2;
+            $newDataDetail->pod_qty_ord = (string)$listDatas->t_podQtyOrd ?? 0;
+            $newDataDetail->pod_qty_rcpt = (string) $newDataDetail->pod_qty_rcpt ?? 0;
+            // $newDataDetail->pod_qty_rcpt = (string)$listDatas->t_podQtyRcpt;
+            $newDataDetail->pod_qty_potensi = (string)$listDatas->t_potensi ?? 0;
+            $newDataDetail->pod_um = (string)$listDatas->t_podUm;
+            $newDataDetail->pod_pt_um = (string)$listDatas->t_ptUm;
+            $newDataDetail->pod_pallete = (string)$listDatas->t_ptPallete;
             $newDataDetail->save();
-
+            
             $dataDetail[] = [
                 'id' => $newDataDetail->id,
                 'po_mstr_id' => $dataMaster->id,
-                'pod_line' => (string) $listDatas->t_podLine,
-                'pod_part' => (string) $listDatas->t_podPart,
-                'pod_part_desc' => (string) $listDatas->t_podPartDesc,
-                'pod_part_desc1' => (string) $listDatas->t_partDesc1,
-                'pod_part_desc2' => (string) $listDatas->t_partDesc2,
-                'pod_qty_ord' => (string) $listDatas->t_podQtyOrd,
-                'pod_qty_rcpt' => (string) $listDatas->t_podQtyRcpt,
+                'pod_line' => (string)$listDatas->t_podLine,
+                'pod_part' => (string)$listDatas->t_podPart,
+                'pod_part_desc' => (string)$listDatas->t_podPartDesc,
+                'pod_part_desc1' => (string)$listDatas->t_partDesc1,
+                'pod_part_desc2' => (string)$listDatas->t_partDesc2,
+                'pod_qty_ord' => (string)$listDatas->t_podQtyOrd,
+                // 'pod_qty_rcpt' => (string)$listDatas->t_podQtyRcpt,
+                'pod_qty_rcpt' => (string)$newDataDetail->pod_qty_rcpt ?? '0',
                 'pod_qty_ongoing' => '0',
                 'pod_qty_potensi' => (string) $listDatas->t_potensi ?? '1',
                 'pod_um' => (string) $listDatas->t_podUm,
@@ -641,8 +652,9 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop = $xmlResp->xpath('//ns1:tempRow');
-        $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
+        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $qdocResult = (string) $xmlResp->xpath('//ns1:outOK');
+        // log::info($xmlResp->xpath('//ns1:outOK'));
 
         return $qdocResult;
     }
@@ -5225,5 +5237,90 @@ class WSAServices
         $qdocMessage = (string) ($xmlResp->xpath('//ns1:outMsg')[0] ?? '');
 
         return [$qdocResult, $dataloop, $qdocMessage];
+    }
+
+    public function wsaInsertCrtWms($site, $itemCode, $lot, $ref, $qty)
+    {
+        $wsa = qxwsa::first();
+
+        $qxUrl = $wsa->wsa_url;
+        $qxReceiver = '';
+        $qxSuppRes = 'false';
+        $qxScopeTrx = '';
+        $qdocName = '';
+        $qdocVersion = '';
+        $dsName = '';
+        $timeout = 0;
+
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+
+        $qdocRequest =
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
+            '<Body>' .
+            '<meiji_crt_wms xmlns="' . $wsa->wsa_path . '">' .
+            '<inpdomain>' . $domainCode . '</inpdomain>' .
+            '<inppart>' . $itemCode . '</inppart>' .
+            '<inpsite>' . $site . '</inpsite>' .
+            '<inplot>' . $lot . '</inplot>' .
+            '<inpref>' . $ref . '</inpref>' .
+            '<inpQty>' . $qty . '</inpQty>' .
+           
+            
+            '</meiji_crt_wms>' .
+            '</Body>' .
+            '</Envelope>';
+
+        $curlOptions = array(
+            CURLOPT_URL => $qxUrl,
+            CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
+            CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
+            CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false
+        );
+
+        $getInfo = '';
+        $httpCode = 0;
+        $curlErrno = 0;
+        $curlError = '';
+        $qdocResponse = '';
+
+        $curl = curl_init();
+        if ($curl) {
+            curl_setopt_array($curl, $curlOptions);
+            $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
+            $curlErrno    = curl_errno($curl);
+            $curlError    = curl_error($curl);
+            $first        = true;
+
+            foreach (curl_getinfo($curl) as $key => $value) {
+                if (gettype($value) != 'array') {
+                    if (!$first) $getInfo .= ", ";
+                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $first = false;
+                    if ($key == 'http_code') $httpCode = $value;
+                }
+            }
+            curl_close($curl);
+        }
+        // log::info($qdocResponse);
+        //  log::info($qdocRequest);
+        $xmlResp = simplexml_load_string($qdocResponse);
+        // dd($qdocRequest,$qdocResponse);
+        $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
+
+        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
+        log::info($qdocRequest);
+        log::info($qdocResponse);
+        
+        return [
+            $qdocResult,
+            json_decode(json_encode($dataloop), true),
+        ];
     }
 }
