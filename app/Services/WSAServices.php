@@ -559,7 +559,7 @@ class WSAServices
                 'pod_part_desc' => (string)$listDatas->t_podPartDesc,
                 'pod_part_desc1' => (string)$listDatas->t_partDesc1,
                 'pod_part_desc2' => (string)$listDatas->t_partDesc2,
-                'pod_qty_ord' => (string)$listDatas->t_podQtyOrd,
+                'pod_qty_ord' => (string)$listDatas->t_podQtyOrd ?? '0',
                 // 'pod_qty_rcpt' => (string)$listDatas->t_podQtyRcpt,
                 'pod_qty_rcpt' => (string)$newDataDetail->pod_qty_rcpt ?? '0',
                 'pod_qty_ongoing' => '0',

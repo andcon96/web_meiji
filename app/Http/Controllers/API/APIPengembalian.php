@@ -20,6 +20,7 @@ use App\Models\Settings\SingleTransferPrefix;
 use App\Models\API\SingleTransfer;
 use App\Services\WSAServices;
 use App\Models\API\xxinvDet;
+use App\Models\API\xxinvDetApproval;
 use App\Models\Settings\Domain;
 use App\Models\Settings\User;
 use App\Services\QxtendServices;
@@ -209,6 +210,37 @@ class APIPengembalian extends Controller
                 $xxinvdet->xxinv_qty_smp = $xxinvdet->xxinv_qty_smp - $qty;
                 $xxinvdet->xxinv_qty_wrh = $xxinvdet->xxinv_qty_wrh + $qty;
                 $xxinvdet->save();
+
+                $xxinvdetApproval = new xxinvDetApproval();
+                $xxinvdetApproval->xxinv_domain = $xxinvdet->xxinv_domain;
+                $xxinvdetApproval->xxinv_part = $xxinvdet->xxinv_part;
+                $xxinvdetApproval->xxinv_loc = $locto;
+                $xxinvdetApproval->xxinv_lot = $xxinvdet->xxinv_lot;
+                $xxinvdetApproval->xxinv_bin = $xxinvdet->xxinv_bin;
+                $xxinvdetApproval->xxinv_level = $xxinvdet->xxinv_level;
+                $xxinvdetApproval->xxinv_site = $siteto;
+                $xxinvdetApproval->xxinv_wrh = $xxinvdet->xxinv_wrh;
+                $xxinvdetApproval->xxinv_qtyoh = $xxinvdet->xxinv_qtyoh;
+                $xxinvdetApproval->xxinv_qty_pick = $xxinvdet->xxinv_qty_pick;
+                $xxinvdetApproval->xxinv__chr01 = $xxinvdet->xxinv__chr01;
+                $xxinvdetApproval->xxinv__chr02 = $xxinvdet->xxinv__chr02;
+                $xxinvdetApproval->xxinv__long1 = $xxinvdet->xxinv__long1;
+                $xxinvdetApproval->xxinv__dec01 = $xxinvdet->xxinv__dec01;
+                $xxinvdetApproval->xxinv__dec02 = $xxinvdet->xxinv__dec02;
+                $xxinvdetApproval->xxinv__dte01 = $xxinvdet->xxinv__dte01;
+                $xxinvdetApproval->xxinv_ref = $xxinvdet->xxinv_ref;
+                $xxinvdetApproval->xxinv_entry_date = $xxinvdet->xxinv_entry_date;
+                $xxinvdetApproval->xxinv_exp_date = $xxinvdet->xxinv_exp_date;
+                $xxinvdetApproval->xxinv_due_date = $xxinvdet->xxinv_due_date;
+                $xxinvdetApproval->xxinv_rel_date = $xxinvdet->xxinv_rel_date;
+                $xxinvdetApproval->xxinv_ord_date = $xxinvdet->xxinv_ord_date;
+                $xxinvdetApproval->xxinv_qty_wrh = $xxinvdet->xxinv_qty_wrh;
+                $xxinvdetApproval->xxinv_qty_smp = $xxinvdet->xxinv_qty_smp;
+                $xxinvdetApproval->xxinv_qty_shp = $xxinvdet->xxinv_qty_shp;
+                $xxinvdetApproval->xxinv_qty_wip = $xxinvdet->xxinv_qty_wip;
+                $xxinvdetApproval->xxinv_status = 'Waiting';
+                $xxinvdetApproval->xxinv_approver = $userapprover->username ?? '';
+                $xxinvdetApproval->save();
                 // $transfer = (new QxtendServices())->qxTransferSingleItemTransfer($item,$qty,$sitefrom,$sitefrom,$locto,'BL3-PM',$lot,$lot,$whfrom,$whfrom,$levelfrom,$levelfrom,$binfrom,$binfrom);
                 // if ($hasil == 'false') {
                 // return response()->json([
@@ -404,6 +436,42 @@ class APIPengembalian extends Controller
             );
         }
        
+    }
+
+    public function getSamplingApproval(Request $req)
+    {
+        $domain = Domain::first();
+        $inpdomain = $domain->domain ?? '';
+        $records = xxinvDetApproval::where('xxinv_domain', $inpdomain)
+        ->where('xxinv_status', 'Waiting')
+        ->where('xxinv_approver', auth()->user()->username ?? '')
+        ->select([
+            'xxinv_domain  as inv_domain',
+            'xxinv_part    as inv_part',
+            'xxinv_lot     as inv_lot',
+            'xxinv_wrh     as inv_wh',
+            'xxinv_level   as inv_level',
+            'xxinv_bin     as inv_bin',
+            'xxinv_qtyoh   as inv_qtyoh',
+            'xxinv_qty_smp as inv_qtysmp',
+            'xxinv_site    as inv_site',
+            'xxinv_status  as inv_status',
+        ])
+        ->get()
+        ->values();
+        if($records->isEmpty()) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        } else {
+            return response()->json(
+                [
+                    'DataWSA' => $records
+                ],
+                200
+            );
+        }
     }
 
 

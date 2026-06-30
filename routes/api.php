@@ -246,7 +246,8 @@ Route::get('listShipmentScheduleWSA', [APIPackingReplenishmentController::class,
     Route::get("/getLotPengembalian", [APIPengembalian::class, 'getLotPengembalian']);
     Route::post("/transferPengembalianQo", [APIPengembalian::class, 'transferPengembalianQo']);
     Route::get("getApproverSampling", [APIPengembalian::class, "getApproverSampling"]);
-    
+    Route::get("getSamplingApproval", [APIPengembalian::class, "getSamplingApproval"]);
+    Route::post("approveRejectSampling", [APIPengembalian::class, "approveRejectSampling"]);
     Route::get("getTransactionHistory", [APISingleTransfer::class, "getTransactionHistory"]);
     //lookup browse android
     Route::get('getLocData', [APIController::class, 'getLocData']);
