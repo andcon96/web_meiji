@@ -126,9 +126,14 @@ class APIPurchaseOrderRecheckController extends Controller
                     ->where('rd_status', '!=', 'Checked')
                     ->first();
                 if (!$checkOtherDetail) {
-                    $receiptMstr->rm_status = $status;
+                    // $receiptMstr->rm_status = $status;
+                    $receiptMstr->rm_status = 'Waiting For Approval';
                     $receiptMstr->save();
                 }
+                // else{
+                //     $receiptMstr->rm_status = $status;
+                //     $receiptMstr->save();
+                // }
                 $getPurchaseOrderDetail = $receiptDetail->getPurchaseOrderDetail;
                 $getPallet = $receiptDetail->getPallet;
                 foreach($listlevel as $key => $level){
