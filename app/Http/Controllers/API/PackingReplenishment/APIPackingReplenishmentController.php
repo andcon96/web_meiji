@@ -7,6 +7,7 @@ use App\Http\Resources\GeneralResources;
 use App\Models\API\PackingReplenishment\PackingReplenishmentApproval;
 use App\Models\API\PackingReplenishment\PackingReplenishmentMstr;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleMstr;
+use App\Models\API\xxinvDet;
 use App\Models\Settings\qxwsa;
 use App\Models\Settings\Role;
 use App\Models\Settings\User;
@@ -332,5 +333,33 @@ class APIPackingReplenishmentController extends Controller
         $data = $data->where('pra_status', 'Waiting for confirmation')->orderBy('created_at', 'desc')->paginate(10);
 
         return GeneralResources::collection($data);
+    }
+
+    public function getStockWarehouse(Request $request)
+    {
+        $data = xxinvDet::query()
+            ->when($request->filled('part'), function ($q) use ($request) {
+                $q->where('xxinv_part', 'LIKE', '%'.$request->part.'%');
+            })
+            ->when($request->filled('loc'), function ($q) use ($request) {
+                $q->where('xxinv_loc', 'LIKE', '%'.$request->loc.'%');
+            })
+            ->when($request->filled('lot'), function ($q) use ($request) {
+                $q->where('xxinv_lot', 'LIKE', '%'.$request->lot.'%');
+            })
+            ->when($request->filled('site'), function ($q) use ($request) {
+                $q->where('xxinv_site', 'LIKE', '%'.$request->site.'%');
+            })
+            ->first();
+
+        if (! $data) {
+            return response()->json([
+                'message' => 'Data tidak ditemukan',
+            ], 404);
+        }
+
+        return response()->json([
+            'qty' => $data->xxinv_qty_wrh,
+        ]);
     }
 }

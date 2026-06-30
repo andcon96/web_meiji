@@ -124,14 +124,16 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     // Packing Replenishment
     Route::get('getPackingReplenishment', [APIPackingReplenishmentController::class, 'index']);
     Route::get('listShipmentSchedule', [APIPackingReplenishmentController::class, 'listShipmentSchedule']);
-Route::post('savePackingReplenishment', [APIPackingReplenishmentController::class, 'store']);
+    Route::post('savePackingReplenishment', [APIPackingReplenishmentController::class, 'store']);
     Route::get('approverList', [APIPackingReplenishmentController::class, 'approverList']);
     Route::post('rejectPackingReplenishment', [APIPackingReplenishmentController::class, 'rejectPackingReplenishment']);
     Route::post('approvePackingReplenishment', [APIPackingReplenishmentController::class, 'approvePackingReplenishment']);
     Route::get('editPackingReplenishment/{id}', [APIPackingReplenishmentController::class, 'editPackingReplenishment']);
     Route::get('getPackingReplenishmentApprovalList', [APIPackingReplenishmentController::class, 'getPackingReplenishmentApprovalList']);
-// routes/api.php
-Route::get('listShipmentScheduleWSA', [APIPackingReplenishmentController::class, 'listShipmentScheduleWSA']);
+
+    Route::get('listShipmentScheduleWSA', [APIPackingReplenishmentController::class, 'listShipmentScheduleWSA']);
+
+    Route::get('getStockWarehouse', [APIPackingReplenishmentController::class, 'getStockWarehouse']);
 
     // Shipper Confirm
     Route::get('getShipperConfirmation', [APIShipperConfirmController::class, 'index']);
