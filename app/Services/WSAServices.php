@@ -543,7 +543,7 @@ class WSAServices
             $newDataDetail->pod_part_desc1 = (string)$listDatas->t_partDesc1;
             $newDataDetail->pod_part_desc2 = (string)$listDatas->t_partDesc2;
             $newDataDetail->pod_qty_ord = (string)$listDatas->t_podQtyOrd ?? 0;
-            $newDataDetail->pod_qty_rcpt = (string) $newDataDetail->pod_qty_rcpt ?? 0;
+            $newDataDetail->pod_qty_rcpt = (string) ($newDataDetail->pod_qty_rcpt != null ? $newDataDetail->pod_qty_rcpt : 0);
             // $newDataDetail->pod_qty_rcpt = (string)$listDatas->t_podQtyRcpt;
             $newDataDetail->pod_qty_potensi = (string)$listDatas->t_potensi ?? 0;
             $newDataDetail->pod_um = (string)$listDatas->t_podUm;
@@ -561,7 +561,7 @@ class WSAServices
                 'pod_part_desc2' => (string)$listDatas->t_partDesc2,
                 'pod_qty_ord' => (string)$listDatas->t_podQtyOrd ?? '0',
                 // 'pod_qty_rcpt' => (string)$listDatas->t_podQtyRcpt,
-                'pod_qty_rcpt' => (string)$newDataDetail->pod_qty_rcpt ?? '0',
+                'pod_qty_rcpt' => (string) ($newDataDetail->pod_qty_rcpt != null ? $newDataDetail->pod_qty_rcpt : '0'),
                 'pod_qty_ongoing' => '0',
                 'pod_qty_potensi' => (string) $listDatas->t_potensi ?? '1',
                 'pod_um' => (string) $listDatas->t_podUm,
