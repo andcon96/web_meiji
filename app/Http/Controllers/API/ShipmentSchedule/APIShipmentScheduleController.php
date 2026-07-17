@@ -183,7 +183,7 @@ class APIShipmentScheduleController extends Controller
         $salesOrders = $request->sales_orders;
 
         $shipmentScheduleServices = new ShipmentScheduleServices();
-        $saveData = $shipmentScheduleServices->saveShipmentSchedule($customerCode, $customerName, $salesOrders);
+    $saveData = $shipmentScheduleServices->saveShipmentSchedule($customerCode, $customerName, $salesOrders);
 
         if ($saveData == false) {
             return response()->json(

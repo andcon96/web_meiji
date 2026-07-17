@@ -8,6 +8,9 @@ use App\Models\API\PackingReplenishment\PackingReplenishmentApproval;
 use App\Models\API\PackingReplenishment\PackingReplenishmentMstr;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleMstr;
 use App\Models\API\xxinvDet;
+use App\Models\Settings\Item;
+use App\Models\Settings\ItemLocation;
+use App\Models\Settings\LocationDetail;
 use App\Models\Settings\qxwsa;
 use App\Models\Settings\Role;
 use App\Models\Settings\User;
@@ -21,33 +24,23 @@ class APIPackingReplenishmentController extends Controller
 {
     public function index(Request $request)
     {
-        $data = PackingReplenishmentMstr::query()->with([
-            'getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster',
-            'getCreatedBy:id,name,username',
-        ]);
+        $data = PackingReplenishmentMstr::query()->with(['getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster', 'getCreatedBy:id,name,username']);
 
         if ($request->search) {
             $search = $request->search;
 
             $data->where(function ($q) use ($search) {
                 // cari customer
-                $q->where('prm_shipper_nbr', 'LIKE', '%'.$search.'%')
+                $q->where('prm_shipper_nbr', 'LIKE', '%' . $search . '%')
 
                     // cari customer
-                    ->orWhereHas(
-                        'getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster',
-                        function ($query) use ($search) {
-                            $query
-                                ->where('ssm_cust_code', 'LIKE', '%'.$search.'%')
-                                ->orWhere('ssm_cust_desc', 'LIKE', '%'.$search.'%');
-                        },
-                    )
+                    ->orWhereHas('getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster', function ($query) use ($search) {
+                        $query->where('ssm_cust_code', 'LIKE', '%' . $search . '%')->orWhere('ssm_cust_desc', 'LIKE', '%' . $search . '%');
+                    })
 
                     // cari SO + item code
-                    ->orWhereHas('getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet', function ($query) use (
-                        $search,
-                    ) {
-                        $query->where('ssd_sod_nbr', 'LIKE', '%'.$search.'%')->orWhere('ssd_sod_part', 'LIKE', '%'.$search.'%');
+                    ->orWhereHas('getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet', function ($query) use ($search) {
+                        $query->where('ssd_sod_nbr', 'LIKE', '%' . $search . '%')->orWhere('ssd_sod_part', 'LIKE', '%' . $search . '%');
                     });
             });
         }
@@ -59,9 +52,7 @@ class APIPackingReplenishmentController extends Controller
 
     public function listShipmentSchedule()
     {
-        $listShipmentSchedule = ShipmentScheduleMstr::whereDoesntHave(
-            'getShipmentScheduleDetail.getShipmentScheduleLocation.getPackingReplenishmentDet',
-        )
+        $listShipmentSchedule = ShipmentScheduleMstr::whereDoesntHave('getShipmentScheduleDetail.getShipmentScheduleLocation.getPackingReplenishmentDet')
             ->with(['getShipmentScheduleDetail.getShipmentScheduleLocation'])
             ->orderBy('ssm_number', 'desc')
             ->get();
@@ -89,47 +80,116 @@ class APIPackingReplenishmentController extends Controller
         $shipperNumber = $request->query('shipperNumber') ?? $request->shipperNumber;
         $site = $request->query('site') ?? $request->site;
 
-        $shipperNumber = $request->shipperNumber;
-        $site = $request->site;
-
-        $hasil = (new WSAServices())->listShipmentScheduleWSA($shipperNumber, $site);
-
-        // Fix: destructuring 3 elemen sesuai return service
+       $hasil = (new WSAServices())->listShipmentScheduleWSA($shipperNumber, $site);
+        // dd($hasil );
         [$qdocResult, $dataloop, $qdocMessage] = $hasil;
 
         if ($qdocResult !== 'true') {
-            return response()->json([
-                'success' => false,
-                'message' => $qdocMessage ?: 'Failed to fetch shipment schedule from WSA',
-                'data' => [],
-            ], 422);
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => $qdocMessage ?: 'Failed to fetch shipment schedule from WSA',
+                    'data' => [],
+                ],
+                422,
+            );
         }
 
+        $partNumbers = collect($dataloop)->pluck('t_part')->map(fn($part) => (string) $part)->unique()->values()->all();
+
+        $items = Item::whereIn('im_item_part', $partNumbers)
+            ->with(['getItemLocation.getLocationDetail'])
+            ->get()
+            ->keyBy('im_item_part');
+
+        $inventory = xxinvDet::whereIn('xxinv_part', $partNumbers)->get();
+
         $rows = [];
+
         foreach ($dataloop as $row) {
+            $part = trim((string) $row->t_part);
+            $lot = trim((string) $row->t_lot);
+            $loc = trim((string) $row->t_loc);
+            $site = trim((string) $row->t_site);
+
+            $item = $items->get($part);
+
+            $itemId = $item->id ?? null;
+            $locationDetail = [];
+
+            if ($item) {
+                $matchedLocations = $item->getItemLocation->filter(function ($itemLocation) use ($lot) {
+                    $ld = $itemLocation->getLocationDetail;
+
+                    return $ld && trim((string) $ld->ld_lot_serial) === $lot;
+                });
+
+                foreach ($matchedLocations as $itemLocation) {
+                    $ld = $itemLocation->getLocationDetail;
+
+                    $level = strtoupper(trim($ld->ld_rak));
+                    $stockRow = $inventory->first(function ($inv) use ($part, $lot, $loc, $site, $level, $ld) {
+
+                        $cleanInvLevel = preg_replace('/[^A-Za-z0-9]/', '', $inv->xxinv_level);
+                        $cleanLocalLevel = preg_replace('/[^A-Za-z0-9]/', '', $level);
+
+                        return trim($inv->xxinv_part) == $part &&
+                            trim((string) $inv->xxinv_lot) === $lot &&
+                            trim($inv->xxinv_loc) == $loc &&
+                            trim($inv->xxinv_site) == $site &&
+                            strtoupper($cleanInvLevel) == strtoupper($cleanLocalLevel) &&
+                            trim($inv->xxinv_bin) == trim($ld->ld_bin);
+                    });
+
+                    $locationDetail[] = [
+                        'lot_serial' => $ld->ld_lot_serial,
+                        'level' => $ld->ld_rak,
+                        'bin' => $ld->ld_bin,
+                        'location' => $ld->ld_building,
+                        'stock' => (float) ($stockRow->xxinv_qty_wrh ?? 0),
+                    ];
+                }
+            }
+
             $rows[] = [
                 'domain' => (string) $row->t_domain,
-                'site' => (string) $row->t_site,
-                'part' => (string) $row->t_part,
+                'site' => $site,
+                'part' => $part,
                 'desc' => (string) $row->t_desc,
                 'um' => (string) $row->t_um,
-                'loc' => (string) $row->t_loc,
+                'loc' => $loc,
                 'line' => (string) $row->t_line,
-                'lot' => (string) $row->t_lot,
+                'lot' => $lot,
                 'qty' => (int) $row->t_qty,
+                'item_id' => $itemId,
+                'location_detail' => $locationDetail,
             ];
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Shipment schedule fetched successfully',
-            'data' => $rows,
-        ], 200);
+        return response()->json(
+            [
+                'success' => true,
+                'message' => 'Shipment schedule fetched successfully',
+                'data' => $rows,
+            ],
+            200,
+        );
     }
-
     public function store(Request $request)
     {
-        // Log::channel("packingReplenishment")->info(json_encode($request->all()));
+        Log::channel('packingReplenishment')->info(json_encode($request->all()));
+        $request->validate(
+            [
+                'approver' => 'required',
+                'prm_id' => 'required',
+                'scheduleDetail' => 'required',
+            ],
+            [
+                'approver.required' => 'Approver wajib dipilih.',
+                'prm_id.required' => 'ID Packing Replenishment (prm_id) wajib diisi.',
+                'scheduleDetail.required' => 'Detail jadwal pengiriman (scheduleDetail) wajib diisi.',
+            ],
+        );
 
         $approver = $request->approver;
         $idPrm = $request->prm_id;
@@ -193,16 +253,16 @@ class APIPackingReplenishmentController extends Controller
 
     public function rejectPackingReplenishment(Request $request)
     {
-        // Log::channel("packingReplenishment")->info(json_encode($request->all()));
+        Log::info('Reject Packing Replenishment Request', [
+            'request' => $request->all(),
+        ]);
+
         $packingReplenishment = $request->shipperPayload;
         $reason = $request->reason;
         $shipmentScheduleNumber = $request->shipmentScheduleNumber;
+
         $packingReplenishmentService = new PackingReplenishmentServices();
-        $rejectPackingReplenishment = $packingReplenishmentService->rejectPackingReplenishment(
-            $packingReplenishment,
-            $reason,
-            $shipmentScheduleNumber,
-        );
+        $rejectPackingReplenishment = $packingReplenishmentService->rejectPackingReplenishment($packingReplenishment, $reason, $shipmentScheduleNumber);
 
         if ($rejectPackingReplenishment == false) {
             return response()->json(
@@ -234,12 +294,7 @@ class APIPackingReplenishmentController extends Controller
         $activeConnection = qxwsa::first();
 
         $packingReplenishmentService = new PackingReplenishmentServices();
-        $approvePackingReplenishment = $packingReplenishmentService->approvePackingReplenishment(
-            $packingReplenishment,
-            $reason,
-            $shipmentScheduleNumber,
-            $activeConnection,
-        );
+        $approvePackingReplenishment = $packingReplenishmentService->approvePackingReplenishment($packingReplenishment, $reason, $shipmentScheduleNumber, $activeConnection);
 
         if ($approvePackingReplenishment == false) {
             return response()->json(
@@ -264,11 +319,9 @@ class APIPackingReplenishmentController extends Controller
 
     public function editPackingReplenishment($id)
     {
-        $packingReplenishment = PackingReplenishmentMstr::with([
-            'getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster',
-        ])->find($id);
+        $packingReplenishment = PackingReplenishmentMstr::with(['getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster'])->find($id);
 
-        if (! $packingReplenishment) {
+        if (!$packingReplenishment) {
             return response()->json(
                 [
                     'status' => 'Error',
@@ -297,11 +350,8 @@ class APIPackingReplenishmentController extends Controller
     public function getPackingReplenishmentApprovalList(Request $request)
     {
         $data = PackingReplenishmentApproval::query()
-            ->with([
-                'getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster',
-                'getCreatedBy:id,name,username',
-            ])
-            ->where('pra_user_approver', 'LIKE', '%'.Auth::user()->id.'%');
+            ->with(['getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster', 'getCreatedBy:id,name,username'])
+            ->where('pra_user_approver', 'LIKE', '%' . Auth::user()->id . '%');
 
         if ($request->search) {
             $filter = $request->search;
@@ -309,24 +359,18 @@ class APIPackingReplenishmentController extends Controller
             $data->where(function ($q) use ($filter) {
                 // Cari shipper number
                 $q->whereHas('getPackingReplenishmentMstr', function ($subq) use ($filter) {
-                    $subq->where('prm_shipper_nbr', 'LIKE', '%'.$filter.'%')->where('prm_status', 'Shipper Created');
+                    $subq->where('prm_shipper_nbr', 'LIKE', '%' . $filter . '%')->where('prm_status', 'Shipper Created');
                 })
 
                     // Cari customer
-                    ->orWhereHas(
-                        'getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster',
-                        function ($q) use ($filter) {
-                            $q->where('ssm_cust_code', 'LIKE', '%'.$filter.'%')->orWhere('ssm_cust_desc', 'LIKE', '%'.$filter.'%');
-                        },
-                    )
+                    ->orWhereHas('getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster', function ($q) use ($filter) {
+                        $q->where('ssm_cust_code', 'LIKE', '%' . $filter . '%')->orWhere('ssm_cust_desc', 'LIKE', '%' . $filter . '%');
+                    })
 
                     // cari SO + item code
-                    ->orWhereHas(
-                        'getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet',
-                        function ($q) use ($filter) {
-                            $q->where('ssd_sod_part', 'LIKE', '%'.$filter.'%');
-                        },
-                    );
+                    ->orWhereHas('getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet', function ($q) use ($filter) {
+                        $q->where('ssd_sod_part', 'LIKE', '%' . $filter . '%');
+                    });
             });
         }
 
@@ -339,27 +383,30 @@ class APIPackingReplenishmentController extends Controller
     {
         $data = xxinvDet::query()
             ->when($request->filled('part'), function ($q) use ($request) {
-                $q->where('xxinv_part', 'LIKE', '%'.$request->part.'%');
+                $q->where('xxinv_part', 'LIKE', '%' . $request->part . '%');
             })
             ->when($request->filled('loc'), function ($q) use ($request) {
-                $q->where('xxinv_loc', 'LIKE', '%'.$request->loc.'%');
+                $q->where('xxinv_loc', 'LIKE', '%' . $request->loc . '%');
             })
             ->when($request->filled('lot'), function ($q) use ($request) {
-                $q->where('xxinv_lot', 'LIKE', '%'.$request->lot.'%');
+                $q->where('xxinv_lot', 'LIKE', '%' . $request->lot . '%');
             })
             ->when($request->filled('site'), function ($q) use ($request) {
-                $q->where('xxinv_site', 'LIKE', '%'.$request->site.'%');
+                $q->where('xxinv_site', 'LIKE', '%' . $request->site . '%');
             })
             ->first();
 
-        if (! $data) {
-            return response()->json([
-                'message' => 'Data tidak ditemukan',
-            ], 404);
+        if (!$data) {
+            return response()->json(
+                [
+                    'message' => 'Data tidak ditemukan',
+                ],
+                404,
+            );
         }
 
         return response()->json([
-            'qty' => $data->xxinv_qty_wrh,
+            'qty' => (float) $data->xxinv_qty_wrh,
         ]);
     }
 }

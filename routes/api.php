@@ -278,7 +278,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post("receiptItempb", [APIBarangJadi::class, "receiptItempb"]);
     Route::get("getPenerimaanBarangData", [APIBarangJadi::class, "getPenerimaanBarangData"]);
     Route::post("getWlbBarangJadi", [APIBarangJadi::class, "getWlbBarangJadi"]);
-    
-    
+
+
 });
 // WSA Picklist
