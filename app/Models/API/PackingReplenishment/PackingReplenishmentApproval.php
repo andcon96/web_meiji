@@ -12,6 +12,11 @@ class PackingReplenishmentApproval extends Model
 
     protected $table = 'packing_replenishment_approval';
 
+    protected $fillable = [
+        'prm_id', 'pra_sequence', 'pra_user_approver', 'pra_status',
+        'created_by', 'updated_by',
+    ];
+
     public function getPackingReplenishmentMstr()
     {
         return $this->belongsTo(PackingReplenishmentMstr::class, 'prm_id', 'id');

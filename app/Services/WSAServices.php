@@ -445,7 +445,7 @@ class WSAServices
             '</meiji_purchase_order>'.
             '</Body>'.
             '</Envelope>';
-        
+
         $curlOptions = array(
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
@@ -491,7 +491,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        
+
         $dataloop    = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
@@ -550,7 +550,7 @@ class WSAServices
             $newDataDetail->pod_pt_um = (string)$listDatas->t_ptUm;
             $newDataDetail->pod_pallete = (string)$listDatas->t_ptPallete;
             $newDataDetail->save();
-            
+
             $dataDetail[] = [
                 'id' => $newDataDetail->id,
                 'po_mstr_id' => $dataMaster->id,
@@ -5265,8 +5265,8 @@ class WSAServices
             '<inplot>' . $lot . '</inplot>' .
             '<inpref>' . $ref . '</inpref>' .
             '<inpQty>' . $qty . '</inpQty>' .
-           
-            
+
+
             '</meiji_crt_wms>' .
             '</Body>' .
             '</Envelope>';
@@ -5317,7 +5317,7 @@ class WSAServices
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
         log::info($qdocRequest);
         log::info($qdocResponse);
-        
+
         return [
             $qdocResult,
             json_decode(json_encode($dataloop), true),

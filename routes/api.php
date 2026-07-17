@@ -241,8 +241,8 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get("/getSamplingData", [APISampling::class, 'getSamplingData']);
     Route::get("/getLotSampling", [APISampling::class, 'getLotSampling']);
     Route::post("/transferSampling", [APISampling::class, 'transferSampling']);
-    
-    
+
+
     Route::get("/getPengembalianQo", [APIPengembalian::class, 'getPengembalianQo']);
     Route::post("/checkWarehouseReturn", [APIPengembalian::class, 'checkWarehouseReturn']);
     Route::get("/getLotPengembalian", [APIPengembalian::class, 'getLotPengembalian']);
@@ -276,7 +276,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post("receiptItempb", [APIBarangJadi::class, "receiptItempb"]);
     Route::get("getPenerimaanBarangData", [APIBarangJadi::class, "getPenerimaanBarangData"]);
     Route::post("getWlbBarangJadi", [APIBarangJadi::class, "getWlbBarangJadi"]);
-    
-    
+
+
 });
 // WSA Picklist

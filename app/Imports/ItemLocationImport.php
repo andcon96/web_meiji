@@ -41,7 +41,7 @@ class ItemLocationImport implements ToCollection, WithHeadingRow, WithChunkReadi
                 ->first();
 
             if (!$cekDetail && $cekMaster) {
-                $this->errorList[] = 'Location : ' . $datas['location'] . ', Site : ' . $datas['site'] . ', Lot Serial : ' . $datas['lot_serial'] . ', Building : ' . $datas['building'] . ', Level : ' . $datas['level'] . ', Bin : ' . $datas['bin'] . ' Not Found';
+                $this->errorList[] = 'Location: ' . $datas['location'] . ', Site : ' . $datas['site'] . ', Lot Serial : ' . $datas['lot_serial'] . ', Building : ' . $datas['building'] . ', Level : ' . $datas['level'] . ', Bin : ' . $datas['bin'] . ' Not Found';
                 // break;
             }
 

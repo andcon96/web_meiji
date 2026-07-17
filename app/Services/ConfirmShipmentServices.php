@@ -2,51 +2,62 @@
 
 namespace App\Services;
 
-use App\Models\API\PackingReplenishment\PackingReplenishmentApproval;
-use App\Models\API\PackingReplenishment\PackingReplenishmentApprovalHist;
 use App\Models\API\PackingReplenishment\PackingReplenishmentHist;
 use App\Models\API\PackingReplenishment\PackingReplenishmentMstr;
-use App\Models\API\ShipperConfirm\ShipperConfirm;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleHist;
-use Exception;
+use App\Models\API\ShipperConfirm\ShipperConfirm;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ConfirmShipmentServices
 {
-    public function confirmShipment($confirmApproval, $reason, $activeConnection)
+    public function confirmShipment(Request $request, $confirmApproval, $reason, $activeConnection)
     {
         $dataArray = [];
         DB::beginTransaction();
 
         try {
-            // Cek approval, masih perlu approval atau tidak
-            $anotherApproval = ShipperConfirm::where("prm_id", $confirmApproval["prm_id"])
-                ->where("id", "!=", $confirmApproval["id"])
-                ->where("sc_status", "=", "Waiting for confirmation")
-                ->first();
+            $packingReplenishmentApproval = ShipperConfirm::where('id', $confirmApproval['id'])->lockForUpdate()->first();
 
-            // Update status + catat ke history
-            $packingReplenishmentApproval = ShipperConfirm::find($confirmApproval["id"]);
-            $packingReplenishmentApproval->sc_status = "Approved";
+            if (!$packingReplenishmentApproval) {
+                DB::rollBack();
+                Log::channel('confirmShipment')->info('ShipperConfirm not found for id: ' . $confirmApproval['id']);
+
+                return false;
+            }
+
+            if ($packingReplenishmentApproval->sc_status !== 'Waiting for confirmation') {
+                DB::rollBack();
+                Log::channel('confirmShipment')->info('Duplicate confirmShipment request ignored. ShipperConfirm id: ' . $confirmApproval['id'] . ', current status: ' . $packingReplenishmentApproval->sc_status);
+
+                return true;
+            }
+
+            $anotherApproval = ShipperConfirm::where('prm_id', $confirmApproval['prm_id'])->where('id', '!=', $confirmApproval['id'])->where('sc_status', '=', 'Waiting for confirmation')->lockForUpdate()->first();
+
+            $packingReplenishmentApproval->sc_status = 'Approved';
             $packingReplenishmentApproval->updated_by = Auth::user()->id;
             $packingReplenishmentApproval->sc_reason = $reason;
             $packingReplenishmentApproval->save();
 
-            if (!$anotherApproval) {
-                // Update packing replenishment jadi shipped + catat ke history
-                $dataPRM = $confirmApproval["get_packing_replenishment_master"];
+            Log::channel('confirmShipment')->info(json_encode($request->all()));
 
-                $packingReplenishmentMstr = PackingReplenishmentMstr::with([
-                    "getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster",
-                ])->find($dataPRM["id"]);
-                $packingReplenishmentMstr->prm_status = "Shipped";
+            if (!$anotherApproval) {
+                $dataPRM = $confirmApproval['get_packing_replenishment_master'];
+
+                $packingReplenishmentMstr = PackingReplenishmentMstr::with(['getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster'])->find($dataPRM['id']);
+
+                $packingReplenishmentMstr->prm_status = 'Shipped';
                 $packingReplenishmentMstr->save();
 
-                $packingReplenishmentMstr->getPackingReplenishmentDet[0]->getShipmentScheduleLocation->getShipmentScheduleDet->getShipmentScheduleMaster->ssm_status =
-                    "Shipped";
-                $packingReplenishmentMstr->getPackingReplenishmentDet[0]->getShipmentScheduleLocation->getShipmentScheduleDet->getShipmentScheduleMaster->save();
+                $shipmentScheduleMaster = $packingReplenishmentMstr->getPackingReplenishmentDet[0]->getShipmentScheduleLocation->getShipmentScheduleDet->getShipmentScheduleMaster;
+
+                if ($shipmentScheduleMaster) {
+                    $shipmentScheduleMaster->ssm_status = 'Shipped';
+                    $shipmentScheduleMaster->save();
+                }
 
                 foreach ($packingReplenishmentMstr->getPackingReplenishmentDet as $packingReplenishmentDet) {
                     $currentSite = strtoupper($packingReplenishmentDet->getShipmentScheduleLocation->ssl_site);
@@ -54,26 +65,23 @@ class ConfirmShipmentServices
                     $currentLot = strtoupper($packingReplenishmentDet->getShipmentScheduleLocation->ssl_lotserial);
                     $picked = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_qty_pick;
 
-                    // use item+lot as a key
-                    $key = $currentSite . "|" . $currentItem . "|" . $currentLot;
+                    $key = $currentSite . '|' . $currentItem . '|' . $currentLot;
 
                     if (!isset($dataArray[$key])) {
                         $dataArray[$key] = [
-                            "site" => $currentSite,
-                            "item" => $currentItem,
-                            "lot" => $currentLot,
-                            "pick" => 0,
+                            'site' => $currentSite,
+                            'item' => $currentItem,
+                            'lot' => $currentLot,
+                            'pick' => 0,
                         ];
                     }
 
-                    $dataArray[$key]["pick"] += $picked;
+                    $dataArray[$key]['pick'] += $picked;
 
                     $packingReplenishmentHist = new PackingReplenishmentHist();
                     $packingReplenishmentHist->prh_shipper_nbr = $packingReplenishmentMstr->prm_shipper_nbr;
-                    $packingReplenishmentHist->prh_so_nbr =
-                        $packingReplenishmentDet->getShipmentScheduleLocation->getShipmentScheduleDet->ssd_sod_nbr;
-                    $packingReplenishmentHist->prh_so_line =
-                        $packingReplenishmentDet->getShipmentScheduleLocation->getShipmentScheduleDet->ssd_sod_line;
+                    $packingReplenishmentHist->prh_so_nbr = $packingReplenishmentDet->getShipmentScheduleLocation->getShipmentScheduleDet->ssd_sod_nbr;
+                    $packingReplenishmentHist->prh_so_line = $packingReplenishmentDet->getShipmentScheduleLocation->getShipmentScheduleDet->ssd_sod_line;
                     $packingReplenishmentHist->prh_site = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_site;
                     $packingReplenishmentHist->prh_warehouse = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_warehouse;
                     $packingReplenishmentHist->prh_location = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_location;
@@ -83,75 +91,52 @@ class ConfirmShipmentServices
                     $packingReplenishmentHist->prh_qty_pick = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_qty_pick;
                     $packingReplenishmentHist->prh_status_qad = $packingReplenishmentDet->prd_status_qad;
                     $packingReplenishmentHist->prh_status = $packingReplenishmentMstr->prm_status;
-                    $packingReplenishmentHist->prh_action = "Confirm Shipment";
+                    $packingReplenishmentHist->prh_action = 'Confirm Shipment';
                     $packingReplenishmentHist->created_by = Auth::user()->name;
                     $packingReplenishmentHist->save();
 
-                    // Bandingkan Qty to pick sama order qty
-                    // kalau sama ganti status shipment schedule jadi Shipped (Full) + catat ke history
-                    // Kalau kurang dari order qty ganti status shipment schedule jadi Shipped (Partial) + catat ke history
                     $dataShipmentScheduleDet = $packingReplenishmentDet->getShipmentScheduleLocation->getShipmentScheduleDet;
                     if ($dataShipmentScheduleDet->ssd_sod_qty_pick < $dataShipmentScheduleDet->ssd_sod_qty_ord) {
-                        $dataShipmentScheduleDet->ssd_status = "Shipped (Partial)";
+                        $dataShipmentScheduleDet->ssd_status = 'Shipped (Partial)';
                     } else {
-                        $dataShipmentScheduleDet->ssd_status = "Shipped (Full)";
+                        $dataShipmentScheduleDet->ssd_status = 'Shipped (Full)';
                     }
 
                     $dataShipmentScheduleDet->updated_by = Auth::user()->id;
                     $dataShipmentScheduleDet->save();
-
-                    $shipmentScheduleHistory = new ShipmentScheduleHist();
-                    $shipmentScheduleHistory->ssh_number = $dataShipmentScheduleDet->getShipmentScheduleMaster->ssm_number;
-                    $shipmentScheduleHistory->ssh_cust_code = $dataShipmentScheduleDet->getShipmentScheduleMaster->ssm_cust_code;
-                    $shipmentScheduleHistory->ssh_cust_desc = $dataShipmentScheduleDet->getShipmentScheduleMaster->ssm_cust_desc;
-                    $shipmentScheduleHistory->ssh_status_mstr = $dataShipmentScheduleDet->getShipmentScheduleMaster->ssm_status;
-                    $shipmentScheduleHistory->ssh_sod_nbr = $dataShipmentScheduleDet->ssd_sod_nbr;
-                    $shipmentScheduleHistory->ssh_sod_site = $dataShipmentScheduleDet->ssd_sod_site;
-                    $shipmentScheduleHistory->ssh_sod_shipto = $dataShipmentScheduleDet->ssd_sod_shipto;
-                    $shipmentScheduleHistory->ssh_sod_line = $dataShipmentScheduleDet->ssd_sod_line;
-                    $shipmentScheduleHistory->ssh_sod_part = $dataShipmentScheduleDet->ssd_sod_part;
-                    $shipmentScheduleHistory->ssh_sod_desc = $dataShipmentScheduleDet->ssd_sod_desc;
-                    $shipmentScheduleHistory->ssh_sod_qty_ord = $dataShipmentScheduleDet->ssd_sod_qty_ord;
-                    $shipmentScheduleHistory->ssh_status_det = $dataShipmentScheduleDet->ssd_status;
-                    $shipmentScheduleHistory->ssh_site = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_site;
-                    $shipmentScheduleHistory->ssh_warehouse = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_warehouse;
-                    $shipmentScheduleHistory->ssh_location = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_location;
-                    $shipmentScheduleHistory->ssh_lotserial = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_lotserial;
-                    $shipmentScheduleHistory->ssh_level = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_level;
-                    $shipmentScheduleHistory->ssh_bin = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_bin;
-                    $shipmentScheduleHistory->ssh_qty_to_pick = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_qty_to_pick;
-                    $shipmentScheduleHistory->ssh_action = "Confirm shipment";
-                    $shipmentScheduleHistory->created_by = Auth::user()->name;
-                    $shipmentScheduleHistory->save();
                 }
 
                 $dataArray = array_values($dataArray);
 
-                // Qxtend ke QAD Pre-shipper/shipper confirm
+                Log::info('CALL confirmShipment', [
+                    'prm_id' => $confirmApproval['prm_id'],
+                    'time' => now(),
+                ]);
+
                 $qxtendServices = new QxtendServices();
                 $qxtend = $qxtendServices->qxShipperConfirm($confirmApproval, $activeConnection);
+
                 if ($qxtend[0] == false) {
                     DB::rollback();
-
-                    Log::channel("confirmShipment")->info($qxtend[1]);
+                    Log::channel('confirmShipment')->info($qxtend[1]);
 
                     return false;
                 }
 
-                foreach ($dataArray as $data) {
-                    // Tembak qty oh di xxinv_det
-                    $updateOHServices = new WSAServices();
-                    $updateOHServices->wsaUpdateQtyOHCustom($data);
-                }
+                Log::channel('confirmShipment')->info(
+                    json_encode([
+                        'confirmApproval' => $confirmApproval,
+                        'reason' => $reason,
+                    ]),
+                );
             }
 
             DB::commit();
 
             return true;
-        } catch (Exception $err) {
+        } catch (\Throwable $err) {
             DB::rollBack();
-
-            Log::channel("confirmShipment")->info($err);
+            Log::channel('confirmShipment')->info($err);
 
             return false;
         }
