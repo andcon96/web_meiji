@@ -106,6 +106,12 @@ class ReceiptServices
                 $newReceiptDetail->rd_keterangan_tambahan = $dataDetail->keterangan_tambahan;
                 $newReceiptDetail->save();
 
+                 $poddet = PurchaseOrderDetail::find($dataDetail->id_pod_det);
+        
+                if ($poddet) {
+                    $poddet->pod_qty_rcpt = $poddet->pod_qty_rcpt + str_replace(',', '', $dataDetail->jumlah_terima);
+                    $poddet->save();
+                }
                 // Create Approval
                 // $currentApprover = ApprovalReceipt::get();
                 // if ($currentApprover) {

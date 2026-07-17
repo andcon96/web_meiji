@@ -8,6 +8,7 @@ use App\Models\API\PurchaseOrderDetail;
 use App\Models\API\PurchaseOrderMaster;
 use App\Models\Settings\ItemLocation;
 use App\Models\Settings\LocationDetail;
+use App\Models\Settings\Domain;
 use App\Models\API\workOrderMaster;
 use App\Models\API\workOrderDetail;
 use App\Models\API\picklistMstr;
@@ -16,6 +17,7 @@ use App\Models\API\picklistWoDet;
 use App\Models\API\prefixWorkOrder;
 use App\Models\API\picklistHistory;
 use App\Models\API\picklistLocationTo;
+use App\Models\API\xxinvDet;
 use App\Models\Settings\PenyerahanBarangPrefix;
 use App\Models\API\PenyerahanBarang;
 use App\Models\Settings\Item;
@@ -1135,15 +1137,25 @@ class APISingleTransfer extends Controller
         $site = $req->site ?? '';
         $item = $req->item ?? '';
         $location = $req->location ?? '';
-        $hasil = (new WSAServices())->wsaGetSiteTransfer($site, $item, $location);
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+        $hasil = xxinvDet::select('xxinv_site as t_site')->where('xxinv_domain', $domainCode)
+            ->where('xxinv_part', $item)
+            ->when($site !== '', fn($q) => $q->where('xxinv_site', $site))
+            ->when($location !== '', fn($q) => $q->where('xxinv_loc', $location))
+            ->groupBy('xxinv_site')
+            ->get()
+            ->values(); 
+        // $hasil = (new WSAServices())->wsaGetSiteTransfer($site, $item, $location);
 
-        if ($hasil[0] == 'false') {
+        // if ($hasil[0] == 'false') {
+        if($hasil->isEmpty()) {
             return response()->json([
                 'Status' => 'Error',
                 'Message' => "Data Not Found."
             ], 422);
         } else {
-            $listData = $hasil[1];
+            $listData = $hasil;
 
             return response()->json(['DataWSA' => $listData], 200);
         }

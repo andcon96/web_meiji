@@ -125,12 +125,7 @@ class APIPurchaseOrderController extends Controller
         $saveData = (new ReceiptServices())->saveDataReceiptPerLot($inputan, $arrayKoneksiImage);
         $poMasterID = $inputan[0]->id_po_mstr;
 
-        $poddet = PurchaseOrderDetail::where('pod_po_mstr_id', $poMasterID)->first();
-        log::info($inputan);
-        if ($poddet) {
-            $poddet->pod_qty_rcpt = $poddet->pod_qty_rcpt + $inputan[0]->total;
-            $poddet->save();
-        }
+       
 
         if ($saveData[0] == false) {
             $msg = "Failed To Save Receipt Data.";
@@ -1486,7 +1481,7 @@ class APIPurchaseOrderController extends Controller
                 'getApprovalTemp',
                 'getApprovalHist'
             ])->findOrFail($id);
-            $master = ReceiptMaster::findOrFail($data->rd_rm_id);
+            $master = ReceiptMaster::with('getPurchaseOrderMaster.getDetail')->findOrFail($data->rd_rm_id);
             $getPurchaseOrderDetail = $data->getPurchaseOrderDetail;
             $getPallet = $data->getPallet;
             foreach ($getPallet as $plt) {
@@ -1516,8 +1511,11 @@ class APIPurchaseOrderController extends Controller
             }
 
             $allDetails = ReceiptDetail::where('rd_rm_id', $master->id)->get();
-
+            
             foreach ($allDetails as $detail) {
+                $poDetail = PurchaseOrderDetail::find($detail->rd_pod_det_id);
+                $poDetail->pod_qty_rcpt = $poDetail->pod_qty_rcpt - $data->rd_qty_terima;
+                $poDetail->save();
                 $detail->getAttachment()->delete();
                 $detail->getDokumen()->delete();
                 $detail->getKemasan()->delete();

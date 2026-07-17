@@ -51,6 +51,7 @@ class APISampling extends Controller
                     ->where('xxinv_loc', 'QC-QRT')
                     ->when($item !== '', fn($query) => $query->where('xxinv_part', $item))
                     ->when($lot !== '', fn($query) => $query->where('xxinv_lot', $lot))
+                    
                     ->select([
                         'xxinv_domain  as inv_domain',
                         'xxinv_part    as inv_part',
@@ -272,6 +273,7 @@ class APISampling extends Controller
                 } else {
                     $lvc_sumqty = $xxinvdet->xxinv_qty_wrh;
                 }
+                log::info($qty);
                 $lvc_sumqty = $lvc_sumqty - $qty;
                 $xxinvdet->xxinv_qty_smp = $xxinvdet->xxinv_qty_smp + $qty;
                 $xxinvdet->xxinv_qty_wrh = $lvc_sumqty;
@@ -319,5 +321,55 @@ class APISampling extends Controller
         // DB::commit();
         // $hasil = (new WSAServices())->wsaTransferSamplingData($item, $lot,$sitefrom,$locto,'QC-QRT',$whfrom,$levelfrom,$binfrom,$qty);
 
+    }
+
+     public function checkWarehouseSampling(Request $req)
+    {
+        // dd($req->all());
+        $item = $req->item ?? '';
+        $lot = $req->lot ?? '';
+        $wh = $req->warehouse ?? '';
+        $level = $req->level ?? '';
+        $bin = $req->bin ?? '';
+        $domain = Domain::first();
+        $inpdomain = $domain->domain ?? '';
+        $records = xxinvDet::where('xxinv_domain', $inpdomain)
+            ->where('xxinv_loc', 'QC-QRT')
+            ->when($item !== '', fn($query) => $query->where('xxinv_part', $item))
+            ->when($lot !== '', fn($query) => $query->where('xxinv_lot', $lot))
+            ->where('xxinv_wrh', $wh)
+            ->where('xxinv_level', $level)
+            ->where('xxinv_bin', $bin)
+            // ->where('xxinv_qty_smp', '>', 0)
+            ->first();
+            // dd($inpdomain, $item, $lot, $wh, $level, $bin, $records);
+        if (!$records) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "No Data Available"
+            ], 422);
+        } else {
+            return response()->json('success',
+                200
+            );
+        }
+        // $wsaData = (new WSAServices())->wsaGetWarehouseCheckReturn($item,  $lot, 'SAMPLING', $wh, $level, $bin);
+        // if ($wsaData[0] == 'false') {
+        //     return response()->json([
+        //         'Status' => 'Error',
+        //         'Message' => "No Data Available"
+        //     ], 422);
+        // } else {
+        //     $listData = $wsaData[1];
+
+        //     return response()->json(
+        //         [
+        //             'DataWSA' => $listData
+        //         ],
+        //         200
+        //     );
+        // }
+
+        // return response()->json($wsaData[1]);
     }
 }
