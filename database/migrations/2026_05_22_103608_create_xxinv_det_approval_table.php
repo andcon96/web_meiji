@@ -15,12 +15,17 @@ return new class extends Migration
             $table->id();
             $table->String('xxinv_domain')->nullable();
             $table->String('xxinv_part')->nullable();
-            $table->String('xxinv_loc')->nullable();
             $table->String('xxinv_lot')->nullable();
-            $table->String('xxinv_bin')->nullable();
-            $table->String('xxinv_level')->nullable();
-            $table->String('xxinv_site')->nullable();
-            $table->String('xxinv_wrh')->nullable();
+            $table->String('xxinv_locfrom')->nullable();
+            $table->String('xxinv_locto')->nullable();
+            $table->String('xxinv_binto')->nullable();
+            $table->String('xxinv_levelto')->nullable();
+            $table->String('xxinv_siteto')->nullable();
+            $table->String('xxinv_wrhto')->nullable();
+            $table->String('xxinv_binfrom')->nullable();
+            $table->String('xxinv_levelfrom')->nullable();
+            $table->String('xxinv_sitefrom')->nullable();
+            $table->String('xxinv_wrhfrom')->nullable();
             $table->decimal('xxinv_qtyoh', 17, 5)->nullable();
             $table->decimal('xxinv_qty_pick', 17, 2)->nullable();
             $table->String('xxinv__chr01')->nullable();
@@ -37,7 +42,7 @@ return new class extends Migration
             $table->date('xxinv_due_date')->nullable();
             $table->date('xxinv_rel_date')->nullable();
             $table->date('xxinv_ord_date')->nullable();
-            
+
             $table->decimal('xxinv_qty_wrh', 20, 5)->nullable();
             $table->decimal('xxinv_qty_smp', 20, 5)->nullable();
             $table->decimal('xxinv_qty_shp', 20, 5)->nullable();
@@ -52,6 +57,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('xxinv_det');
+        Schema::dropIfExists('xxinv_det_approval');
     }
 };

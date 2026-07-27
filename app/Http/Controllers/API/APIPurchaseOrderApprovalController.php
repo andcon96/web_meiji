@@ -205,7 +205,7 @@ class APIPurchaseOrderApprovalController extends Controller
                         // Ambil Qty Ongoing jadi Qty Receipt
                         $dataReceipt = ReceiptDetail::find($tempApprove->art_receipt_det_id);
                         $totalReceipt = $dataReceipt->rd_qty_terima * $dataReceipt->rd_qty_potensi;
-                        
+
                         // Qxtend Po Receipt
                         $dataPurchaseOrderDetail = PurchaseOrderDetail::with('getMaster')->find($dataReceipt->rd_pod_det_id);
                         $poNbr = $dataPurchaseOrderDetail->getMaster->po_nbr ?? '';
@@ -225,7 +225,7 @@ class APIPurchaseOrderApprovalController extends Controller
                         $expireddate = !empty($dataReceipt->rd_tgl_expire)
                             ? date('Y-m-d', strtotime($dataReceipt->rd_tgl_expire))
                             : '';
-                            $retestdate = !empty($dataReceipt->rd_tgl_retest)
+                        $retestdate = !empty($dataReceipt->rd_tgl_retest)
                             ? date('Y-m-d', strtotime($dataReceipt->rd_tgl_retest))
                             : '';
                         $effdate = !empty($dataReceipt->rd_tanggal_datang)
@@ -294,24 +294,26 @@ class APIPurchaseOrderApprovalController extends Controller
                             }
                         }
                             */
-                        $domain = Domain::first();
-                        $domainCode = $domain->domain ?? '';
-   
-                        $newxxinv = new xxinvDet();
-                        $newxxinv->xxinv_domain = $domainCode;
-                        $newxxinv->xxinv_part = $dataPurchaseOrderDetail->pod_part ?? '';
-                        $newxxinv->xxinv_loc = $location;
-                        $newxxinv->xxinv_lot = $lotserial;
-                        $newxxinv->xxinv_site = $site;
-                        $newxxinv->xxinv_level = $dataReceipt->rd_building_penyimpanan ?? '';
-                        $newxxinv->xxinv_bin = $dataReceipt->rd_location_penyimpanan ?? '';
-                        $newxxinv->xxinv_wrh = $dataReceipt->rd_building_penyimpanan ?? '';
-                        $newxxinv->xxinv_qtyoh = $dataPallet->rdp_qty_penyimpanan ?? 0;
-                        $newxxinv->xxinv_ref = $ref;
-                        $newxxinv->xxinv_entry_date = $dataReceipt->rd_tanggal_datang;
-                        $newxxinv->xxinv_exp_date = $expireddate;
-                        $newxxinv->save();
+                        $dataReceiptPallet = ReceiptDetail::with('getPallet')->find($tempApprove->art_receipt_det_id);
+                        foreach ($dataReceiptPallet->getPallet as $dataPallet) {
+                            $domain = Domain::first();
+                            $domainCode = $domain->domain ?? '';
 
+                            $newxxinv = new xxinvDet();
+                            $newxxinv->xxinv_domain = $domainCode;
+                            $newxxinv->xxinv_part = $dataPurchaseOrderDetail->pod_part ?? '';
+                            $newxxinv->xxinv_loc = $location;
+                            $newxxinv->xxinv_lot = $lotserial;
+                            $newxxinv->xxinv_site = $site;
+                            $newxxinv->xxinv_level = $dataPallet->rdp_level_penyimpanan ?? '';
+                            $newxxinv->xxinv_bin = $dataPallet->rdp_bin_penyimpanan ?? '';
+                            $newxxinv->xxinv_wrh = $dataReceipt->rd_building_penyimpanan ?? '';
+                            $newxxinv->xxinv_qtyoh = $dataPallet->rdp_qty_penyimpanan ?? 0;
+                            $newxxinv->xxinv_ref = $ref;
+                            $newxxinv->xxinv_entry_date = $dataReceipt->rd_tanggal_datang;
+                            $newxxinv->xxinv_exp_date = $expireddate;
+                            $newxxinv->save();
+                        }
                         $wsaData = (new WSAServices())->wsaInsertCrtWms($site, $dataPurchaseOrderDetail->pod_part, $lotserial, $ref, $dataReceipt->rd_qty_terima);
                         if ($wsaData[0] == 'false') {
                             DB::rollback();
@@ -320,7 +322,6 @@ class APIPurchaseOrderApprovalController extends Controller
                                 'Message' => "Failed to insert data to QAD"
                             ], 422);
                         }
-
                     }
                     //getDetail Receipt
                     $data = ReceiptDetail::with(['getMaster', 'getPurchaseOrderDetail.getMaster', 'getPallet'])->find($tempApprove->art_receipt_det_id);

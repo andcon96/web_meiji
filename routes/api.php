@@ -44,6 +44,8 @@ Route::post('sendQxCompIssue', [APIController::class, 'sendQxCompIssue']);
 
 // Get APK Latest Version
 Route::get('getAPKLatestVersion', [APIController::class, 'getAPKLatestVersion']);
+Route::post('updatexxinvloc', [APIController::class, 'outboundxxinvDet']);
+
 Route::middleware(['auth:api', 'token.api'])->group(function () {
 
     // PO
@@ -243,15 +245,15 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get("/getSamplingData", [APISampling::class, 'getSamplingData']);
     Route::get("/getLotSampling", [APISampling::class, 'getLotSampling']);
     Route::post("/transferSampling", [APISampling::class, 'transferSampling']);
-
-
+       Route::post("/checkWarehouseSampling", [APISampling::class, 'checkWarehouseSampling']);
+    
     Route::get("/getPengembalianQo", [APIPengembalian::class, 'getPengembalianQo']);
     Route::post("/checkWarehouseReturn", [APIPengembalian::class, 'checkWarehouseReturn']);
     Route::get("/getLotPengembalian", [APIPengembalian::class, 'getLotPengembalian']);
     Route::post("/transferPengembalianQo", [APIPengembalian::class, 'transferPengembalianQo']);
     Route::get("getApproverSampling", [APIPengembalian::class, "getApproverSampling"]);
     Route::get("getSamplingApproval", [APIPengembalian::class, "getSamplingApproval"]);
-    Route::post("approveRejectSampling", [APIPengembalian::class, "approveRejectSampling"]);
+    Route::post("samplingApprovalResult", [APIPengembalian::class, "samplingApprovalResult"]);
     Route::get("getTransactionHistory", [APISingleTransfer::class, "getTransactionHistory"]);
     //lookup browse android
     Route::get('getLocData', [APIController::class, 'getLocData']);

@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Services\RunningNumberServices;
 use App\Services\WSAServices;
+use App\Models\API\xxinvDet;
+use App\Models\API\xxinvDetApproval;
 use App\Services\APIServices;
 use App\Services\QxtendServices;
 use App\Models\QadData;
@@ -719,5 +721,88 @@ class APIController extends Controller
             ->first();
 
         return response()->json($data);
+    }
+
+    public function outboundxxinvDet(Request $req)
+    {
+        Log::channel('customlog')->info('masuk');
+        DB::beginTransaction();
+        try {
+            $xml = simplexml_load_string($req->getContent());
+            if ($xml === false) {
+                throw new \Exception('Malformed XML payload');
+            }
+
+            $body       = $xml->children('soapenv', true)->Body;
+            $xxlddetwms = $body->children('qdoc', true)->xxlddetwms;
+            $dsLdDet    = $xxlddetwms->children('qdoc', true)->dsLd_det;
+            $ldDet      = $dsLdDet->children('qdoc', true)->ld_det;
+            $fields     = $ldDet->children('qdoc', true);
+
+            $data = [
+                'operation' => (string) $fields->operation,
+                'ldDomain'  => (string) $fields->ldDomain,
+                'ldLoc'     => (string) $fields->ldLoc,
+                'ldLot'     => (string) $fields->ldLot,
+                'ldPart'    => (string) $fields->ldPart,
+                'ldRef'     => (string) $fields->ldRef,
+                'ldSite'    => (string) $fields->ldSite,
+            ];
+
+            Log::channel('customlog')->info(json_encode($data['ldDomain']));
+
+            $xxinvDet = xxinvDet::where('xxinv_domain', $data['ldDomain'])
+                ->where('xxinv_site', $data['ldSite'])
+                ->where('xxinv_lot', $data['ldLot'])
+                ->where('xxinv_part', $data['ldPart'])
+                ->get();
+            // $xxinvDet2 = xxinvDet::where('xxinv_domain', $data['ldDomain'])
+            //     ->where('xxinv_site', $data['ldSite'])
+            //     ->where('xxinv_lot', $data['ldLot'])
+            //     ->where('xxinv_part', $data['ldPart'])
+            //     ->toSql();
+            // Log::channel('customlog')->info($xxinvDet2. ' '.$data['ldDomain']. ' '.$data['ldSite']. ' '.$data['ldLot']. ' '.$data['ldPart']);
+            foreach ($xxinvDet as $det) {
+                $det->xxinv_loc = $data['ldLoc'];
+                $det->save();
+            }
+
+            // $xxinvDetApproval = xxinvDetApproval::where('xxinv_domain', $data['ldDomain'])
+            //     ->where('xxinv_siteto', $data['ldSite'])
+            //     ->where('xxinv_lot', $data['ldLot'])
+            //     ->where('xxinv_part', $data['ldPart'])
+            //     ->get();
+            // foreach ($xxinvDetApproval as $detapproval) {
+            //     $detapproval->xxinv_loc = $data['ldLoc'];
+            //     $detapproval->save();
+            // }
+            DB::commit();
+
+            Log::channel('customlog')->info(json_encode($data));
+
+            return response($this->soapAck(), 200)
+                ->header('Content-Type', 'text/xml; charset=utf-8');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::channel('customlog')->error('outboundxxinvDet error: ' . $e->getMessage());
+
+            return response($this->soapAck(false, $e->getMessage()), 500)
+                ->header('Content-Type', 'text/xml; charset=utf-8');
+        }
+    }
+    private function soapAck(bool $success = true, string $message = 'Success')
+    {
+        $status  = $success ? 'SUCCESS' : 'ERROR';
+        $escaped = htmlspecialchars($message);
+
+        return <<<XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+        <soapenv:Body>
+            <status>{$status}</status>
+            <message>{$escaped}</message>
+        </soapenv:Body>
+        </soapenv:Envelope>
+        XML;
     }
 }
