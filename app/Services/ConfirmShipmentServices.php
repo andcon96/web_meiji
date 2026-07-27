@@ -115,13 +115,16 @@ class ConfirmShipmentServices
 
                 $qxtendServices = new QxtendServices();
                 $qxtend = $qxtendServices->qxShipperConfirm($confirmApproval, $activeConnection);
+if ($qxtend[0] == false) {
+    DB::rollBack();
 
-                if ($qxtend[0] == false) {
-                    DB::rollback();
-                    Log::channel('confirmShipment')->info($qxtend[1]);
+    Log::channel('confirmShipment')->info($qxtend[1]);
 
-                    return false;
-                }
+    return [
+        'success' => false,
+        'message' => $qxtend[1],
+    ];
+}
 
                 Log::channel('confirmShipment')->info(
                     json_encode([

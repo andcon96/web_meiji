@@ -21,7 +21,7 @@ use App\Http\Controllers\API\PackingReplenishment\APIPackingReplenishmentControl
 use App\Http\Controllers\API\ShipmentSchedule\APIShipmentScheduleController;
 use App\Http\Controllers\API\ShipperConfirm\APIShipperConfirmController;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\API\OtherTransactionConfirm\APIOtherTransactionConfirmController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -139,6 +139,8 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getShipperConfirmation', [APIShipperConfirmController::class, 'index']);
     Route::post('confirmShipment', [APIShipperConfirmController::class, 'store']);
 
+    Route::get('getOtherShipmentConfirmation', [APIOtherTransactionConfirmController::class, 'index']);
+       Route::post('confirmOtherTransaction', [APIOtherTransactionConfirmController::class, 'store']); // 👈 pastikan ini ada
     // Other Shipment Schedule
     Route::get('getOtherShipmentSchedule', [APIOtherShipmentScheduleController::class, 'index']);
     Route::get('/getItemOSS', [APIOtherShipmentScheduleController::class, 'getItemOSS']);

@@ -5157,7 +5157,7 @@ class WSAServices
 
         $qxUrl = $wsa->wsa_url;
         $timeout = 0;
-
+    
         $domain = Domain::first();
         $domainCode = $domain->domain ?? '';
         $qdocRequest =

@@ -11,7 +11,7 @@ use App\Services\WSAServices;
 use App\Models\Settings\qxwsa;
 use Illuminate\Support\Facades\Log;
 use App\Services\OtherShipmentScheduleServices;
-
+use App\Models\Settings\Itemlocation;
 class APIOtherShipmentScheduleController extends Controller
 {
     public function index(Request $req)
@@ -21,83 +21,68 @@ class APIOtherShipmentScheduleController extends Controller
         if ($req->search) {
             $data->where(function ($query) use ($req) {
                 $query
-                    ->where("ossm_number", "LIKE", "%" . $req->search . "%")
-                    ->orWhere("ossm_cust_code", "LIKE", "%" . $req->search . "%")
-                    ->orWhere("ossm_cust_desc", "LIKE", "%" . $req->search . "%")
-                    ->orWhere("ossm_status", "LIKE", "%" . $req->search . "%");
+                    ->where('ossm_number', 'LIKE', '%' . $req->search . '%')
+                    ->orWhere('ossm_cust_code', 'LIKE', '%' . $req->search . '%')
+                    ->orWhere('ossm_cust_desc', 'LIKE', '%' . $req->search . '%')
+                    ->orWhere('ossm_status', 'LIKE', '%' . $req->search . '%');
             });
         }
 
-        $data = $data->orderBy("ossm_number", "desc")->paginate(10);
+        $data = $data->orderBy('ossm_number', 'desc')->paginate(10);
 
         return GeneralResources::collection($data);
     }
 
     public function getItemOSS(Request $request)
     {
-        $items = Item::with(["getLoadedBy:id,name", "getUpdatedBy:id,name"])
-            ->orderBy("im_item_part")
+        $items = Item::with(['getLoadedBy:id,name', 'getUpdatedBy:id,name'])
+            ->orderBy('im_item_part')
             ->get();
 
         return response()->json(
             [
-                "items" => $items,
+                'items' => $items,
             ],
             200,
         );
     }
 
-    public function getLocationByPart(Request $request)
-    {
-        $item = $request->search;
-        // return response()->json(['data' => $searchData, 200, ['Content-Type' => 'application/json']], JSON_UNESCAPED_UNICODE);
+   public function getLocationByPart(Request $request)
+{
+    $item = Item::where('im_item_part', $request->search)
+        ->with('getItemLocation.getLocationDetail.getMaster')
+        ->first();
 
-        Log::channel("otherShipmentSchedule")->info(json_encode($item));
+    $tempData = [];
 
-        // make sure we always get both values
-        $site = "";
-        $itemCode = $item;
-        $lot = "";
+    if ($item) {
+        foreach ($item->getItemLocation as $location) {
+            $detail = $location->getLocationDetail;
 
-        $activeConnection = qxwsa::first();
-        $wsaServices = new WSAServices();
-        $wsaInventory = $wsaServices->wsaInventoryDetail($site, $itemCode, $lot, $activeConnection);
+            if (!$detail) {
+                continue;
+            }
 
-        if ($wsaInventory[0] == "false") {
-            return response()->json(
-                [
-                    "Status" => "Error",
-                    "Message" => "No inventory data found.",
-                ],
-                422,
-            );
+            $master = $detail->getMaster;
+
+            $tempData[] = [
+                't_inv_part'  => $item->im_item_part,
+                't_inv_loc'   => $master?->location_code ?? '',
+                't_inv_lot'   => $detail->ld_lot_serial,
+                't_inv_bin'   => $detail->ld_bin,
+                't_inv_level' => $detail->ld_rak,
+                't_inv_site'  => $master?->location_site ?? '',
+                't_inv_wrh'   => $master?->location_desc ?? $master?->location_code ?? '',
+                't_inv_qtyoh' => '0',
+                't_inv_uom'   => $item->im_item_um,
+            ];
         }
-
-        $tempData = [];
-
-        foreach ($wsaInventory[1] as $data) {
-            array_push($tempData, [
-                "t_inv_part" => (string) $data->t_inv_part,
-                "t_inv_loc" => (string) $data->t_inv_loc,
-                "t_inv_lot" => (string) $data->t_inv_lot,
-                "t_inv_bin" => (string) $data->t_inv_bin,
-                "t_inv_level" => (string) $data->t_inv_level,
-                "t_inv_site" => (string) $data->t_inv_site,
-                "t_inv_wrh" => (string) $data->t_inv_wrh,
-                "t_inv_qtyoh" => (string) $data->t_inv_qtyoh,
-                "t_inv_uom" => (string) $data->t_inv_uom,
-            ]);
-        }
-
-        return response()->json(
-            [
-                "inventoryData" => $tempData,
-            ],
-            200,
-            ["Content-Type" => "application/json"],
-            JSON_UNESCAPED_UNICODE,
-        );
     }
+
+    return response()->json([
+        'inventoryData' => $tempData,
+    ]);
+}
 
     public function store(Request $request)
     {
@@ -113,8 +98,8 @@ class APIOtherShipmentScheduleController extends Controller
         if ($saveData == false) {
             return response()->json(
                 [
-                    "Status" => "Error",
-                    "Message" => "Failed To Save Other Shipment Schedule.",
+                    'Status' => 'Error',
+                    'Message' => 'Failed To Save Other Shipment Schedule.',
                 ],
                 422,
             );
@@ -122,11 +107,11 @@ class APIOtherShipmentScheduleController extends Controller
 
         return response()->json(
             [
-                "status" => "success",
-                "message" => "Other Shipment schedule has been created",
+                'status' => 'success',
+                'message' => 'Other Shipment schedule has been created',
             ],
             200,
-            ["Content-Type" => "application/json"],
+            ['Content-Type' => 'application/json'],
             JSON_UNESCAPED_UNICODE,
         );
     }
@@ -136,18 +121,16 @@ class APIOtherShipmentScheduleController extends Controller
         $id = $request->id;
 
         // Ambil data master, loop ke detail, loop ke lokasi, sebelum hapus masukin ke history, terakhir delete
-        $otherShipmentScheduleMstr = OtherShipmentScheduleMstr::with([
-            "getOtherShipmentScheduleDetail.getOtherShipmentScheduleLocation",
-        ])->find($id);
+        $otherShipmentScheduleMstr = OtherShipmentScheduleMstr::with(['getOtherShipmentScheduleDetail.getOtherShipmentScheduleLocation'])->find($id);
 
         if (!$otherShipmentScheduleMstr) {
             return response()->json(
                 [
-                    "status" => "Error",
-                    "message" => "Data not found",
+                    'status' => 'Error',
+                    'message' => 'Data not found',
                 ],
                 422,
-                ["Content-Type" => "application/json"],
+                ['Content-Type' => 'application/json'],
                 JSON_UNESCAPED_UNICODE,
             );
         }
@@ -158,58 +141,56 @@ class APIOtherShipmentScheduleController extends Controller
         if ($deleteData == false) {
             return response()->json(
                 [
-                    "status" => "Error",
-                    "message" => "Failed to delete other shipment schedule",
+                    'status' => 'Error',
+                    'message' => 'Failed to delete other shipment schedule',
                 ],
                 422,
-                ["Content-Type" => "application/json"],
+                ['Content-Type' => 'application/json'],
                 JSON_UNESCAPED_UNICODE,
             );
         }
 
         return response()->json(
             [
-                "status" => "success",
-                "message" => "Other shipment schedule has been deleted",
+                'status' => 'success',
+                'message' => 'Other shipment schedule has been deleted',
             ],
             200,
-            ["Content-Type" => "application/json"],
+            ['Content-Type' => 'application/json'],
             JSON_UNESCAPED_UNICODE,
         );
     }
 
     public function edit($id)
     {
-        $otherShipmentSchedule = OtherShipmentScheduleMstr::with(["getOtherShipmentScheduleDetail.getOtherShipmentScheduleLocation"])->find(
-            $id,
-        );
+        $otherShipmentSchedule = OtherShipmentScheduleMstr::with(['getOtherShipmentScheduleDetail.getOtherShipmentScheduleLocation'])->find($id);
 
         if (!$otherShipmentSchedule) {
             return response()->json(
                 [
-                    "status" => "Error",
-                    "message" => "Failed to fetch other shipment schedule data",
+                    'status' => 'Error',
+                    'message' => 'Failed to fetch other shipment schedule data',
                 ],
                 422,
-                ["Content-Type" => "application/json"],
+                ['Content-Type' => 'application/json'],
                 JSON_UNESCAPED_UNICODE,
             );
         }
 
         return response()->json(
             [
-                "status" => "success",
-                "otherShipmentScheduleData" => $otherShipmentSchedule,
+                'status' => 'success',
+                'otherShipmentScheduleData' => $otherShipmentSchedule,
             ],
             200,
-            ["Content-Type" => "application/json"],
+            ['Content-Type' => 'application/json'],
             JSON_UNESCAPED_UNICODE,
         );
     }
 
     public function update(Request $request, $id)
     {
-        Log::channel("otherShipmentSchedule")->info(json_encode($request->all()));
+        Log::channel('otherShipmentSchedule')->info(json_encode($request->all()));
 
         $idOtherShipmentScheduleMstr = $id;
         $items = $request->items;
@@ -219,8 +200,8 @@ class APIOtherShipmentScheduleController extends Controller
         if ($updateData == false) {
             return response()->json(
                 [
-                    "Status" => "Error",
-                    "Message" => "Failed To Update Other Shipment Schedule.",
+                    'Status' => 'Error',
+                    'Message' => 'Failed To Update Other Shipment Schedule.',
                 ],
                 422,
             );
@@ -228,11 +209,11 @@ class APIOtherShipmentScheduleController extends Controller
 
         return response()->json(
             [
-                "status" => "success",
-                "message" => "Other Shipment schedule has been updated",
+                'status' => 'success',
+                'message' => 'Other Shipment schedule has been updated',
             ],
             200,
-            ["Content-Type" => "application/json"],
+            ['Content-Type' => 'application/json'],
             JSON_UNESCAPED_UNICODE,
         );
     }

@@ -330,6 +330,13 @@ return [
             "days" => "30",
             "permission" => 0775,
         ],
+           "confirmOtherTransaction" => [
+            "driver" => "daily",
+            "path" => storage_path("logs/confirmOtherTransaction.log"),
+            "level" => "info",
+            "days" => "30",
+            "permission" => 0775,
+        ],
                 "samplingLog" => [
             "driver" => "daily",
             "path" => storage_path("logs/samplingLog.log"),

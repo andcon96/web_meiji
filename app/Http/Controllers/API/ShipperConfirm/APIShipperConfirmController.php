@@ -43,35 +43,34 @@ class APIShipperConfirmController extends Controller
 
         return GeneralResources::collection($data);
     }
+public function store(Request $request)
+{
+    Log::info('REQUEST', $request->all());
 
-    public function store(Request $request)
-    {
-        Log::info('REQUEST', $request->all());
-        $shipperApproval = $request['shipperPayload'];
-        $reason = $request['reason'];
-        $activeConnection = qxwsa::first();
+    $shipperApproval = $request['shipperPayload'];
+    $reason = $request['reason'];
+    $activeConnection = qxwsa::first();
 
-        $confirmServices = new ConfirmShipmentServices();
-        $saveData = $confirmServices->confirmShipment($request, $shipperApproval, $reason, $activeConnection);
+    $confirmServices = new ConfirmShipmentServices();
 
-        if ($saveData == false) {
-            return response()->json(
-                [
-                    'Status' => 'Error',
-                    'Message' => 'Failed To Approve Shipment.',
-                ],
-                422,
-            );
-        }
+    $saveData = $confirmServices->confirmShipment(
+        $request,
+        $shipperApproval,
+        $reason,
+        $activeConnection
+    );
 
-        return response()->json(
-            [
-                'status' => 'success',
-                'message' => 'Shipment has been approved',
-            ],
-            200,
-            ['Content-Type' => 'application/json'],
-            JSON_UNESCAPED_UNICODE,
-        );
+    if ($saveData !== true) {
+        return response()->json([
+            'Status' => 'error',
+            'Message'=> $saveData['message'] ?? 'Unknown QAD error.',
+            // 'qad_message' => $saveData['message'] ?? 'Unknown QAD error.',
+        ], 422);
     }
+
+    return response()->json([
+        'Status' => 'success',
+        'Message' => 'Shipment has been approved',
+    ], 200);
+}
 }

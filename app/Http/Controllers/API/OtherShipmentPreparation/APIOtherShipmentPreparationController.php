@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Models\Settings\Role;
 use App\Models\Settings\User;
-
+use App\Models\API\xxinvDet;
 class APIOtherShipmentPreparationController extends Controller
 {
     public function index(Request $request)
@@ -55,32 +55,73 @@ class APIOtherShipmentPreparationController extends Controller
         return GeneralResources::collection($data);
     }
 
-    public function listOtherShipmentSchedule()
-    {
-        $listOtherShipmentSchedule = OtherShipmentScheduleMstr::whereDoesntHave(
-            "getOtherShipmentScheduleDetail.getOtherShipmentScheduleLocation.getOtherShipmentPreparationDet",
-        )
-            ->with(["getOtherShipmentScheduleDetail.getOtherShipmentScheduleLocation"])
-            ->orderBy("ossm_number", "desc")
-            ->get();
+   public function listOtherShipmentSchedule()
+{
+    $listOtherShipmentSchedule = OtherShipmentScheduleMstr::whereDoesntHave(
+        "getOtherShipmentScheduleDetail.getOtherShipmentScheduleLocation.getOtherShipmentPreparationDet",
+    )
+        ->with(["getOtherShipmentScheduleDetail.getOtherShipmentScheduleLocation"])
+        ->orderBy("ossm_number", "desc")
+        ->get();
 
-        if ($listOtherShipmentSchedule->count() == 0) {
-            return response()->json(
-                [
-                    "Status" => "Error",
-                    "Message" => "No Other Shipment Schedule found.",
-                ],
-                422,
-            );
-        }
-
+    if ($listOtherShipmentSchedule->count() == 0) {
         return response()->json(
             [
-                "listOtherShipmentSchedule" => $listOtherShipmentSchedule,
+                "Status" => "Error",
+                "Message" => "No Other Shipment Schedule found.",
             ],
-            200,
+            422,
         );
     }
+
+    // 🔹 Kumpulkan semua part number yang terlibat, biar query inventory cukup sekali
+    $partNumbers = $listOtherShipmentSchedule
+        ->flatMap(fn($mstr) => $mstr->getOtherShipmentScheduleDetail)
+        ->pluck('ossd_part')
+        ->map(fn($part) => (string) $part)
+        ->unique()
+        ->values()
+        ->all();
+
+    $inventory = xxinvDet::whereIn('xxinv_part', $partNumbers)->get();
+
+    // 🔹 Sisipkan stok ke tiap location, pakai matching logic yang sama seperti WSA
+    foreach ($listOtherShipmentSchedule as $mstr) {
+        foreach ($mstr->getOtherShipmentScheduleDetail as $detail) {
+            $part = trim((string) $detail->ossd_part);
+
+            foreach ($detail->getOtherShipmentScheduleLocation as $location) {
+                $lot = trim((string) $location->ossl_lotserial);
+                $loc = trim((string) $location->ossl_location);
+                $site = trim((string) $location->ossl_site);
+                $level = strtoupper(trim((string) $location->ossl_level));
+                $bin = trim((string) $location->ossl_bin);
+
+                $stockRow = $inventory->first(function ($inv) use ($part, $lot, $loc, $site, $level, $bin) {
+                    $cleanInvLevel = preg_replace('/[^A-Za-z0-9]/', '', $inv->xxinv_level);
+                    $cleanLocalLevel = preg_replace('/[^A-Za-z0-9]/', '', $level);
+
+                    return trim($inv->xxinv_part) == $part &&
+                        trim((string) $inv->xxinv_lot) === $lot &&
+                        trim($inv->xxinv_loc) == $loc &&
+                        trim($inv->xxinv_site) == $site &&
+                        strtoupper($cleanInvLevel) == strtoupper($cleanLocalLevel) &&
+                        trim($inv->xxinv_bin) == $bin;
+                });
+
+                // Ditempel sebagai atribut computed, otomatis ikut ke JSON response
+                $location->setAttribute('stock', (float) ($stockRow->xxinv_qty_wrh ?? 0));
+            }
+        }
+    }
+
+    return response()->json(
+        [
+            "listOtherShipmentSchedule" => $listOtherShipmentSchedule,
+        ],
+        200,
+    );
+}
 
     public function store(Request $request)
     {
