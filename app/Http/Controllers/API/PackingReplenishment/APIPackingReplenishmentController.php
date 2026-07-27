@@ -76,105 +76,85 @@ class APIPackingReplenishmentController extends Controller
     }
 
     public function listShipmentScheduleWSA(Request $request)
-    {
-        $shipperNumber = $request->query('shipperNumber') ?? $request->shipperNumber;
-        $site = $request->query('site') ?? $request->site;
+{
+    $shipperNumber = $request->query('shipperNumber') ?? $request->shipperNumber;
+    $site = $request->query('site') ?? $request->site;
 
-       $hasil = (new WSAServices())->listShipmentScheduleWSA($shipperNumber, $site);
-        // dd($hasil );
-        [$qdocResult, $dataloop, $qdocMessage] = $hasil;
+    $hasil = (new WSAServices())->listShipmentScheduleWSA($shipperNumber, $site);
+    [$qdocResult, $dataloop, $qdocMessage] = $hasil;
 
-        if ($qdocResult !== 'true') {
-            return response()->json(
-                [
-                    'success' => false,
-                    'message' => $qdocMessage ?: 'Failed to fetch shipment schedule from WSA',
-                    'data' => [],
-                ],
-                422,
-            );
-        }
+    if ($qdocResult !== 'true') {
+        return response()->json(
+            [
+                'success' => false,
+                'message' => $qdocMessage ?: 'Failed to fetch shipment schedule from WSA',
+                'data' => [],
+            ],
+            422,
+        );
+    }
 
-        $partNumbers = collect($dataloop)->pluck('t_part')->map(fn($part) => (string) $part)->unique()->values()->all();
+    $partNumbers = collect($dataloop)->pluck('t_part')->map(fn($part) => (string) $part)->unique()->values()->all();
 
-        $items = Item::whereIn('im_item_part', $partNumbers)
-            ->with(['getItemLocation.getLocationDetail'])
-            ->get()
-            ->keyBy('im_item_part');
+    $items = Item::whereIn('im_item_part', $partNumbers)
+        ->get()
+        ->keyBy('im_item_part');
 
-        $inventory = xxinvDet::whereIn('xxinv_part', $partNumbers)->get();
+    $inventory = xxinvDet::whereIn('xxinv_part', $partNumbers)->get();
 
-        $rows = [];
+    // Group berdasarkan gabungan part + lot supaya bisa langsung diambil per baris shipment
+    $inventoryGrouped = $inventory->groupBy(function ($row) {
+        return trim((string) $row->xxinv_part) . '|' . trim((string) $row->xxinv_lot);
+    });
 
-        foreach ($dataloop as $row) {
-            $part = trim((string) $row->t_part);
-            $lot = trim((string) $row->t_lot);
-            $loc = trim((string) $row->t_loc);
-            $site = trim((string) $row->t_site);
+    $rows = [];
 
-            $item = $items->get($part);
+    foreach ($dataloop as $row) {
+        $part = trim((string) $row->t_part);
+        $lot  = trim((string) $row->t_lot);
+        $loc  = trim((string) $row->t_loc);
+        $siteRow = trim((string) $row->t_site);
 
-            $itemId = $item->id ?? null;
-            $locationDetail = [];
+        $item   = $items->get($part);
+        $itemId = $item->id ?? null;
 
-            if ($item) {
-                $matchedLocations = $item->getItemLocation->filter(function ($itemLocation) use ($lot) {
-                    $ld = $itemLocation->getLocationDetail;
+        $stockRows = $inventoryGrouped->get($part . '|' . $lot, collect());
 
-                    return $ld && trim((string) $ld->ld_lot_serial) === $lot;
-                });
-
-                foreach ($matchedLocations as $itemLocation) {
-                    $ld = $itemLocation->getLocationDetail;
-
-                    $level = strtoupper(trim($ld->ld_rak));
-                    $stockRow = $inventory->first(function ($inv) use ($part, $lot, $loc, $site, $level, $ld) {
-
-                        $cleanInvLevel = preg_replace('/[^A-Za-z0-9]/', '', $inv->xxinv_level);
-                        $cleanLocalLevel = preg_replace('/[^A-Za-z0-9]/', '', $level);
-
-                        return trim($inv->xxinv_part) == $part &&
-                            trim((string) $inv->xxinv_lot) === $lot &&
-                            trim($inv->xxinv_loc) == $loc &&
-                            trim($inv->xxinv_site) == $site &&
-                            strtoupper($cleanInvLevel) == strtoupper($cleanLocalLevel) &&
-                            trim($inv->xxinv_bin) == trim($ld->ld_bin);
-                    });
-
-                    $locationDetail[] = [
-                        'lot_serial' => $ld->ld_lot_serial,
-                        'level' => $ld->ld_rak,
-                        'bin' => $ld->ld_bin,
-                        'location' => $ld->ld_building,
-                        'stock' => (float) ($stockRow->xxinv_qty_wrh ?? 0),
-                    ];
-                }
-            }
-
-            $rows[] = [
-                'domain' => (string) $row->t_domain,
-                'site' => $site,
-                'part' => $part,
-                'desc' => (string) $row->t_desc,
-                'um' => (string) $row->t_um,
-                'loc' => $loc,
-                'line' => (string) $row->t_line,
-                'lot' => $lot,
-                'qty' => (int) $row->t_qty,
-                'item_id' => $itemId,
-                'location_detail' => $locationDetail,
+        $locationDetail = [];
+        foreach ($stockRows as $stockRow) {
+            $locationDetail[] = [
+                'lot_serial' => (string) $stockRow->xxinv_lot,
+                'level'      => (string) $stockRow->xxinv_level,
+                'bin'        => (string) $stockRow->xxinv_bin,
+                'location'   => (string) $stockRow->xxinv_wrh,
+                'stock'      => (float) ($stockRow->xxinv_qtyoh ?? 0),
             ];
         }
 
-        return response()->json(
-            [
-                'success' => true,
-                'message' => 'Shipment schedule fetched successfully',
-                'data' => $rows,
-            ],
-            200,
-        );
+        $rows[] = [
+            'domain'          => (string) $row->t_domain,
+            'site'            => $siteRow,
+            'part'            => $part,
+            'desc'            => (string) $row->t_desc,
+            'um'              => (string) $row->t_um,
+            'loc'             => $loc,
+            'line'            => (string) $row->t_line,
+            'lot'             => $lot,
+            'qty'             => (int) $row->t_qty,
+            'item_id'         => $itemId,
+            'location_detail' => $locationDetail,
+        ];
     }
+
+    return response()->json(
+        [
+            'success' => true,
+            'message' => 'Shipment schedule fetched successfully',
+            'data' => $rows,
+        ],
+        200,
+    );
+}
     public function store(Request $request)
     {
         Log::channel('packingReplenishment')->info(json_encode($request->all()));
