@@ -24,7 +24,7 @@ class PackingReplenishmentServices
             $packingReplenishmentMstr = PackingReplenishmentMstr::find($idPrm);
             $isEdit = (bool) $packingReplenishmentMstr;
 
-            if (!$packingReplenishmentMstr) {
+            if (! $packingReplenishmentMstr) {
                 $packingReplenishmentMstr = new PackingReplenishmentMstr();
                 $packingReplenishmentMstr->created_by = Auth::user()->id;
             }
@@ -54,8 +54,13 @@ class PackingReplenishmentServices
                 $shipmentScheduleDet->ssd_sod_qty_pick = $packingReplenishment['totalPickedQty'];
                 $shipmentScheduleDet->ssd_status = 'Pending';
                 $shipmentScheduleDet->save();
-
                 foreach ($packingReplenishment['locations'] as $location) {
+             
+                    $qtyPick = $location['qtyPick'] ?? null;
+                    if ($qtyPick === null || $qtyPick === '' || (is_numeric($qtyPick) && (float) $qtyPick == 0)) {
+                        continue;
+                    }
+
                     $sslId = $isEdit && is_numeric($location['id'] ?? null) ? $location['id'] : null;
 
                     if ($sslId && ShipmentScheduleLoc::where('id', $sslId)->exists()) {
@@ -79,7 +84,7 @@ class PackingReplenishmentServices
 
                     $packingReplenishmentDet = PackingReplenishmentDet::where('prm_id', $packingReplenishmentMstr->id)->where('ssl_id', $shipmentScheduleLocation->id)->first();
 
-                    if (!$packingReplenishmentDet) {
+                    if (! $packingReplenishmentDet) {
                         $packingReplenishmentDet = new PackingReplenishmentDet();
                         $packingReplenishmentDet->prm_id = $packingReplenishmentMstr->id;
                         $packingReplenishmentDet->ssl_id = $shipmentScheduleLocation->id;
@@ -93,7 +98,7 @@ class PackingReplenishmentServices
 
             $packingReplenishmentApproval = PackingReplenishmentApproval::where('prm_id', $packingReplenishmentMstr->id)->where('pra_sequence', 1)->first();
 
-            if (!$packingReplenishmentApproval) {
+            if (! $packingReplenishmentApproval) {
                 $packingReplenishmentApproval = new PackingReplenishmentApproval();
                 $packingReplenishmentApproval->prm_id = $packingReplenishmentMstr->id;
                 $packingReplenishmentApproval->pra_sequence = 1;

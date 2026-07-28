@@ -122,6 +122,7 @@ class APIPackingReplenishmentController extends Controller
             foreach ($stockRows as $stockRow) {
                 $locationDetail[] = [
                     'lot_serial' => (string) $stockRow->xxinv_lot,
+                    'wrh'=> (string) $stockRow->xxinv_wrh,
                     'level' => (string) $stockRow->xxinv_level,
                     'bin' => (string) $stockRow->xxinv_bin,
                     'location' => (string) $stockRow->xxinv_loc,
