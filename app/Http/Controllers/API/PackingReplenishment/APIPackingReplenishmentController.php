@@ -9,8 +9,6 @@ use App\Models\API\PackingReplenishment\PackingReplenishmentMstr;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleMstr;
 use App\Models\API\xxinvDet;
 use App\Models\Settings\Item;
-use App\Models\Settings\ItemLocation;
-use App\Models\Settings\LocationDetail;
 use App\Models\Settings\qxwsa;
 use App\Models\Settings\Role;
 use App\Models\Settings\User;
@@ -31,16 +29,16 @@ class APIPackingReplenishmentController extends Controller
 
             $data->where(function ($q) use ($search) {
                 // cari customer
-                $q->where('prm_shipper_nbr', 'LIKE', '%' . $search . '%')
+                $q->where('prm_shipper_nbr', 'LIKE', '%'.$search.'%')
 
                     // cari customer
                     ->orWhereHas('getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster', function ($query) use ($search) {
-                        $query->where('ssm_cust_code', 'LIKE', '%' . $search . '%')->orWhere('ssm_cust_desc', 'LIKE', '%' . $search . '%');
+                        $query->where('ssm_cust_code', 'LIKE', '%'.$search.'%')->orWhere('ssm_cust_desc', 'LIKE', '%'.$search.'%');
                     })
 
                     // cari SO + item code
                     ->orWhereHas('getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet', function ($query) use ($search) {
-                        $query->where('ssd_sod_nbr', 'LIKE', '%' . $search . '%')->orWhere('ssd_sod_part', 'LIKE', '%' . $search . '%');
+                        $query->where('ssd_sod_nbr', 'LIKE', '%'.$search.'%')->orWhere('ssd_sod_part', 'LIKE', '%'.$search.'%');
                     });
             });
         }
@@ -76,85 +74,86 @@ class APIPackingReplenishmentController extends Controller
     }
 
     public function listShipmentScheduleWSA(Request $request)
-{
-    $shipperNumber = $request->query('shipperNumber') ?? $request->shipperNumber;
-    $site = $request->query('site') ?? $request->site;
+    {
+        $shipperNumber = $request->query('shipperNumber') ?? $request->shipperNumber;
+        $site = $request->query('site') ?? $request->site;
 
-    $hasil = (new WSAServices())->listShipmentScheduleWSA($shipperNumber, $site);
-    [$qdocResult, $dataloop, $qdocMessage] = $hasil;
+        $hasil = (new WSAServices())->listShipmentScheduleWSA($shipperNumber, $site);
+        [$qdocResult, $dataloop, $qdocMessage] = $hasil;
 
-    if ($qdocResult !== 'true') {
-        return response()->json(
-            [
-                'success' => false,
-                'message' => $qdocMessage ?: 'Failed to fetch shipment schedule from WSA',
-                'data' => [],
-            ],
-            422,
-        );
-    }
+        if ($qdocResult !== 'true') {
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => $qdocMessage ?: 'Failed to fetch shipment schedule from WSA',
+                    'data' => [],
+                ],
+                422,
+            );
+        }
 
-    $partNumbers = collect($dataloop)->pluck('t_part')->map(fn($part) => (string) $part)->unique()->values()->all();
+        $partNumbers = collect($dataloop)->pluck('t_part')->map(fn ($part) => (string) $part)->unique()->values()->all();
 
-    $items = Item::whereIn('im_item_part', $partNumbers)
-        ->get()
-        ->keyBy('im_item_part');
+        $items = Item::whereIn('im_item_part', $partNumbers)
+            ->get()
+            ->keyBy('im_item_part');
 
-    $inventory = xxinvDet::whereIn('xxinv_part', $partNumbers)->get();
+        $inventory = xxinvDet::whereIn('xxinv_part', $partNumbers)->get();
 
-    // Group berdasarkan gabungan part + lot supaya bisa langsung diambil per baris shipment
-    $inventoryGrouped = $inventory->groupBy(function ($row) {
-        return trim((string) $row->xxinv_part) . '|' . trim((string) $row->xxinv_lot);
-    });
+        // Group berdasarkan gabungan part + lot supaya bisa langsung diambil per baris shipment
+        $inventoryGrouped = $inventory->groupBy(function ($row) {
+            return trim((string) $row->xxinv_part).'|'.trim((string) $row->xxinv_lot);
+        });
 
-    $rows = [];
+        $rows = [];
 
-    foreach ($dataloop as $row) {
-        $part = trim((string) $row->t_part);
-        $lot  = trim((string) $row->t_lot);
-        $loc  = trim((string) $row->t_loc);
-        $siteRow = trim((string) $row->t_site);
+        foreach ($dataloop as $row) {
+            $part = trim((string) $row->t_part);
+            $lot = trim((string) $row->t_lot);
+            $loc = trim((string) $row->t_loc);
+            $siteRow = trim((string) $row->t_site);
 
-        $item   = $items->get($part);
-        $itemId = $item->id ?? null;
+            $item = $items->get($part);
+            $itemId = $item->id ?? null;
 
-        $stockRows = $inventoryGrouped->get($part . '|' . $lot, collect());
+            $stockRows = $inventoryGrouped->get($part.'|'.$lot, collect());
 
-        $locationDetail = [];
-        foreach ($stockRows as $stockRow) {
-            $locationDetail[] = [
-                'lot_serial' => (string) $stockRow->xxinv_lot,
-                'level'      => (string) $stockRow->xxinv_level,
-                'bin'        => (string) $stockRow->xxinv_bin,
-                'location'   => (string) $stockRow->xxinv_wrh,
-                'stock'      => (float) ($stockRow->xxinv_qtyoh ?? 0),
+            $locationDetail = [];
+            foreach ($stockRows as $stockRow) {
+                $locationDetail[] = [
+                    'lot_serial' => (string) $stockRow->xxinv_lot,
+                    'level' => (string) $stockRow->xxinv_level,
+                    'bin' => (string) $stockRow->xxinv_bin,
+                    'location' => (string) $stockRow->xxinv_loc,
+                    'stock' => (float) ($stockRow->xxinv_qtyoh ?? 0),
+                ];
+            }
+
+            $rows[] = [
+                'domain' => (string) $row->t_domain,
+                'site' => $siteRow,
+                'part' => $part,
+                'desc' => (string) $row->t_desc,
+                'um' => (string) $row->t_um,
+                'loc' => $loc,
+                'line' => (string) $row->t_line,
+                'lot' => $lot,
+                'qty' => (int) $row->t_qty,
+                'item_id' => $itemId,
+                'location_detail' => $locationDetail,
             ];
         }
 
-        $rows[] = [
-            'domain'          => (string) $row->t_domain,
-            'site'            => $siteRow,
-            'part'            => $part,
-            'desc'            => (string) $row->t_desc,
-            'um'              => (string) $row->t_um,
-            'loc'             => $loc,
-            'line'            => (string) $row->t_line,
-            'lot'             => $lot,
-            'qty'             => (int) $row->t_qty,
-            'item_id'         => $itemId,
-            'location_detail' => $locationDetail,
-        ];
+        return response()->json(
+            [
+                'success' => true,
+                'message' => 'Shipment schedule fetched successfully',
+                'data' => $rows,
+            ],
+            200,
+        );
     }
 
-    return response()->json(
-        [
-            'success' => true,
-            'message' => 'Shipment schedule fetched successfully',
-            'data' => $rows,
-        ],
-        200,
-    );
-}
     public function store(Request $request)
     {
         Log::channel('packingReplenishment')->info(json_encode($request->all()));
@@ -301,7 +300,7 @@ class APIPackingReplenishmentController extends Controller
     {
         $packingReplenishment = PackingReplenishmentMstr::with(['getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster'])->find($id);
 
-        if (!$packingReplenishment) {
+        if (! $packingReplenishment) {
             return response()->json(
                 [
                     'status' => 'Error',
@@ -331,7 +330,7 @@ class APIPackingReplenishmentController extends Controller
     {
         $data = PackingReplenishmentApproval::query()
             ->with(['getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster', 'getCreatedBy:id,name,username'])
-            ->where('pra_user_approver', 'LIKE', '%' . Auth::user()->id . '%');
+            ->where('pra_user_approver', 'LIKE', '%'.Auth::user()->id.'%');
 
         if ($request->search) {
             $filter = $request->search;
@@ -339,17 +338,17 @@ class APIPackingReplenishmentController extends Controller
             $data->where(function ($q) use ($filter) {
                 // Cari shipper number
                 $q->whereHas('getPackingReplenishmentMstr', function ($subq) use ($filter) {
-                    $subq->where('prm_shipper_nbr', 'LIKE', '%' . $filter . '%')->where('prm_status', 'Shipper Created');
+                    $subq->where('prm_shipper_nbr', 'LIKE', '%'.$filter.'%')->where('prm_status', 'Shipper Created');
                 })
 
                     // Cari customer
                     ->orWhereHas('getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster', function ($q) use ($filter) {
-                        $q->where('ssm_cust_code', 'LIKE', '%' . $filter . '%')->orWhere('ssm_cust_desc', 'LIKE', '%' . $filter . '%');
+                        $q->where('ssm_cust_code', 'LIKE', '%'.$filter.'%')->orWhere('ssm_cust_desc', 'LIKE', '%'.$filter.'%');
                     })
 
                     // cari SO + item code
                     ->orWhereHas('getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet', function ($q) use ($filter) {
-                        $q->where('ssd_sod_part', 'LIKE', '%' . $filter . '%');
+                        $q->where('ssd_sod_part', 'LIKE', '%'.$filter.'%');
                     });
             });
         }
@@ -363,20 +362,20 @@ class APIPackingReplenishmentController extends Controller
     {
         $data = xxinvDet::query()
             ->when($request->filled('part'), function ($q) use ($request) {
-                $q->where('xxinv_part', 'LIKE', '%' . $request->part . '%');
+                $q->where('xxinv_part', 'LIKE', '%'.$request->part.'%');
             })
             ->when($request->filled('loc'), function ($q) use ($request) {
-                $q->where('xxinv_loc', 'LIKE', '%' . $request->loc . '%');
+                $q->where('xxinv_loc', 'LIKE', '%'.$request->loc.'%');
             })
             ->when($request->filled('lot'), function ($q) use ($request) {
-                $q->where('xxinv_lot', 'LIKE', '%' . $request->lot . '%');
+                $q->where('xxinv_lot', 'LIKE', '%'.$request->lot.'%');
             })
             ->when($request->filled('site'), function ($q) use ($request) {
-                $q->where('xxinv_site', 'LIKE', '%' . $request->site . '%');
+                $q->where('xxinv_site', 'LIKE', '%'.$request->site.'%');
             })
             ->first();
 
-        if (!$data) {
+        if (! $data) {
             return response()->json(
                 [
                     'message' => 'Data tidak ditemukan',
