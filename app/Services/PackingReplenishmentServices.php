@@ -170,6 +170,9 @@ class PackingReplenishmentServices
                 $packingReplenishment['get_packing_replenishment_mstr']['id']
             );
 
+
+
+
             $packingReplenishmentDetails = PackingReplenishmentDet::where(
                 'prm_id',
                 $packingReplenishmentMstr->id
@@ -198,6 +201,9 @@ class PackingReplenishmentServices
                         (float) $shipmentScheduleLocation->ssl_qty_pick
                     );
             }
+
+
+
 
             $packingReplenishmentMstr->prm_status = 'Rejected';
             $packingReplenishmentMstr->save();

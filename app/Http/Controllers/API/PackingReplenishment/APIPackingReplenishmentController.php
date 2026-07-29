@@ -10,7 +10,6 @@ use App\Models\API\ShipmentSchedule\ShipmentScheduleMstr;
 use App\Models\API\xxinvDet;
 use App\Models\Settings\Item;
 use App\Models\Settings\qxwsa;
-use App\Models\Settings\Role;
 use App\Models\Settings\User;
 use App\Services\PackingReplenishmentServices;
 use App\Services\WSAServices;
@@ -28,15 +27,13 @@ class APIPackingReplenishmentController extends Controller
             $search = $request->search;
 
             $data->where(function ($q) use ($search) {
-                // cari customer
+
                 $q->where('prm_shipper_nbr', 'LIKE', '%'.$search.'%')
 
-                    // cari customer
                     ->orWhereHas('getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster', function ($query) use ($search) {
                         $query->where('ssm_cust_code', 'LIKE', '%'.$search.'%')->orWhere('ssm_cust_desc', 'LIKE', '%'.$search.'%');
                     })
 
-                    // cari SO + item code
                     ->orWhereHas('getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet', function ($query) use ($search) {
                         $query->where('ssd_sod_nbr', 'LIKE', '%'.$search.'%')->orWhere('ssd_sod_part', 'LIKE', '%'.$search.'%');
                     });
@@ -100,7 +97,6 @@ class APIPackingReplenishmentController extends Controller
 
         $inventory = xxinvDet::whereIn('xxinv_part', $partNumbers)->get();
 
-        // Group berdasarkan gabungan part + lot supaya bisa langsung diambil per baris shipment
         $inventoryGrouped = $inventory->groupBy(function ($row) {
             return trim((string) $row->xxinv_part).'|'.trim((string) $row->xxinv_lot);
         });
@@ -122,7 +118,7 @@ class APIPackingReplenishmentController extends Controller
             foreach ($stockRows as $stockRow) {
                 $locationDetail[] = [
                     'lot_serial' => (string) $stockRow->xxinv_lot,
-                    'wrh'=> (string) $stockRow->xxinv_wrh,
+                    'wrh' => (string) $stockRow->xxinv_wrh,
                     'level' => (string) $stockRow->xxinv_level,
                     'bin' => (string) $stockRow->xxinv_bin,
                     'location' => (string) $stockRow->xxinv_loc,
@@ -208,10 +204,6 @@ class APIPackingReplenishmentController extends Controller
             ->where('is_active', 'Active')
             ->orderBy('username', 'asc')
             ->get(['id', 'name']);
-        // $role = Role::where("role_code", "SH")->first();
-        // $users = User::where("role_id", $role->id)
-        //     ->where("is_active", "Active")
-        //     ->get(["id", "name"]);
 
         if ($users->count() == 0) {
             return response()->json(
@@ -267,7 +259,7 @@ class APIPackingReplenishmentController extends Controller
 
     public function approvePackingReplenishment(Request $request)
     {
-        // Log::channel("packingReplenishment")->info(json_encode($request->all()));
+
         $packingReplenishment = $request->shipperPayload;
         $reason = $request->reason;
         $shipmentScheduleNumber = $request->shipmentScheduleNumber;
@@ -299,7 +291,9 @@ class APIPackingReplenishmentController extends Controller
 
     public function editPackingReplenishment($id)
     {
-        $packingReplenishment = PackingReplenishmentMstr::with(['getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster'])->find($id);
+        $packingReplenishment = PackingReplenishmentMstr::with([
+            'getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster',
+        ])->find($id);
 
         if (! $packingReplenishment) {
             return response()->json(
@@ -313,7 +307,46 @@ class APIPackingReplenishmentController extends Controller
             );
         }
 
-        $shipmentScheduleDet = $packingReplenishment->getPackingReplenishmentDet[0]->getShipmentScheduleLocation->getShipmentScheduleDet;
+        $packingReplenishmentDet = $packingReplenishment->getPackingReplenishmentDet;
+
+        $shipmentScheduleDet = $packingReplenishmentDet[0]->getShipmentScheduleLocation->getShipmentScheduleDet;
+
+        $parts = $packingReplenishmentDet
+            ->map(fn ($det) => trim((string) $det->getShipmentScheduleLocation->getShipmentScheduleDet->ssd_sod_part))
+            ->unique()
+            ->values()
+            ->all();
+
+        $lot = $packingReplenishmentDet
+            ->map(fn ($det) => trim((string) $det->getShipmentScheduleLocation->getShipmentScheduleDet->ssd_sod_lot))
+            ->unique()
+            ->values()
+            ->all();
+        $inventory = xxinvDet::whereIn('xxinv_part', $parts)->where('xxinv_lot', $lot)->get();
+
+        $inventoryGrouped = $inventory->groupBy(function ($row) {
+            return trim((string) $row->xxinv_part);
+        });
+
+        foreach ($packingReplenishmentDet as $det) {
+            $ssl = $det->getShipmentScheduleLocation;
+            $part = trim((string) $ssl->getShipmentScheduleDet->ssd_sod_part);
+
+            $stockRows = $inventoryGrouped->get($part, collect());
+
+            $locationDetail = $stockRows->map(function ($stockRow) {
+                return [
+                    'lot_serial' => (string) $stockRow->xxinv_lot,
+                    'wrh' => (string) $stockRow->xxinv_wrh,
+                    'level' => (string) $stockRow->xxinv_level,
+                    'bin' => (string) $stockRow->xxinv_bin,
+                    'location' => (string) $stockRow->xxinv_loc,
+                    'stock' => (float) ($stockRow->xxinv_qtyoh ?? 0),
+                ];
+            })->values();
+
+            $ssl->setAttribute('location_detail', $locationDetail);
+        }
 
         return response()->json(
             [
@@ -337,17 +370,15 @@ class APIPackingReplenishmentController extends Controller
             $filter = $request->search;
 
             $data->where(function ($q) use ($filter) {
-                // Cari shipper number
+
                 $q->whereHas('getPackingReplenishmentMstr', function ($subq) use ($filter) {
                     $subq->where('prm_shipper_nbr', 'LIKE', '%'.$filter.'%')->where('prm_status', 'Shipper Created');
                 })
 
-                    // Cari customer
                     ->orWhereHas('getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster', function ($q) use ($filter) {
                         $q->where('ssm_cust_code', 'LIKE', '%'.$filter.'%')->orWhere('ssm_cust_desc', 'LIKE', '%'.$filter.'%');
                     })
 
-                    // cari SO + item code
                     ->orWhereHas('getPackingReplenishmentMstr.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet', function ($q) use ($filter) {
                         $q->where('ssd_sod_part', 'LIKE', '%'.$filter.'%');
                     });
