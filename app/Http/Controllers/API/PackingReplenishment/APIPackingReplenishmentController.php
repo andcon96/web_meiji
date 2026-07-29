@@ -318,21 +318,22 @@ class APIPackingReplenishmentController extends Controller
             ->all();
 
         $lot = $packingReplenishmentDet
-            ->map(fn ($det) => trim((string) $det->getShipmentScheduleLocation->getShipmentScheduleDet->ssd_sod_lot))
+            ->map(fn ($det) => trim((string) $det->getShipmentScheduleLocation->ssl_lotserial))
             ->unique()
             ->values()
             ->all();
-        $inventory = xxinvDet::whereIn('xxinv_part', $parts)->where('xxinv_lot', $lot)->get();
+        $inventory = xxinvDet::whereIn('xxinv_part', $parts)->whereIn('xxinv_lot', $lot)->get();
 
         $inventoryGrouped = $inventory->groupBy(function ($row) {
-            return trim((string) $row->xxinv_part);
+            return trim((string) $row->xxinv_part).'|'.trim((string) $row->xxinv_lot);
         });
 
         foreach ($packingReplenishmentDet as $det) {
             $ssl = $det->getShipmentScheduleLocation;
             $part = trim((string) $ssl->getShipmentScheduleDet->ssd_sod_part);
+            $lot = trim((string) $ssl->ssl_lotserial);
 
-            $stockRows = $inventoryGrouped->get($part, collect());
+            $stockRows = $inventoryGrouped->get($part.'|'.$lot, collect());
 
             $locationDetail = $stockRows->map(function ($stockRow) {
                 return [
