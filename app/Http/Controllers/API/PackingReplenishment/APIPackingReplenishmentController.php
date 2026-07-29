@@ -318,7 +318,7 @@ class APIPackingReplenishmentController extends Controller
             ->all();
 
         $lot = $packingReplenishmentDet
-            ->map(fn ($det) => trim((string) $det->getShipmentScheduleLocation->ssl_lotserial))
+            ->map(fn ($det) => trim((string) $det->getShipmentScheduleLocation->getShipmentScheduleDet->ssd_sod_lot))
             ->unique()
             ->values()
             ->all();

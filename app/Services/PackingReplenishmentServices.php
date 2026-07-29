@@ -51,6 +51,7 @@ class PackingReplenishmentServices
                 $shipmentScheduleDet->ssd_sod_line = $packingReplenishment['sodLine'];
                 $shipmentScheduleDet->ssd_sod_part = $packingReplenishment['sodPart'];
                 $shipmentScheduleDet->ssd_sod_desc = $packingReplenishment['sodDesc'];
+                $shipmentScheduleDet->ssd_sod_lot = $packingReplenishment['sodLot'] ?? null;
                 $shipmentScheduleDet->ssd_sod_qty_ord = $packingReplenishment['totalToPickQty'];
                 $shipmentScheduleDet->ssd_sod_qty_pick = $packingReplenishment['totalPickedQty'];
                 $shipmentScheduleDet->ssd_status = 'Pending';
@@ -170,9 +171,6 @@ class PackingReplenishmentServices
                 $packingReplenishment['get_packing_replenishment_mstr']['id']
             );
 
-
-
-
             $packingReplenishmentDetails = PackingReplenishmentDet::where(
                 'prm_id',
                 $packingReplenishmentMstr->id
@@ -200,10 +198,10 @@ class PackingReplenishmentServices
                         'xxinv_qtyoh',
                         (float) $shipmentScheduleLocation->ssl_qty_pick
                     );
+                $shipmentScheduleLocation->ssl_qty_pick = 0;
+                $shipmentScheduleLocation->save();
+
             }
-
-
-
 
             $packingReplenishmentMstr->prm_status = 'Rejected';
             $packingReplenishmentMstr->save();
