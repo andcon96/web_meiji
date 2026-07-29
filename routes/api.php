@@ -124,7 +124,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getDefaultSampleLoc', [APITrasnferStockController::class, 'getDefaultSampleLoc']);
 
     // Packing Replenishment
-    Route::get('getPackingReplenishment', [APIPackingReplenishmentController::class, 'index']);
+Route::get('getPackingReplenishment', [APIPackingReplenishmentController::class, 'index']);
     Route::get('listShipmentSchedule', [APIPackingReplenishmentController::class, 'listShipmentSchedule']);
     Route::post('savePackingReplenishment', [APIPackingReplenishmentController::class, 'store']);
     Route::get('approverList', [APIPackingReplenishmentController::class, 'approverList']);
@@ -246,7 +246,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get("/getLotSampling", [APISampling::class, 'getLotSampling']);
     Route::post("/transferSampling", [APISampling::class, 'transferSampling']);
        Route::post("/checkWarehouseSampling", [APISampling::class, 'checkWarehouseSampling']);
-    
+
     Route::get("/getPengembalianQo", [APIPengembalian::class, 'getPengembalianQo']);
     Route::post("/checkWarehouseReturn", [APIPengembalian::class, 'checkWarehouseReturn']);
     Route::get("/getLotPengembalian", [APIPengembalian::class, 'getLotPengembalian']);

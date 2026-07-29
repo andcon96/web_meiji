@@ -9,6 +9,7 @@ use App\Models\API\PackingReplenishment\PackingReplenishmentMstr;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleDet;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleLoc;
 use App\Models\API\ShipperConfirm\ShipperConfirm;
+use App\Models\API\xxinvDet;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -53,9 +54,10 @@ class PackingReplenishmentServices
                 $shipmentScheduleDet->ssd_sod_qty_ord = $packingReplenishment['totalToPickQty'];
                 $shipmentScheduleDet->ssd_sod_qty_pick = $packingReplenishment['totalPickedQty'];
                 $shipmentScheduleDet->ssd_status = 'Pending';
+                $shipmentScheduleDet->ssm_id = '1';
                 $shipmentScheduleDet->save();
                 foreach ($packingReplenishment['locations'] as $location) {
-             
+
                     $qtyPick = $location['qtyPick'] ?? null;
                     if ($qtyPick === null || $qtyPick === '' || (is_numeric($qtyPick) && (float) $qtyPick == 0)) {
                         continue;
@@ -93,6 +95,22 @@ class PackingReplenishmentServices
 
                     $packingReplenishmentDet->prd_status_qad = 'No';
                     $packingReplenishmentDet->save();
+                    $qtyPick = (float) ($location['qtyPick'] ?? 0);
+
+                    if ($qtyPick > 0) {
+                        $inventory = xxinvDet::where('xxinv_part', $packingReplenishment['sodPart'])
+                            ->where('xxinv_lot', $location['lot'])
+                            ->where('xxinv_bin', $location['bin'] ?? '0')
+                            ->where('xxinv_level', $location['level'] ?? '0')
+                            ->first();
+
+                        if (! $inventory) {
+                            throw new \Exception('Inventory tidak ditemukan.');
+                        }
+
+                        $inventory->xxinv_qtyoh = max(0, (float) $inventory->xxinv_qtyoh - $qtyPick);
+                        $inventory->save();
+                    }
                 }
             }
 
@@ -132,6 +150,7 @@ class PackingReplenishmentServices
 
         try {
             $packingReplenishmentApprovalData = PackingReplenishmentApproval::where('id', $packingReplenishment['id'])->first();
+
             $packingReplenishmentApprovalData->pra_status = 'Rejected';
             $packingReplenishmentApprovalData->pra_reason = $reason;
             $packingReplenishmentApprovalData->updated_by = Auth::user()->id;
@@ -143,11 +162,42 @@ class PackingReplenishmentServices
             $packingReplenishmentApprovalHist->prah_user_approver = $packingReplenishmentApprovalData->pra_user_approver;
             $packingReplenishmentApprovalHist->prah_alt_user_approver = $packingReplenishmentApprovalData->pra_alt_user_approver;
             $packingReplenishmentApprovalHist->prah_status = $packingReplenishmentApprovalData->pra_status;
-            $packingReplenishmentApprovalHist->prah_reason = $packingReplenishmentApprovalData->prah_reason;
+            $packingReplenishmentApprovalHist->prah_reason = $reason;
             $packingReplenishmentApprovalHist->created_by = Auth::user()->name;
             $packingReplenishmentApprovalHist->save();
 
-            $packingReplenishmentMstr = PackingReplenishmentMstr::find($packingReplenishment['get_packing_replenishment_mstr']['id']);
+            $packingReplenishmentMstr = PackingReplenishmentMstr::find(
+                $packingReplenishment['get_packing_replenishment_mstr']['id']
+            );
+
+            $packingReplenishmentDetails = PackingReplenishmentDet::where(
+                'prm_id',
+                $packingReplenishmentMstr->id
+            )->get();
+
+            foreach ($packingReplenishmentDetails as $detail) {
+
+                $shipmentScheduleLocation = ShipmentScheduleLoc::find($detail->ssl_id);
+
+                if (! $shipmentScheduleLocation) {
+                    continue;
+                }
+
+                $shipmentScheduleDet = ShipmentScheduleDet::find($shipmentScheduleLocation->ssd_id);
+
+                if (! $shipmentScheduleDet) {
+                    continue;
+                }
+
+                xxinvDet::where('xxinv_part', $shipmentScheduleDet->ssd_sod_part)
+                    ->where('xxinv_lot', $shipmentScheduleLocation->ssl_lotserial)
+                    ->where('xxinv_bin', $shipmentScheduleLocation->ssl_bin)
+                    ->where('xxinv_level', $shipmentScheduleLocation->ssl_level)
+                    ->increment(
+                        'xxinv_qtyoh',
+                        (float) $shipmentScheduleLocation->ssl_qty_pick
+                    );
+            }
 
             $packingReplenishmentMstr->prm_status = 'Rejected';
             $packingReplenishmentMstr->save();
@@ -155,10 +205,12 @@ class PackingReplenishmentServices
             DB::commit();
 
             return true;
+
         } catch (Exception $err) {
+
             DB::rollBack();
 
-            Log::channel('packingReplenishment')->info($err);
+            Log::channel('packingReplenishment')->error($err);
 
             return false;
         }
