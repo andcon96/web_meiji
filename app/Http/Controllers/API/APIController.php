@@ -171,28 +171,34 @@ class APIController extends Controller
         try {
             /* throw new Exception('test exception'); */
 
-            $items = (new WSAServices)->wsaInvWms($req->query('inppart') ?? '', $req->query('inplot') ?? '');
+          /*  $items = (new WSAServices)->wsaInvWms($req->query('inppart') ?? '', $req->query('inplot') ?? '');
+*/
+            
+            $items = DB::table('xxinv_det')
+                       ->join('item_master','item_master.im_item_part','=','xxinv_det.xxinv_part')
+                       ->where('xxinv_part', $req->query('inppart') ?? '')
+                       ->where('xxinv_lot', $req->query('inplot') ?? '')
+					   ->get();     
 
-            /*  dd($items); */
+                      //  dd($items); 
+            // if ($items == false) { //jika error koneksi wsa
+            //     return response()->json([
+            //         'Status' => 'Error',
+            //         'Message' => "WSA Error Connection"
+            //     ], 500);
+            // }
 
-            if ($items == false) { //jika error koneksi wsa
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "WSA Error Connection"
-                ], 500);
-            }
-
-            if ($items[0] == "false") { //jika data tidak ada
-                return response()->json([
-                    'Status' => 'Not found',
-                    'Message' => "Data not found"
-                ], 404); //not found
-            }
+            // if ($items[0] == "false") { //jika data tidak ada
+            //     return response()->json([
+            //         'Status' => 'Not found',
+            //         'Message' => "Data not found"
+            //     ], 404); //not found
+            // }
 
             return response()->json([
-                'Status' => 'Not found',
-                'Message' => "Get inventory WMS successfully",
-                'Items' => $items[1]
+                // 'Status' => 'Not found',
+                // 'Message' => "Get inventory WMS successfully",
+                'Items' => $items
             ], 200);
         } catch (\Exception $e) {
             /* dd($e); */
