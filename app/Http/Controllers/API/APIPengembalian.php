@@ -527,14 +527,14 @@ class APIPengembalian extends Controller
                         ->where('xxinv_bin', $xxinvApproval->xxinv_binfrom)
                         ->first();
                         $wsaData = (new WSAServices())->wsaConfirmSampling($item, $lot, 'QC-QRT', $xxinvApproval->xxinv_qty_smp, $siteto);
-                        
+
                     if ($wsaData[0] == 'false') {
                         DB::rollback();
                         return response()->json([
                             'Status' => 'Error',
                             'Message' => "No Data Available"
                         ], 422);
-                    } 
+                    }
 
 
                     // Transaction History

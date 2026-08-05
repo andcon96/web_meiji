@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\APIBarangJadi;
 use App\Http\Controllers\API\APIController;
+use App\Http\Controllers\API\APIDashboard;
 use App\Http\Controllers\API\APIPengembalian;
 use App\Http\Controllers\API\APIPicklistShopping;
 use App\Http\Controllers\API\APIPurchaseOrderApprovalController;
@@ -17,11 +18,12 @@ use App\Http\Controllers\API\APIWorkOrderController;
 use App\Http\Controllers\API\APIZebraPrinterController;
 use App\Http\Controllers\API\OtherShipmentPreparation\APIOtherShipmentPreparationController;
 use App\Http\Controllers\API\OtherShipmentSchedule\APIOtherShipmentScheduleController;
+use App\Http\Controllers\API\OtherTransactionConfirm\APIOtherTransactionConfirmController;
 use App\Http\Controllers\API\PackingReplenishment\APIPackingReplenishmentController;
 use App\Http\Controllers\API\ShipmentSchedule\APIShipmentScheduleController;
 use App\Http\Controllers\API\ShipperConfirm\APIShipperConfirmController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\OtherTransactionConfirm\APIOtherTransactionConfirmController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -57,11 +59,11 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     //delete po
     Route::post('deleteDraftPo', [APIPurchaseOrderController::class, 'deleteDraft']);
 
-    Route::get("getDataPORecheck", [APIPurchaseOrderRecheckController::class, "index"]);
-    Route::post("checkWarehouse", [APIPurchaseOrderRecheckController::class, "checkWarehouse"]);
-    Route::post("submitRecheckReceipt", [APIPurchaseOrderRecheckController::class, "saveReceiptRecheck"]);
-    Route::post("validateRecheck", [APIPurchaseOrderRecheckController::class, "validateRecheck"]);
-    Route::post("getDuplicateKeys", [APIPurchaseOrderRecheckController::class, "getDuplicateKeys"]);
+    Route::get('getDataPORecheck', [APIPurchaseOrderRecheckController::class, 'index']);
+    Route::post('checkWarehouse', [APIPurchaseOrderRecheckController::class, 'checkWarehouse']);
+    Route::post('submitRecheckReceipt', [APIPurchaseOrderRecheckController::class, 'saveReceiptRecheck']);
+    Route::post('validateRecheck', [APIPurchaseOrderRecheckController::class, 'validateRecheck']);
+    Route::post('getDuplicateKeys', [APIPurchaseOrderRecheckController::class, 'getDuplicateKeys']);
 
     // PO Approval
     Route::get('getPoApproval', [APIPurchaseOrderApprovalController::class, 'getPoApproval']);
@@ -124,7 +126,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getDefaultSampleLoc', [APITrasnferStockController::class, 'getDefaultSampleLoc']);
 
     // Packing Replenishment
-Route::get('getPackingReplenishment', [APIPackingReplenishmentController::class, 'index']);
+    Route::get('getPackingReplenishment', [APIPackingReplenishmentController::class, 'index']);
     Route::get('listShipmentSchedule', [APIPackingReplenishmentController::class, 'listShipmentSchedule']);
     Route::post('savePackingReplenishment', [APIPackingReplenishmentController::class, 'store']);
     Route::get('approverList', [APIPackingReplenishmentController::class, 'approverList']);
@@ -140,9 +142,11 @@ Route::get('getPackingReplenishment', [APIPackingReplenishmentController::class,
     // Shipper Confirm
     Route::get('getShipperConfirmation', [APIShipperConfirmController::class, 'index']);
     Route::post('confirmShipment', [APIShipperConfirmController::class, 'store']);
+    Route::post('rejectShipment', [APIShipperConfirmController::class, 'rejectShipment']);
 
     Route::get('getOtherShipmentConfirmation', [APIOtherTransactionConfirmController::class, 'index']);
-       Route::post('confirmOtherTransaction', [APIOtherTransactionConfirmController::class, 'store']); // 👈 pastikan ini ada
+    Route::post('confirmOtherTransaction', [APIOtherTransactionConfirmController::class, 'store']);
+        Route::post('rejectOtherTransaction', [APIOtherTransactionConfirmController::class, 'rejectOtherTransaction']);
     // Other Shipment Schedule
     Route::get('getOtherShipmentSchedule', [APIOtherShipmentScheduleController::class, 'index']);
     Route::get('/getItemOSS', [APIOtherShipmentScheduleController::class, 'getItemOSS']);
@@ -242,19 +246,19 @@ Route::get('getPackingReplenishment', [APIPackingReplenishmentController::class,
     Route::post('/checkdatainquiry', [APIController::class, 'getDataInquiry']);
 
     //Sampling & Pengembalian QO
-    Route::get("/getSamplingData", [APISampling::class, 'getSamplingData']);
-    Route::get("/getLotSampling", [APISampling::class, 'getLotSampling']);
-    Route::post("/transferSampling", [APISampling::class, 'transferSampling']);
-       Route::post("/checkWarehouseSampling", [APISampling::class, 'checkWarehouseSampling']);
+    Route::get('/getSamplingData', [APISampling::class, 'getSamplingData']);
+    Route::get('/getLotSampling', [APISampling::class, 'getLotSampling']);
+    Route::post('/transferSampling', [APISampling::class, 'transferSampling']);
+    Route::post('/checkWarehouseSampling', [APISampling::class, 'checkWarehouseSampling']);
 
-    Route::get("/getPengembalianQo", [APIPengembalian::class, 'getPengembalianQo']);
-    Route::post("/checkWarehouseReturn", [APIPengembalian::class, 'checkWarehouseReturn']);
-    Route::get("/getLotPengembalian", [APIPengembalian::class, 'getLotPengembalian']);
-    Route::post("/transferPengembalianQo", [APIPengembalian::class, 'transferPengembalianQo']);
-    Route::get("getApproverSampling", [APIPengembalian::class, "getApproverSampling"]);
-    Route::get("getSamplingApproval", [APIPengembalian::class, "getSamplingApproval"]);
-    Route::post("samplingApprovalResult", [APIPengembalian::class, "samplingApprovalResult"]);
-    Route::get("getTransactionHistory", [APISingleTransfer::class, "getTransactionHistory"]);
+    Route::get('/getPengembalianQo', [APIPengembalian::class, 'getPengembalianQo']);
+    Route::post('/checkWarehouseReturn', [APIPengembalian::class, 'checkWarehouseReturn']);
+    Route::get('/getLotPengembalian', [APIPengembalian::class, 'getLotPengembalian']);
+    Route::post('/transferPengembalianQo', [APIPengembalian::class, 'transferPengembalianQo']);
+    Route::get('getApproverSampling', [APIPengembalian::class, 'getApproverSampling']);
+    Route::get('getSamplingApproval', [APIPengembalian::class, 'getSamplingApproval']);
+    Route::post('samplingApprovalResult', [APIPengembalian::class, 'samplingApprovalResult']);
+    Route::get('getTransactionHistory', [APISingleTransfer::class, 'getTransactionHistory']);
     //lookup browse android
     Route::get('getLocData', [APIController::class, 'getLocData']);
     Route::get('getSites', [APIController::class, 'getSites']);
@@ -270,17 +274,21 @@ Route::get('getPackingReplenishment', [APIPackingReplenishmentController::class,
     // Route::get("wsaWarehousePick", [APIPicklistShopping::class, "wsaWarehouse"]);
     // Route::get("getSearchLocation", [APIPicklistShopping::class, "wsainvdet"]);
     // Route::post("sendTransferItem", [APIPicklistShopping::class, "sendTransferItem"]);
-    Route::get("getLocationBarangJadi", [APIBarangJadi::class, "getLocationBarangJadi"]);
-    Route::post("getWebLocationDataTransfer", [APIBarangJadi::class, "getWebLocationBarangJadi"]);
-    Route::get("getSiteBarangJadi", [APIBarangJadi::class, "getSiteBarangJadi"]);
-    Route::get("wsaWarehousePick", [APIBarangJadi::class, "wsaWarehouseBarangJadi"]);
-    Route::get("getSearchLocation", [APIBarangJadi::class, "wsainvdetBarangJadi"]);
-    Route::post("sendBarangJadi", [APIBarangJadi::class, "sendBarangJadi"]);
-    Route::get("getTransferData", [APIBarangJadi::class, "getTransferBarangJadi"]);
-    Route::post("receiptItempb", [APIBarangJadi::class, "receiptItempb"]);
-    Route::get("getPenerimaanBarangData", [APIBarangJadi::class, "getPenerimaanBarangData"]);
-    Route::post("getWlbBarangJadi", [APIBarangJadi::class, "getWlbBarangJadi"]);
+    Route::get('getLocationBarangJadi', [APIBarangJadi::class, 'getLocationBarangJadi']);
+    Route::post('getWebLocationDataTransfer', [APIBarangJadi::class, 'getWebLocationBarangJadi']);
+    Route::get('getSiteBarangJadi', [APIBarangJadi::class, 'getSiteBarangJadi']);
+    Route::get('wsaWarehousePick', [APIBarangJadi::class, 'wsaWarehouseBarangJadi']);
+    Route::get('getSearchLocation', [APIBarangJadi::class, 'wsainvdetBarangJadi']);
+    Route::post('sendBarangJadi', [APIBarangJadi::class, 'sendBarangJadi']);
+    Route::get('getTransferData', [APIBarangJadi::class, 'getTransferBarangJadi']);
+    Route::post('receiptItempb', [APIBarangJadi::class, 'receiptItempb']);
+    Route::get('getPenerimaanBarangData', [APIBarangJadi::class, 'getPenerimaanBarangData']);
+    Route::post('getWlbBarangJadi', [APIBarangJadi::class, 'getWlbBarangJadi']);
 
-
+    //dashboard
+    Route::get('getInventoryByWarehouse', [APIDashboard::class, 'getInventoryByWarehouse']);
+    Route::get('getDetailInventoryByWarehouse', [APIDashboard::class, 'getDetailInventoryByWarehouse']);
+    Route::get('getDetailInventoryByStatus', [APIDashboard::class, 'getDetailInventoryByStatus']);
+    Route::get('getInventoryByStatus', [APIDashboard::class, 'getInventoryByStatus']);
 });
 // WSA Picklist

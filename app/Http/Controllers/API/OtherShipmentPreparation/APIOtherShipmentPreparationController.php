@@ -26,17 +26,15 @@ class APIOtherShipmentPreparationController extends Controller
             $search = $request->search;
 
             $data->where(function ($q) use ($search) {
-                // cari customer
-                $q->where('ospm_number', 'LIKE', '%' . $search . '%')
 
-                    // cari customer
+                $q->where('ospm_number', 'LIKE', '%'.$search.'%')
+
                     ->orWhereHas('getOtherShipmentPreparationDet.getOtherShipmentScheduleLocation.getOtherShipmentScheduleDet.getOtherShipmentScheduleMaster', function ($query) use ($search) {
-                        $query->where('ossm_cust_code', 'LIKE', '%' . $search . '%')->orWhere('ossm_cust_desc', 'LIKE', '%' . $search . '%');
+                        $query->where('ossm_cust_code', 'LIKE', '%'.$search.'%')->orWhere('ossm_cust_desc', 'LIKE', '%'.$search.'%');
                     })
 
-                    // cari SO + item code
                     ->orWhereHas('getOtherShipmentPreparationDet.getOtherShipmentScheduleLocation.getOtherShipmentScheduleDet', function ($query) use ($search) {
-                        $query->where('ossd_part', 'LIKE', '%' . $search . '%');
+                        $query->where('ossd_part', 'LIKE', '%'.$search.'%');
                     });
             });
         }
@@ -63,12 +61,10 @@ class APIOtherShipmentPreparationController extends Controller
             );
         }
 
-        // 🔹 Kumpulkan semua part number yang terlibat, biar query inventory cukup sekali
-        $partNumbers = $listOtherShipmentSchedule->flatMap(fn($mstr) => $mstr->getOtherShipmentScheduleDetail)->pluck('ossd_part')->map(fn($part) => (string) $part)->unique()->values()->all();
+        $partNumbers = $listOtherShipmentSchedule->flatMap(fn ($mstr) => $mstr->getOtherShipmentScheduleDetail)->pluck('ossd_part')->map(fn ($part) => (string) $part)->unique()->values()->all();
 
         $inventory = xxinvDet::whereIn('xxinv_part', $partNumbers)->get();
 
-        // 🔹 Sisipkan stok ke tiap location, pakai matching logic yang sama seperti WSA
         foreach ($listOtherShipmentSchedule as $mstr) {
             foreach ($mstr->getOtherShipmentScheduleDetail as $detail) {
                 $part = trim((string) $detail->ossd_part);
@@ -76,19 +72,18 @@ class APIOtherShipmentPreparationController extends Controller
                 foreach ($detail->getOtherShipmentScheduleLocation as $location) {
                     $lot = trim((string) $location->ossl_lotserial);
                     $loc = trim((string) $location->ossl_location);
-                    $site = trim((string) $location->ossl_site);
+
                     $level = strtoupper(trim((string) $location->ossl_level));
                     $bin = trim((string) $location->ossl_bin);
 
-                    $stockRow = $inventory->first(function ($inv) use ($part, $lot, $loc, $site, $level, $bin) {
+                    $stockRow = $inventory->first(function ($inv) use ($part, $lot, $loc, $level, $bin) {
                         $cleanInvLevel = preg_replace('/[^A-Za-z0-9]/', '', $inv->xxinv_level);
                         $cleanLocalLevel = preg_replace('/[^A-Za-z0-9]/', '', $level);
 
-                        return trim($inv->xxinv_part) == $part && trim((string) $inv->xxinv_lot) === $lot && trim($inv->xxinv_loc) == $loc && trim($inv->xxinv_site) == $site && strtoupper($cleanInvLevel) == strtoupper($cleanLocalLevel) && trim($inv->xxinv_bin) == $bin;
+                        return trim($inv->xxinv_part) == $part && trim((string) $inv->xxinv_lot) === $lot && trim($inv->xxinv_loc) == $loc && strtoupper($cleanInvLevel) == strtoupper($cleanLocalLevel) && trim($inv->xxinv_bin) == $bin;
                     });
 
-                    // Ditempel sebagai atribut computed, otomatis ikut ke JSON response
-                    $location->setAttribute('stock', (float) ($stockRow->xxinv_qty_wrh ?? 0));
+                    $location->setAttribute('stock', (float) ($stockRow->xxinv_qtyoh ?? 0));
                 }
             }
         }
@@ -103,7 +98,6 @@ class APIOtherShipmentPreparationController extends Controller
 
     public function store(Request $request)
     {
-        // Log::channel("otherShipmentPreparation")->info(json_encode($request->all()));
 
         $approver = $request->approver;
         $idOssm = $request->ossm_id;
@@ -162,7 +156,7 @@ class APIOtherShipmentPreparationController extends Controller
 
     public function rejectShipmentPreparation(Request $request)
     {
-        // Log::channel("otherShipmentPreparation")->info(json_encode($request->all()));
+
         $otherShipmentPreparation = $request->shipperPayload;
         $reason = $request->reason;
         $otherShipmentScheduleNumber = $request->shipmentScheduleNumber;
@@ -225,9 +219,11 @@ class APIOtherShipmentPreparationController extends Controller
 
     public function editShipmentPreparation($id)
     {
-        $shipmentPreparation = OtherShipmentPreparationMstr::with(['getOtherShipmentPreparationDet.getOtherShipmentScheduleLocation.getOtherShipmentScheduleDet.getOtherShipmentScheduleMaster'])->find($id);
+        $shipmentPreparation = OtherShipmentPreparationMstr::with([
+            'getOtherShipmentPreparationDet.getOtherShipmentScheduleLocation.getOtherShipmentScheduleDet.getOtherShipmentScheduleMaster',
+        ])->find($id);
 
-        if (!$shipmentPreparation) {
+        if (! $shipmentPreparation) {
             return response()->json(
                 [
                     'status' => 'Error',
@@ -239,7 +235,56 @@ class APIOtherShipmentPreparationController extends Controller
             );
         }
 
-        $otherShipmentScheduleDet = $shipmentPreparation->getOtherShipmentPreparationDet[0]->getOtherShipmentScheduleLocation->getOtherShipmentScheduleDet;
+        $shipmentPreparationDet = $shipmentPreparation->getOtherShipmentPreparationDet;
+
+        $otherShipmentScheduleDet = $shipmentPreparationDet[0]
+            ->getOtherShipmentScheduleLocation
+            ->getOtherShipmentScheduleDet;
+
+        $parts = $shipmentPreparationDet
+            ->map(fn ($det) => trim((string) $det->getOtherShipmentScheduleLocation
+                ->getOtherShipmentScheduleDet->ossd_part))
+            ->unique()
+            ->values()
+            ->all();
+
+        $lots = $shipmentPreparationDet
+            ->map(fn ($det) => trim((string) $det->getOtherShipmentScheduleLocation
+                ->ossl_lotserial))
+            ->unique()
+            ->values()
+            ->all();
+
+        $inventory = xxinvDet::whereIn('xxinv_part', $parts)
+            ->whereIn('xxinv_lot', $lots)
+            ->get();
+
+        $inventoryGrouped = $inventory->groupBy(function ($row) {
+            return trim((string) $row->xxinv_part).'|'.trim((string) $row->xxinv_lot);
+        });
+
+        foreach ($shipmentPreparationDet as $det) {
+
+            $location = $det->getOtherShipmentScheduleLocation;
+
+            $part = trim((string) $location->getOtherShipmentScheduleDet->ossd_part);
+            $lot = trim((string) $location->ossl_lotserial);
+
+            $stockRows = $inventoryGrouped->get($part.'|'.$lot, collect());
+
+            $locationDetail = $stockRows->map(function ($stockRow) {
+                return [
+                    'lot_serial' => (string) $stockRow->xxinv_lot,
+                    'wrh' => (string) $stockRow->xxinv_wrh,
+                    'level' => (string) $stockRow->xxinv_level,
+                    'bin' => (string) $stockRow->xxinv_bin,
+                    'location' => (string) $stockRow->xxinv_loc,
+                    'stock' => (float) ($stockRow->xxinv_qtyoh ?? 0),
+                ];
+            })->values();
+
+            $location->setAttribute('location_detail', $locationDetail);
+        }
 
         return response()->json(
             [
@@ -257,25 +302,23 @@ class APIOtherShipmentPreparationController extends Controller
     {
         $data = OtherShipmentPreparationApproval::query()
             ->with(['getOtherShipmentPreparationMstr.getOtherShipmentPreparationDet.getOtherShipmentScheduleLocation.getOtherShipmentScheduleDet.getOtherShipmentScheduleMaster', 'getCreatedBy:id,name,username'])
-            ->where('ospa_user_approver', 'LIKE', '%' . Auth::user()->id . '%');
+            ->where('ospa_user_approver', 'LIKE', '%'.Auth::user()->id.'%');
 
         if ($request->search) {
             $filter = $request->search;
 
             $data->where(function ($q) use ($filter) {
-                // Cari shipper number
+
                 $q->whereHas('getOtherShipmentPreparationMstr', function ($subq) use ($filter) {
-                    $subq->where('ospm_number', 'LIKE', '%' . $filter . '%')->where('ospm_status', 'Shipper Created');
+                    $subq->where('ospm_number', 'LIKE', '%'.$filter.'%')->where('ospm_status', 'Shipper Created');
                 })
 
-                    // Cari customer
                     ->orWhereHas('getOtherShipmentPreparationMstr.getOtherShipmentPreparationDet.getOtherShipmentScheduleLocation.getOtherShipmentScheduleDet.getOtherShipmentScheduleMaster', function ($q) use ($filter) {
-                        $q->where('ossm_cust_code', 'LIKE', '%' . $filter . '%')->orWhere('ossm_cust_desc', 'LIKE', '%' . $filter . '%');
+                        $q->where('ossm_cust_code', 'LIKE', '%'.$filter.'%')->orWhere('ossm_cust_desc', 'LIKE', '%'.$filter.'%');
                     })
 
-                    // cari SO + item code
                     ->orWhereHas('getOtherShipmentPreparationMstr.getOtherShipmentPreparationDet.getOtherShipmentScheduleLocation.getOtherShipmentScheduleDet.getOtherShipmentScheduleMaster', function ($q) use ($filter) {
-                        $q->where('ossd_part', 'LIKE', '%' . $filter . '%');
+                        $q->where('ossd_part', 'LIKE', '%'.$filter.'%');
                     });
             });
         }

@@ -1,17 +1,18 @@
 <?php
 
 namespace App\Services;
-use App\Models\API\OtherTransactionConfirm\OtherTransactionConfirm;
 
-use App\Models\API\OtherShipmentPreparation\OtherShipmentPreparationMstr;
-use App\Models\API\OtherShipmentSchedule\OtherShipmentScheduleMstr;
-use App\Models\API\OtherShipmentSchedule\OtherShipmentScheduleDet;
-use App\Models\API\OtherShipmentSchedule\OtherShipmentScheduleLoc;
-use App\Models\API\OtherShipmentSchedule\OtherShipmentScheduleHist;
-use App\Models\API\OtherShipmentPreparation\OtherShipmentPreparationDet;
-use App\Models\API\OtherShipmentPreparation\OtherShipmentPreparationHist;
 use App\Models\API\OtherShipmentPreparation\OtherShipmentPreparationApproval;
 use App\Models\API\OtherShipmentPreparation\OtherShipmentPreparationApprovalHist;
+use App\Models\API\OtherShipmentPreparation\OtherShipmentPreparationDet;
+use App\Models\API\OtherShipmentPreparation\OtherShipmentPreparationHist;
+use App\Models\API\OtherShipmentPreparation\OtherShipmentPreparationMstr;
+use App\Models\API\OtherShipmentSchedule\OtherShipmentScheduleDet;
+use App\Models\API\OtherShipmentSchedule\OtherShipmentScheduleHist;
+use App\Models\API\OtherShipmentSchedule\OtherShipmentScheduleLoc;
+use App\Models\API\OtherShipmentSchedule\OtherShipmentScheduleMstr;
+use App\Models\API\OtherTransactionConfirm\OtherTransactionConfirm;
+use App\Models\API\xxinvDet;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +27,7 @@ class OtherShipmentPreparationServices
         try {
             // Buat other shipment preparation mstr + det
             $otherShipmentPreparationMstr = OtherShipmentPreparationMstr::find($ossmId);
-            if (!$otherShipmentPreparationMstr) {
+            if (! $otherShipmentPreparationMstr) {
                 // Generate Running Number Other Shipment preparation
                 // $runningNumberServices = new RunningNumberServices();
                 // $ospmNumber = $runningNumberServices->getRunningNumberOtherShipmentPreparation();
@@ -37,15 +38,15 @@ class OtherShipmentPreparationServices
             } else {
                 $ospmNumber = $otherShipmentPreparationMstr->ospm_number;
             }
-        $totalMatch = 0;
-            $otherShipmentPreparationMstr->ospm_status = "Draft";
+            $totalMatch = 0;
+            $otherShipmentPreparationMstr->ospm_status = 'Draft';
             $otherShipmentPreparationMstr->save();
 
             foreach ($otherShipmentPreparation as $key => $shipmentPreparation) {
 
-                $otherShipmentScheduleDet = OtherShipmentScheduleDet::with(["getOtherShipmentScheduleMaster"])
+                $otherShipmentScheduleDet = OtherShipmentScheduleDet::with(['getOtherShipmentScheduleMaster'])
                     // ->where("ossd_sent_to_qad", "No")
-                    ->find($shipmentPreparation["id"]);
+                    ->find($shipmentPreparation['id']);
 
                 if ($otherShipmentScheduleDet) {
                     // Ambil shipment schedule master ID
@@ -53,8 +54,8 @@ class OtherShipmentPreparationServices
                         $idOtherShipmentScheduleMstr = $otherShipmentScheduleDet->getOtherShipmentScheduleMaster->id;
                     }
 
-                    $otherShipmentScheduleDet->ossd_qty_pick += $shipmentPreparation["totalPickedQty"];
-                    foreach ($shipmentPreparation["locations"] as $locationDetail) {
+                    $otherShipmentScheduleDet->ossd_qty_pick += $shipmentPreparation['totalPickedQty'];
+                    foreach ($shipmentPreparation['locations'] as $locationDetail) {
                         // Baca conversion nya dulu
                         // $wsaConversion = $wsaServices->wsaQtyConversion($packingReplenishment, $activeConnection);
                         // if ($wsaConversion[0] == "true") {
@@ -63,7 +64,7 @@ class OtherShipmentPreparationServices
                         //     $qtyTransfer = $locationDetail["qtyPick"];
                         // }
 
-                        $qtyTransfer = $locationDetail["qtyPick"];
+                        $qtyTransfer = $locationDetail['qtyPick'];
 
                         // // Qxtend Transfer single item
                         // $qxtendServices = new QxtendServices();
@@ -84,8 +85,8 @@ class OtherShipmentPreparationServices
                         // }
 
                         // Update shipment schedule location
-                        $otherShipmentScheduleLocation = OtherShipmentScheduleLoc::where("id", $locationDetail["id"])->first();
-                        $otherShipmentScheduleLocation->ossl_qty_pick = $locationDetail["qtyPick"] ?? 0;
+                        $otherShipmentScheduleLocation = OtherShipmentScheduleLoc::where('id', $locationDetail['id'])->first();
+                        $otherShipmentScheduleLocation->ossl_qty_pick = $locationDetail['qtyPick'] ?? 0;
                         $otherShipmentScheduleLocation->updated_by = Auth::user()->id;
                         $otherShipmentScheduleLocation->save();
 
@@ -113,9 +114,25 @@ class OtherShipmentPreparationServices
                         $otherShipmentScheduleHistory->ossl_bin = $otherShipmentScheduleLocation->ossl_bin;
                         $otherShipmentScheduleHistory->ossl_qty_to_pick = $otherShipmentScheduleLocation->ossl_qty_to_pick;
                         $otherShipmentScheduleHistory->ossl_qty_pick = $otherShipmentScheduleLocation->ossl_qty_pick;
-                        $otherShipmentScheduleHistory->ossl_action = "Create";
+                        $otherShipmentScheduleHistory->ossl_action = 'Create';
                         $otherShipmentScheduleHistory->created_by = Auth::user()->id;
                         $otherShipmentScheduleHistory->save();
+                        $qtyPick = (float) ($locationDetail['qtyPick'] ?? 0);
+
+                        if ($qtyPick > 0) {
+                            $inventory = xxinvDet::where('xxinv_lot', $locationDetail['lot'])
+                                ->where('xxinv_bin', $locationDetail['bin'] ?? '0')
+                                ->where('xxinv_level', $locationDetail['level'] ?? '0')
+                                ->first();
+
+                            if (! $inventory) {
+                                throw new \Exception('Inventory tidak ditemukan.');
+                            }
+
+                            $inventory->xxinv_qtyoh = max(0, (float) $inventory->xxinv_qtyoh - $qtyPick);
+                            $inventory->save();
+                        }
+
                     }
 
                     // $otherShipmentScheduleDet->ossd_sent_to_qad = "Yes";
@@ -127,39 +144,39 @@ class OtherShipmentPreparationServices
                 }
             }
 
-            $otherShipmentPreparationMstr->ospm_status = "Waiting for approval";
+            $otherShipmentPreparationMstr->ospm_status = 'Waiting for approval';
             $otherShipmentPreparationMstr->save();
 
             // Buat packing replenishment detail + Buat packing replenishment history
             foreach ($otherShipmentPreparation as $shipmentPreparation) {
-                foreach ($shipmentPreparation["locations"] as $locationDetail) {
-                    $shipmentPreparationDet = OtherShipmentPreparationDet::where("ospm_id", $otherShipmentPreparationMstr->id)
-                        ->where("ossl_id", $locationDetail["id"])
+                foreach ($shipmentPreparation['locations'] as $locationDetail) {
+                    $shipmentPreparationDet = OtherShipmentPreparationDet::where('ospm_id', $otherShipmentPreparationMstr->id)
+                        ->where('ossl_id', $locationDetail['id'])
                         ->first();
                     // Buat packing replenishment detail
                     if ($shipmentPreparationDet == null) {
                         $shipmentPreparationDet = new OtherShipmentPreparationDet();
                         $shipmentPreparationDet->ospm_id = $otherShipmentPreparationMstr->id;
-                        $shipmentPreparationDet->ossl_id = $locationDetail["id"];
-                        $shipmentPreparationDet->ospd_status = "Yes";
+                        $shipmentPreparationDet->ossl_id = $locationDetail['id'];
+                        $shipmentPreparationDet->ospd_status = 'Yes';
                         $shipmentPreparationDet->created_by = Auth::user()->id;
                         $shipmentPreparationDet->save();
                     }
 
                     $otherShipmentPreparationHist = new OtherShipmentPreparationHist();
                     $otherShipmentPreparationHist->osph_number = $ossmId;
-                    $otherShipmentPreparationHist->osph_item = $shipmentPreparation["ossdPart"];
-                    $otherShipmentPreparationHist->osph_site = $locationDetail["site"];
-                    $otherShipmentPreparationHist->osph_warehouse = $locationDetail["wh"];
-                    $otherShipmentPreparationHist->osph_location = $locationDetail["loc"];
-                    $otherShipmentPreparationHist->osph_lotserial = $locationDetail["lot"];
-                    $otherShipmentPreparationHist->osph_level = $locationDetail["level"];
-                    $otherShipmentPreparationHist->osph_bin = $locationDetail["bin"];
-                    $otherShipmentPreparationHist->osph_qty_to_pick = $locationDetail["qtyToPick"];
-                    $otherShipmentPreparationHist->osph_qty_pick = $locationDetail["qtyPick"];
-                    $otherShipmentPreparationHist->osph_status_qad = "Yes";
+                    $otherShipmentPreparationHist->osph_item = $shipmentPreparation['ossdPart'];
+                    $otherShipmentPreparationHist->osph_site = $locationDetail['site'];
+                    $otherShipmentPreparationHist->osph_warehouse = $locationDetail['wh'];
+                    $otherShipmentPreparationHist->osph_location = $locationDetail['loc'];
+                    $otherShipmentPreparationHist->osph_lotserial = $locationDetail['lot'];
+                    $otherShipmentPreparationHist->osph_level = $locationDetail['level'];
+                    $otherShipmentPreparationHist->osph_bin = $locationDetail['bin'];
+                    $otherShipmentPreparationHist->osph_qty_to_pick = $locationDetail['qtyToPick'];
+                    $otherShipmentPreparationHist->osph_qty_pick = $locationDetail['qtyPick'];
+                    $otherShipmentPreparationHist->osph_status_qad = 'Yes';
                     $otherShipmentPreparationHist->osph_status = $otherShipmentPreparationMstr->ospm_status;
-                    $otherShipmentPreparationHist->osph_action = "Create";
+                    $otherShipmentPreparationHist->osph_action = 'Create';
                     $otherShipmentPreparationHist->created_by = Auth::user()->id;
                     $otherShipmentPreparationHist->save();
                 }
@@ -170,16 +187,16 @@ class OtherShipmentPreparationServices
             $otherShipmentPreparationApproval->ospm_id = $otherShipmentPreparationMstr->id;
             $otherShipmentPreparationApproval->ospa_sequence = 1;
             $otherShipmentPreparationApproval->ospa_user_approver = $approver;
-            $otherShipmentPreparationApproval->ospa_status = "Waiting for confirmation";
+            $otherShipmentPreparationApproval->ospa_status = 'Waiting for confirmation';
             $otherShipmentPreparationApproval->created_by = Auth::user()->id;
             $otherShipmentPreparationApproval->updated_by = Auth::user()->id;
             $otherShipmentPreparationApproval->save();
 
             $otherShipmentScheduleMstr = OtherShipmentScheduleMstr::with([
-                "getOtherShipmentScheduleDetail.getOtherShipmentScheduleLocation",
+                'getOtherShipmentScheduleDetail.getOtherShipmentScheduleLocation',
             ])->find($idOtherShipmentScheduleMstr);
 
-            $otherShipmentScheduleMstr->ossm_status = "Scheduled";
+            $otherShipmentScheduleMstr->ossm_status = 'Scheduled';
             $otherShipmentScheduleMstr->updated_by = Auth::user()->id;
             $otherShipmentScheduleMstr->save();
 
@@ -208,7 +225,7 @@ class OtherShipmentPreparationServices
                     $otherShipmentScheduleHistory->ossl_bin = $otherShipmentScheduleLocation->ossl_bin;
                     $otherShipmentScheduleHistory->ossl_qty_to_pick = $otherShipmentScheduleLocation->ossl_qty_to_pick;
                     $otherShipmentScheduleHistory->ossl_qty_pick = $otherShipmentScheduleLocation->ossl_qty_pick;
-                    $otherShipmentScheduleHistory->ossl_action = "Shipper Create";
+                    $otherShipmentScheduleHistory->ossl_action = 'Shipper Create';
                     $otherShipmentScheduleHistory->created_by = Auth::user()->id;
                     $otherShipmentScheduleHistory->save();
                 }
@@ -220,7 +237,7 @@ class OtherShipmentPreparationServices
         } catch (Exception $err) {
             DB::rollBack();
 
-            Log::channel("otherShipmentPreparation")->info($err);
+            Log::channel('otherShipmentPreparation')->info($err);
 
             return false;
         }
@@ -231,15 +248,15 @@ class OtherShipmentPreparationServices
         DB::beginTransaction();
 
         try {
-            $otherShipmentPreparationApprovalData = OtherShipmentPreparationApproval::where("id", $otherShipmentPreparation["id"])->first();
-            $otherShipmentPreparationApprovalData->ospa_status = "Rejected";
+            $otherShipmentPreparationApprovalData = OtherShipmentPreparationApproval::where('id', $otherShipmentPreparation['id'])->first();
+            $otherShipmentPreparationApprovalData->ospa_status = 'Rejected';
             $otherShipmentPreparationApprovalData->ospa_reason = $reason;
             $otherShipmentPreparationApprovalData->updated_by = Auth::user()->id;
             $otherShipmentPreparationApprovalData->save();
 
             $otherShipmentPreparationApprovalHist = new OtherShipmentPreparationApprovalHist();
             $otherShipmentPreparationApprovalHist->ospm_number =
-                $otherShipmentPreparation["get_other_shipment_preparation_mstr"]["ospm_number"];
+                $otherShipmentPreparation['get_other_shipment_preparation_mstr']['ospm_number'];
             $otherShipmentPreparationApprovalHist->ospah_sequence = $otherShipmentPreparationApprovalData->ospa_sequence;
             $otherShipmentPreparationApprovalHist->ospah_user_approver = $otherShipmentPreparationApprovalData->ospa_user_approver;
             $otherShipmentPreparationApprovalHist->ospah_alt_user_approver = $otherShipmentPreparationApprovalData->ospa_alt_user_approver;
@@ -248,17 +265,120 @@ class OtherShipmentPreparationServices
             $otherShipmentPreparationApprovalHist->created_by = Auth::user()->id;
             $otherShipmentPreparationApprovalHist->save();
 
-            $otherShipmentScheduleMstr = OtherShipmentScheduleMstr::where("ossm_number", $otherShipmentScheduleNumber)->first();
-            $otherShipmentScheduleMstr->ossm_status = "Rejected";
+            $otherShipmentScheduleMstr = OtherShipmentScheduleMstr::where('ossm_number', $otherShipmentScheduleNumber)->first();
+            $otherShipmentScheduleMstr->ossm_status = 'Rejected';
             $otherShipmentScheduleMstr->updated_by = Auth::user()->id;
             $otherShipmentScheduleMstr->save();
 
             $otherShipmentPreparationMaster = OtherShipmentPreparationMstr::where(
-                "id",
-                $otherShipmentPreparation["get_other_shipment_preparation_mstr"]["id"],
+                'id',
+                $otherShipmentPreparation['get_other_shipment_preparation_mstr']['id'],
             )->first();
-            $otherShipmentPreparationMaster->ospm_status = "Rejected";
+            $otherShipmentPreparationMaster->ospm_status = 'Rejected';
             $otherShipmentPreparationMaster->save();
+            // Rollback inventory dan qty pick
+            $otherShipmentPreparationMaster = OtherShipmentPreparationMstr::with([
+                'getOtherShipmentPreparationDet.getOtherShipmentScheduleLocation.getOtherShipmentScheduleDet',
+            ])->find($otherShipmentPreparation['get_other_shipment_preparation_mstr']['id']);
+
+            foreach ($otherShipmentPreparationMaster->getOtherShipmentPreparationDet as $prepDet) {
+
+                $location = $prepDet->getOtherShipmentScheduleLocation;
+
+                if (! $location) {
+                    continue;
+                }
+
+                $qtyPick = (float) $location->ossl_qty_pick;
+
+                if ($qtyPick > 0) {
+
+                    // Kembalikan stok ke xxinv
+                    $inventory = xxinvDet::where('xxinv_lot', $location->ossl_lotserial)
+                        ->where('xxinv_bin', $location->ossl_bin ?? '0')
+                        ->where('xxinv_level', $location->ossl_level ?? '0')
+                        ->first();
+
+                    if ($inventory) {
+                        $inventory->xxinv_qtyoh += $qtyPick;
+                        $inventory->save();
+                    }
+
+                    // Kurangi qty pick di detail schedule
+                    $scheduleDet = $location->getOtherShipmentScheduleDet;
+                    if ($scheduleDet) {
+                        $scheduleDet->ossd_qty_pick = max(
+                            0,
+                            (float) $scheduleDet->ossd_qty_pick - $qtyPick
+                        );
+                        $scheduleDet->save();
+                    }
+
+                    // Reset qty pick location
+                    $location->ossl_qty_pick = 0;
+                    $location->updated_by = Auth::user()->id;
+                    $location->save();
+                }
+            }
+            DB::commit();
+
+            return true;
+        } catch (Exception $err) {
+            DB::rollBack();
+
+            Log::channel('otherShipmentPreparation')->info($err);
+
+            return false;
+        }
+    }
+
+    public function approveOtherShipmentPreparation($shipmentPreparation, $reason, $otherShipmentScheduleNumber, $activeConnection)
+    {
+        DB::beginTransaction();
+
+        try {
+            $otherShipmentPreparationApproval = OtherShipmentPreparationApproval::where('id', $shipmentPreparation['id'])->first();
+            $otherShipmentPreparationApproval->ospa_status = 'Approved';
+            $otherShipmentPreparationApproval->ospa_reason = $reason;
+            $otherShipmentPreparationApproval->updated_by = Auth::user()->id;
+            $otherShipmentPreparationApproval->save();
+
+            $otherShipmentPreparationApprovalHist = new OtherShipmentPreparationApprovalHist();
+            $otherShipmentPreparationApprovalHist->ospm_number = $shipmentPreparation['get_other_shipment_preparation_mstr']['ospm_number'];
+            $otherShipmentPreparationApprovalHist->ospah_sequence = $otherShipmentPreparationApproval->ospa_sequence;
+            $otherShipmentPreparationApprovalHist->ospah_user_approver = $otherShipmentPreparationApproval->ospa_user_approver;
+            $otherShipmentPreparationApprovalHist->ospah_alt_user_approver = $otherShipmentPreparationApproval->ospa_alt_user_approver;
+            $otherShipmentPreparationApprovalHist->ospah_status = $otherShipmentPreparationApproval->ospa_status;
+            $otherShipmentPreparationApprovalHist->ospah_reason = $otherShipmentPreparationApproval->ospa_reason;
+            $otherShipmentPreparationApprovalHist->created_by = Auth::user()->id;
+            $otherShipmentPreparationApprovalHist->save();
+
+            $otherShipmentScheduleMaster = OtherShipmentScheduleMstr::with([
+                'getOtherShipmentScheduleDetail.getOtherShipmentScheduleLocation',
+            ])
+                ->where('ossm_number', $otherShipmentScheduleNumber)
+                ->first();
+
+            $otherShipmentScheduleMaster->ossm_status = 'Scheduled';
+            $otherShipmentScheduleMaster->updated_by = Auth::user()->id;
+            $otherShipmentScheduleMaster->save();
+
+            $otherShipmentPreparationMaster = OtherShipmentPreparationMstr::with(['getOtherShipmentPreparationDet'])
+                ->where('id', $shipmentPreparation['get_other_shipment_preparation_mstr']['id'])
+                ->first();
+            $otherShipmentPreparationMaster->ospm_status = 'Shipper Created';
+            $otherShipmentPreparationMaster->save();
+
+            // 🔹 Buat record Other Transaction Confirm (paralel dengan ShipperConfirm)
+            $otherTransactionConfirm = new OtherTransactionConfirm();
+            $otherTransactionConfirm->otpm_id = $otherShipmentPreparationMaster->id;
+            $otherTransactionConfirm->otc_sequence = 1;
+            $otherTransactionConfirm->otc_user_approver = Auth::user()->id;
+            $otherTransactionConfirm->otc_status = 'Waiting for confirmation';
+            $otherTransactionConfirm->created_by = Auth::user()->id;
+            $otherTransactionConfirm->save();
+
+            $fieldName = 'mji_pack_dock';
 
             DB::commit();
 
@@ -266,71 +386,9 @@ class OtherShipmentPreparationServices
         } catch (Exception $err) {
             DB::rollBack();
 
-            Log::channel("otherShipmentPreparation")->info($err);
+            Log::channel('otherShipmentPreparation')->info($err);
 
             return false;
         }
     }
-
-  public function approveOtherShipmentPreparation($shipmentPreparation, $reason, $otherShipmentScheduleNumber, $activeConnection)
-{
-    DB::beginTransaction();
-
-    try {
-        $otherShipmentPreparationApproval = OtherShipmentPreparationApproval::where("id", $shipmentPreparation["id"])->first();
-        $otherShipmentPreparationApproval->ospa_status = "Approved";
-        $otherShipmentPreparationApproval->ospa_reason = $reason;
-        $otherShipmentPreparationApproval->updated_by = Auth::user()->id;
-        $otherShipmentPreparationApproval->save();
-
-        $otherShipmentPreparationApprovalHist = new OtherShipmentPreparationApprovalHist();
-        $otherShipmentPreparationApprovalHist->ospm_number = $shipmentPreparation["get_other_shipment_preparation_mstr"]["ospm_number"];
-        $otherShipmentPreparationApprovalHist->ospah_sequence = $otherShipmentPreparationApproval->ospa_sequence;
-        $otherShipmentPreparationApprovalHist->ospah_user_approver = $otherShipmentPreparationApproval->ospa_user_approver;
-        $otherShipmentPreparationApprovalHist->ospah_alt_user_approver = $otherShipmentPreparationApproval->ospa_alt_user_approver;
-        $otherShipmentPreparationApprovalHist->ospah_status = $otherShipmentPreparationApproval->ospa_status;
-        $otherShipmentPreparationApprovalHist->ospah_reason = $otherShipmentPreparationApproval->ospa_reason;
-        $otherShipmentPreparationApprovalHist->created_by = Auth::user()->id;
-        $otherShipmentPreparationApprovalHist->save();
-
-        $otherShipmentScheduleMaster = OtherShipmentScheduleMstr::with([
-            "getOtherShipmentScheduleDetail.getOtherShipmentScheduleLocation",
-        ])
-            ->where("ossm_number", $otherShipmentScheduleNumber)
-            ->first();
-
-        $otherShipmentScheduleMaster->ossm_status = "Scheduled";
-        $otherShipmentScheduleMaster->updated_by = Auth::user()->id;
-        $otherShipmentScheduleMaster->save();
-
-        $otherShipmentPreparationMaster = OtherShipmentPreparationMstr::with(["getOtherShipmentPreparationDet"])
-            ->where("id", $shipmentPreparation["get_other_shipment_preparation_mstr"]["id"])
-            ->first();
-        $otherShipmentPreparationMaster->ospm_status = "Shipper Created";
-        $otherShipmentPreparationMaster->save();
-
-        // 🔹 Buat record Other Transaction Confirm (paralel dengan ShipperConfirm)
-        $otherTransactionConfirm = new OtherTransactionConfirm();
-        $otherTransactionConfirm->otpm_id = $otherShipmentPreparationMaster->id;
-        $otherTransactionConfirm->otc_sequence = 1;
-        $otherTransactionConfirm->otc_user_approver = Auth::user()->id;
-        $otherTransactionConfirm->otc_status = "Waiting for confirmation";
-        $otherTransactionConfirm->created_by = Auth::user()->id;
-        $otherTransactionConfirm->save();
-
-        $fieldName = "mji_pack_dock";
-
-        // ... sisanya sama seperti sebelumnya (bagian yang di-comment tetap)
-
-        DB::commit();
-
-        return true;
-    } catch (Exception $err) {
-        DB::rollBack();
-
-        Log::channel("otherShipmentPreparation")->info($err);
-
-        return false;
-    }
-}
 }
