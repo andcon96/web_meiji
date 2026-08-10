@@ -5,13 +5,12 @@ namespace App\Http\Controllers\API\OtherShipmentSchedule;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\GeneralResources;
 use App\Models\API\OtherShipmentSchedule\OtherShipmentScheduleMstr;
-use Illuminate\Http\Request;
+use App\Models\API\xxinvDet;
 use App\Models\Settings\Item;
-use App\Services\WSAServices;
-use App\Models\Settings\qxwsa;
-use Illuminate\Support\Facades\Log;
 use App\Services\OtherShipmentScheduleServices;
-use App\Models\Settings\Itemlocation;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+
 class APIOtherShipmentScheduleController extends Controller
 {
     public function index(Request $req)
@@ -21,10 +20,10 @@ class APIOtherShipmentScheduleController extends Controller
         if ($req->search) {
             $data->where(function ($query) use ($req) {
                 $query
-                    ->where('ossm_number', 'LIKE', '%' . $req->search . '%')
-                    ->orWhere('ossm_cust_code', 'LIKE', '%' . $req->search . '%')
-                    ->orWhere('ossm_cust_desc', 'LIKE', '%' . $req->search . '%')
-                    ->orWhere('ossm_status', 'LIKE', '%' . $req->search . '%');
+                    ->where('ossm_number', 'LIKE', '%'.$req->search.'%')
+                    ->orWhere('ossm_cust_code', 'LIKE', '%'.$req->search.'%')
+                    ->orWhere('ossm_cust_desc', 'LIKE', '%'.$req->search.'%')
+                    ->orWhere('ossm_status', 'LIKE', '%'.$req->search.'%');
             });
         }
 
@@ -47,42 +46,28 @@ class APIOtherShipmentScheduleController extends Controller
         );
     }
 
-   public function getLocationByPart(Request $request)
-{
-    $item = Item::where('im_item_part', $request->search)
-        ->with('getItemLocation.getLocationDetail.getMaster')
-        ->first();
+    public function getLocationByPart(Request $request)
+    {
+        $items = xxinvDet::where('xxinv_part', $request->search)->get();
 
-    $tempData = [];
-
-    if ($item) {
-        foreach ($item->getItemLocation as $location) {
-            $detail = $location->getLocationDetail;
-
-            if (!$detail) {
-                continue;
-            }
-
-            $master = $detail->getMaster;
-
-            $tempData[] = [
-                't_inv_part'  => $item->im_item_part,
-                't_inv_loc'   => $master?->location_code ?? '',
-                't_inv_lot'   => $detail->ld_lot_serial,
-                't_inv_bin'   => $detail->ld_bin,
-                't_inv_level' => $detail->ld_rak,
-                't_inv_site'  => $master?->location_site ?? '',
-                't_inv_wrh'   => $master?->location_desc ?? $master?->location_code ?? '',
-                't_inv_qtyoh' => '0',
-                't_inv_uom'   => $item->im_item_um,
+        $inventoryData = $items->map(function ($item) {
+            return [
+                't_inv_part' => $item->xxinv_part,
+                't_inv_loc' => $item->xxinv_loc,
+                't_inv_lot' => $item->xxinv_lot,
+                't_inv_bin' => $item->xxinv_bin,
+                't_inv_level' => $item->xxinv_level,
+                't_inv_site' => $item->xxinv_site,
+                't_inv_wrh' => $item->xxinv_wrh,
+                't_inv_qtyoh' => $item->xxinv_qtyoh,
+                't_inv_uom' => "null", // atau ambil dari tabel Item jika diperlukan
             ];
-        }
-    }
+        });
 
-    return response()->json([
-        'inventoryData' => $tempData,
-    ]);
-}
+        return response()->json([
+            'inventoryData' => $inventoryData,
+        ]);
+    }
 
     public function store(Request $request)
     {
@@ -123,7 +108,7 @@ class APIOtherShipmentScheduleController extends Controller
         // Ambil data master, loop ke detail, loop ke lokasi, sebelum hapus masukin ke history, terakhir delete
         $otherShipmentScheduleMstr = OtherShipmentScheduleMstr::with(['getOtherShipmentScheduleDetail.getOtherShipmentScheduleLocation'])->find($id);
 
-        if (!$otherShipmentScheduleMstr) {
+        if (! $otherShipmentScheduleMstr) {
             return response()->json(
                 [
                     'status' => 'Error',
@@ -165,7 +150,7 @@ class APIOtherShipmentScheduleController extends Controller
     {
         $otherShipmentSchedule = OtherShipmentScheduleMstr::with(['getOtherShipmentScheduleDetail.getOtherShipmentScheduleLocation'])->find($id);
 
-        if (!$otherShipmentSchedule) {
+        if (! $otherShipmentSchedule) {
             return response()->json(
                 [
                     'status' => 'Error',

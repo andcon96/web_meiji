@@ -44,7 +44,14 @@ class PackingReplenishmentServices
                     $shipmentScheduleDet = new ShipmentScheduleDet();
                     $shipmentScheduleDet->created_by = Auth::user()->id;
                 }
-
+                Log::channel('packingReplenishment')->info('DEBUG sodLot check', [
+                    'ssdId' => $ssdId,
+                    'isEdit' => $isEdit,
+                    'sodLot_exists' => array_key_exists('sodLot', $packingReplenishment),
+                    'sodLot_value' => $packingReplenishment['sodLot'] ?? '(missing)',
+                    'existing_ssd_sod_lot_before_overwrite' => $shipmentScheduleDet->ssd_sod_lot ?? '(no existing value / new record)',
+                    'full_payload' => $packingReplenishment,
+                ]);
                 $shipmentScheduleDet->ssd_sod_nbr = $packingReplenishment['sodNbr'];
                 $shipmentScheduleDet->ssd_sod_site = $packingReplenishment['sodSite'];
                 $shipmentScheduleDet->ssd_sod_shipto = $packingReplenishment['sodShip'];
@@ -55,7 +62,7 @@ class PackingReplenishmentServices
                 $shipmentScheduleDet->ssd_sod_qty_ord = $packingReplenishment['totalToPickQty'];
                 $shipmentScheduleDet->ssd_sod_qty_pick = $packingReplenishment['totalPickedQty'];
                 $shipmentScheduleDet->ssd_status = 'Pending';
-                $shipmentScheduleDet->ssm_id = '1';
+                // $shipmentScheduleDet->ssm_id = '1';
                 $shipmentScheduleDet->save();
                 foreach ($packingReplenishment['locations'] as $location) {
 
@@ -152,7 +159,7 @@ class PackingReplenishmentServices
         try {
             $packingReplenishmentApprovalData = PackingReplenishmentApproval::where('id', $packingReplenishment['id'])->first();
 
-            $packingReplenishmentApprovalData->pra_status = 'Rejected';
+            $packingReplenishmentApprovalData->pra_status = 'Pending';
             $packingReplenishmentApprovalData->pra_reason = $reason;
             $packingReplenishmentApprovalData->updated_by = Auth::user()->id;
             $packingReplenishmentApprovalData->save();
@@ -203,7 +210,7 @@ class PackingReplenishmentServices
 
             }
 
-            $packingReplenishmentMstr->prm_status = 'Rejected';
+            $packingReplenishmentMstr->prm_status = 'Draft';
             $packingReplenishmentMstr->save();
 
             DB::commit();

@@ -10,13 +10,14 @@ use App\Services\ConfirmShipmentServices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+
 class APIShipperConfirmController extends Controller
 {
     public function index(Request $request)
     {
         $data = ShipperConfirm::query()
             ->with(['getPackingReplenishmentMaster.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster', 'getCreatedBy:id,name,username'])
-            ->where('sc_user_approver', 'LIKE', '%' . Auth::user()->id . '%');
+            ->where('sc_user_approver', 'LIKE', '%'.Auth::user()->id.'%');
 
         if ($request->search) {
             $filter = $request->search;
@@ -24,17 +25,15 @@ class APIShipperConfirmController extends Controller
             $data->where(function ($q) use ($filter) {
 
                 $q->whereHas('getPackingReplenishmentMaster', function ($subq) use ($filter) {
-                    $subq->where('prm_shipper_nbr', 'LIKE', '%' . $filter . '%')->where('prm_status', 'Shipper Created');
+                    $subq->where('prm_shipper_nbr', 'LIKE', '%'.$filter.'%')->where('prm_status', 'Shipper Created');
                 })
 
-
                     ->orWhereHas('getPackingReplenishmentMaster.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster', function ($q) use ($filter) {
-                        $q->where('ssm_cust_code', 'LIKE', '%' . $filter . '%')->orWhere('ssm_cust_desc', 'LIKE', '%' . $filter . '%');
+                        $q->where('ssm_cust_code', 'LIKE', '%'.$filter.'%')->orWhere('ssm_cust_desc', 'LIKE', '%'.$filter.'%');
                     })
 
-
                     ->orWhereHas('getPackingReplenishmentMaster.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet', function ($q) use ($filter) {
-                        $q->where('ssd_sod_part', 'LIKE', '%' . $filter . '%');
+                        $q->where('ssd_sod_part', 'LIKE', '%'.$filter.'%');
                     });
             });
         }
@@ -43,34 +42,64 @@ class APIShipperConfirmController extends Controller
 
         return GeneralResources::collection($data);
     }
-public function store(Request $request)
-{
-    Log::info('REQUEST', $request->all());
 
-    $shipperApproval = $request['shipperPayload'];
-    $reason = $request['reason'];
-    $activeConnection = qxwsa::first();
+    public function store(Request $request)
+    {
+        Log::info('REQUEST', $request->all());
 
-    $confirmServices = new ConfirmShipmentServices();
+        $shipperApproval = $request['shipperPayload'];
+        $reason = $request['reason'];
+        $activeConnection = qxwsa::first();
 
-    $saveData = $confirmServices->confirmShipment(
-        $request,
-        $shipperApproval,
-        $reason,
-        $activeConnection
-    );
+        $confirmServices = new ConfirmShipmentServices();
 
-    if ($saveData !== true) {
+        $saveData = $confirmServices->confirmShipment(
+            $request,
+            $shipperApproval,
+            $reason,
+            $activeConnection
+        );
+
+        if ($saveData !== true) {
+            return response()->json([
+                'Status' => 'error',
+                'Message' => $saveData['message'] ?? 'Unknown QAD error.',
+                // 'qad_message' => $saveData['message'] ?? 'Unknown QAD error.',
+            ], 422);
+        }
+
         return response()->json([
-            'Status' => 'error',
-            'Message'=> $saveData['message'] ?? 'Unknown QAD error.',
-            // 'qad_message' => $saveData['message'] ?? 'Unknown QAD error.',
-        ], 422);
+            'Status' => 'success',
+            'Message' => 'Shipment has been approved',
+        ], 200);
     }
 
-    return response()->json([
-        'Status' => 'success',
-        'Message' => 'Shipment has been approved',
-    ], 200);
-}
+    public function rejectShipment(Request $request)
+    {
+        Log::info('REQUEST', $request->all());
+
+        $shipperApproval = $request['shipperPayload'];
+        $reason = $request['reason'];
+        $activeConnection = qxwsa::first();
+
+        $confirmServices = new ConfirmShipmentServices();
+        $saveData = $confirmServices->rejectShipment(
+            $request,
+            $shipperApproval,
+            $reason,
+            $activeConnection
+        );
+        if ($saveData !== true) {
+            return response()->json([
+                'Status' => 'error',
+                'Message' => $saveData['message'] ?? 'Unknown QAD error.',
+                // 'qad_message' => $saveData['message'] ?? 'Unknown QAD error.',
+            ], 422);
+        }
+
+        return response()->json([
+            'Status' => 'success',
+            'Message' => 'Shipment has been approved',
+        ], 200);
+    }
 }
