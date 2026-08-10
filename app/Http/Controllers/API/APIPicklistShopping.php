@@ -17,6 +17,8 @@ use App\Models\API\picklistWoDet;
 use App\Models\API\PicklistShopping;
 use App\Models\API\TransactionHistory;
 use App\Models\API\xxinvDet;
+use App\Models\API\xxinvDetApproval;
+use App\Models\Settings\Domain;
 use App\Models\API\prefixWorkOrder;
 use App\Models\API\picklistHistory;
 use App\Models\API\picklistLocationTo;
@@ -26,6 +28,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use App\Services\ReceiptServices;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
@@ -371,8 +374,9 @@ class APIPicklistShopping extends Controller
         return GeneralResources::collection($data);
     }
 
-    public function getPicklistDet(Request $req)
+    public function getPicklistBrowse(Request $req)
     {
+
         $statusreq = $req->status;
         $wonbr = $req->wonbr ?? '';
         $site = $req->site ?? '';
@@ -380,13 +384,205 @@ class APIPicklistShopping extends Controller
         // $user = $req->player;
         $status = str_replace('_', ' ', $statusreq);
         // $hasil = (new WSAServices())->wsaGetPickDetail($status);
-        $hasil = (new WSAServices())->wsaGetPickDetail($status, $wonbr, $site, $lot);
+        // $hasil = (new WSAServices())->wsaGetPickDetail($status, $wonbr, $site, $lot);
         $currentPick = '';
         $currentWo = '';
         $detail = [];
         $master = [];
         $wonbr = [];
         $wonbrstring = '';
+        // if ($hasil[0] == 'false') {
+        //     return response()->json([
+        //         'Status' => 'Error',
+        //         'Message' => "Data Not Found."
+        //     ], 422);
+        // } else {
+        //     $listData = $hasil[1];
+        // }
+        $checkpicklistshopping = PicklistShopping::query();
+        // where('ps_status', 'shopping')
+        // ->where('ps_approver', $req->player)
+        $checkpicklistshopping
+            ->when($wonbr != '', fn($query) => $query->where('ps_number', $wonbr));
+        $picklistshopping = $checkpicklistshopping->get();
+
+        // dd($checkpicklistshopping);
+        if ($picklistshopping) {
+            foreach ($picklistshopping as $check) {
+                $statusps = $check->ps_status;
+                $wonbrps = $check->ps_number;
+                $siteps = $check->ps_site ?? '2100';
+                $lotps = $check->ps_wo_lot;
+                // dd($status,$wonbrps,$siteps,$lotps);
+                $item = (string)$check->ps_part ?? '';
+                $site = '2100';
+                $lot = (string)$check->ps_lot ?? '';
+                $warehouse = (string)$check->ps_warehouse ?? '';
+                $level = (string)$check->ps_level ?? '';
+                $bin = (string)$check->ps_bin ?? '';
+                // dd($lot);
+                // dump($warehouse,$level,$bin);
+                $xxinvdet = xxinvDet::where('xxinv_part', $item)
+                    ->where('xxinv_site', $site)
+                    ->where('xxinv_lot', $lot)
+                    ->where('xxinv_wrh', $warehouse)
+                    ->where('xxinv_level', $level)
+                    ->where('xxinv_bin', $bin)
+                    ->first();
+
+                // dd($xxinvdet);
+
+                // dd($wonbrps,$status,$siteps,$lotps);
+                $status = '';
+                $hasil = (new WSAServices())->wsaGetPickDetail($status, $wonbrps, $siteps, $lotps);
+                if ($hasil[0] == 'false') {
+                    return response()->json([
+                        'Status' => 'Error',
+                        'Message' => "Data Not Found."
+                    ], 422);
+                } else {
+                    $listData = $hasil[1];
+                    // dd($hasil);
+
+
+                    foreach ($listData as $key => $value) {
+
+                        $currentWo = '';
+
+                        if ($xxinvdet) {
+                            if (
+                                $xxinvdet->xxinv_loc == $value->t_loc
+                                && $xxinvdet->xxinv_lot == $value->t_lot
+                                && $xxinvdet->xxinv_part == $value->t_comp
+                            ) {
+                                // dd((string)$value->t_nbr);
+
+                                if ($currentWo != (string)$value->t_nbr) {
+                                    $currentWo = (string)$value->t_nbr;
+
+                                    $locationlist[] =  [
+                                        // 'id' => (string)$value->t_id ?? '',
+                                        'wrh' => (string)$xxinvdet->xxinv_wrh ?? '',
+                                        'level' => (string)$xxinvdet->xxinv_level ?? '',
+                                        'bin' => (string)$xxinvdet->xxinv_bin ?? '',
+                                        'qtyloc' => (string)$xxinvdet->xxinv_qty_shp ?? '0',
+                                    ];
+
+
+                                    // dd('b');
+                                    $detail[] = [
+                                        'wodpart' => (string)$value->t_comp ?? '',
+                                        'qtyreq' => (string)$value->t_qty_req ?? '',
+                                        'qtypick' => (string)$xxinvdet->xxinv_qty_shp ?? '0',
+                                        // (string)$value->t_qty ?? '',
+                                        'qtytopick' => (string)$value->t_qty ?? '',
+                                        'qtykemasan' => (string)$value->t_qty_kem ?? '',
+                                        'lot' => (string)$value->t_lot ?? '',
+                                        'id' => (string)$value->t_id ?? '',
+                                        'wrh' => (string)$xxinvdet->xxinv_wrh ?? '',
+                                        'level' => (string)$xxinvdet->xxinv_level ?? '',
+                                        'bin' => (string)$xxinvdet->xxinv_bin ?? '',
+                                        'dd' => (string)$value->t_duedate ?? '',
+                                        'od' => (string)$value->t_orddate ?? '',
+                                        'rd' => (string)$value->t_reldate ?? '',
+                                        'ref' => (string)$value->t_ref ?? '',
+                                        'um' => (string)$value->t_um ?? '',
+                                        'qtyoh' => (string)$value->t_qty_oh ?? '',
+                                        'qtytopickkemasan' => (string)$value->t_qty_kem ?? '',
+                                        'edfuc' => (string)$value->t_ed_fuc ?? '',
+                                        'qtyshp' => (string)$value->t_qty_shp ?? '',
+                                        'qtywip' => (string)$value->t_qty_wip ?? '',
+                                        'loc' => (string)$value->t_loc ?? '',
+                                        'locationlist' => $locationlist
+                                    ];
+                                    // dd('a');
+                                    $wonbr[$currentWo] = [
+                                        'wonbrnbr' => (string)$value->t_nbr,
+                                        'wopart' => (string)$value->t_part,
+                                        'site' => (string)$value->t_site ?? '',
+                                        'woid' => (string)$value->t_id,
+                                        'detail' => $detail
+                                    ];
+                                } else {
+                                    $locationlist[] =  [
+                                        // 'id' => (string)$value->t_id ?? '',
+                                        'wrh' => (string)$xxinvdet->xxinv_wrh ?? '',
+                                        'level' => (string)$xxinvdet->xxinv_level ?? '',
+                                        'bin' => (string)$xxinvdet->xxinv_bin ?? '',
+                                        'qtyloc' => (string)$xxinvdet->xxinv_qty_shp ?? '0',
+                                    ];
+                                    $wonbr[$currentWo]['detail'][] = [
+                                        'wodpart' => (string)$value->t_comp,
+                                        'qtyreq' => (string)$value->t_qty_req,
+                                        'qtypick' => (string)$xxinvdet->xxinv_qty_shp ?? '0',
+                                        // (string)$value->t_qty ?? '',
+
+                                        'qtytopick' => (string)$value->t_qty,
+                                        'qtykemasan' => (string)$value->t_qty_kem,
+                                        'lot' => (string)$value->t_lot,
+                                        'id' => (string)$value->t_id,
+                                        'wrh' => (string)$xxinvdet->xxinv_wrh,
+                                        'level' => (string)$xxinvdet->xxinv_level,
+                                        'bin' => (string)$xxinvdet->xxinv_bin,
+                                        'dd' => (string)$value->t_duedate,
+                                        'od' => (string)$value->t_orddate,
+                                        'rd' => (string)$value->t_reldate,
+                                        'ref' => (string)$value->t_ref,
+                                        'um' => (string)$value->t_um,
+                                        'qtyoh' => (string)$value->t_qty_oh,
+                                        'qtytopickkemasan' => (string)$value->t_qty_kem,
+                                        'edfuc' => (string)$value->t_ed_fuc,
+                                        'qtyshp' => (string)$value->t_qty_shp,
+                                        'qtywip' => (string)$value->t_qty_wip,
+                                        'loc' => (string)$value->t_loc,
+                                        'locationlist' => $locationlist
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            return response()->json(
+                [
+                    'DataWSA' => $wonbr
+                ],
+                200
+            );
+        } else {
+
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Data Not Found."
+            ], 422);
+        }
+
+
+
+        return GeneralResources::collection($data);
+    }
+    public function getPicklistDet(Request $req)
+    {
+
+        $statusreq = $req->status;
+        $wonbrreq = $req->wonbr ?? '';
+        $site = $req->site ?? '';
+        $lot = $req->lot ?? '';
+        // $user = $req->player;
+        $status = str_replace('_', ' ', $statusreq);
+        // $hasil = (new WSAServices())->wsaGetPickDetail($status);
+        $currentPick = '';
+        $currentWo = '';
+        $detail = [];
+        $master = [];
+        $currentpart = [];
+        $wonbr = [];
+        $locationlist  = [];
+        $wonbrstring = '';
+
+        $hasil = (new WSAServices())->wsaGetPickDetail($status, $wonbrreq, $site, $lot);
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
@@ -395,478 +591,311 @@ class APIPicklistShopping extends Controller
         } else {
             $listData = $hasil[1];
         }
-
         foreach ($listData as $key => $value) {
             $item = (string)$value->t_comp ?? '';
-            $site = (string)$value->t_site ?? '';
+            $site = (string)$value->t_site == '' || (string)$value->t_site == null ? '2100' : (string)$value->t_site;
             $lot = (string)$value->t_lot ?? '';
+
+            // // ppicklist shopping
+            // $picklist = picklistShopping::query();
+            // $picklist->where('ps_approver', Auth::user()->username);
+            // $picklist->where('ps_number', (string)$value->t_nbr);
+            // $picklist->where('ps_wo_lot', (string)$value->t_id);
+            // $picklist->where('ps_part', (string)$value->t_comp);
+            // $picklist->where('ps_lot', (string)$value->t_lot);
+            // $picklist->where('ps_status', '=', $status);
+
+            // if ($status == 'PICK') {
+            //     $picklist->orwhere('ps_status', '=', 'shopping');
+            // }
+
+            // $picklistRecord  = $picklist->first();
+            // if (!$picklistRecord) {
+
+
+
             //new function
             $wonbrstring = (string)$value->t_wo_nbr;
-            $xxinvdet = xxinvDet::where('xxinv_part', $item)
-                // ->when($item !== '', fn($query) => $query->where('xxinv_part', $item))
-                // ->when($site !== '', fn($query) => $query->where('xxinv_site', $site))
-                // ->when($lot !== '', fn($query) => $query->where('xxinv_lot', $lot))
-                ->where('xxinv_site', $site)
-                ->where('xxinv_lot', $lot)
-                ->first();
+
             // dd($xxinvdet, $item, $site, $lot);
             // dd((string)$value->t_comp);
             // if ($currentPick != (string)$value->t_pick_nbr) {
-
+            // dd($xxinvdet);
             $currentWo = '';
-            //     $detail = [];
-            //     $wonbr = [];
-            //     $currentPick = (string)$value->t_pick_nbr;
-
-            // dd($value);
-            if ($xxinvdet) {
 
 
-                if ($currentWo != (string)$value->t_nbr) {
-                    $currentWo = (string)$value->t_nbr;
-                    // dd('b');
-                    $detail[] = [
-                        'wodpart' => (string)$value->t_comp ?? '',
-                        'qtyreq' => (string)$value->t_qty_req ?? '',
-                        'qtypick' => (string)$value->t_qty ?? '',
-                        'qtytopick' => (string)$value->t_qty ?? '',
-                        'qtykemasan' => (string)$value->t_qty_kem ?? '',
-                        'lot' => (string)$value->t_lot ?? '',
-                        'id' => (string)$value->t_id ?? '',
-                        'wrh' => (string)$xxinvdet->xxinv_wrh ?? '',
-                        'level' => (string)$xxinvdet->xxinv_level ?? '',
-                        'bin' => (string)$xxinvdet->xxinv_bin ?? '',
-                        'dd' => (string)$value->t_duedate ?? '',
-                        'od' => (string)$value->t_orddate ?? '',
-                        'rd' => (string)$value->t_reldate ?? '',
-                        'ref' => (string)$value->t_ref ?? '',
-                        'um' => (string)$value->t_um ?? '',
-                        'qtyoh' => (string)$value->t_qty_oh ?? '',
-                        'qtytopickkemasan' => (string)$value->t_qty_topick_kem ?? '',
-                        'edfuc' => (string)$value->t_ed_fuc ?? '',
-                        'qtyshp' => (string)$value->t_qty_shp ?? '',
-                        'qtywip' => (string)$value->t_qty_wip ?? '',
-                        'loc' => (string)$value->t_loc ?? '',
-                    ];
-                    dd('a');
-                    $wonbr[$currentWo] = [
-                        'wonbrnbr' => (string)$value->t_nbr,
-                        'wopart' => (string)$value->t_part,
-                        'site' => (string)$value->t_site ?? '',
-                        'woid' => (string)$value->t_id,
-                        'detail' => $detail
-                    ];
-                    // $master[$currentPick] = [
-                    //     'picknbr' => (string)$value->t_pick_nbr,
-                    //     'site' => (string)$value->t_site,
-                    //     'status' => (string)$value->t_status,
+            // $picklistshopping = picklistShopping::where('ps_number', (string)$value->t_nbr)
+            //     ->when($status != '', fn($query) => $query->where('ps_status', $status))
+            //     // ->where('ps_part', $item)
+            //     // ->where('ps_lot', $lot)
+            //     ->first();
+            // if (!$picklistshopping) {
 
-                    //     'wonbr' => $wonbr
-                    // ];
-                    // dd($wonbr);
 
-                } else {
-                    $$wonbr[$currentWo]['detail'][] = [
-                        'wodpart' => (string)$value->t_comp,
-                        'qtyreq' => (string)$value->t_qty_req,
-                        'qtypick' => (string)$value->t_qty,
-                        'qtytopick' => (string)$value->t_qty,
-                        'qtykemasan' => (string)$value->t_qty_kem,
-                        'lot' => (string)$value->t_lot,
-                        'id' => (string)$value->t_id,
-                        'wrh' => (string)$xxinvdet->xxinv_wrh,
-                        'level' => (string)$xxinvdet->xxinv_level,
-                        'bin' => (string)$xxinvdet->xxinv_bin,
-                        'dd' => (string)$value->t_duedate,
-                        'od' => (string)$value->t_orddate,
-                        'rd' => (string)$value->t_reldate,
-                        'ref' => (string)$value->t_ref,
-                        'um' => (string)$value->t_um,
-                        'qtyoh' => (string)$value->t_qty_oh,
-                        'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                        'edfuc' => (string)$value->t_ed_fuc,
-                        'qtyshp' => (string)$value->t_qty_shp,
-                        'qtywip' => (string)$value->t_qty_wip,
-                        'loc' => (string)$value->t_loc,
-                    ];
+            if ($currentWo != (string)$value->t_nbr) {
+                $currentWo = (string)$value->t_nbr;
+                if ($currentpart != $item) {
+                    $currentpart = $item;
+                    $xxinvdet = xxinvDet::where('xxinv_part', $item)
+                        // ->when($item !== '', fn($query) => $query->where('xxinv_part', $item))
+                        // ->when($site !== '', fn($query) => $query->where('xxinv_site', $site))
+                        // ->when($lot !== '', fn($query) => $query->where('xxinv_lot', $lot))
+                        ->where('xxinv_site', $site)
+                        ->where('xxinv_lot', $lot)
+                        ->get();
+                    if (count($xxinvdet) > 0) {
+                        if ($status != 'PICK') {
+
+                            $picklist = picklistShopping::query();
+                            $picklist->where('ps_approver', Auth::user()->username);
+                            $picklist->where('ps_number', (string)$value->t_nbr);
+                            $picklist->where('ps_wo_lot', (string)$value->t_id);
+                            $picklist->where('ps_part', (string)$value->t_comp);
+                            $picklist->where('ps_lot', (string)$value->t_lot);
+                            $picklist->where('ps_status', '=', $status);
+                            $picklistRecord  = $picklist->first();
+
+                            if ($picklistRecord) {
+                                foreach ($xxinvdet as $xxinvdet) {
+                                    $locationlist[] =  [
+                                        // 'id' => (string)$value->t_id ?? '',
+                                        'wrh' => (string)$xxinvdet->xxinv_wrh ?? '',
+                                        'level' => (string)$xxinvdet->xxinv_level ?? '',
+                                        'bin' => (string)$xxinvdet->xxinv_bin ?? '',
+                                    ];
+                                }
+
+                                // dd('b');
+                                $detail[] = [
+                                    'wodpart' => (string)$value->t_comp ?? '',
+                                    'qtyreq' => (string)$value->t_qty_req ?? '',
+                                    'qtypick' => (string)$value->t_qty ?? '',
+                                    'qtytopick' => (string)$value->t_qty ?? '',
+                                    'qtykemasan' => (string)$value->t_qty_kem ?? '',
+                                    'lot' => (string)$value->t_lot ?? '',
+                                    'id' => (string)$value->t_id ?? '',
+                                    // 'wrh' => (string)$xxinvdet->xxinv_wrh ?? '',
+                                    // 'level' => (string)$xxinvdet->xxinv_level ?? '',
+                                    // 'bin' => (string)$xxinvdet->xxinv_bin ?? '',
+                                    'dd' => (string)$value->t_duedate ?? '',
+                                    'od' => (string)$value->t_orddate ?? '',
+                                    'rd' => (string)$value->t_reldate ?? '',
+                                    'ref' => (string)$value->t_ref ?? '',
+                                    'um' => (string)$value->t_um ?? '',
+                                    'qtyoh' => (string)$value->t_qty_oh ?? '',
+                                    'qtytopickkemasan' => (string)$value->t_qty_kem ?? '',
+                                    'edfuc' => (string)$value->t_ed_fuc ?? '',
+                                    'qtyshp' => (string)$value->t_qty_shp ?? '',
+                                    'qtywip' => (string)$value->t_qty_wip ?? '',
+                                    'loc' => (string)$value->t_loc ?? '',
+                                    'oldloc' => (string)$value->t_loc ?? '',
+                                    'locationlist' => $locationlist
+                                ];
+
+                                // dd('a');
+                                $wonbr[$currentWo] = [
+                                    'wonbrnbr' => (string)$value->t_nbr,
+                                    'wopart' => (string)$value->t_part,
+                                    'site' => (string)$value->t_site ?? '',
+                                    'woid' => (string)$value->t_id,
+                                    'detail' => $detail
+                                ];
+                            }
+                        } else {
+                            $picklist = picklistShopping::query();
+                            $picklist->where('ps_approver', Auth::user()->username);
+                            $picklist->where('ps_number', (string)$value->t_nbr);
+                            $picklist->where('ps_wo_lot', (string)$value->t_id);
+                            $picklist->where('ps_part', (string)$value->t_comp);
+                            $picklist->where('ps_lot', (string)$value->t_lot);
+                            
+                            $picklistRecord  = $picklist->first();
+                            if (!$picklistRecord) {
+                                foreach ($xxinvdet as $xxinvdet) {
+                                    $locationlist[] =  [
+                                        // 'id' => (string)$value->t_id ?? '',
+                                        'wrh' => (string)$xxinvdet->xxinv_wrh ?? '',
+                                        'level' => (string)$xxinvdet->xxinv_level ?? '',
+                                        'bin' => (string)$xxinvdet->xxinv_bin ?? '',
+                                    ];
+                                }
+
+                                // dd('b');
+                                $detail[] = [
+                                    'wodpart' => (string)$value->t_comp ?? '',
+                                    'qtyreq' => (string)$value->t_qty_req ?? '',
+                                    'qtypick' => (string)$value->t_qty ?? '',
+                                    'qtytopick' => (string)$value->t_qty ?? '',
+                                    'qtykemasan' => (string)$value->t_qty_kem ?? '',
+                                    'lot' => (string)$value->t_lot ?? '',
+                                    'id' => (string)$value->t_id ?? '',
+                                    // 'wrh' => (string)$xxinvdet->xxinv_wrh ?? '',
+                                    // 'level' => (string)$xxinvdet->xxinv_level ?? '',
+                                    // 'bin' => (string)$xxinvdet->xxinv_bin ?? '',
+                                    'dd' => (string)$value->t_duedate ?? '',
+                                    'od' => (string)$value->t_orddate ?? '',
+                                    'rd' => (string)$value->t_reldate ?? '',
+                                    'ref' => (string)$value->t_ref ?? '',
+                                    'um' => (string)$value->t_um ?? '',
+                                    'qtyoh' => (string)$value->t_qty_oh ?? '',
+                                    'qtytopickkemasan' => (string)$value->t_qty_kem ?? '',
+                                    'edfuc' => (string)$value->t_ed_fuc ?? '',
+                                    'qtyshp' => (string)$value->t_qty_shp ?? '',
+                                    'qtywip' => (string)$value->t_qty_wip ?? '',
+                                    'loc' => (string)$value->t_loc ?? '',
+                                    'oldloc' => (string)$value->t_loc ?? '',
+                                    'locationlist' => $locationlist
+                                ];
+
+                                // dd('a');
+                                $wonbr[$currentWo] = [
+                                    'wonbrnbr' => (string)$value->t_nbr,
+                                    'wopart' => (string)$value->t_part,
+                                    'site' => (string)$value->t_site ?? '',
+                                    'woid' => (string)$value->t_id,
+                                    'detail' => $detail
+                                ];
+                            }
+                        }
+                    }
                 }
-                // } else {
-                //     if ($currentWo != (string)$value->t_wo_nbr) {
 
-                //         $currentWo = (string)$value->t_wo_nbr;
 
-                //         $wonbr = [];
-                //         $detail = [];
 
-                //         $detail[] = [
-                //             'wodpart' => (string)$value->t_wod_part,
-                //             'qtyreq' => (string)$value->t_qty_req,
-                //             'qtypick' => (string)$value->t_qty_pick,
-                //             'qtytopick' => (string)$value->t_qty_topick,
-                //             'qtykemasan' => (string)$value->t_qty_kemasan,
-                //             'lot' => (string)$value->t_lot,
-                //             'id' => (string)$value->t_wo_id,
-                //             'wrh' => (string)$value->t_wrh,
-                //             'level' => (string)$value->t_level,
-                //             'bin' => (string)$value->t_bin,
-                //             'dd' => (string)$value->t_duedate,
-                //             'od' => (string)$value->t_orddate,
-                //             'rd' => (string)$value->t_reldate,
-                //             'ref' => (string)$value->t_ref,
-                //             'um' => (string)$value->t_um,
-                //             'qtyoh' => (string)$value->t_qty_oh,
-                //             'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                //             'edfuc' => (string)$value->t_ed_fuc,
-                //             'qtyshp' => (string)$value->t_qty_shp,
-                //             'qtywip' => (string)$value->t_qty_wip,
-                //             'loc' => (string)$value->t_loc,
+                // $master[$currentPick] = [
+                //     'picknbr' => (string)$value->t_pick_nbr,
+                //     'site' => (string)$value->t_site,
+                //     'status' => (string)$value->t_status,
+
+                //     'wonbr' => $wonbr
+                // ];
+                // dd($wonbr);
+
+            } else {
+                // $xxinvdet = xxinvDet::where('xxinv_part', $item)
+                //     // ->when($item !== '', fn($query) => $query->where('xxinv_part', $item))
+                //     // ->when($site !== '', fn($query) => $query->where('xxinv_site', $site))
+                //     // ->when($lot !== '', fn($query) => $query->where('xxinv_lot', $lot))
+                //     ->where('xxinv_site', $site)
+                //     ->where('xxinv_lot', $lot)
+                //     ->get();
+                // if ($xxinvdet) {
+                //     foreach ($xxinvdet as $xxinvdet) {
+                //         $locationlist[] =  [
+                //             'id' => (string)$value->t_id ?? '',
+                //             'wrh' => (string)$xxinvdet->xxinv_wrh ?? '',
+                //             'level' => (string)$xxinvdet->xxinv_level ?? '',
                 //         ];
-
-                //         // $wonbr[$currentWo] = [
-                //         //     'wonbrnbr' => (string)$value->t_wo_nbr,
-                //         //     'wopart' => (string)$value->t_wo_part,
-                //         //     'detail' => $detail
-                //         // ];
-
-                //         $master[$currentPick]['wonbr'][$currentWo] = [
-                //             'wonbrnbr' => (string)$value->t_wo_nbr,
-                //             'wopart' => (string)$value->t_wo_part,
-                //             'woid' => (string)$value->t_wo_id,
-                //             'detail' => $detail
-                //         ];
-                //     } else {
-
-                //         $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-                //             'wodpart' => (string)$value->t_wod_part,
-                //             'qtyreq' => (string)$value->t_qty_req,
-                //             'qtypick' => (string)$value->t_qty_pick,
-                //             'qtytopick' => (string)$value->t_qty_topick,
-                //             'qtykemasan' => (string)$value->t_qty_kemasan,
-                //             'lot' => (string)$value->t_lot,
-                //             'id' => (string)$value->t_wo_id,
-                //             'wrh' => (string)$value->t_wrh,
-                //             'level' => (string)$value->t_level,
-                //             'bin' => (string)$value->t_bin,
-                //             'dd' => (string)$value->t_duedate,
-                //             'od' => (string)$value->t_orddate,
-                //             'rd' => (string)$value->t_reldate,
-                //             'ref' => (string)$value->t_ref,
-                //             'um' => (string)$value->t_um,
-                //             'qtyoh' => (string)$value->t_qty_oh,
-                //             'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                //             'edfuc' => (string)$value->t_ed_fuc,
-                //             'qtyshp' => (string)$value->t_qty_shp,
-                //             'qtywip' => (string)$value->t_qty_wip,
-                //             'loc' => (string)$value->t_loc,
-
-                //         ];
-                //         // dd($master[$currentPick]['wonbr'][$currentWo]['detail'],$hasil[1],$currentWo);
                 //     }
                 // }
 
+                if ($currentpart != $item) {
+                    $currentpart = $item;
+                    $xxinvdet = xxinvDet::where('xxinv_part', $item)
+                        // ->when($item !== '', fn($query) => $query->where('xxinv_part', $item))
+                        // ->when($site !== '', fn($query) => $query->where('xxinv_site', $site))
+                        // ->when($lot !== '', fn($query) => $query->where('xxinv_lot', $lot))
+                        ->where('xxinv_site', $site)
+                        ->where('xxinv_lot', $lot)
+                        ->get();
+                    if (count($xxinvdet) > 0) {
+                        if ($status != 'PICK') {
+                            $picklist = picklistShopping::query();
+                            $picklist->where('ps_approver', Auth::user()->username);
+                            $picklist->where('ps_number', (string)$value->t_nbr);
+                            $picklist->where('ps_wo_lot', (string)$value->t_id);
+                            $picklist->where('ps_part', (string)$value->t_comp);
+                            $picklist->where('ps_lot', (string)$value->t_lot);
+                            $picklist->where('ps_status', '=', $status);
+                            $picklistRecord  = $picklist->first();
 
-                //old function
-                // $wonbrstring = (string)$value->t_wo_nbr;
-
-                // if (strlen($wonbrstring) == 0) {
-                //     $wonbrstring = 'manual';
-
-                //     if ($currentPick != (string)$value->t_pick_nbr) {
-                //         $wonbrstring = 'manual';
-                //         $currentWo = '';
-
-                //         $detail = [];
-                //         $wonbr = [];
-                //         $currentPick = (string)$value->t_pick_nbr;
-
-                //         if ($currentWo != $wonbrstring) {
-                //             $currentWo = $wonbrstring;
-
-
-                //             $detail[] = [
-                //                 'wodpart' => (string)$value->t_wod_part,
-                //                 'qtyreq' => (string)$value->t_qty_req,
-                //                 'qtypick' => (string)$value->t_qty_pick,
-                //                 'qtytopick' => (string)$value->t_qty_topick,
-                //                 'qtykemasan' => (string)$value->t_qty_kemasan,
-                //                 'lot' => (string)$value->t_lot,
-                //                 'id' => (string)$value->t_wo_id,
-                //                 'wrh' => (string)$value->t_wrh,
-                //                 'level' => (string)$value->t_level,
-                //                 'bin' => (string)$value->t_bin,
-                //                 'dd' => (string)$value->t_duedate,
-                //                 'od' => (string)$value->t_orddate,
-                //                 'rd' => (string)$value->t_reldate,
-                //                 'ref' => (string)$value->t_ref,
-                //                 'um' => (string)$value->t_um,
-                //                 'qtyoh' => (string)$value->t_qty_oh,
-                //                 'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                //                 'edfuc' => (string)$value->t_ed_fuc,
-                //                 'qtyshp' => (string)$value->t_qty_shp,
-                //                 'qtywip' => (string)$value->t_qty_wip,
-                //                 'loc' => (string)$value->t_loc,
-                //             ];
-
-                //             $wonbr[$currentWo] = [
-                //                 'wonbrnbr' => $wonbrstring,
-                //                 'wopart' => '',
-                //                 'woid' => (string)$value->t_wo_id,
-                //                 'detail' => $detail
-                //             ];
-
-                //             $master[$currentPick] = [
-                //                 'picknbr' => (string)$value->t_pick_nbr,
-                //                 'site' => (string)$value->t_site,
-                //                 'status' => (string)$value->t_status,
-
-                //                 'wonbr' => $wonbr,
-                //             ];
-                //         } else {
-                //             $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-                //                 'wodpart' => (string)$value->t_wod_part,
-                //                 'qtyreq' => (string)$value->t_qty_req,
-                //                 'qtypick' => (string)$value->t_qty_pick,
-                //                 'qtytopick' => (string)$value->t_qty_topick,
-                //                 'qtykemasan' => (string)$value->t_qty_kemasan,
-                //                 'lot' => (string)$value->t_lot,
-                //                 'id' => (string)$value->t_wo_id,
-                //                 'wrh' => (string)$value->t_wrh,
-                //                 'level' => (string)$value->t_level,
-                //                 'bin' => (string)$value->t_bin,
-                //                 'dd' => (string)$value->t_duedate,
-                //                 'od' => (string)$value->t_orddate,
-                //                 'rd' => (string)$value->t_reldate,
-                //                 'ref' => (string)$value->t_ref,
-                //                 'um' => (string)$value->t_um,
-                //                 'qtyoh' => (string)$value->t_qty_oh,
-                //                 'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                //                 'edfuc' => (string)$value->t_ed_fuc,
-                //                 'qtyshp' => (string)$value->t_qty_shp,
-                //                 'qtywip' => (string)$value->t_qty_wip,
-                //                 'loc' => (string)$value->t_loc,
-                //             ];
-                //         }
-                //     } else {
-                //         $wonbrstring = 'manual';
-                //         if ($currentWo != $wonbrstring) {
-                //             $currentWo = $wonbrstring;
-
-                //             $detail[] = [
-                //                 'wodpart' => (string)$value->t_wod_part,
-                //                 'qtyreq' => (string)$value->t_qty_req,
-                //                 'qtypick' => (string)$value->t_qty_pick,
-                //                 'qtytopick' => (string)$value->t_qty_topick,
-                //                 'qtykemasan' => (string)$value->t_qty_kemasan,
-                //                 'lot' => (string)$value->t_lot,
-                //                 'id' => (string)$value->t_wo_id,
-                //                 'wrh' => (string)$value->t_wrh,
-                //                 'level' => (string)$value->t_level,
-                //                 'bin' => (string)$value->t_bin,
-                //                 'dd' => (string)$value->t_duedate,
-                //                 'od' => (string)$value->t_orddate,
-                //                 'rd' => (string)$value->t_reldate,
-                //                 'ref' => (string)$value->t_ref,
-                //                 'um' => (string)$value->t_um,
-                //                 'qtyoh' => (string)$value->t_qty_oh,
-                //                 'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                //                 'edfuc' => (string)$value->t_ed_fuc,
-                //                 'qtyshp' => (string)$value->t_qty_shp,
-                //                 'qtywip' => (string)$value->t_qty_wip,
-                //                 'loc' => (string)$value->t_loc,
-                //             ];
-                //             $wonbr[$currentWo] = [
-                //                 'wonbrnbr' => $currentWo,
-                //                 'wopart' => '',
-                //                 'woid' => (string)$value->t_wo_id,
-                //                 'detail' => $detail
-                //             ];
-                //             $master[$currentPick] = [
-                //                 'picknbr' => (string)$value->t_pick_nbr,
-                //                 'site' => (string)$value->t_site,
-                //                 'status' => (string)$value->t_status,
-
-                //                 'wonbr' => $wonbr
-                //             ];
-                //         } else {
-                //             $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-                //                 'wodpart' => (string)$value->t_wod_part,
-                //                 'qtyreq' => (string)$value->t_qty_req,
-                //                 'qtypick' => (string)$value->t_qty_pick,
-                //                 'qtytopick' => (string)$value->t_qty_topick,
-                //                 'qtykemasan' => (string)$value->t_qty_kemasan,
-                //                 'lot' => (string)$value->t_lot,
-                //                 'id' => (string)$value->t_wo_id,
-                //                 'wrh' => (string)$value->t_wrh,
-                //                 'level' => (string)$value->t_level,
-                //                 'bin' => (string)$value->t_bin,
-                //                 'dd' => (string)$value->t_duedate,
-                //                 'od' => (string)$value->t_orddate,
-                //                 'rd' => (string)$value->t_reldate,
-                //                 'ref' => (string)$value->t_ref,
-                //                 'um' => (string)$value->t_um,
-                //                 'qtyoh' => (string)$value->t_qty_oh,
-                //                 'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                //                 'edfuc' => (string)$value->t_ed_fuc,
-                //                 'qtyshp' => (string)$value->t_qty_shp,
-                //                 'qtywip' => (string)$value->t_qty_wip,
-                //                 'loc' => (string)$value->t_loc,
-                //             ];
-                //         }
-                //     }
-                // } else {
-
-                //     if ($currentPick != (string)$value->t_pick_nbr) {
-
-                //         $currentWo = '';
-                //         $detail = [];
-                //         $wonbr = [];
-                //         $currentPick = (string)$value->t_pick_nbr;
-
-                //         if ($currentWo != (string)$value->t_wo_nbr) {
-                //             $currentWo = (string)$value->t_wo_nbr;
-
-                //             $detail[] = [
-                //                 'wodpart' => (string)$value->t_wod_part,
-                //                 'qtyreq' => (string)$value->t_qty_req,
-                //                 'qtypick' => (string)$value->t_qty_pick,
-                //                 'qtytopick' => (string)$value->t_qty_topick,
-                //                 'qtykemasan' => (string)$value->t_qty_kemasan,
-                //                 'lot' => (string)$value->t_lot,
-                //                 'id' => (string)$value->t_wo_id,
-                //                 'wrh' => (string)$value->t_wrh,
-                //                 'level' => (string)$value->t_level,
-                //                 'bin' => (string)$value->t_bin,
-                //                 'dd' => (string)$value->t_duedate,
-                //                 'od' => (string)$value->t_orddate,
-                //                 'rd' => (string)$value->t_reldate,
-                //                 'ref' => (string)$value->t_ref,
-                //                 'um' => (string)$value->t_um,
-                //                 'qtyoh' => (string)$value->t_qty_oh,
-                //                 'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                //                 'edfuc' => (string)$value->t_ed_fuc,
-                //                 'qtyshp' => (string)$value->t_qty_shp,
-                //                 'qtywip' => (string)$value->t_qty_wip,
-                //                 'loc' => (string)$value->t_loc,
-                //             ];
-                //             $wonbr[$currentWo] = [
-                //                 'wonbrnbr' => (string)$value->t_wo_nbr,
-                //                 'wopart' => (string)$value->t_wo_part,
-                //                 'woid' => (string)$value->t_wo_id,
-                //                 'detail' => $detail
-                //             ];
-                //             $master[$currentPick] = [
-                //                 'picknbr' => (string)$value->t_pick_nbr,
-                //                 'site' => (string)$value->t_site,
-                //                 'status' => (string)$value->t_status,
-
-                //                 'wonbr' => $wonbr
-                //             ];
-                //         } else {
-                //             $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-                //                 'wodpart' => (string)$value->t_wod_part,
-                //                 'qtyreq' => (string)$value->t_qty_req,
-                //                 'qtypick' => (string)$value->t_qty_pick,
-                //                 'qtytopick' => (string)$value->t_qty_topick,
-                //                 'qtykemasan' => (string)$value->t_qty_kemasan,
-                //                 'lot' => (string)$value->t_lot,
-                //                 'id' => (string)$value->t_wo_id,
-                //                 'wrh' => (string)$value->t_wrh,
-                //                 'level' => (string)$value->t_level,
-                //                 'bin' => (string)$value->t_bin,
-                //                 'dd' => (string)$value->t_duedate,
-                //                 'od' => (string)$value->t_orddate,
-                //                 'rd' => (string)$value->t_reldate,
-                //                 'ref' => (string)$value->t_ref,
-                //                 'um' => (string)$value->t_um,
-                //                 'qtyoh' => (string)$value->t_qty_oh,
-                //                 'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                //                 'edfuc' => (string)$value->t_ed_fuc,
-                //                 'qtyshp' => (string)$value->t_qty_shp,
-                //                 'qtywip' => (string)$value->t_qty_wip,
-                //                 'loc' => (string)$value->t_loc,
-                //             ];
-                //         }
-                //     } else {
-                //         if ($currentWo != (string)$value->t_wo_nbr) {
-
-                //             $currentWo = (string)$value->t_wo_nbr;
-
-                //             $wonbr = [];
-                //             $detail = [];
-
-                //             $detail[] = [
-                //                 'wodpart' => (string)$value->t_wod_part,
-                //                 'qtyreq' => (string)$value->t_qty_req,
-                //                 'qtypick' => (string)$value->t_qty_pick,
-                //                 'qtytopick' => (string)$value->t_qty_topick,
-                //                 'qtykemasan' => (string)$value->t_qty_kemasan,
-                //                 'lot' => (string)$value->t_lot,
-                //                 'id' => (string)$value->t_wo_id,
-                //                 'wrh' => (string)$value->t_wrh,
-                //                 'level' => (string)$value->t_level,
-                //                 'bin' => (string)$value->t_bin,
-                //                 'dd' => (string)$value->t_duedate,
-                //                 'od' => (string)$value->t_orddate,
-                //                 'rd' => (string)$value->t_reldate,
-                //                 'ref' => (string)$value->t_ref,
-                //                 'um' => (string)$value->t_um,
-                //                 'qtyoh' => (string)$value->t_qty_oh,
-                //                 'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                //                 'edfuc' => (string)$value->t_ed_fuc,
-                //                 'qtyshp' => (string)$value->t_qty_shp,
-                //                 'qtywip' => (string)$value->t_qty_wip,
-                //                 'loc' => (string)$value->t_loc,
-                //             ];
-
-                //             // $wonbr[$currentWo] = [
-                //             //     'wonbrnbr' => (string)$value->t_wo_nbr,
-                //             //     'wopart' => (string)$value->t_wo_part,
-                //             //     'detail' => $detail
-                //             // ];
-
-                //             $master[$currentPick]['wonbr'][$currentWo] = [
-                //                 'wonbrnbr' => (string)$value->t_wo_nbr,
-                //                 'wopart' => (string)$value->t_wo_part,
-                //                 'woid' => (string)$value->t_wo_id,
-                //                 'detail' => $detail
-                //             ];
-                //         } else {
-
-                //             $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-                //                 'wodpart' => (string)$value->t_wod_part,
-                //                 'qtyreq' => (string)$value->t_qty_req,
-                //                 'qtypick' => (string)$value->t_qty_pick,
-                //                 'qtytopick' => (string)$value->t_qty_topick,
-                //                 'qtykemasan' => (string)$value->t_qty_kemasan,
-                //                 'lot' => (string)$value->t_lot,
-                //                 'id' => (string)$value->t_wo_id,
-                //                 'wrh' => (string)$value->t_wrh,
-                //                 'level' => (string)$value->t_level,
-                //                 'bin' => (string)$value->t_bin,
-                //                 'dd' => (string)$value->t_duedate,
-                //                 'od' => (string)$value->t_orddate,
-                //                 'rd' => (string)$value->t_reldate,
-                //                 'ref' => (string)$value->t_ref,
-                //                 'um' => (string)$value->t_um,
-                //                 'qtyoh' => (string)$value->t_qty_oh,
-                //                 'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                //                 'edfuc' => (string)$value->t_ed_fuc,
-                //                 'qtyshp' => (string)$value->t_qty_shp,
-                //                 'qtywip' => (string)$value->t_qty_wip,
-                //                 'loc' => (string)$value->t_loc,
-
-                //             ];
-                //             // dd($master[$currentPick]['wonbr'][$currentWo]['detail'],$hasil[1],$currentWo);
-                //         }
-                //     }
-                // }
+                            if ($picklistRecord) {
+                                foreach ($xxinvdet as $xxinvdet) {
+                                    $locationlist[] =  [
+                                        // 'id' => (string)$value->t_id ?? '',
+                                        'wrh' => (string)$xxinvdet->xxinv_wrh ?? '',
+                                        'level' => (string)$xxinvdet->xxinv_level ?? '',
+                                        'bin' => (string)$xxinvdet->xxinv_bin ?? '',
+                                    ];
+                                }
+                                $wonbr[$currentWo]['detail'][] = [
+                                    'wodpart' => (string)$value->t_comp,
+                                    'qtyreq' => (string)$value->t_qty_req,
+                                    'qtypick' => (string)$value->t_qty,
+                                    'qtytopick' => (string)$value->t_qty,
+                                    'qtykemasan' => (string)$value->t_qty_kem,
+                                    'lot' => (string)$value->t_lot,
+                                    'id' => (string)$value->t_id,
+                                    // 'wrh' => (string)$xxinvdet->xxinv_wrh,
+                                    // 'level' => (string)$xxinvdet->xxinv_level,
+                                    // 'bin' => (string)$xxinvdet->xxinv_bin,
+                                    'dd' => (string)$value->t_duedate,
+                                    'od' => (string)$value->t_orddate,
+                                    'rd' => (string)$value->t_reldate,
+                                    'ref' => (string)$value->t_ref,
+                                    'um' => (string)$value->t_um,
+                                    'qtyoh' => (string)$value->t_qty_oh,
+                                    'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
+                                    'edfuc' => (string)$value->t_ed_fuc,
+                                    'qtyshp' => (string)$value->t_qty_shp,
+                                    'qtywip' => (string)$value->t_qty_wip,
+                                    'loc' => (string)$value->t_loc,
+                                ];
+                            }
+                        } else {
+                            $picklist = picklistShopping::query();
+                            $picklist->where('ps_approver', Auth::user()->username);
+                            $picklist->where('ps_number', (string)$value->t_nbr);
+                            $picklist->where('ps_wo_lot', (string)$value->t_id);
+                            $picklist->where('ps_part', (string)$value->t_comp);
+                            $picklist->where('ps_lot', (string)$value->t_lot);
+                           
+                            $picklistRecord  = $picklist->first();
+                            if (!$picklistRecord) {
+                                foreach ($xxinvdet as $xxinvdet) {
+                                    $locationlist[] =  [
+                                        // 'id' => (string)$value->t_id ?? '',
+                                        'wrh' => (string)$xxinvdet->xxinv_wrh ?? '',
+                                        'level' => (string)$xxinvdet->xxinv_level ?? '',
+                                        'bin' => (string)$xxinvdet->xxinv_bin ?? '',
+                                    ];
+                                }
+                                $wonbr[$currentWo]['detail'][] = [
+                                    'wodpart' => (string)$value->t_comp,
+                                    'qtyreq' => (string)$value->t_qty_req,
+                                    'qtypick' => (string)$value->t_qty,
+                                    'qtytopick' => (string)$value->t_qty,
+                                    'qtykemasan' => (string)$value->t_qty_kem,
+                                    'lot' => (string)$value->t_lot,
+                                    'id' => (string)$value->t_id,
+                                    // 'wrh' => (string)$xxinvdet->xxinv_wrh,
+                                    // 'level' => (string)$xxinvdet->xxinv_level,
+                                    // 'bin' => (string)$xxinvdet->xxinv_bin,
+                                    'dd' => (string)$value->t_duedate,
+                                    'od' => (string)$value->t_orddate,
+                                    'rd' => (string)$value->t_reldate,
+                                    'ref' => (string)$value->t_ref,
+                                    'um' => (string)$value->t_um,
+                                    'qtyoh' => (string)$value->t_qty_oh,
+                                    'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
+                                    'edfuc' => (string)$value->t_ed_fuc,
+                                    'qtyshp' => (string)$value->t_qty_shp,
+                                    'qtywip' => (string)$value->t_qty_wip,
+                                    'loc' => (string)$value->t_loc,
+                                ];
+                            }
+                        }
+                    }
+                }
             }
+            // }
         }
+
 
 
         return response()->json(
             [
-                'DataWSA' => $master
+                'DataWSA' => $wonbr
             ],
             200
         );
@@ -879,78 +908,220 @@ class APIPicklistShopping extends Controller
     {
         $data = $req->all();
 
+        log::info($data);
 
-        $approver = $data['approver'];
-        $picknbr = $data['data']['picknbr'];
-        $site = $data['data']['site'];
-        // $loc = $data['data']['loc'];
-        $wonbrlist = $data['data']['wonbr'];
-        foreach ($wonbrlist as $wo) {
-            foreach ($wo['detail'] as $det) {
-                if ($wo['wonbrnbr'] == 'manual') {
-                    $wonbr = '';
-                } else {
-                    $wonbr = $wo['wonbrnbr'];
-                }
+        $countupdated = 0;
+        // log::info($data);
+        DB::beginTransaction();
+        try {
+            $approver = $data['approver'];
+            // $picknbr = $data['data']['picknbr'];
+            $site = $data['site'] ?? '2100';
+            // $loc = $data['data']['loc'];
+            $wonbrlist = $data;
+            foreach ($wonbrlist as $key => $wo) {
 
-                $wodpart = $det['wodpart'];
-                $lot = $det['lot'];
-                $wrh = $det['wrh'];
-                $level = $det['level'];
-                $bin = $det['bin'];
-                $qtypick = $det['qtypick'];
-                $loc = $det['loc'];
+                if ($key == 'data') {
+                    // log::info($wo
+                    // log::info($wo['detail']);
+                    // log::info('test');
+                    foreach ($wo['detail'] as  $det) {
+                        foreach ($det['locationlist'] as $locdet) {
 
-                // $qxtendsingleitem = (new QxtendServices())->qxTransferSingleItemWo($wodpart, $wonbr, $site, $site, $loc, 'Shopping', $qtypick, $bin, $level, $wrh, $lot);
-                // if ($qxtendsingleitem == 'false') {
-                //     Log::channel('Picklist')->info("Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart);
-                //     return response()->json([
-                //         'Status' => 'Error',
-                //         'Message' => "Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
-                //         //'Message'=> $qxtendsingleitem[1];
-                //     ], 422);
-                // } else {
-                if ($qtypick > 0) {
+                            if (isset($locdet['qtyloc']) && $locdet['qtyloc'] != 0) {
 
+                                if ($wo['wonbrnbr'] == 'manual') {
+                                    $wonbr = '';
+                                } else {
+                                    $wonbr = $wo['wonbrnbr'];
+                                }
+                                $wolot = $wo['woid'];
+                                $wodpart = $det['wodpart'];
+                                $lot = $det['lot'];
+                                $wrh = $locdet['wrh'];
+                                $level = $locdet['level'];
+                                $bin = $locdet['bin'];
+                                $qty = $locdet['qtyloc'];
+                                log::info($wrh . ' ' . $level . ' ' . $bin . ' ' . $qty);
+                                $qtypick = $det['qtypick'];
+                                $loc = $det['loc'];
+                                $oldloc = $det['oldloc'];
 
+                                $domain = Domain::first();
+                                $domainCode = $domain->domain ?? '';
 
-                    $hasil = (new WSAServices())->wsaUpdateQtyPick($picknbr, $qtypick, $wonbr, $wodpart, $site, $loc, $lot, $wrh, $level, $bin);
-                    if ($hasil == 'false') {
-                        Log::channel('Picklist')->info("Update Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart);
-                        return response()->json([
-                            'Status' => 'Error',
-                            'Message' => "Update Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
-                        ], 422);
+                                $xxinvdet = xxinvDet::where('xxinv_domain', $domainCode)
+                                    ->where('xxinv_part', $wodpart)
+                                    ->where('xxinv_site', $site)
+                                    ->where('xxinv_loc', $oldloc)
+                                    ->where('xxinv_lot', $lot)
+                                    ->where('xxinv_wrh', $wrh)
+                                    ->where('xxinv_level', $level)
+                                    ->where('xxinv_bin', $bin)
+                                    ->first();
+                                log::info($domainCode . ' ' . $wodpart . ' ' . $site . ' ' . $oldloc . ' ' . $loc . ' ' . $lot . ' ' . $wrh . ' ' . $level . ' ' . $bin);
+                                log::info($xxinvdet);
+                                if ($xxinvdet) {
+                                    $xxinvdet->xxinv_qty_shp = $xxinvdet->xxinv_qty_shp + $qty;
+                                    $xxinvdet->xxinv_qty_wrh = $xxinvdet->xxinv_qty_wrh - $qty;
+                                    $xxinvdet->xxinv_qty_shp = $qty;
+                                    $xxinvdet->xxinv_loc = $loc;
+                                    $xxinvdet->save();
+
+                                    $countupdated++;
+
+                                    $checkpicklistshopping = PicklistShopping::where('ps_number', $wonbr)
+                                        ->where('ps_part', $wodpart)
+                                        ->where('ps_lot', $lot)
+                                        ->where('ps_status', 'shopping')
+                                        ->where('ps_warehouse', $wrh)
+                                        ->where('ps_level', $level)
+                                        ->where('ps_bin', $bin)
+                                        ->first();
+                                    if (!$checkpicklistshopping) {
+                                        $shopping = new PicklistShopping();
+                                        $shopping->ps_number = $wonbr;
+                                        $shopping->ps_approver = $approver;
+                                        $shopping->ps_part = $wodpart;
+                                        $shopping->ps_lot = $lot;
+                                        $shopping->ps_wo_lot = $wolot;
+                                        $shopping->ps_warehouse = $wrh;
+                                        $shopping->ps_level = $level;
+                                        $shopping->ps_bin = $bin;
+                                        $shopping->ps_status = "shopping";
+                                        $shopping->save();
+                                    }
+
+                                    $newTransactionHistory = new TransactionHistory();
+                                    $newTransactionHistory->tr_nbr = $wonbr;
+                                    $newTransactionHistory->tr_order = $wonbr;
+                                    $newTransactionHistory->tr_program = 'Picklist Module';
+                                    $newTransactionHistory->tr_activity = 'Shopping';
+                                    $newTransactionHistory->tr_user =  $approver ?? '';
+                                    // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                                    $newTransactionHistory->tr_part = $wodpart ?? '';
+                                    $newTransactionHistory->tr_uom =  '';
+                                    $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                                    $newTransactionHistory->tr_lot =  $lot ?? '';
+                                    $newTransactionHistory->tr_qty =  $qtypick ?? '';
+                                    $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                                    $newTransactionHistory->tr_reference =  '';
+                                    $newTransactionHistory->tr_site =  $site ?? '';
+                                    $newTransactionHistory->tr_location = $loc ?? '';
+                                    $newTransactionHistory->tr_warehouse =  $wrh ?? '';
+                                    $newTransactionHistory->tr_level = $level ?? '';
+                                    $newTransactionHistory->tr_bin =  $bin ?? '';
+                                    $newTransactionHistory->tr_remark = '';
+                                    $newTransactionHistory->save();
+                                } else {
+                                    Log::channel('Picklist')->info("Update Qty Pick Failed for Picklist WO : " . $wonbr . " Part : " . $wodpart);
+                                    return response()->json([
+                                        'Status' => 'Error',
+                                        'Message' => "Update Qty Pick Failed for Picklist WO : " . $wonbr . " Part : " . $wodpart
+                                    ], 422);
+                                }
+                            }
+                            // else {
+                            //     Log::channel('Picklist')->info("Update Qty Pick Failed for Picklist WO : " . $wonbr . " Part : " . $wodpart);
+                            //     return response()->json([
+                            //         'Status' => 'Error',
+                            //         'Message' => "Update Qty Pick Failed for Picklist WO : " . $wonbr . " Part : " . $wodpart
+                            //     ], 422);
+                            // }
+                        }
                     }
                 }
-                // }
-                $checkpicklistshopping = PicklistShopping::where('ps_number', $picknbr)
-                    ->where('ps_part', $wodpart)
-                    ->where('ps_lot', $lot)
-                    ->where('ps_status', 'shopping')
-                    ->first();
-                if (!$checkpicklistshopping) {
-                    $shopping = new PicklistShopping();
-                    $shopping->ps_number = $picknbr;
-                    $shopping->ps_approver = $approver;
-                    $shopping->ps_part = $wodpart;
-                    $shopping->ps_lot = $lot;
-                    $shopping->ps_status = "shopping";
-                    $shopping->save();
-                }
+            }
+
+            DB::commit();
+
+
+
+
+
+            // $hasil = (new WSAServices())->wsaUpdateQtyPick($picknbr, $qtypick, $wonbr, $wodpart, $site, $loc, $lot, $wrh, $level, $bin);
+            // if ($hasil == 'false') {
+            //     Log::channel('Picklist')->info("Update Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart);
+            //     return response()->json([
+            //         'Status' => 'Error',
+            //         'Message' => "Update Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
+            //     ], 422);
+            // }
+
+            // }
+
+
+
+
+
+
+            return response()->json([
+                'Status' => 'Success',
+                'Message' => "Update Qty Pick Success"
+            ], 200);
+        } catch (Exception $e) {
+            DB::rollBack();
+            log::info($e->getMessage());
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => $e->getMessage()
+            ], 422);
+        }
+    }
+    public function wsaUpdateStatusPick(Request $req)
+    {
+        //$data = $req->all();
+        // $picknbr = $req->input('picknbr');
+        DB::beginTransaction();
+        try {
+            $id = $req->input('id');
+            $status = $req->input('status');
+
+            // $status = $req->input('status');
+            $data = $req->input('data');
+            $approver = $req->input('approver') ?? '';
+            $lot = $data['lot'] ?? '';
+            $part = $data['wodpart'] ?? '';
+            $qty = $data['qtyshp'] ?? '';
+            $site = $data['site'] ?? '';
+            $loc = $data['loc'] ?? '';
+            // $wrh = $data['wrh'] ?? '';
+            // $level = $data['level'] ?? '';
+            // $bin = $data['bin'] ?? '';
+            $wonbr = $req->input('wonbr');
+            $wrh = $req->input('warehouse') ?? '';
+            $level = $req->input('level') ?? '';
+            $bin = $req->input('bin') ?? '';
+            log::info($wonbr . ' ' . $id . ' ' . $part . ' ' . $lot . ' ' . $wrh . ' ' . $level . ' ' . $bin . ' ' . $status);
+            // dd('stop');
+            // $locto = $data['loc'];
+            $picklist = picklistShopping::where('ps_number', $wonbr)
+                ->where('ps_wo_lot', $id)
+                ->where('ps_part', $part)
+                ->where('ps_lot', $lot)
+                ->where('ps_warehouse', $wrh)
+                ->where('ps_level', $level)
+                ->where('ps_bin', $bin)->first();
+
+            // dump($picklist);
+            log::info($picklist);
+            if ($picklist) {
+                log::info('Picklist found: ' . $picklist->ps_number);
+                $picklist->ps_status = $status;
+                $picklist->save();
 
                 $newTransactionHistory = new TransactionHistory();
-                $newTransactionHistory->tr_nbr = $picknbr;
+                $newTransactionHistory->tr_nbr = $wonbr;
                 $newTransactionHistory->tr_order = $wonbr;
                 $newTransactionHistory->tr_program = 'Picklist Module';
-                $newTransactionHistory->tr_activity = 'Shopping';
+                $newTransactionHistory->tr_activity = 'Approval';
                 $newTransactionHistory->tr_user =  $approver ?? '';
                 // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
-                $newTransactionHistory->tr_part = $wodpart ?? '';
+                $newTransactionHistory->tr_part = $part ?? '';
                 $newTransactionHistory->tr_uom =  '';
                 $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                 $newTransactionHistory->tr_lot =  $lot ?? '';
-                $newTransactionHistory->tr_qty =  $qtypick ?? '';
+                $newTransactionHistory->tr_qty =  $qty ?? '';
                 $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
                 $newTransactionHistory->tr_reference =  '';
                 $newTransactionHistory->tr_site =  $site ?? '';
@@ -960,431 +1131,578 @@ class APIPicklistShopping extends Controller
                 $newTransactionHistory->tr_bin =  $bin ?? '';
                 $newTransactionHistory->tr_remark = '';
                 $newTransactionHistory->save();
+
+                DB::commit();
+                return response()->json([
+                    'Status' => 'Success',
+                    'Message' => "Update Status Pick Success for Picklist Item: " . $part
+                ], 200);
+            } else {
+                // log::info('Picklist not found for: ' . $wonbr . ', Part: ' . $part . ', Lot: ' . $lot);
+                // log::info($wonbr . ' ' . $id . ' ' . $part . ' ' . $lot . ' ' . $wrh . ' ' . $level . ' ' . $bin);
+                // // $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $status, $qty, $part, $lot);
+
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "Update Qty Pick Failed for Picklist Item: " . $part
+                ], 422);
             }
-        }
-
-
-
-
-        return response()->json([
-            'Status' => 'Success',
-            'Message' => "Update Qty Pick Success"
-        ], 200);
-    }
-    public function wsaUpdateStatusPick(Request $req)
-    {
-        //$data = $req->all();
-        $picknbr = $req->input('picknbr');
-        $status = $req->input('status');
-
-        $status = $req->input('status');
-        $data = $req->input('data');
-        $approver = $req->input('approver') ?? '';
-        $lot = $data['lot'] ?? '';
-        $part = $data['wodpart'] ?? '';
-        $qty = $data['qtyshp'] ?? '';
-        $site = $data['site'] ?? '';
-        $loc = $data['loc'] ?? '';
-        $wrh = $data['wrh'] ?? '';
-        $level = $data['level'] ?? '';
-        $bin = $data['bin'] ?? '';
-        $wonbr = $req->input('wonbr');
-        // $locto = $data['loc'];
-        $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $status, $qty, $part, $lot);
-        if ($hasil[0] == 'false') {
+        } catch (Exception $e) {
+            DB::rollBack();
+            log::info($e->getMessage());
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Update Qty Pick Failed for Picklist : " . $picknbr
+                'Message' => $e->getMessage()
             ], 422);
-        } else {
-            $newTransactionHistory = new TransactionHistory();
-            $newTransactionHistory->tr_nbr = $picknbr;
-            $newTransactionHistory->tr_order = $wonbr;
-            $newTransactionHistory->tr_program = 'Picklist Module';
-            $newTransactionHistory->tr_activity = 'Approval';
-            $newTransactionHistory->tr_user =  $approver ?? '';
-            // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
-            $newTransactionHistory->tr_part = $part ?? '';
-            $newTransactionHistory->tr_uom =  '';
-            $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-            $newTransactionHistory->tr_lot =  $lot ?? '';
-            $newTransactionHistory->tr_qty =  $qty ?? '';
-            $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-            $newTransactionHistory->tr_reference =  '';
-            $newTransactionHistory->tr_site =  $site ?? '';
-            $newTransactionHistory->tr_location = $loc ?? '';
-            $newTransactionHistory->tr_warehouse =  $wrh ?? '';
-            $newTransactionHistory->tr_level = $level ?? '';
-            $newTransactionHistory->tr_bin =  $bin ?? '';
-            $newTransactionHistory->tr_remark = '';
-            $newTransactionHistory->save();
         }
-
-
-        return response()->json([
-            'Status' => 'Success',
-            'Message' => "Update Qty Pick Success"
-        ], 200);
     }
 
+    // public function getPicklistDetAppr(Request $req)
+
+    // {
+    //     $statusreq = $req->status;
+    //     $user = $req->player;
+    //     $status = str_replace('_', ' ', $statusreq);
+    //     $wonbr = $req->wonbr;
+    //     $site = $req->site;
+    //     $lot = $req->lot;
+    //     // $user = $req->player;
+
+    //     // $hasil = (new WSAServices())->wsaGetPickDetail($status);
+    //     $hasil = (new WSAServices())->wsaGetPickDetail($status, $wonbr, $site, $lot);
+    //     // $hasil = (new WSAServices())->wsaGetPickDetail($status);
+
+    //     $currentPick = '';
+    //     $currentWo = '';
+    //     $detail = [];
+    //     $master = [];
+    //     $wonbr = [];
+    //     $wonbrstring = '';
+    //     if ($hasil[0] == 'false') {
+    //         return response()->json([
+    //             'Status' => 'Error',
+    //             'Message' => "Data Not Found."
+    //         ], 422);
+    //     } else {
+    //         $listData = $hasil[1];
+    //     }
+
+    //     foreach ($listData as $key => $value) {
+
+
+    //         $wonbrstring = (string)$value->t_wo_nbr;
+
+    //         if (strlen($wonbrstring) == 0) {
+    //             $wonbrstring = 'manual';
+    //             $checkpicklistshopping = PicklistShopping::where('ps_number', (string)$value->t_pick_nbr)
+    //                 ->where('ps_part', (string)$value->t_wod_part)
+    //                 ->where('ps_lot', (string)$value->t_lot)
+    //                 ->where('ps_status', 'shopping')
+    //                 ->where('ps_approver', $req->player)
+    //                 ->first();
+    //             if ($checkpicklistshopping) {
+    //                 if ($currentPick != (string)$value->t_pick_nbr) {
+    //                     $wonbrstring = 'manual';
+    //                     $currentWo = '';
+
+    //                     $detail = [];
+    //                     $wonbr = [];
+    //                     $currentPick = (string)$value->t_pick_nbr;
+
+    //                     if ($currentWo != $wonbrstring) {
+    //                         $currentWo = $wonbrstring;
+
+
+    //                         $detail[] = [
+    //                             'wodpart' => (string)$value->t_wod_part,
+    //                             'qtyreq' => (string)$value->t_qty_req,
+    //                             'qtypick' => (string)$value->t_qty_pick,
+    //                             'qtytopick' => (string)$value->t_qty_topick,
+    //                             'qtykemasan' => (string)$value->t_qty_kemasan,
+    //                             'lot' => (string)$value->t_lot,
+    //                             'id' => (string)$value->t_wo_id,
+    //                             'wrh' => (string)$value->t_wrh,
+    //                             'level' => (string)$value->t_level,
+    //                             'bin' => (string)$value->t_bin,
+    //                             'dd' => (string)$value->t_duedate,
+    //                             'od' => (string)$value->t_orddate,
+    //                             'rd' => (string)$value->t_reldate,
+    //                             'ref' => (string)$value->t_ref,
+    //                             'um' => (string)$value->t_um,
+    //                             'qtyoh' => (string)$value->t_qty_oh,
+    //                             'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
+    //                             'edfuc' => (string)$value->t_ed_fuc,
+    //                             'qtyshp' => (string)$value->t_qty_shp,
+    //                             'qtywip' => (string)$value->t_qty_wip,
+
+
+    //                         ];
+
+    //                         $wonbr[$currentWo] = [
+    //                             'wonbrnbr' => $wonbrstring,
+    //                             'wopart' => '',
+    //                             'detail' => $detail
+    //                         ];
+
+    //                         $master[$currentPick] = [
+    //                             'picknbr' => (string)$value->t_pick_nbr,
+    //                             'site' => (string)$value->t_site,
+    //                             'status' => (string)$value->t_status,
+
+    //                             'wonbr' => $wonbr,
+    //                         ];
+    //                     } else {
+    //                         $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
+    //                             'wodpart' => (string)$value->t_wod_part,
+    //                             'qtyreq' => (string)$value->t_qty_req,
+    //                             'qtypick' => (string)$value->t_qty_pick,
+    //                             'qtytopick' => (string)$value->t_qty_topick,
+    //                             'qtykemasan' => (string)$value->t_qty_kemasan,
+    //                             'lot' => (string)$value->t_lot,
+    //                             'id' => (string)$value->t_wo_id,
+    //                             'wrh' => (string)$value->t_wrh,
+    //                             'level' => (string)$value->t_level,
+    //                             'bin' => (string)$value->t_bin,
+    //                             'dd' => (string)$value->t_duedate,
+    //                             'od' => (string)$value->t_orddate,
+    //                             'rd' => (string)$value->t_reldate,
+    //                             'ref' => (string)$value->t_ref,
+    //                             'um' => (string)$value->t_um,
+    //                             'qtyoh' => (string)$value->t_qty_oh,
+    //                             'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
+    //                             'edfuc' => (string)$value->t_ed_fuc,
+    //                             'qtyshp' => (string)$value->t_qty_shp,
+    //                             'qtywip' => (string)$value->t_qty_wip,
+    //                             'loc' => (string)$value->t_loc
+
+    //                         ];
+    //                     }
+    //                 } else {
+    //                     $wonbrstring = 'manual';
+    //                     if ($currentWo != $wonbrstring) {
+    //                         $currentWo = $wonbrstring;
+
+    //                         $detail[] = [
+    //                             'wodpart' => (string)$value->t_wod_part,
+    //                             'qtyreq' => (string)$value->t_qty_req,
+    //                             'qtypick' => (string)$value->t_qty_pick,
+    //                             'qtytopick' => (string)$value->t_qty_topick,
+    //                             'qtykemasan' => (string)$value->t_qty_kemasan,
+    //                             'lot' => (string)$value->t_lot,
+    //                             'id' => (string)$value->t_wo_id,
+    //                             'wrh' => (string)$value->t_wrh,
+    //                             'level' => (string)$value->t_level,
+    //                             'bin' => (string)$value->t_bin,
+    //                             'dd' => (string)$value->t_duedate,
+    //                             'od' => (string)$value->t_orddate,
+    //                             'rd' => (string)$value->t_reldate,
+    //                             'ref' => (string)$value->t_ref,
+    //                             'um' => (string)$value->t_um,
+    //                             'qtyoh' => (string)$value->t_qty_oh,
+    //                             'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
+    //                             'edfuc' => (string)$value->t_ed_fuc,
+    //                             'qtyshp' => (string)$value->t_qty_shp,
+    //                             'qtywip' => (string)$value->t_qty_wip,
+    //                             'loc' => (string)$value->t_loc
+
+    //                         ];
+    //                         $wonbr[$currentWo] = [
+    //                             'wonbrnbr' => $currentWo,
+    //                             'wopart' => '',
+    //                             'woid' => '',
+    //                             'detail' => $detail
+    //                         ];
+    //                         $master[$currentPick] = [
+    //                             'picknbr' => (string)$value->t_pick_nbr,
+    //                             'site' => (string)$value->t_site,
+    //                             'status' => (string)$value->t_status,
+
+    //                             'wonbr' => $wonbr
+    //                         ];
+    //                     } else {
+    //                         $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
+    //                             'wodpart' => (string)$value->t_wod_part,
+    //                             'qtyreq' => (string)$value->t_qty_req,
+    //                             'qtypick' => (string)$value->t_qty_pick,
+    //                             'qtytopick' => (string)$value->t_qty_topick,
+    //                             'qtykemasan' => (string)$value->t_qty_kemasan,
+    //                             'lot' => (string)$value->t_lot,
+    //                             'id' => (string)$value->t_wo_id,
+    //                             'wrh' => (string)$value->t_wrh,
+    //                             'level' => (string)$value->t_level,
+    //                             'bin' => (string)$value->t_bin,
+    //                             'dd' => (string)$value->t_duedate,
+    //                             'od' => (string)$value->t_orddate,
+    //                             'rd' => (string)$value->t_reldate,
+    //                             'ref' => (string)$value->t_ref,
+    //                             'um' => (string)$value->t_um,
+    //                             'qtyoh' => (string)$value->t_qty_oh,
+    //                             'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
+    //                             'edfuc' => (string)$value->t_ed_fuc,
+    //                             'qtyshp' => (string)$value->t_qty_shp,
+    //                             'qtywip' => (string)$value->t_qty_wip,
+    //                             'loc' => (string)$value->t_loc
+
+    //                         ];
+    //                     }
+    //                 }
+    //             }
+    //         } else {
+    //             // $checkpicklistshopping = PicklistShopping::where('ps_number', (string)$value->t_pick_nbr)
+    //             //     ->where('ps_status', 'shopping')
+    //             //     ->where('ps_approver', $req->player)
+    //             //     ->first();
+    //             $checkpicklistshopping = PicklistShopping::where('ps_number', (string)$value->t_pick_nbr)
+    //                 ->where('ps_part', (string)$value->t_wod_part)
+    //                 ->where('ps_lot', (string)$value->t_lot)
+    //                 ->where('ps_status', 'shopping')
+    //                 ->where('ps_approver', $req->player)
+    //                 ->first();
+    //             if ($checkpicklistshopping) {
+    //                 if ($currentPick != (string)$value->t_pick_nbr) {
+
+    //                     $currentWo = '';
+    //                     $detail = [];
+    //                     $wonbr = [];
+    //                     $currentPick = (string)$value->t_pick_nbr;
+
+    //                     if ($currentWo != (string)$value->t_wo_nbr) {
+    //                         $currentWo = (string)$value->t_wo_nbr;
+
+    //                         $detail[] = [
+    //                             'wodpart' => (string)$value->t_wod_part,
+    //                             'qtyreq' => (string)$value->t_qty_req,
+    //                             'qtypick' => (string)$value->t_qty_pick,
+    //                             'qtytopick' => (string)$value->t_qty_topick,
+    //                             'qtykemasan' => (string)$value->t_qty_kemasan,
+    //                             'lot' => (string)$value->t_lot,
+    //                             'id' => (string)$value->t_wo_id,
+    //                             'wrh' => (string)$value->t_wrh,
+    //                             'level' => (string)$value->t_level,
+    //                             'bin' => (string)$value->t_bin,
+    //                             'dd' => (string)$value->t_duedate,
+    //                             'od' => (string)$value->t_orddate,
+    //                             'rd' => (string)$value->t_reldate,
+    //                             'ref' => (string)$value->t_ref,
+    //                             'um' => (string)$value->t_um,
+    //                             'qtyoh' => (string)$value->t_qty_oh,
+    //                             'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
+    //                             'edfuc' => (string)$value->t_ed_fuc,
+    //                             'qtyshp' => (string)$value->t_qty_shp,
+    //                             'qtywip' => (string)$value->t_qty_wip,
+    //                             'loc' => (string)$value->t_loc
+
+    //                         ];
+    //                         $wonbr[$currentWo] = [
+    //                             'wonbrnbr' => (string)$value->t_wo_nbr,
+    //                             'wopart' => (string)$value->t_wo_part,
+    //                             'woid' => (string)$value->t_wo_id,
+    //                             'detail' => $detail
+    //                         ];
+    //                         $master[$currentPick] = [
+    //                             'picknbr' => (string)$value->t_pick_nbr,
+    //                             'site' => (string)$value->t_site,
+    //                             'status' => (string)$value->t_status,
+
+    //                             'wonbr' => $wonbr
+    //                         ];
+    //                     } else {
+    //                         $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
+    //                             'wodpart' => (string)$value->t_wod_part,
+    //                             'qtyreq' => (string)$value->t_qty_req,
+    //                             'qtypick' => (string)$value->t_qty_pick,
+    //                             'qtytopick' => (string)$value->t_qty_topick,
+    //                             'qtykemasan' => (string)$value->t_qty_kemasan,
+    //                             'lot' => (string)$value->t_lot,
+    //                             'id' => (string)$value->t_wo_id,
+    //                             'wrh' => (string)$value->t_wrh,
+    //                             'level' => (string)$value->t_level,
+    //                             'bin' => (string)$value->t_bin,
+    //                             'dd' => (string)$value->t_duedate,
+    //                             'od' => (string)$value->t_orddate,
+    //                             'rd' => (string)$value->t_reldate,
+    //                             'ref' => (string)$value->t_ref,
+    //                             'um' => (string)$value->t_um,
+    //                             'qtyoh' => (string)$value->t_qty_oh,
+    //                             'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
+    //                             'edfuc' => (string)$value->t_ed_fuc,
+    //                             'qtyshp' => (string)$value->t_qty_shp,
+    //                             'qtywip' => (string)$value->t_qty_wip,
+    //                             'loc' => (string)$value->t_loc
+
+    //                         ];
+    //                     }
+    //                 } else {
+    //                     if ($currentWo != (string)$value->t_wo_nbr) {
+
+    //                         $currentWo = (string)$value->t_wo_nbr;
+
+    //                         $wonbr = [];
+    //                         $detail = [];
+
+    //                         $detail[] = [
+    //                             'wodpart' => (string)$value->t_wod_part,
+    //                             'qtyreq' => (string)$value->t_qty_req,
+    //                             'qtypick' => (string)$value->t_qty_pick,
+    //                             'qtytopick' => (string)$value->t_qty_topick,
+    //                             'qtykemasan' => (string)$value->t_qty_kemasan,
+    //                             'lot' => (string)$value->t_lot,
+    //                             'id' => (string)$value->t_wo_id,
+    //                             'wrh' => (string)$value->t_wrh,
+    //                             'level' => (string)$value->t_level,
+    //                             'bin' => (string)$value->t_bin,
+    //                             'dd' => (string)$value->t_duedate,
+    //                             'od' => (string)$value->t_orddate,
+    //                             'rd' => (string)$value->t_reldate,
+    //                             'ref' => (string)$value->t_ref,
+    //                             'um' => (string)$value->t_um,
+    //                             'qtyoh' => (string)$value->t_qty_oh,
+    //                             'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
+    //                             'edfuc' => (string)$value->t_ed_fuc,
+    //                             'qtyshp' => (string)$value->t_qty_shp,
+    //                             'qtywip' => (string)$value->t_qty_wip,
+    //                             'loc' => (string)$value->t_loc
+
+    //                         ];
+
+    //                         // $wonbr[$currentWo] = [
+    //                         //     'wonbrnbr' => (string)$value->t_wo_nbr,
+    //                         //     'wopart' => (string)$value->t_wo_part,
+    //                         //     'detail' => $detail
+    //                         // ];
+
+    //                         $master[$currentPick]['wonbr'][$currentWo] = [
+    //                             'wonbrnbr' => (string)$value->t_wo_nbr,
+    //                             'wopart' => (string)$value->t_wo_part,
+    //                             'detail' => $detail
+    //                         ];
+    //                     } else {
+
+    //                         $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
+    //                             'wodpart' => (string)$value->t_wod_part,
+    //                             'qtyreq' => (string)$value->t_qty_req,
+    //                             'qtypick' => (string)$value->t_qty_pick,
+    //                             'qtytopick' => (string)$value->t_qty_topick,
+    //                             'qtykemasan' => (string)$value->t_qty_kemasan,
+    //                             'lot' => (string)$value->t_lot,
+    //                             'id' => (string)$value->t_wo_id,
+    //                             'wrh' => (string)$value->t_wrh,
+    //                             'level' => (string)$value->t_level,
+    //                             'bin' => (string)$value->t_bin,
+    //                             'dd' => (string)$value->t_duedate,
+    //                             'od' => (string)$value->t_orddate,
+    //                             'rd' => (string)$value->t_reldate,
+    //                             'ref' => (string)$value->t_ref,
+    //                             'um' => (string)$value->t_um,
+    //                             'qtyoh' => (string)$value->t_qty_oh,
+    //                             'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
+    //                             'edfuc' => (string)$value->t_ed_fuc,
+    //                             'qtyshp' => (string)$value->t_qty_shp,
+    //                             'qtywip' => (string)$value->t_qty_wip,
+    //                             'loc' => (string)$value->t_loc
+    //                         ];
+    //                         // dd($master[$currentPick]['wonbr'][$currentWo]['detail'],$hasil[1],$currentWo);
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+
+
+    //     return response()->json(
+    //         [
+    //             'DataWSA' => $master
+    //         ],
+    //         200
+    //     );
+
+
+
+    //     return GeneralResources::collection($data);
+    // }
+
     public function getPicklistDetAppr(Request $req)
-
     {
+
         $statusreq = $req->status;
-        $user = $req->player;
-        $status = str_replace('_', ' ', $statusreq);
-        $wonbr = $req->wonbr;
-        $site = $req->site;
-        $lot = $req->lot;
+        $wonbr = $req->wonbr ?? '';
+        $site = $req->site ?? '';
+        $lot = $req->lot ?? '';
         // $user = $req->player;
-
+        $status = str_replace('_', ' ', $statusreq);
         // $hasil = (new WSAServices())->wsaGetPickDetail($status);
-        $hasil = (new WSAServices())->wsaGetPickDetail($status, $wonbr, $site, $lot);
-        // $hasil = (new WSAServices())->wsaGetPickDetail($status);
-
+        // $hasil = (new WSAServices())->wsaGetPickDetail($status, $wonbr, $site, $lot);
         $currentPick = '';
         $currentWo = '';
         $detail = [];
         $master = [];
         $wonbr = [];
         $wonbrstring = '';
-        if ($hasil[0] == 'false') {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "Data Not Found."
-            ], 422);
-        } else {
-            $listData = $hasil[1];
-        }
+        // if ($hasil[0] == 'false') {
+        //     return response()->json([
+        //         'Status' => 'Error',
+        //         'Message' => "Data Not Found."
+        //     ], 422);
+        // } else {
+        //     $listData = $hasil[1];
+        // }
+        $checkpicklistshopping = PicklistShopping::where('ps_status', 'shopping')
+            ->where('ps_approver', $req->player)
+            ->when($wonbr != '', fn($query) => $query->where('ps_number', $wonbr))
+            ->get();
+        // dd($checkpicklistshopping);
+        if ($checkpicklistshopping) {
+            foreach ($checkpicklistshopping as $check) {
+                $statusps = $check->ps_status;
+                $wonbrps = $check->ps_number;
+                $siteps = $check->ps_site ?? '2100';
+                $lotps = $check->ps_wo_lot;
+                // dd($status,$wonbrps,$siteps,$lotps);
+                $item = (string)$check->ps_part ?? '';
+                $site = '2100';
+                $lot = (string)$check->ps_lot ?? '';
+                // dd($lot);
 
-        foreach ($listData as $key => $value) {
-
-
-            $wonbrstring = (string)$value->t_wo_nbr;
-
-            if (strlen($wonbrstring) == 0) {
-                $wonbrstring = 'manual';
-                $checkpicklistshopping = PicklistShopping::where('ps_number', (string)$value->t_pick_nbr)
-                    ->where('ps_part', (string)$value->t_wod_part)
-                    ->where('ps_lot', (string)$value->t_lot)
-                    ->where('ps_status', 'shopping')
-                    ->where('ps_approver', $req->player)
+                $xxinvdet = xxinvDet::where('xxinv_part', $item)
+                    ->where('xxinv_site', $site)
+                    ->where('xxinv_lot', $lot)
                     ->first();
-                if ($checkpicklistshopping) {
-                    if ($currentPick != (string)$value->t_pick_nbr) {
-                        $wonbrstring = 'manual';
+                // dd($xxinvdet);
+
+                // dd($wonbrps,$status,$siteps,$lotps);
+                $status = '';
+                $hasil = (new WSAServices())->wsaGetPickDetail($status, $wonbrps, $siteps, $lotps);
+                if ($hasil[0] == 'false') {
+                    return response()->json([
+                        'Status' => 'Error',
+                        'Message' => "Data Not Found."
+                    ], 422);
+                } else {
+                    $listData = $hasil[1];
+                    // dd($hasil);
+
+
+                    foreach ($listData as $key => $value) {
+
                         $currentWo = '';
 
-                        $detail = [];
-                        $wonbr = [];
-                        $currentPick = (string)$value->t_pick_nbr;
+                        if ($xxinvdet) {
+                            if (
+                                $xxinvdet->xxinv_loc == $value->t_loc
+                                && $xxinvdet->xxinv_lot == $value->t_lot
+                                && $xxinvdet->xxinv_part == $value->t_comp
+                            ) {
+                                // dd((string)$value->t_nbr);
 
-                        if ($currentWo != $wonbrstring) {
-                            $currentWo = $wonbrstring;
+                                if ($currentWo != (string)$value->t_nbr) {
+                                    $currentWo = (string)$value->t_nbr;
+                                    $locationlist[] =  [
+                                        // 'id' => (string)$value->t_id ?? '',
+                                        'wrh' => (string)$xxinvdet->xxinv_wrh ?? '',
+                                        'level' => (string)$xxinvdet->xxinv_level ?? '',
+                                        'bin' => (string)$xxinvdet->xxinv_bin ?? '',
+                                        'qtyloc' => (string)$xxinvdet->xxinv_qty_shp ?? '0',
+                                        'status' => (string)$check->ps_status ?? '',
+                                    ];
 
+                                    // dd('b');
+                                    $detail[] = [
+                                        'wodpart' => (string)$value->t_comp ?? '',
+                                        'qtyreq' => (string)$value->t_qty_req ?? '',
+                                        'qtypick' => (string)$xxinvdet->xxinv_qty_shp ?? '0',
+                                        // (string)$value->t_qty ?? '',
+                                        'qtytopick' => (string)$value->t_qty ?? '',
+                                        'qtykemasan' => (string)$value->t_qty_kem ?? '',
+                                        'lot' => (string)$value->t_lot ?? '',
+                                        'id' => (string)$value->t_id ?? '',
+                                        'wrh' => (string)$xxinvdet->xxinv_wrh ?? '',
+                                        'level' => (string)$xxinvdet->xxinv_level ?? '',
+                                        'bin' => (string)$xxinvdet->xxinv_bin ?? '',
+                                        'dd' => (string)$value->t_duedate ?? '',
+                                        'od' => (string)$value->t_orddate ?? '',
+                                        'rd' => (string)$value->t_reldate ?? '',
+                                        'ref' => (string)$value->t_ref ?? '',
+                                        'um' => (string)$value->t_um ?? '',
+                                        'qtyoh' => (string)$value->t_qty_oh ?? '',
+                                        'qtytopickkemasan' => (string)$value->t_qty_kem ?? '',
+                                        'edfuc' => (string)$value->t_ed_fuc ?? '',
+                                        'qtyshp' => (string)$value->t_qty_shp ?? '',
+                                        'qtywip' => (string)$value->t_qty_wip ?? '',
+                                        'loc' => (string)$value->t_loc ?? '',
+                                        'locationlist' => $locationlist
+                                    ];
+                                    // dd('a');
+                                    $wonbr[$currentWo] = [
+                                        'wonbrnbr' => (string)$value->t_nbr,
+                                        'wopart' => (string)$value->t_part,
+                                        'site' => (string)$value->t_site ?? '',
+                                        'woid' => (string)$value->t_id,
+                                        'detail' => $detail
+                                    ];
+                                } else {
+                                    $locationlist[] =  [
+                                        // 'id' => (string)$value->t_id ?? '',
+                                        'wrh' => (string)$xxinvdet->xxinv_wrh ?? '',
+                                        'level' => (string)$xxinvdet->xxinv_level ?? '',
+                                        'bin' => (string)$xxinvdet->xxinv_bin ?? '',
+                                        'qtyloc' => (string)$xxinvdet->xxinv_qty_shp ?? '0',
+                                    ];
 
-                            $detail[] = [
-                                'wodpart' => (string)$value->t_wod_part,
-                                'qtyreq' => (string)$value->t_qty_req,
-                                'qtypick' => (string)$value->t_qty_pick,
-                                'qtytopick' => (string)$value->t_qty_topick,
-                                'qtykemasan' => (string)$value->t_qty_kemasan,
-                                'lot' => (string)$value->t_lot,
-                                'id' => (string)$value->t_wo_id,
-                                'wrh' => (string)$value->t_wrh,
-                                'level' => (string)$value->t_level,
-                                'bin' => (string)$value->t_bin,
-                                'dd' => (string)$value->t_duedate,
-                                'od' => (string)$value->t_orddate,
-                                'rd' => (string)$value->t_reldate,
-                                'ref' => (string)$value->t_ref,
-                                'um' => (string)$value->t_um,
-                                'qtyoh' => (string)$value->t_qty_oh,
-                                'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                                'edfuc' => (string)$value->t_ed_fuc,
-                                'qtyshp' => (string)$value->t_qty_shp,
-                                'qtywip' => (string)$value->t_qty_wip,
+                                    $wonbr[$currentWo]['detail'][] = [
+                                        'wodpart' => (string)$value->t_comp,
+                                        'qtyreq' => (string)$value->t_qty_req,
+                                        'qtypick' => (string)$xxinvdet->xxinv_qty_shp ?? '0',
+                                        // (string)$value->t_qty ?? '',
 
-
-                            ];
-
-                            $wonbr[$currentWo] = [
-                                'wonbrnbr' => $wonbrstring,
-                                'wopart' => '',
-                                'detail' => $detail
-                            ];
-
-                            $master[$currentPick] = [
-                                'picknbr' => (string)$value->t_pick_nbr,
-                                'site' => (string)$value->t_site,
-                                'status' => (string)$value->t_status,
-
-                                'wonbr' => $wonbr,
-                            ];
-                        } else {
-                            $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-                                'wodpart' => (string)$value->t_wod_part,
-                                'qtyreq' => (string)$value->t_qty_req,
-                                'qtypick' => (string)$value->t_qty_pick,
-                                'qtytopick' => (string)$value->t_qty_topick,
-                                'qtykemasan' => (string)$value->t_qty_kemasan,
-                                'lot' => (string)$value->t_lot,
-                                'id' => (string)$value->t_wo_id,
-                                'wrh' => (string)$value->t_wrh,
-                                'level' => (string)$value->t_level,
-                                'bin' => (string)$value->t_bin,
-                                'dd' => (string)$value->t_duedate,
-                                'od' => (string)$value->t_orddate,
-                                'rd' => (string)$value->t_reldate,
-                                'ref' => (string)$value->t_ref,
-                                'um' => (string)$value->t_um,
-                                'qtyoh' => (string)$value->t_qty_oh,
-                                'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                                'edfuc' => (string)$value->t_ed_fuc,
-                                'qtyshp' => (string)$value->t_qty_shp,
-                                'qtywip' => (string)$value->t_qty_wip,
-                                'loc' => (string)$value->t_loc
-
-                            ];
-                        }
-                    } else {
-                        $wonbrstring = 'manual';
-                        if ($currentWo != $wonbrstring) {
-                            $currentWo = $wonbrstring;
-
-                            $detail[] = [
-                                'wodpart' => (string)$value->t_wod_part,
-                                'qtyreq' => (string)$value->t_qty_req,
-                                'qtypick' => (string)$value->t_qty_pick,
-                                'qtytopick' => (string)$value->t_qty_topick,
-                                'qtykemasan' => (string)$value->t_qty_kemasan,
-                                'lot' => (string)$value->t_lot,
-                                'id' => (string)$value->t_wo_id,
-                                'wrh' => (string)$value->t_wrh,
-                                'level' => (string)$value->t_level,
-                                'bin' => (string)$value->t_bin,
-                                'dd' => (string)$value->t_duedate,
-                                'od' => (string)$value->t_orddate,
-                                'rd' => (string)$value->t_reldate,
-                                'ref' => (string)$value->t_ref,
-                                'um' => (string)$value->t_um,
-                                'qtyoh' => (string)$value->t_qty_oh,
-                                'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                                'edfuc' => (string)$value->t_ed_fuc,
-                                'qtyshp' => (string)$value->t_qty_shp,
-                                'qtywip' => (string)$value->t_qty_wip,
-                                'loc' => (string)$value->t_loc
-
-                            ];
-                            $wonbr[$currentWo] = [
-                                'wonbrnbr' => $currentWo,
-                                'wopart' => '',
-                                'woid' => '',
-                                'detail' => $detail
-                            ];
-                            $master[$currentPick] = [
-                                'picknbr' => (string)$value->t_pick_nbr,
-                                'site' => (string)$value->t_site,
-                                'status' => (string)$value->t_status,
-
-                                'wonbr' => $wonbr
-                            ];
-                        } else {
-                            $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-                                'wodpart' => (string)$value->t_wod_part,
-                                'qtyreq' => (string)$value->t_qty_req,
-                                'qtypick' => (string)$value->t_qty_pick,
-                                'qtytopick' => (string)$value->t_qty_topick,
-                                'qtykemasan' => (string)$value->t_qty_kemasan,
-                                'lot' => (string)$value->t_lot,
-                                'id' => (string)$value->t_wo_id,
-                                'wrh' => (string)$value->t_wrh,
-                                'level' => (string)$value->t_level,
-                                'bin' => (string)$value->t_bin,
-                                'dd' => (string)$value->t_duedate,
-                                'od' => (string)$value->t_orddate,
-                                'rd' => (string)$value->t_reldate,
-                                'ref' => (string)$value->t_ref,
-                                'um' => (string)$value->t_um,
-                                'qtyoh' => (string)$value->t_qty_oh,
-                                'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                                'edfuc' => (string)$value->t_ed_fuc,
-                                'qtyshp' => (string)$value->t_qty_shp,
-                                'qtywip' => (string)$value->t_qty_wip,
-                                'loc' => (string)$value->t_loc
-
-                            ];
-                        }
-                    }
-                }
-            } else {
-                // $checkpicklistshopping = PicklistShopping::where('ps_number', (string)$value->t_pick_nbr)
-                //     ->where('ps_status', 'shopping')
-                //     ->where('ps_approver', $req->player)
-                //     ->first();
-                $checkpicklistshopping = PicklistShopping::where('ps_number', (string)$value->t_pick_nbr)
-                    ->where('ps_part', (string)$value->t_wod_part)
-                    ->where('ps_lot', (string)$value->t_lot)
-                    ->where('ps_status', 'shopping')
-                    ->where('ps_approver', $req->player)
-                    ->first();
-                if ($checkpicklistshopping) {
-                    if ($currentPick != (string)$value->t_pick_nbr) {
-
-                        $currentWo = '';
-                        $detail = [];
-                        $wonbr = [];
-                        $currentPick = (string)$value->t_pick_nbr;
-
-                        if ($currentWo != (string)$value->t_wo_nbr) {
-                            $currentWo = (string)$value->t_wo_nbr;
-
-                            $detail[] = [
-                                'wodpart' => (string)$value->t_wod_part,
-                                'qtyreq' => (string)$value->t_qty_req,
-                                'qtypick' => (string)$value->t_qty_pick,
-                                'qtytopick' => (string)$value->t_qty_topick,
-                                'qtykemasan' => (string)$value->t_qty_kemasan,
-                                'lot' => (string)$value->t_lot,
-                                'id' => (string)$value->t_wo_id,
-                                'wrh' => (string)$value->t_wrh,
-                                'level' => (string)$value->t_level,
-                                'bin' => (string)$value->t_bin,
-                                'dd' => (string)$value->t_duedate,
-                                'od' => (string)$value->t_orddate,
-                                'rd' => (string)$value->t_reldate,
-                                'ref' => (string)$value->t_ref,
-                                'um' => (string)$value->t_um,
-                                'qtyoh' => (string)$value->t_qty_oh,
-                                'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                                'edfuc' => (string)$value->t_ed_fuc,
-                                'qtyshp' => (string)$value->t_qty_shp,
-                                'qtywip' => (string)$value->t_qty_wip,
-                                'loc' => (string)$value->t_loc
-
-                            ];
-                            $wonbr[$currentWo] = [
-                                'wonbrnbr' => (string)$value->t_wo_nbr,
-                                'wopart' => (string)$value->t_wo_part,
-                                'woid' => (string)$value->t_wo_id,
-                                'detail' => $detail
-                            ];
-                            $master[$currentPick] = [
-                                'picknbr' => (string)$value->t_pick_nbr,
-                                'site' => (string)$value->t_site,
-                                'status' => (string)$value->t_status,
-
-                                'wonbr' => $wonbr
-                            ];
-                        } else {
-                            $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-                                'wodpart' => (string)$value->t_wod_part,
-                                'qtyreq' => (string)$value->t_qty_req,
-                                'qtypick' => (string)$value->t_qty_pick,
-                                'qtytopick' => (string)$value->t_qty_topick,
-                                'qtykemasan' => (string)$value->t_qty_kemasan,
-                                'lot' => (string)$value->t_lot,
-                                'id' => (string)$value->t_wo_id,
-                                'wrh' => (string)$value->t_wrh,
-                                'level' => (string)$value->t_level,
-                                'bin' => (string)$value->t_bin,
-                                'dd' => (string)$value->t_duedate,
-                                'od' => (string)$value->t_orddate,
-                                'rd' => (string)$value->t_reldate,
-                                'ref' => (string)$value->t_ref,
-                                'um' => (string)$value->t_um,
-                                'qtyoh' => (string)$value->t_qty_oh,
-                                'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                                'edfuc' => (string)$value->t_ed_fuc,
-                                'qtyshp' => (string)$value->t_qty_shp,
-                                'qtywip' => (string)$value->t_qty_wip,
-                                'loc' => (string)$value->t_loc
-
-                            ];
-                        }
-                    } else {
-                        if ($currentWo != (string)$value->t_wo_nbr) {
-
-                            $currentWo = (string)$value->t_wo_nbr;
-
-                            $wonbr = [];
-                            $detail = [];
-
-                            $detail[] = [
-                                'wodpart' => (string)$value->t_wod_part,
-                                'qtyreq' => (string)$value->t_qty_req,
-                                'qtypick' => (string)$value->t_qty_pick,
-                                'qtytopick' => (string)$value->t_qty_topick,
-                                'qtykemasan' => (string)$value->t_qty_kemasan,
-                                'lot' => (string)$value->t_lot,
-                                'id' => (string)$value->t_wo_id,
-                                'wrh' => (string)$value->t_wrh,
-                                'level' => (string)$value->t_level,
-                                'bin' => (string)$value->t_bin,
-                                'dd' => (string)$value->t_duedate,
-                                'od' => (string)$value->t_orddate,
-                                'rd' => (string)$value->t_reldate,
-                                'ref' => (string)$value->t_ref,
-                                'um' => (string)$value->t_um,
-                                'qtyoh' => (string)$value->t_qty_oh,
-                                'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                                'edfuc' => (string)$value->t_ed_fuc,
-                                'qtyshp' => (string)$value->t_qty_shp,
-                                'qtywip' => (string)$value->t_qty_wip,
-                                'loc' => (string)$value->t_loc
-
-                            ];
-
-                            // $wonbr[$currentWo] = [
-                            //     'wonbrnbr' => (string)$value->t_wo_nbr,
-                            //     'wopart' => (string)$value->t_wo_part,
-                            //     'detail' => $detail
-                            // ];
-
-                            $master[$currentPick]['wonbr'][$currentWo] = [
-                                'wonbrnbr' => (string)$value->t_wo_nbr,
-                                'wopart' => (string)$value->t_wo_part,
-                                'detail' => $detail
-                            ];
-                        } else {
-
-                            $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-                                'wodpart' => (string)$value->t_wod_part,
-                                'qtyreq' => (string)$value->t_qty_req,
-                                'qtypick' => (string)$value->t_qty_pick,
-                                'qtytopick' => (string)$value->t_qty_topick,
-                                'qtykemasan' => (string)$value->t_qty_kemasan,
-                                'lot' => (string)$value->t_lot,
-                                'id' => (string)$value->t_wo_id,
-                                'wrh' => (string)$value->t_wrh,
-                                'level' => (string)$value->t_level,
-                                'bin' => (string)$value->t_bin,
-                                'dd' => (string)$value->t_duedate,
-                                'od' => (string)$value->t_orddate,
-                                'rd' => (string)$value->t_reldate,
-                                'ref' => (string)$value->t_ref,
-                                'um' => (string)$value->t_um,
-                                'qtyoh' => (string)$value->t_qty_oh,
-                                'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                                'edfuc' => (string)$value->t_ed_fuc,
-                                'qtyshp' => (string)$value->t_qty_shp,
-                                'qtywip' => (string)$value->t_qty_wip,
-                                'loc' => (string)$value->t_loc
-                            ];
-                            // dd($master[$currentPick]['wonbr'][$currentWo]['detail'],$hasil[1],$currentWo);
+                                        'qtytopick' => (string)$value->t_qty,
+                                        'qtykemasan' => (string)$value->t_qty_kem,
+                                        'lot' => (string)$value->t_lot,
+                                        'id' => (string)$value->t_id,
+                                        'wrh' => (string)$xxinvdet->xxinv_wrh,
+                                        'level' => (string)$xxinvdet->xxinv_level,
+                                        'bin' => (string)$xxinvdet->xxinv_bin,
+                                        'dd' => (string)$value->t_duedate,
+                                        'od' => (string)$value->t_orddate,
+                                        'rd' => (string)$value->t_reldate,
+                                        'ref' => (string)$value->t_ref,
+                                        'um' => (string)$value->t_um,
+                                        'qtyoh' => (string)$value->t_qty_oh,
+                                        'qtytopickkemasan' => (string)$value->t_qty_kem,
+                                        'edfuc' => (string)$value->t_ed_fuc,
+                                        'qtyshp' => (string)$value->t_qty_shp,
+                                        'qtywip' => (string)$value->t_qty_wip,
+                                        'loc' => (string)$value->t_loc,
+                                        'locationlist' => $locationlist
+                                    ];
+                                }
+                            }
                         }
                     }
                 }
             }
+
+            if (count($wonbr) > 0) {
+
+
+                return response()->json(
+                    [
+                        'DataWSA' => $wonbr
+                    ],
+                    200
+                );
+            } else {
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => "Data Not Found."
+                ], 422);
+            }
+        } else {
+
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Data Not Found."
+            ], 422);
         }
-
-
-        return response()->json(
-            [
-                'DataWSA' => $master
-            ],
-            200
-        );
 
 
 

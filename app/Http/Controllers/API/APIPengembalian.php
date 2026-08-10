@@ -456,7 +456,7 @@ class APIPengembalian extends Controller
         $inpdomain = $domain->domain ?? '';
         $records = xxinvDetApproval::where('xxinv_domain', $inpdomain)
             ->where('xxinv_status', 'Waiting')
-            ->where('xxinv_approver', auth()->user()->username ?? '')
+            // ->where('xxinv_approver', auth()->user()->username ?? '')
             ->select([
                 'xxinv_status as status',
                 'xxinv_domain  as inv_domain',

@@ -182,7 +182,8 @@ Route::get('getPackingReplenishment', [APIPackingReplenishmentController::class,
     Route::post('wsaDataItem', [APIWorkOrderController::class, 'wsaDataItem']);
 
     //picklist browse
-    Route::get('getDataPicklist', [APIPicklistShopping::class, 'getPicklistMstr']);
+    // Route::get('getDataPicklist', [APIPicklistShopping::class, 'getPicklistMstr']);
+      Route::get('getPicklistBrowse', [APIPicklistShopping::class, 'getPicklistBrowse']);
 
     // Picklist Shopping
     Route::get('getPicklistDet', [APIPicklistShopping::class, 'getPicklistDet']);

@@ -1873,7 +1873,7 @@ class WSAServices
             // '</meiji_get_xxpick_det>'.
             '</Body>' .
             '</Envelope>';
-
+        // dd($qdocRequest);
         $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.

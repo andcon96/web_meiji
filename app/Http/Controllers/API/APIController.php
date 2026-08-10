@@ -457,7 +457,7 @@ class APIController extends Controller
 
     public function checkPalletLoc(Request $req)
     {
-        /* dd($request->lotpallet); */
+       
 
         try {
             /* throw new Exception('test internal server error'); */
