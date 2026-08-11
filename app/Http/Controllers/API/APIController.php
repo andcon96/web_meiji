@@ -166,7 +166,7 @@ class APIController extends Controller
 
     public function getInvWms(Request $req)
     {
-        /* dd($req->query('inppart')); */
+        // dd($req->query('inppart')); 
 
         try {
             /* throw new Exception('test exception'); */
@@ -174,11 +174,23 @@ class APIController extends Controller
           /*  $items = (new WSAServices)->wsaInvWms($req->query('inppart') ?? '', $req->query('inplot') ?? '');
 */
             
-            $items = DB::table('xxinv_det')
-                       ->join('item_master','item_master.im_item_part','=','xxinv_det.xxinv_part')
-                       ->where('xxinv_part', $req->query('inppart') ?? '')
-                       ->where('xxinv_lot', $req->query('inplot') ?? '')
-					   ->get();     
+            $query = DB::table('xxinv_det')
+    ->join(
+        'item_master',
+        'item_master.im_item_part',
+        '=',
+        'xxinv_det.xxinv_part'
+    );
+
+if ($req->filled('inppart')) {
+    $query->where('xxinv_det.xxinv_part', $req->query('inppart'));
+}
+
+if ($req->filled('inplot')) {
+    $query->where('xxinv_det.xxinv_lot', $req->query('inplot'));
+}
+
+$items = $query->get();
 
                       //  dd($items); 
             // if ($items == false) { //jika error koneksi wsa
