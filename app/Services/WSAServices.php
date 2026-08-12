@@ -2886,6 +2886,7 @@ class WSAServices
     public function wsaInvWms(string $inppart, string $inplot)
     {
         $wsa = qxwsa::first();
+       
 
         $qxUrl = $wsa->wsa_url;
         $qxReceiver = '';
@@ -2899,15 +2900,15 @@ class WSAServices
         $domain = Domain::first();
         $domainCode = $domain->domain ?? '';
 
-        $qdocRequest = "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
-                            <Body>
-                                <meiji_inv_wms xmlns='$wsa->wsa_path'>
-                                    <inpdomain>$domainCode</inpdomain>
-                                    <inppart>$inppart</inppart>
-                                    <inplot>$inplot</inplot>
-                                </meiji_inv_wms>
-                            </Body>
-                        </Envelope>";
+        $qdocRequest = '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
+            '<Body>' .
+            '<meiji_inv_wms xmlns="' . $wsa->wsa_path . '">' .
+            '<inpdomain>' . $domainCode . '</inpdomain>' .
+            '<inppart>' . $inppart . '</inppart>' .
+            '<inplot>' . $inplot . '</inplot>' .
+            ' </meiji_inv_wms>' .
+            '</Body>' .
+            '</Envelope>';
 
         $curlOptions = [
             CURLOPT_URL => $qxUrl,
@@ -2953,6 +2954,8 @@ class WSAServices
         if (is_bool($qdocResponse)) {
             return false;
         }
+
+       
 
         $xmlResp = simplexml_load_string($qdocResponse);
 
