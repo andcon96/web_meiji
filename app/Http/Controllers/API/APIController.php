@@ -171,28 +171,115 @@ class APIController extends Controller
         try {
             /* throw new Exception('test exception'); */
 
-          /*  $items = (new WSAServices)->wsaInvWms($req->query('inppart') ?? '', $req->query('inplot') ?? '');
-*/
-            
+            //            $dat = (new WSAServices)->wsaInvWms($req->query('inppart') ?? '', $req->query('inplot') ?? '');
+            //         dd($dat);
+
+            //             $query = DB::table('xxinv_det')
+            //     ->join(
+            //         'item_master',
+            //         'item_master.im_item_part',
+            //         '=',
+            //         'xxinv_det.xxinv_part'
+            //     );
+
+            // if ($req->filled('inppart')) {
+            //     $query->where('xxinv_det.xxinv_part', $req->query('inppart'));
+            // }
+
+            // if ($req->filled('inplot')) {
+            //     $query->where('xxinv_det.xxinv_lot', $req->query('inplot'));
+            // }
+
+            // $items = $query->get();
+
+            //  dd($items); 
+
+            $dat = (new WSAServices)->wsaInvWms(
+                $req->query('inppart') ?? '',
+                $req->query('inplot') ?? ''
+            );
+
+            // =========================
+            // Query database
+            // =========================
             $query = DB::table('xxinv_det')
-    ->join(
-        'item_master',
-        'item_master.im_item_part',
-        '=',
-        'xxinv_det.xxinv_part'
-    );
+                ->join(
+                    'item_master',
+                    'item_master.im_item_part',
+                    '=',
+                    'xxinv_det.xxinv_part'
+                );
 
-if ($req->filled('inppart')) {
-    $query->where('xxinv_det.xxinv_part', $req->query('inppart'));
-}
+            if ($req->filled('inppart')) {
+                $query->where(
+                    'xxinv_det.xxinv_part',
+                    $req->query('inppart')
+                );
+            }
 
-if ($req->filled('inplot')) {
-    $query->where('xxinv_det.xxinv_lot', $req->query('inplot'));
-}
+            if ($req->filled('inplot')) {
+                $query->where(
+                    'xxinv_det.xxinv_lot',
+                    $req->query('inplot')
+                );
+            }
 
-$items = $query->get();
+            $items = $query->get();
 
-                      //  dd($items); 
+            // =========================
+            // Data dari WSA
+            // =========================
+            // $dat[0] = "true"
+            // $dat[1] = array data inventory WMS
+
+            $wmsItems = collect($dat[1] ?? []);
+
+            // =========================
+            // JOIN DB dengan WSA
+            // =========================
+            $result = $items->map(function ($item) use ($wmsItems) {
+
+                $wms = $wmsItems->first(function ($wmsItem) use ($item) {
+
+                    return $wmsItem['t_item'] == $item->xxinv_part
+                        && $wmsItem['t_lot'] == $item->xxinv_lot;
+                });
+
+                return [
+                    // Data dari xxinv_det
+                    'xxinv_part' => $item->xxinv_part,
+                    'xxinv_loc'  => $item->xxinv_loc,
+                    'xxinv_lot'  => $item->xxinv_lot,
+                    'xxinv_bin'  => $item->xxinv_bin,
+                    'xxinv_level'  => $item->xxinv_level,
+                    'xxinv_site'  => $item->xxinv_site,
+                    'xxinv_wrh'  => $item->xxinv_wrh,
+                    'xxinv_qtyoh'  => $item->xxinv_qtyoh,
+                    'xxinv_qty_pick'  => $item->xxinv_qty_pick,
+                    'xxinv_ref'  => $item->xxinv_ref,
+                    'xxinv_exp_date'  => $item->xxinv_exp_date,                    
+                    'xxinv_qty_wrh'  => $item->xxinv_qty_wrh,
+                    'xxinv_qty_smp'  => $item->xxinv_qty_wrh,
+                    'xxinv_qty_shp'  => $item->xxinv_qty_wrh,
+                    'xxinv_qty_wip'  => $item->xxinv_qty_wrh,
+
+                    // Data dari WSA
+                    't_domain'   => $wms['t_domain'] ?? null,
+                    't_item'     => $wms['t_item'] ?? null,
+                    't_site'     => $wms['t_site'] ?? null,
+                    't_loc'      => $wms['t_loc'] ?? null,
+                    't_lot'      => $wms['t_lot'] ?? null,
+                    't_exp_fuc'  => $wms['t_exp_fuc'] ?? null,
+                    't_status'   => $wms['t_status'] ?? null,
+                ];
+            });
+
+            
+
+            return response()->json([
+                'status' => true,
+                'Items'   => $result
+            ]);
             // if ($items == false) { //jika error koneksi wsa
             //     return response()->json([
             //         'Status' => 'Error',
@@ -207,13 +294,13 @@ $items = $query->get();
             //     ], 404); //not found
             // }
 
-            return response()->json([
-                // 'Status' => 'Not found',
-                // 'Message' => "Get inventory WMS successfully",
-                'Items' => $items
-            ], 200);
+            // return response()->json([
+            //     // 'Status' => 'Not found',
+            //     // 'Message' => "Get inventory WMS successfully",
+            //     'Items' => $items
+            // ], 200);
         } catch (\Exception $e) {
-            /* dd($e); */
+            dd($e);
             Log::error($e);
             return response()->json([
                 'Status' => 'Error',
@@ -469,7 +556,7 @@ $items = $query->get();
 
     public function checkPalletLoc(Request $req)
     {
-       
+
 
         try {
             /* throw new Exception('test internal server error'); */
