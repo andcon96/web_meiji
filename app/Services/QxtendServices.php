@@ -2203,7 +2203,7 @@ class QxtendServices
     ) {
         $receiver = 'QADERP';
 
-        // Data dari local web
+
         $part = $scheduleDet->ossd_part;
         $qty = $locationDetail->ossl_qty_pick;
         $site = $locationDetail->ossl_site;

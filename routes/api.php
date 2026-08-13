@@ -146,7 +146,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
 
     Route::get('getOtherShipmentConfirmation', [APIOtherTransactionConfirmController::class, 'index']);
     Route::post('confirmOtherTransaction', [APIOtherTransactionConfirmController::class, 'store']);
-        Route::post('rejectOtherTransaction', [APIOtherTransactionConfirmController::class, 'rejectOtherTransaction']);
+    Route::post('rejectOtherTransaction', [APIOtherTransactionConfirmController::class, 'rejectOtherTransaction']);
     // Other Shipment Schedule
     Route::get('getOtherShipmentSchedule', [APIOtherShipmentScheduleController::class, 'index']);
     Route::get('/getItemOSS', [APIOtherShipmentScheduleController::class, 'getItemOSS']);
@@ -187,7 +187,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
 
     //picklist browse
     // Route::get('getDataPicklist', [APIPicklistShopping::class, 'getPicklistMstr']);
-      Route::get('getPicklistBrowse', [APIPicklistShopping::class, 'getPicklistBrowse']);
+    Route::get('getPicklistBrowse', [APIPicklistShopping::class, 'getPicklistBrowse']);
 
     // Picklist Shopping
     Route::get('getPicklistDet', [APIPicklistShopping::class, 'getPicklistDet']);
@@ -285,7 +285,11 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post('receiptItempb', [APIBarangJadi::class, 'receiptItempb']);
     Route::get('getPenerimaanBarangData', [APIBarangJadi::class, 'getPenerimaanBarangData']);
     Route::post('getWlbBarangJadi', [APIBarangJadi::class, 'getWlbBarangJadi']);
+    Route::post('getWlbBarangJadi', [APIBarangJadi::class, 'getWlbBarangJadi']);
+    Route::post('updateBarangJadi', [APIBarangJadi::class, 'update']);
 
+    Route::get('getPenyerahanBarang', [APIBarangJadi::class, 'index']);
+    Route::get('getItemXxinvDet', [APIBarangJadi::class, 'getItemXxinvDet']);
     //dashboard
     Route::get('getInventoryByWarehouse', [APIDashboard::class, 'getInventoryByWarehouse']);
     Route::get('getDetailInventoryByWarehouse', [APIDashboard::class, 'getDetailInventoryByWarehouse']);

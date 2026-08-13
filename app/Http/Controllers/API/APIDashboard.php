@@ -17,7 +17,8 @@ class APIDashboard extends Controller
             $data = xxinvDet::select(
                 'xxinv_wrh',
                 DB::raw('SUM(xxinv_qty_wrh) as total_qty'),
-                DB::raw('SUM(xxinv_qty_wrh - xxinv_qtyoh) as qty_diff')
+                // DB::raw('SUM(xxinv_qty_wrh - xxinv_qtyoh) as qty_diff')
+                DB::raw('SUM(xxinv_qtyoh) as qty_diff')
             )
                 ->groupBy('xxinv_wrh')
                 ->orderBy('xxinv_wrh')
@@ -84,7 +85,8 @@ class APIDashboard extends Controller
             $data = xxinvDet::select(
                 'xxinv_loc',
                 DB::raw('SUM(xxinv_qty_wrh) as total_qty'),
-                DB::raw('SUM(xxinv_qty_wrh - xxinv_qtyoh) as qty_diff')
+                // DB::raw('SUM(xxinv_qty_wrh - xxinv_qtyoh) as qty_diff')
+                DB::raw('SUM(xxinv_qtyoh) as qty_diff')
             )
                 ->groupBy('xxinv_loc')
                 ->orderBy('xxinv_loc')
