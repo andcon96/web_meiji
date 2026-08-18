@@ -34,7 +34,7 @@ class APIOtherShipmentScheduleController extends Controller
 
     public function getItemOSS(Request $request)
     {
-        $items = Item::with(['getLoadedBy:id,name', 'getUpdatedBy:id,name'])
+        $items = Item::with(['getLoadedBy:id,name', 'getUpdatedBy:id,name'])->where()
             ->orderBy('im_item_part')
             ->get();
 
@@ -44,6 +44,42 @@ class APIOtherShipmentScheduleController extends Controller
             ],
             200,
         );
+    }
+
+    public function getItemOT(Request $request)
+    {
+        $items = xxinvDet::where('xxinv_det.xxinv_site', $request->site)
+            ->join('item_master', 'item_master.im_item_part', '=', 'xxinv_det.xxinv_part')
+            ->select(
+                'xxinv_det.xxinv_part',
+                'xxinv_det.xxinv_site',
+                'item_master.im_item_desc',
+                'item_master.im_item_um'
+            )
+            ->groupBy(
+                'xxinv_det.xxinv_part',
+                'xxinv_det.xxinv_site',
+                'item_master.im_item_desc',
+                'item_master.im_item_um'
+            )
+            ->get();
+
+        return response()->json([
+            'items' => $items,
+        ], 200);
+    }
+
+    public function getSiteOT(Request $request)
+    {
+        $sites = xxinvDet::query()
+            ->select('xxinv_site')
+            ->distinct()
+            ->orderBy('xxinv_site')
+            ->pluck('xxinv_site');
+
+        return response()->json([
+            'site' => $sites,
+        ], 200);
     }
 
     public function getLocationByPart(Request $request)
@@ -60,7 +96,7 @@ class APIOtherShipmentScheduleController extends Controller
                 't_inv_site' => $item->xxinv_site,
                 't_inv_wrh' => $item->xxinv_wrh,
                 't_inv_qtyoh' => $item->xxinv_qtyoh,
-                't_inv_uom' => "null", // atau ambil dari tabel Item jika diperlukan
+                't_inv_uom' => 'null', // atau ambil dari tabel Item jika diperlukan
             ];
         });
 

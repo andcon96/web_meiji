@@ -47,130 +47,178 @@ class APIBarangJadi extends Controller
 
     public function getPenerimaanBarangData(Request $req)
     {
-
         $search = $req->search;
+
         $trfdata = penyerahanBarang::where('pb_status', 'Open');
+
         if ($search) {
-            $trfdata = $trfdata->where('pb_trfid', 'LIKE', '%'.$search.'%')
-                ->orWhere('pb_item', 'LIKE', '%'.$search.'%')
-                ->orWhere('pb_lot', 'LIKE', '%'.$search.'%')
-                ->get();
+            $trfdata->where(function ($query) use ($search) {
+                $query->where('pb_trfid', 'LIKE', '%'.$search.'%')
+                    ->orWhere('pb_item', 'LIKE', '%'.$search.'%')
+                    ->orWhere('pb_lot', 'LIKE', '%'.$search.'%');
+            });
         }
+
         $trfdata = $trfdata->get();
 
-        if (! $trfdata) {
+        if ($trfdata->isEmpty()) {
             return response()->json([
                 'Status' => 'Error',
                 'Message' => 'Data Not Found.',
             ], 422);
+        }
+
+        return GeneralResources::collection($trfdata);
+    }
+
+   public function receiptItempb(Request $req)
+{
+    $trfid = $req->trfid;
+    $locto = $req->locto;
+    $whto = $req->whto;
+    $levelto = $req->levelto;
+    $binto = $req->binto;
+
+    $data = penyerahanBarang::where('pb_trfid', $trfid)->first();
+
+    if (!$data) {
+        return response()->json([
+            'Status' => 'Error',
+            'Message' => 'Transfer ID tidak ditemukan',
+        ], 404);
+    }
+
+    $part = $data->pb_item;
+    $qtyoh = $data->pb_qty;
+    $sitefrom = $data->pb_site_from;
+    $siteto = $data->pb_site_to;
+    $locfrom = $data->pb_loc_from;
+    $lotfrom = $data->pb_lot;
+    $lotto = $data->pb_lot;
+    $buildingfrom = $data->pb_wh_from ?? '';
+    $buildingto = $whto ?? '';
+    $levelfrom = $data->pb_level_from ?? '';
+    $binfrom = $data->pb_bin_from ?? '';
+
+    DB::beginTransaction();
+    try {
+        // Kurangi stok dari lokasi asal HANYA jika lokasi storage asal spesifik ada.
+        // Kalau wh/level/bin asal kosong, berarti stok asalnya berbasis lokasi saja
+        // (misal hasil produksi di QC-QRT), jadi tidak ada baris xxinvDet untuk dikurangi.
+        if ($buildingfrom !== '' && $levelfrom !== '' && $binfrom !== '') {
+            $invFrom = xxinvDet::where('xxinv_part', $part)
+                ->where('xxinv_lot', $lotfrom)
+                ->where('xxinv_wrh', $buildingfrom)
+                ->where('xxinv_level', $levelfrom)
+                ->where('xxinv_bin', $binfrom)
+                ->first();
+
+            if (!$invFrom) {
+                DB::rollBack();
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => 'Data storage asal tidak ditemukan',
+                ], 422);
+            }
+
+            $invFrom->xxinv_qtyoh = $invFrom->xxinv_qtyoh - $qtyoh;
+            $invFrom->save();
+        }
+
+        // Tambah/insert stok ke lokasi tujuan (whto/levelto/binto/locto)
+        $invTo = xxinvDet::where('xxinv_part', $part)
+            ->where('xxinv_lot', $lotto)
+            ->where('xxinv_wrh', $buildingto)
+            ->where('xxinv_level', $levelto)
+            ->where('xxinv_bin', $binto)
+            ->first();
+
+        if ($invTo) {
+            $invTo->xxinv_qtyoh = $invTo->xxinv_qtyoh + $qtyoh;
+            $invTo->save();
         } else {
-            return GeneralResources::collection($trfdata);
-            // return response()->json(
-            //     [
-            //         'Data' => $trfdata
-            //     ],
-            //     200
-            // );
-        }
-    }
-
-    public function receiptItempb(Request $req)
-    {
-        $trfid = $req->trfid;
-        $locto = $req->locto;
-        $whto = $req->whto;
-        $levelto = $req->levelto;
-        $binto = $req->binto;
-
-        $data = penyerahanBarang::where('pb_trfid', $trfid)->first();
-
-        $part = $data->pb_item;
-        $qtyoh = $data->pb_qty;
-        $sitefrom = $data->pb_site_from;
-        $siteto = $data->pb_site_to;
-        $locfrom = $data->pb_loc_from;
-        // $locto = $data->pb_loc_to;
-        $lotfrom = $data->pb_lot;
-        $lotto = $data->pb_lot;
-        $buildingfrom = $data->pb_wh_from ?? '';
-        // $buildingto = $data->pb_wh_to ?? '';
-        $levelfrom = $data->pb_level_from ?? '';
-        // $levelto = $data->pb_level_to ?? '';
-        $binfrom = $data->pb_bin_from ?? '';
-        // $binto = $data->pb_bin_to ?? '';
-
-        try {
-            $inv = xxinvDet::where('xxinv_part', $part)->where('xxinv_lot', $lotfrom)->where('xxinv_wrh', $buildingfrom)->where('xxinv_level', $levelfrom)->where('xxinv_bin', $binfrom)->first();
-            $inv->xxinv_qtyoh = $qtyoh;
-            $inv->save();
-            $dataupdate = penyerahanBarang::where('pb_trfid', $trfid)->first();
-            $dataupdate->pb_status = 'Received';
-            $dataupdate->pb_loc_to = $locto;
-            $dataupdate->pb_wh_to = $whto;
-            $dataupdate->pb_level_to = $levelto;
-            $dataupdate->pb_bin_to = $binto;
-            $dataupdate->save();
-
-            $user = Auth::user()->name;
-            // Transaction History
-
-            $newTransactionHistoryfrom = new TransactionHistory();
-            $newTransactionHistoryfrom->tr_nbr = $trfid;
-            $newTransactionHistoryfrom->tr_program = 'Barang Jadi Module';
-            $newTransactionHistoryfrom->tr_activity = 'Penerimaan Barang Jadi From';
-            $newTransactionHistoryfrom->tr_user = $user ?? '';
-            $newTransactionHistoryfrom->tr_part = $part ?? '';
-            $newTransactionHistoryfrom->tr_uom = '';
-            $newTransactionHistoryfrom->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-            $newTransactionHistoryfrom->tr_lot = $lotfrom ?? '';
-            $newTransactionHistoryfrom->tr_qty = $qtyoh ?? '';
-            $newTransactionHistoryfrom->tr_date = date('Y-m-d H:i:s');
-            $newTransactionHistoryfrom->tr_reference = '';
-            $newTransactionHistoryfrom->tr_site = $sitefrom ?? '';
-            $newTransactionHistoryfrom->tr_location = $locfrom ?? '';
-            $newTransactionHistoryfrom->tr_warehouse = $buildingfrom ?? '';
-            $newTransactionHistoryfrom->tr_level = $levelfrom ?? '';
-            $newTransactionHistoryfrom->tr_bin = $binfrom ?? '';
-            $newTransactionHistoryfrom->tr_remark = '';
-            $newTransactionHistoryfrom->save();
-
-            $newTransactionHistory = new TransactionHistory();
-            $newTransactionHistory->tr_nbr = $trfid;
-            $newTransactionHistory->tr_order = '';
-            $newTransactionHistory->tr_program = 'Barang Jadi Module';
-            $newTransactionHistory->tr_activity = 'Penerimaan Barang Jadi To';
-            $newTransactionHistory->tr_user = $user ?? '';
-            $newTransactionHistory->tr_part = $part ?? '';
-            $newTransactionHistory->tr_uom = '';
-            $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-            $newTransactionHistory->tr_lot = $lotto ?? '';
-            $newTransactionHistory->tr_qty = $qtyoh ?? '';
-            $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-            $newTransactionHistory->tr_reference = '';
-            $newTransactionHistory->tr_site = $siteto ?? '';
-            $newTransactionHistory->tr_location = $locto ?? '';
-            $newTransactionHistory->tr_warehouse = $buildingto ?? '';
-            $newTransactionHistory->tr_level = $levelto ?? '';
-            $newTransactionHistory->tr_bin = $binto ?? '';
-            $newTransactionHistory->tr_remark = '';
-            $newTransactionHistory->save();
-
-            DB::commit();
-
-            return response()->json([
-                'Status' => 'Success',
-                'Message' => 'Receipt Item Successful',
-            ], 200);
-        } catch (Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => 'Receipt Item Failed :'.$e->getMessage(),
-            ], 422);
+            // Belum ada baris storage untuk kombinasi ini -> buat baru
+            xxinvDet::create([
+                'xxinv_part'   => $part,
+                'xxinv_lot'    => $lotto,
+                'xxinv_loc'    => $locto,
+                'xxinv_site'   => $siteto,
+                'xxinv_wrh'    => $buildingto,
+                'xxinv_level'  => $levelto,
+                'xxinv_bin'    => $binto,
+                'xxinv_qtyoh'  => $qtyoh,
+                // isi kolom lain sesuai kebutuhan/default
+            ]);
         }
 
+        $dataupdate = penyerahanBarang::where('pb_trfid', $trfid)->first();
+        $dataupdate->pb_status = 'Received';
+        $dataupdate->pb_loc_to = $locto;
+        $dataupdate->pb_wh_to = $whto;
+        $dataupdate->pb_level_to = $levelto;
+        $dataupdate->pb_bin_to = $binto;
+        $dataupdate->save();
+
+        $user = Auth::user()->name;
+
+        // Transaction History - From
+        $newTransactionHistoryfrom = new TransactionHistory();
+        $newTransactionHistoryfrom->tr_nbr = $trfid;
+        $newTransactionHistoryfrom->tr_program = 'Barang Jadi Module';
+        $newTransactionHistoryfrom->tr_activity = 'Penerimaan Barang Jadi From';
+        $newTransactionHistoryfrom->tr_user = $user ?? '';
+        $newTransactionHistoryfrom->tr_part = $part ?? '';
+        $newTransactionHistoryfrom->tr_uom = '';
+        $newTransactionHistoryfrom->tr_line = '';
+        $newTransactionHistoryfrom->tr_lot = $lotfrom ?? '';
+        $newTransactionHistoryfrom->tr_qty = $qtyoh ?? '';
+        $newTransactionHistoryfrom->tr_date = date('Y-m-d H:i:s');
+        $newTransactionHistoryfrom->tr_reference = '';
+        $newTransactionHistoryfrom->tr_site = $sitefrom ?? '';
+        $newTransactionHistoryfrom->tr_location = $locfrom ?? '';
+        $newTransactionHistoryfrom->tr_warehouse = $buildingfrom ?? '';
+        $newTransactionHistoryfrom->tr_level = $levelfrom ?? '';
+        $newTransactionHistoryfrom->tr_bin = $binfrom ?? '';
+        $newTransactionHistoryfrom->tr_remark = '';
+        $newTransactionHistoryfrom->save();
+
+        // Transaction History - To
+        $newTransactionHistory = new TransactionHistory();
+        $newTransactionHistory->tr_nbr = $trfid;
+        $newTransactionHistory->tr_order = '';
+        $newTransactionHistory->tr_program = 'Barang Jadi Module';
+        $newTransactionHistory->tr_activity = 'Penerimaan Barang Jadi To';
+        $newTransactionHistory->tr_user = $user ?? '';
+        $newTransactionHistory->tr_part = $part ?? '';
+        $newTransactionHistory->tr_uom = '';
+        $newTransactionHistory->tr_line = '';
+        $newTransactionHistory->tr_lot = $lotto ?? '';
+        $newTransactionHistory->tr_qty = $qtyoh ?? '';
+        $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+        $newTransactionHistory->tr_reference = '';
+        $newTransactionHistory->tr_site = $siteto ?? '';
+        $newTransactionHistory->tr_location = $locto ?? '';
+        $newTransactionHistory->tr_warehouse = $buildingto ?? '';
+        $newTransactionHistory->tr_level = $levelto ?? '';
+        $newTransactionHistory->tr_bin = $binto ?? '';
+        $newTransactionHistory->tr_remark = '';
+        $newTransactionHistory->save();
+
+        DB::commit();
+
+        return response()->json([
+            'Status' => 'Success',
+            'Message' => 'Receipt Item Successful',
+        ], 200);
+    } catch (Exception $e) {
+        DB::rollBack();
+
+        return response()->json([
+            'Status' => 'Error',
+            'Message' => 'Receipt Item Failed :' . $e->getMessage(),
+        ], 422);
     }
+}
 
     public function getPicklistDet(Request $req)
     {
@@ -539,6 +587,19 @@ class APIBarangJadi extends Controller
         }
     }
 
+    public function getStrorage(Request $request)
+    {
+        $storage = xxinvDet::where('xxinv_part', $request->part)->where('xxinv_lot', $request->lot)->get();
+
+        return response()->json(
+            [
+                'storage' => $storage,
+            ],
+            200,
+        );
+
+    }
+
     public function wsaWarehouseBarangJadi(Request $req)
     {
         $wsaData = Cache::remember('wsaWarehouse', 60, function () {
@@ -772,18 +833,18 @@ class APIBarangJadi extends Controller
 
             $item = $data['item'];
             $sitefrom = $data['sitefrom'];
-            $siteto = $this->nullConversion($data['siteto']);
+            // $siteto = $this->nullConversion($data['siteto']);
             $locfrom = $data['locfrom'];
             $remark = $this->nullConversion($data['remark']);
-            $locto = $this->nullConversion($data['locto']);
-            $whfrom = $this->nullConversion($data['whfrom']);
-            $levelfrom = $this->nullConversion($data['levelfrom']);
-            $binfrom = $this->nullConversion($data['binfrom']);
+            // $locto = $this->nullConversion($data['locto']);
+            // $whfrom = $this->nullConversion($data['whfrom']);
+            // $levelfrom = $this->nullConversion($data['levelfrom']);
+            // $binfrom = $this->nullConversion($data['binfrom']);
             $qty = $data['qty'];
-            $wh = $this->nullConversion($data['wh']);
-            $ref = $this->nullConversion($data['ref']);
-            $level = $this->nullConversion($data['level']);
-            $bin = $this->nullConversion($data['bin']);
+            // $wh = $this->nullConversion($data['wh']);
+            // $ref = $this->nullConversion($data['ref']);
+            // $level = $this->nullConversion($data['level']);
+            // $bin = $this->nullConversion($data['bin']);
             $lot = $this->nullConversion($data['lot']);
 
             /*
@@ -832,18 +893,18 @@ class APIBarangJadi extends Controller
             $newPenyerahanBarang->pb_trfid = $newPrefix;
             $newPenyerahanBarang->pb_item = $item;
             $newPenyerahanBarang->pb_site_from = $sitefrom;
-            $newPenyerahanBarang->pb_site_to = $siteto;
+            // $newPenyerahanBarang->pb_site_to = $siteto;
             $newPenyerahanBarang->pb_loc_from = $locfrom;
-            $newPenyerahanBarang->pb_loc_to = $locto;
-            $newPenyerahanBarang->pb_wh_from = $whfrom;
+            // $newPenyerahanBarang->pb_loc_to = $locto;
+            // $newPenyerahanBarang->pb_wh_from = $whfrom;
             $newPenyerahanBarang->pb_remark = $remark;
             $newPenyerahanBarang->pb_qty = $qty;
-            $newPenyerahanBarang->pb_wh_to = $wh;
-            $newPenyerahanBarang->pb_ref = $ref;
-            $newPenyerahanBarang->pb_level_from = $levelfrom;
-            $newPenyerahanBarang->pb_level_to = $level;
-            $newPenyerahanBarang->pb_bin_from = $binfrom;
-            $newPenyerahanBarang->pb_bin_to = $bin;
+            // $newPenyerahanBarang->pb_wh_to = $wh;
+            // $newPenyerahanBarang->pb_ref = $ref;
+            // $newPenyerahanBarang->pb_level_from = $levelfrom;
+            // $newPenyerahanBarang->pb_level_to = $level;
+            // $newPenyerahanBarang->pb_bin_from = $binfrom;
+            // $newPenyerahanBarang->pb_bin_to = $bin;
             $newPenyerahanBarang->pb_lot = $lot;
             $newPenyerahanBarang->pb_status = 'Open';
 

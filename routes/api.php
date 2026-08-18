@@ -147,9 +147,12 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getOtherShipmentConfirmation', [APIOtherTransactionConfirmController::class, 'index']);
     Route::post('confirmOtherTransaction', [APIOtherTransactionConfirmController::class, 'store']);
     Route::post('rejectOtherTransaction', [APIOtherTransactionConfirmController::class, 'rejectOtherTransaction']);
+
     // Other Shipment Schedule
     Route::get('getOtherShipmentSchedule', [APIOtherShipmentScheduleController::class, 'index']);
     Route::get('/getItemOSS', [APIOtherShipmentScheduleController::class, 'getItemOSS']);
+    Route::get('/getItemOT', [APIOtherShipmentScheduleController::class, 'getItemOT']);
+    Route::get('/getSiteOT', [APIOtherShipmentScheduleController::class, 'getSiteOT']);
     Route::post('/getLocationByPart', [APIOtherShipmentScheduleController::class, 'getLocationByPart']);
     Route::post('/saveOtherShipmentSchedule', [APIOtherShipmentScheduleController::class, 'store']);
     Route::post('deleteOtherShipmentSchedule', [APIOtherShipmentScheduleController::class, 'delete']);
@@ -287,6 +290,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post('getWlbBarangJadi', [APIBarangJadi::class, 'getWlbBarangJadi']);
     Route::post('getWlbBarangJadi', [APIBarangJadi::class, 'getWlbBarangJadi']);
     Route::post('updateBarangJadi', [APIBarangJadi::class, 'update']);
+    Route::get('getStrorage', [APIBarangJadi::class, 'getStrorage']);
 
     Route::get('getPenyerahanBarang', [APIBarangJadi::class, 'index']);
     Route::get('getItemXxinvDet', [APIBarangJadi::class, 'getItemXxinvDet']);
