@@ -4,50 +4,37 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\GeneralResources;
-use App\Models\API\PurchaseOrderDetail;
-use App\Models\API\PurchaseOrderMaster;
-use App\Models\Settings\ItemLocation;
-use App\Models\Settings\LocationDetail;
-use App\Models\Settings\Domain;
-use App\Models\API\workOrderMaster;
-use App\Models\API\workOrderDetail;
-use App\Models\API\picklistMstr;
-use App\Models\API\picklistWo;
-use App\Models\API\picklistWoDet;
-use App\Models\API\prefixWorkOrder;
-use App\Models\API\picklistHistory;
-use App\Models\API\picklistLocationTo;
-use App\Models\API\xxinvDet;
-use App\Models\Settings\PenyerahanBarangPrefix;
 use App\Models\API\PenyerahanBarang;
-use App\Models\Settings\Item;
-use App\Models\Settings\Location;
-use App\Models\Settings\SingleTransferPrefix;
+use App\Models\API\picklistLocationTo;
 use App\Models\API\SingleTransfer;
-use App\Services\WSAServices;
+use App\Models\API\TransactionHistory;
+use App\Models\API\xxinvDet;
+use App\Models\Settings\Domain;
+use App\Models\Settings\Item;
+use App\Models\Settings\ItemLocation;
+use App\Models\Settings\Location;
+use App\Models\Settings\LocationDetail;
+use App\Models\Settings\PenyerahanBarangPrefix;
+use App\Models\Settings\SingleTransferPrefix;
 use App\Services\QxtendServices;
+use App\Services\WSAServices;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Services\ReceiptServices;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
-use App\Models\API\TransactionHistory;
-use Illuminate\Support\Facades\Auth;
 
 class APISingleTransfer extends Controller
 {
-
     public function getTransferData(Request $req)
     {
         $trfid = $req->trfid;
         $trfdata = singleTransfer::where('st_trfid', $trfid)->first();
-        if (!$trfdata) {
+        if (! $trfdata) {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Data Not Found."
+                'Message' => 'Data Not Found.',
             ], 422);
         } else {
             return GeneralResources::collection($trfdata);
@@ -66,17 +53,17 @@ class APISingleTransfer extends Controller
 
         $trfdata = singleTransfer::where('st_status', 'Open');
         if ($search) {
-            $trfdata =  $trfdata->where('st_trfid', 'LIKE', '%' . $search . '%')
-                ->orWhere('st_item', 'LIKE', '%' . $search . '%')
-                ->orWhere('st_lot', 'LIKE', '%' . $search . '%')
+            $trfdata = $trfdata->where('st_trfid', 'LIKE', '%'.$search.'%')
+                ->orWhere('st_item', 'LIKE', '%'.$search.'%')
+                ->orWhere('st_lot', 'LIKE', '%'.$search.'%')
                 ->get();
         }
         $trfdata = $trfdata->get();
 
-        if (!$trfdata) {
+        if (! $trfdata) {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Data Not Found."
+                'Message' => 'Data Not Found.',
             ], 422);
         } else {
             return GeneralResources::collection($trfdata);
@@ -91,7 +78,7 @@ class APISingleTransfer extends Controller
 
     public function receiptItem(Request $req)
     {
-  log::info('f');
+        log::info('f');
         $trfid = $req->trfid;
         $data = singleTransfer::where('st_trfid', $trfid)->first();
         $part = $data->st_item;
@@ -111,95 +98,97 @@ class APISingleTransfer extends Controller
         $locto = $req->locto ?? '';
         $buildingto = $req->whto ?? '';
         $levelto = $req->levelto ?? '';
-        $binto  = $req->binto ?? '';
+        $binto = $req->binto ?? '';
 
         log::info('a');
-        $qxreceipt = (new QxtendServices())->qxTransferSingleItemTransfer(
-            $part,
-            $qtyoh,
-            $sitefrom,
-            $siteto,
-            $locfrom,
-            $locto,
-            $lotfrom,
-            $lotto,
-            $buildingfrom,
-            $buildingto,
-            $levelfrom,
-            $levelto,
-            $binfrom,
-            $binto
-        );
-        if ($qxreceipt[0] == false) {
+
+        log::info('b');
+        DB::beginTransaction();
+        try {
+            $dataupdate = singleTransfer::where('st_trfid', $trfid)->first();
+            $dataupdate->st_loc_to = $locto ?? '';
+            $dataupdate->st_wh = $buildingto ?? '';
+            $dataupdate->st_level = $levelto ?? '';
+            $dataupdate->st_bin = $binto ?? '';
+            $dataupdate->st_status = 'Received';
+            $dataupdate->save();
+
+            $user = Auth::user()->name;
+            $invFrom = xxinvDet::where('xxinv_part', $part)
+                ->where('xxinv_wrh', $buildingfrom)
+                ->where('xxinv_level', $levelfrom)
+                ->where('xxinv_bin', $binfrom)
+                ->first();
+
+            $invFrom->xxinv_qtyoh -= $qtyoh;
+            $invFrom->save();
+
+            $invTo = xxinvDet::where('xxinv_part', $part)
+                ->where('xxinv_wrh', $buildingto)
+                ->where('xxinv_level', $levelto)
+                ->where('xxinv_bin', $binto)
+                ->first();
+
+            $invTo->xxinv_qtyoh += $qtyoh;
+            $invTo->save();
+            // Transaction History
+            log::info('c');
+            $newTransactionHistoryfrom = new TransactionHistory();
+            $newTransactionHistoryfrom->tr_nbr = $trfid;
+            $newTransactionHistoryfrom->tr_program = 'Single Transfer Module';
+            $newTransactionHistoryfrom->tr_activity = 'Single Transfer From';
+            $newTransactionHistoryfrom->tr_user = $user ?? '';
+            $newTransactionHistoryfrom->tr_part = $part ?? '';
+            $newTransactionHistoryfrom->tr_uom = '';
+            $newTransactionHistoryfrom->tr_line = '';  
+            $newTransactionHistoryfrom->tr_lot = $lotfrom ?? '';
+            $newTransactionHistoryfrom->tr_qty = $qtyoh ?? '';
+            $newTransactionHistoryfrom->tr_date = date('Y-m-d H:i:s');
+            $newTransactionHistoryfrom->tr_reference = '';
+            $newTransactionHistoryfrom->tr_site = $sitefrom ?? '';
+            $newTransactionHistoryfrom->tr_location = $locfrom ?? '';
+            $newTransactionHistoryfrom->tr_warehouse = $buildingfrom ?? '';
+            $newTransactionHistoryfrom->tr_level = $levelfrom ?? '';
+            $newTransactionHistoryfrom->tr_bin = $binfrom ?? '';
+            $newTransactionHistoryfrom->tr_remark = '';
+            $newTransactionHistoryfrom->save();
+            log::info('d');
+            $newTransactionHistory = new TransactionHistory();
+            $newTransactionHistory->tr_nbr = $trfid;
+            $newTransactionHistory->tr_order = '';
+            $newTransactionHistory->tr_program = 'Single Transfer Module';
+            $newTransactionHistory->tr_activity = 'Single Transfer To';
+            $newTransactionHistory->tr_user = $user ?? '';
+            $newTransactionHistory->tr_part = $part ?? '';
+            $newTransactionHistory->tr_uom = '';
+            $newTransactionHistory->tr_line = '';  
+            $newTransactionHistory->tr_lot = $lotto ?? '';
+            $newTransactionHistory->tr_qty = $qtyoh ?? '';
+            $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+            $newTransactionHistory->tr_reference = '';
+            $newTransactionHistory->tr_site = $siteto ?? '';
+            $newTransactionHistory->tr_location = $locto ?? '';
+            $newTransactionHistory->tr_warehouse = $buildingto ?? '';
+            $newTransactionHistory->tr_level = $levelto ?? '';
+            $newTransactionHistory->tr_bin = $binto ?? '';
+            $newTransactionHistory->tr_remark = '';
+            $newTransactionHistory->save();
+            log::info('e');
+            DB::commit();
+
+            return response()->json([
+                'Status' => 'Success',
+                'Message' => 'Receipt Item Successful',
+            ], 200);
+        } catch (Exception $e) {
+            DB::rollBack();
+
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Transfer Item Failed "
+                'Message' => 'Receipt Item Failed :'.$e->getMessage(),
             ], 422);
-        } else {
-              log::info('b');
-            DB::beginTransaction();
-            try {
-                $dataupdate = singleTransfer::where('st_trfid', $trfid)->first();
-                $dataupdate->st_status = 'Received';
-                $dataupdate->save();
-
-                $user = Auth::user()->name;
-                // Transaction History
-  log::info('c');
-                $newTransactionHistoryfrom = new TransactionHistory();
-                $newTransactionHistoryfrom->tr_nbr = '';
-                $newTransactionHistoryfrom->tr_program = 'Single Transfer Module';
-                $newTransactionHistoryfrom->tr_activity = 'Single Transfer From';
-                $newTransactionHistoryfrom->tr_user = $user ?? '';
-                $newTransactionHistoryfrom->tr_part = $part ?? '';
-                $newTransactionHistoryfrom->tr_uom = '';
-                $newTransactionHistoryfrom->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-                $newTransactionHistoryfrom->tr_lot = $lotfrom ?? '';
-                $newTransactionHistoryfrom->tr_qty = $qtyoh ?? '';
-                $newTransactionHistoryfrom->tr_date = date('Y-m-d H:i:s');
-                $newTransactionHistoryfrom->tr_reference = '';
-                $newTransactionHistoryfrom->tr_site = $sitefrom ?? '';
-                $newTransactionHistoryfrom->tr_location = $locfrom ?? '';
-                $newTransactionHistoryfrom->tr_warehouse = $buildingfrom ?? '';
-                $newTransactionHistoryfrom->tr_level = $levelfrom ?? '';
-                $newTransactionHistoryfrom->tr_bin = $binfrom ?? '';
-                $newTransactionHistoryfrom->tr_remark = '';
-                $newTransactionHistoryfrom->save();
-  log::info('d');
-                $newTransactionHistory = new TransactionHistory();
-                $newTransactionHistory->tr_nbr = '';
-                $newTransactionHistory->tr_order = '';
-                $newTransactionHistory->tr_program = 'Single Transfer Module';
-                $newTransactionHistory->tr_activity = 'Single Transfer To';
-                $newTransactionHistory->tr_user = $user ?? '';
-                $newTransactionHistory->tr_part = $part ?? '';
-                $newTransactionHistory->tr_uom = '';
-                $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-                $newTransactionHistory->tr_lot = $lotto ?? '';
-                $newTransactionHistory->tr_qty = $qtyoh ?? '';
-                $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                $newTransactionHistory->tr_reference = '';
-                $newTransactionHistory->tr_site = $siteto ?? '';
-                $newTransactionHistory->tr_location = $locto ?? '';
-                $newTransactionHistory->tr_warehouse = $buildingto ?? '';
-                $newTransactionHistory->tr_level = $levelto ?? '';
-                $newTransactionHistory->tr_bin = $binto ?? '';
-                $newTransactionHistory->tr_remark = '';
-                $newTransactionHistory->save();
-  log::info('e');
-                DB::commit();
-                return response()->json([
-                    'Status' => 'Success',
-                    'Message' => "Receipt Item Successful"
-                ], 200);
-            } catch (Exception $e) {
-                DB::rollBack();
-                return response()->json([
-                    'Status' => 'Error',
-                    'Message' => "Receipt Item Failed :" . $e->getMessage()
-                ], 422);
-            }
         }
+
     }
 
     // public function getLocation(Request $req)
@@ -207,7 +196,6 @@ class APISingleTransfer extends Controller
 
     //     $wonbr = $req->wonbr;
     //     $hasil = (new WSAServices())->wsaGetLocationTransfer($wonbr);
-
 
     //     $currentPick = '';
     //     $currentWo = '';
@@ -226,7 +214,6 @@ class APISingleTransfer extends Controller
 
     //     foreach ($listData as $key => $value) {
 
-
     //         $wonbrstring = (string)$value->t_wo_nbr;
 
     //         if (strlen($wonbrstring) == 0) {
@@ -242,7 +229,6 @@ class APISingleTransfer extends Controller
 
     //                 if ($currentWo != $wonbrstring) {
     //                     $currentWo = $wonbrstring;
-
 
     //                     $detail[] = [
     //                         'wodpart' => (string)$value->t_wod_part,
@@ -455,8 +441,6 @@ class APISingleTransfer extends Controller
     //         200
     //     );
 
-
-
     //     return GeneralResources::collection($data);
     // }
 
@@ -475,7 +459,7 @@ class APISingleTransfer extends Controller
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Data Not Found."
+                'Message' => 'Data Not Found.',
             ], 422);
         } else {
             $listData = $hasil[1];
@@ -483,68 +467,66 @@ class APISingleTransfer extends Controller
 
         foreach ($listData as $key => $value) {
 
-
-            $wonbrstring = (string)$value->t_wo_nbr;
+            $wonbrstring = (string) $value->t_wo_nbr;
 
             if (strlen($wonbrstring) == 0) {
                 $wonbrstring = 'manual';
 
-                if ($currentPick != (string)$value->t_pick_nbr) {
+                if ($currentPick != (string) $value->t_pick_nbr) {
                     $wonbrstring = 'manual';
                     $currentWo = '';
 
                     $detail = [];
                     $wonbr = [];
-                    $currentPick = (string)$value->t_pick_nbr;
+                    $currentPick = (string) $value->t_pick_nbr;
 
                     if ($currentWo != $wonbrstring) {
                         $currentWo = $wonbrstring;
 
-
                         $detail[] = [
-                            'wodpart' => (string)$value->t_wod_part,
-                            'qtyreq' => (string)$value->t_qty_req,
-                            'qtypick' => (string)$value->t_qty_pick,
-                            'qtytopick' => (string)$value->t_qty_topick,
-                            'qtykemasan' => (string)$value->t_qty_kemasan,
-                            'lot' => (string)$value->t_lot,
-                            'id' => (string)$value->t_wo_id,
-                            'wrh' => (string)$value->t_wrh,
-                            'level' => (string)$value->t_level,
-                            'bin' => (string)$value->t_bin,
-                            'dd' => (string)$value->t_duedate,
-                            'od' => (string)$value->t_orddate,
-                            'rd' => (string)$value->t_reldate,
+                            'wodpart' => (string) $value->t_wod_part,
+                            'qtyreq' => (string) $value->t_qty_req,
+                            'qtypick' => (string) $value->t_qty_pick,
+                            'qtytopick' => (string) $value->t_qty_topick,
+                            'qtykemasan' => (string) $value->t_qty_kemasan,
+                            'lot' => (string) $value->t_lot,
+                            'id' => (string) $value->t_wo_id,
+                            'wrh' => (string) $value->t_wrh,
+                            'level' => (string) $value->t_level,
+                            'bin' => (string) $value->t_bin,
+                            'dd' => (string) $value->t_duedate,
+                            'od' => (string) $value->t_orddate,
+                            'rd' => (string) $value->t_reldate,
                         ];
 
                         $wonbr[$currentWo] = [
                             'wonbrnbr' => $wonbrstring,
                             'wopart' => '',
-                            'detail' => $detail
+                            'detail' => $detail,
                         ];
 
                         $master[$currentPick] = [
-                            'picknbr' => (string)$value->t_pick_nbr,
-                            'site' => (string)$value->t_site,
-                            'status' => (string)$value->t_status,
-                            'loc' => (string)$value->t_loc,
+                            'picknbr' => (string) $value->t_pick_nbr,
+                            'site' => (string) $value->t_site,
+                            'status' => (string) $value->t_status,
+                            'loc' => (string) $value->t_loc,
                             'wonbr' => $wonbr,
                         ];
                     } else {
                         $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-                            'wodpart' => (string)$value->t_wod_part,
-                            'qtyreq' => (string)$value->t_qty_req,
-                            'qtypick' => (string)$value->t_qty_pick,
-                            'qtytopick' => (string)$value->t_qty_topick,
-                            'qtykemasan' => (string)$value->t_qty_kemasan,
-                            'lot' => (string)$value->t_lot,
-                            'id' => (string)$value->t_wo_id,
-                            'wrh' => (string)$value->t_wrh,
-                            'level' => (string)$value->t_level,
-                            'bin' => (string)$value->t_bin,
-                            'dd' => (string)$value->t_duedate,
-                            'od' => (string)$value->t_orddate,
-                            'rd' => (string)$value->t_reldate,
+                            'wodpart' => (string) $value->t_wod_part,
+                            'qtyreq' => (string) $value->t_qty_req,
+                            'qtypick' => (string) $value->t_qty_pick,
+                            'qtytopick' => (string) $value->t_qty_topick,
+                            'qtykemasan' => (string) $value->t_qty_kemasan,
+                            'lot' => (string) $value->t_lot,
+                            'id' => (string) $value->t_wo_id,
+                            'wrh' => (string) $value->t_wrh,
+                            'level' => (string) $value->t_level,
+                            'bin' => (string) $value->t_bin,
+                            'dd' => (string) $value->t_duedate,
+                            'od' => (string) $value->t_orddate,
+                            'rd' => (string) $value->t_reldate,
                         ];
                     }
                 } else {
@@ -553,130 +535,130 @@ class APISingleTransfer extends Controller
                         $currentWo = $wonbrstring;
 
                         $detail[] = [
-                            'wodpart' => (string)$value->t_wod_part,
-                            'qtyreq' => (string)$value->t_qty_req,
-                            'qtypick' => (string)$value->t_qty_pick,
-                            'qtytopick' => (string)$value->t_qty_topick,
-                            'qtykemasan' => (string)$value->t_qty_kemasan,
-                            'lot' => (string)$value->t_lot,
-                            'id' => (string)$value->t_wo_id,
-                            'wrh' => (string)$value->t_wrh,
-                            'level' => (string)$value->t_level,
-                            'bin' => (string)$value->t_bin,
-                            'dd' => (string)$value->t_duedate,
-                            'od' => (string)$value->t_orddate,
-                            'rd' => (string)$value->t_reldate,
+                            'wodpart' => (string) $value->t_wod_part,
+                            'qtyreq' => (string) $value->t_qty_req,
+                            'qtypick' => (string) $value->t_qty_pick,
+                            'qtytopick' => (string) $value->t_qty_topick,
+                            'qtykemasan' => (string) $value->t_qty_kemasan,
+                            'lot' => (string) $value->t_lot,
+                            'id' => (string) $value->t_wo_id,
+                            'wrh' => (string) $value->t_wrh,
+                            'level' => (string) $value->t_level,
+                            'bin' => (string) $value->t_bin,
+                            'dd' => (string) $value->t_duedate,
+                            'od' => (string) $value->t_orddate,
+                            'rd' => (string) $value->t_reldate,
                         ];
                         $wonbr[$currentWo] = [
                             'wonbrnbr' => $currentWo,
                             'wopart' => '',
                             'woid' => '',
-                            'detail' => $detail
+                            'detail' => $detail,
                         ];
                         $master[$currentPick] = [
-                            'picknbr' => (string)$value->t_pick_nbr,
-                            'site' => (string)$value->t_site,
-                            'status' => (string)$value->t_status,
-                            'loc' => (string)$value->t_loc,
-                            'wonbr' => $wonbr
+                            'picknbr' => (string) $value->t_pick_nbr,
+                            'site' => (string) $value->t_site,
+                            'status' => (string) $value->t_status,
+                            'loc' => (string) $value->t_loc,
+                            'wonbr' => $wonbr,
                         ];
                     } else {
                         $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-                            'wodpart' => (string)$value->t_wod_part,
-                            'qtyreq' => (string)$value->t_qty_req,
-                            'qtypick' => (string)$value->t_qty_pick,
-                            'qtytopick' => (string)$value->t_qty_topick,
-                            'qtykemasan' => (string)$value->t_qty_kemasan,
-                            'lot' => (string)$value->t_lot,
-                            'id' => (string)$value->t_wo_id,
-                            'wrh' => (string)$value->t_wrh,
-                            'level' => (string)$value->t_level,
-                            'bin' => (string)$value->t_bin,
-                            'dd' => (string)$value->t_duedate,
-                            'od' => (string)$value->t_orddate,
-                            'rd' => (string)$value->t_reldate,
+                            'wodpart' => (string) $value->t_wod_part,
+                            'qtyreq' => (string) $value->t_qty_req,
+                            'qtypick' => (string) $value->t_qty_pick,
+                            'qtytopick' => (string) $value->t_qty_topick,
+                            'qtykemasan' => (string) $value->t_qty_kemasan,
+                            'lot' => (string) $value->t_lot,
+                            'id' => (string) $value->t_wo_id,
+                            'wrh' => (string) $value->t_wrh,
+                            'level' => (string) $value->t_level,
+                            'bin' => (string) $value->t_bin,
+                            'dd' => (string) $value->t_duedate,
+                            'od' => (string) $value->t_orddate,
+                            'rd' => (string) $value->t_reldate,
                         ];
                     }
                 }
             } else {
 
-                if ($currentPick != (string)$value->t_pick_nbr) {
+                if ($currentPick != (string) $value->t_pick_nbr) {
 
                     $currentWo = '';
                     $detail = [];
                     $wonbr = [];
-                    $currentPick = (string)$value->t_pick_nbr;
+                    $currentPick = (string) $value->t_pick_nbr;
 
-                    if ($currentWo != (string)$value->t_wo_nbr) {
-                        $currentWo = (string)$value->t_wo_nbr;
+                    if ($currentWo != (string) $value->t_wo_nbr) {
+                        $currentWo = (string) $value->t_wo_nbr;
 
                         $detail[] = [
-                            'wodpart' => (string)$value->t_wod_part,
-                            'qtyreq' => (string)$value->t_qty_req,
-                            'qtypick' => (string)$value->t_qty_pick,
-                            'qtytopick' => (string)$value->t_qty_topick,
-                            'qtykemasan' => (string)$value->t_qty_kemasan,
-                            'lot' => (string)$value->t_lot,
-                            'id' => (string)$value->t_wo_id,
-                            'wrh' => (string)$value->t_wrh,
-                            'level' => (string)$value->t_level,
-                            'bin' => (string)$value->t_bin,
-                            'dd' => (string)$value->t_duedate,
-                            'od' => (string)$value->t_orddate,
-                            'rd' => (string)$value->t_reldate,
+                            'wodpart' => (string) $value->t_wod_part,
+                            'qtyreq' => (string) $value->t_qty_req,
+                            'qtypick' => (string) $value->t_qty_pick,
+                            'qtytopick' => (string) $value->t_qty_topick,
+                            'qtykemasan' => (string) $value->t_qty_kemasan,
+                            'lot' => (string) $value->t_lot,
+                            'id' => (string) $value->t_wo_id,
+                            'wrh' => (string) $value->t_wrh,
+                            'level' => (string) $value->t_level,
+                            'bin' => (string) $value->t_bin,
+                            'dd' => (string) $value->t_duedate,
+                            'od' => (string) $value->t_orddate,
+                            'rd' => (string) $value->t_reldate,
                         ];
                         $wonbr[$currentWo] = [
-                            'wonbrnbr' => (string)$value->t_wo_nbr,
-                            'wopart' => (string)$value->t_wo_part,
-                            'woid' => (string)$value->t_wo_id,
-                            'detail' => $detail
+                            'wonbrnbr' => (string) $value->t_wo_nbr,
+                            'wopart' => (string) $value->t_wo_part,
+                            'woid' => (string) $value->t_wo_id,
+                            'detail' => $detail,
                         ];
                         $master[$currentPick] = [
-                            'picknbr' => (string)$value->t_pick_nbr,
-                            'site' => (string)$value->t_site,
-                            'status' => (string)$value->t_status,
-                            'loc' => (string)$value->t_loc,
-                            'wonbr' => $wonbr
+                            'picknbr' => (string) $value->t_pick_nbr,
+                            'site' => (string) $value->t_site,
+                            'status' => (string) $value->t_status,
+                            'loc' => (string) $value->t_loc,
+                            'wonbr' => $wonbr,
                         ];
                     } else {
                         $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-                            'wodpart' => (string)$value->t_wod_part,
-                            'qtyreq' => (string)$value->t_qty_req,
-                            'qtypick' => (string)$value->t_qty_pick,
-                            'qtytopick' => (string)$value->t_qty_topick,
-                            'qtykemasan' => (string)$value->t_qty_kemasan,
-                            'lot' => (string)$value->t_lot,
-                            'id' => (string)$value->t_wo_id,
-                            'wrh' => (string)$value->t_wrh,
-                            'level' => (string)$value->t_level,
-                            'bin' => (string)$value->t_bin,
-                            'dd' => (string)$value->t_duedate,
-                            'od' => (string)$value->t_orddate,
-                            'rd' => (string)$value->t_reldate,
+                            'wodpart' => (string) $value->t_wod_part,
+                            'qtyreq' => (string) $value->t_qty_req,
+                            'qtypick' => (string) $value->t_qty_pick,
+                            'qtytopick' => (string) $value->t_qty_topick,
+                            'qtykemasan' => (string) $value->t_qty_kemasan,
+                            'lot' => (string) $value->t_lot,
+                            'id' => (string) $value->t_wo_id,
+                            'wrh' => (string) $value->t_wrh,
+                            'level' => (string) $value->t_level,
+                            'bin' => (string) $value->t_bin,
+                            'dd' => (string) $value->t_duedate,
+                            'od' => (string) $value->t_orddate,
+                            'rd' => (string) $value->t_reldate,
                         ];
                     }
                 } else {
-                    if ($currentWo != (string)$value->t_wo_nbr) {
+                    if ($currentWo != (string) $value->t_wo_nbr) {
 
-                        $currentWo = (string)$value->t_wo_nbr;
+                        $currentWo = (string) $value->t_wo_nbr;
 
                         $wonbr = [];
                         $detail = [];
 
                         $detail[] = [
-                            'wodpart' => (string)$value->t_wod_part,
-                            'qtyreq' => (string)$value->t_qty_req,
-                            'qtypick' => (string)$value->t_qty_pick,
-                            'qtytopick' => (string)$value->t_qty_topick,
-                            'qtykemasan' => (string)$value->t_qty_kemasan,
-                            'lot' => (string)$value->t_lot,
-                            'id' => (string)$value->t_wo_id,
-                            'wrh' => (string)$value->t_wrh,
-                            'level' => (string)$value->t_level,
-                            'bin' => (string)$value->t_bin,
-                            'dd' => (string)$value->t_duedate,
-                            'od' => (string)$value->t_orddate,
-                            'rd' => (string)$value->t_reldate,
+                            'wodpart' => (string) $value->t_wod_part,
+                            'qtyreq' => (string) $value->t_qty_req,
+                            'qtypick' => (string) $value->t_qty_pick,
+                            'qtytopick' => (string) $value->t_qty_topick,
+                            'qtykemasan' => (string) $value->t_qty_kemasan,
+                            'lot' => (string) $value->t_lot,
+                            'id' => (string) $value->t_wo_id,
+                            'wrh' => (string) $value->t_wrh,
+                            'level' => (string) $value->t_level,
+                            'bin' => (string) $value->t_bin,
+                            'dd' => (string) $value->t_duedate,
+                            'od' => (string) $value->t_orddate,
+                            'rd' => (string) $value->t_reldate,
                         ];
 
                         // $wonbr[$currentWo] = [
@@ -686,26 +668,26 @@ class APISingleTransfer extends Controller
                         // ];
 
                         $master[$currentPick]['wonbr'][$currentWo] = [
-                            'wonbrnbr' => (string)$value->t_wo_nbr,
-                            'wopart' => (string)$value->t_wo_part,
-                            'detail' => $detail
+                            'wonbrnbr' => (string) $value->t_wo_nbr,
+                            'wopart' => (string) $value->t_wo_part,
+                            'detail' => $detail,
                         ];
                     } else {
 
                         $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-                            'wodpart' => (string)$value->t_wod_part,
-                            'qtyreq' => (string)$value->t_qty_req,
-                            'qtypick' => (string)$value->t_qty_pick,
-                            'qtytopick' => (string)$value->t_qty_topick,
-                            'qtykemasan' => (string)$value->t_qty_kemasan,
-                            'lot' => (string)$value->t_lot,
-                            'id' => (string)$value->t_wo_id,
-                            'wrh' => (string)$value->t_wrh,
-                            'level' => (string)$value->t_level,
-                            'bin' => (string)$value->t_bin,
-                            'dd' => (string)$value->t_duedate,
-                            'od' => (string)$value->t_orddate,
-                            'rd' => (string)$value->t_reldate,
+                            'wodpart' => (string) $value->t_wod_part,
+                            'qtyreq' => (string) $value->t_qty_req,
+                            'qtypick' => (string) $value->t_qty_pick,
+                            'qtytopick' => (string) $value->t_qty_topick,
+                            'qtykemasan' => (string) $value->t_qty_kemasan,
+                            'lot' => (string) $value->t_lot,
+                            'id' => (string) $value->t_wo_id,
+                            'wrh' => (string) $value->t_wrh,
+                            'level' => (string) $value->t_level,
+                            'bin' => (string) $value->t_bin,
+                            'dd' => (string) $value->t_duedate,
+                            'od' => (string) $value->t_orddate,
+                            'rd' => (string) $value->t_reldate,
                         ];
                         // dd($master[$currentPick]['wonbr'][$currentWo]['detail'],$hasil[1],$currentWo);
                     }
@@ -713,18 +695,16 @@ class APISingleTransfer extends Controller
             }
         }
 
-
         return response()->json(
             [
-                'DataWSA' => $master
+                'DataWSA' => $master,
             ],
             200
         );
 
-
-
         return GeneralResources::collection($data);
     }
+
     public function wsaSendQtyPick(Request $req)
     {
         $data = $req->all();
@@ -748,19 +728,21 @@ class APISingleTransfer extends Controller
                 $qtypick = $det['qtypick'];
                 $qxtendsingleitem = (new QxtendServices())->qxTransferSingleItemWo($wodpart, $wonbr, $site, $site, $loc, 'Shopping', $qtypick, $bin, $level, $wrh, $lot);
                 if ($qxtendsingleitem == 'false') {
-                    Log::channel('Picklist')->info("Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart);
+                    Log::channel('Picklist')->info('Transfer Qty Pick Failed for Picklist : '.$picknbr.' WO : '.$wonbr.' Part : '.$wodpart);
+
                     return response()->json([
                         'Status' => 'Error',
-                        'Message' => "Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
+                        'Message' => 'Transfer Qty Pick Failed for Picklist : '.$picknbr.' WO : '.$wonbr.' Part : '.$wodpart,
                         //'Message'=> $qxtendsingleitem[1];
                     ], 422);
                 } else {
                     $hasil = (new WSAServices())->wsaUpdateQtyPick($picknbr, $qtypick, $wonbr, $wodpart, $site, $loc, $lot, $wrh, $level, $bin);
                     if ($hasil == 'false') {
-                        Log::channel('Picklist')->info("Update Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart);
+                        Log::channel('Picklist')->info('Update Qty Pick Failed for Picklist : '.$picknbr.' WO : '.$wonbr.' Part : '.$wodpart);
+
                         return response()->json([
                             'Status' => 'Error',
-                            'Message' => "Update Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
+                            'Message' => 'Update Qty Pick Failed for Picklist : '.$picknbr.' WO : '.$wonbr.' Part : '.$wodpart,
                         ], 422);
                     }
                 }
@@ -769,7 +751,7 @@ class APISingleTransfer extends Controller
 
         return response()->json([
             'Status' => 'Success',
-            'Message' => "Update Qty Pick Success"
+            'Message' => 'Update Qty Pick Success',
         ], 200);
     }
     // public function wsaUpdateStatusPick(Request $req)
@@ -787,7 +769,6 @@ class APISingleTransfer extends Controller
     //     } else {
     //     }
 
-
     //     return response()->json([
     //         'Status' => 'Success',
     //         'Message' => "Update Qty Pick Success"
@@ -796,7 +777,7 @@ class APISingleTransfer extends Controller
 
     public function getPicklistDetAppr(Request $req)
     {
-        $hasil = (new WSAServices())->wsaGetPickDetail("waiting for Approval");
+        $hasil = (new WSAServices())->wsaGetPickDetail('waiting for Approval');
 
         $currentPick = '';
         $currentWo = '';
@@ -806,110 +787,110 @@ class APISingleTransfer extends Controller
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Picklist : " . $req->search . " Not Found."
+                'Message' => 'Picklist : '.$req->search.' Not Found.',
             ], 422);
         } else {
             $listData = $hasil[1];
         }
         foreach ($listData as $key => $value) {
-            if ($currentPick != (string)$value->t_pick_nbr) {
+            if ($currentPick != (string) $value->t_pick_nbr) {
                 $detail = [];
                 $wonbr = [];
                 $currentWo = '';
-                $currentPick = (string)$value->t_pick_nbr;
-                if ($currentWo != (string)$value->t_wo_nbr) {
-                    $currentWo = (string)$value->t_wo_nbr;
+                $currentPick = (string) $value->t_pick_nbr;
+                if ($currentWo != (string) $value->t_wo_nbr) {
+                    $currentWo = (string) $value->t_wo_nbr;
 
                     $detail[] = [
-                        'wodpart' => (string)$value->t_wod_part,
-                        'qtyreq' => (string)$value->t_qty_req,
-                        'qtypick' => (string)$value->t_qty_pick,
-                        'qtytopick' => (string)$value->t_qty_topick,
-                        'qtykemasan' => (string)$value->t_qty_kemasan,
-                        'lot' => (string)$value->t_lot,
-                        'id' => (string)$value->t_wo_id,
-                        'wrh' => (string)$value->t_wrh,
-                        'level' => (string)$value->t_level,
-                        'bin' => (string)$value->t_bin,
-                        'dd' => (string)$value->t_duedate,
-                        'od' => (string)$value->t_orddate,
-                        'rd' => (string)$value->t_reldate,
+                        'wodpart' => (string) $value->t_wod_part,
+                        'qtyreq' => (string) $value->t_qty_req,
+                        'qtypick' => (string) $value->t_qty_pick,
+                        'qtytopick' => (string) $value->t_qty_topick,
+                        'qtykemasan' => (string) $value->t_qty_kemasan,
+                        'lot' => (string) $value->t_lot,
+                        'id' => (string) $value->t_wo_id,
+                        'wrh' => (string) $value->t_wrh,
+                        'level' => (string) $value->t_level,
+                        'bin' => (string) $value->t_bin,
+                        'dd' => (string) $value->t_duedate,
+                        'od' => (string) $value->t_orddate,
+                        'rd' => (string) $value->t_reldate,
                     ];
                     $wonbr[$currentWo] = [
-                        'wonbr' => (string)$value->t_wo_nbr,
-                        'wopart' => (string)$value->t_wo_part,
-                        'detail' => $detail
+                        'wonbr' => (string) $value->t_wo_nbr,
+                        'wopart' => (string) $value->t_wo_part,
+                        'detail' => $detail,
                     ];
                     $master[$currentPick] = [
-                        'picknbr' => (string)$value->t_pick_nbr,
-                        'site' => (string)$value->t_site,
-                        'status' => (string)$value->t_status,
-                        'loc' => (string)$value->t_loc,
-                        'wonbr' => $wonbr
+                        'picknbr' => (string) $value->t_pick_nbr,
+                        'site' => (string) $value->t_site,
+                        'status' => (string) $value->t_status,
+                        'loc' => (string) $value->t_loc,
+                        'wonbr' => $wonbr,
                     ];
                 } else {
                     $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-                        'wodpart' => (string)$value->t_wod_part,
-                        'qtyreq' => (string)$value->t_qty_req,
-                        'qtypick' => (string)$value->t_qty_pick,
-                        'qtytopick' => (string)$value->t_qty_topick,
-                        'qtykemasan' => (string)$value->t_qty_kemasan,
-                        'lot' => (string)$value->t_lot,
-                        'id' => (string)$value->t_wo_id,
-                        'wrh' => (string)$value->t_wrh,
-                        'level' => (string)$value->t_level,
-                        'bin' => (string)$value->t_bin,
-                        'dd' => (string)$value->t_duedate,
-                        'od' => (string)$value->t_orddate,
-                        'rd' => (string)$value->t_reldate,
+                        'wodpart' => (string) $value->t_wod_part,
+                        'qtyreq' => (string) $value->t_qty_req,
+                        'qtypick' => (string) $value->t_qty_pick,
+                        'qtytopick' => (string) $value->t_qty_topick,
+                        'qtykemasan' => (string) $value->t_qty_kemasan,
+                        'lot' => (string) $value->t_lot,
+                        'id' => (string) $value->t_wo_id,
+                        'wrh' => (string) $value->t_wrh,
+                        'level' => (string) $value->t_level,
+                        'bin' => (string) $value->t_bin,
+                        'dd' => (string) $value->t_duedate,
+                        'od' => (string) $value->t_orddate,
+                        'rd' => (string) $value->t_reldate,
                     ];
                 }
             } else {
-                if ($currentWo != (string)$value->t_wo_nbr) {
-                    $currentWo = (string)$value->t_wo_nbr;
+                if ($currentWo != (string) $value->t_wo_nbr) {
+                    $currentWo = (string) $value->t_wo_nbr;
 
                     $detail[] = [
-                        'wodpart' => (string)$value->t_wod_part,
-                        'qtyreq' => (string)$value->t_qty_req,
-                        'qtypick' => (string)$value->t_qty_pick,
-                        'qtytopick' => (string)$value->t_qty_topick,
-                        'qtykemasan' => (string)$value->t_qty_kemasan,
-                        'lot' => (string)$value->t_lot,
-                        'id' => (string)$value->t_wo_id,
-                        'wrh' => (string)$value->t_wrh,
-                        'level' => (string)$value->t_level,
-                        'bin' => (string)$value->t_bin,
-                        'dd' => (string)$value->t_duedate,
-                        'od' => (string)$value->t_orddate,
-                        'rd' => (string)$value->t_reldate,
+                        'wodpart' => (string) $value->t_wod_part,
+                        'qtyreq' => (string) $value->t_qty_req,
+                        'qtypick' => (string) $value->t_qty_pick,
+                        'qtytopick' => (string) $value->t_qty_topick,
+                        'qtykemasan' => (string) $value->t_qty_kemasan,
+                        'lot' => (string) $value->t_lot,
+                        'id' => (string) $value->t_wo_id,
+                        'wrh' => (string) $value->t_wrh,
+                        'level' => (string) $value->t_level,
+                        'bin' => (string) $value->t_bin,
+                        'dd' => (string) $value->t_duedate,
+                        'od' => (string) $value->t_orddate,
+                        'rd' => (string) $value->t_reldate,
                     ];
                     $wonbr[$currentWo] = [
-                        'wonbr' => (string)$value->t_wo_nbr,
-                        'wopart' => (string)$value->t_wo_part,
-                        'detail' => $detail
+                        'wonbr' => (string) $value->t_wo_nbr,
+                        'wopart' => (string) $value->t_wo_part,
+                        'detail' => $detail,
                     ];
                     $master[$currentPick] = [
-                        'picknbr' => (string)$value->t_pick_nbr,
-                        'site' => (string)$value->t_site,
-                        'status' => (string)$value->t_status,
-                        'loc' => (string)$value->t_loc,
-                        'wonbr' => $wonbr
+                        'picknbr' => (string) $value->t_pick_nbr,
+                        'site' => (string) $value->t_site,
+                        'status' => (string) $value->t_status,
+                        'loc' => (string) $value->t_loc,
+                        'wonbr' => $wonbr,
                     ];
                 } else {
                     $master[$currentPick]['wonbr'][$currentWo]['detail'][] = [
-                        'wodpart' => (string)$value->t_wod_part,
-                        'qtyreq' => (string)$value->t_qty_req,
-                        'qtypick' => (string)$value->t_qty_pick,
-                        'qtytopick' => (string)$value->t_qty_topick,
-                        'qtykemasan' => (string)$value->t_qty_kemasan,
-                        'lot' => (string)$value->t_lot,
-                        'id' => (string)$value->t_wo_id,
-                        'wrh' => (string)$value->t_wrh,
-                        'level' => (string)$value->t_level,
-                        'bin' => (string)$value->t_bin,
-                        'dd' => (string)$value->t_duedate,
-                        'od' => (string)$value->t_orddate,
-                        'rd' => (string)$value->t_reldate,
+                        'wodpart' => (string) $value->t_wod_part,
+                        'qtyreq' => (string) $value->t_qty_req,
+                        'qtypick' => (string) $value->t_qty_pick,
+                        'qtytopick' => (string) $value->t_qty_topick,
+                        'qtykemasan' => (string) $value->t_qty_kemasan,
+                        'lot' => (string) $value->t_lot,
+                        'id' => (string) $value->t_wo_id,
+                        'wrh' => (string) $value->t_wrh,
+                        'level' => (string) $value->t_level,
+                        'bin' => (string) $value->t_bin,
+                        'dd' => (string) $value->t_duedate,
+                        'od' => (string) $value->t_orddate,
+                        'rd' => (string) $value->t_reldate,
                     ];
                 }
                 /*
@@ -933,14 +914,13 @@ class APISingleTransfer extends Controller
                 */
             }
         }
+
         return response()->json(
             [
-                'DataWSA' => $master
+                'DataWSA' => $master,
             ],
             200
         );
-
-
 
         return GeneralResources::collection($data);
     }
@@ -954,18 +934,18 @@ class APISingleTransfer extends Controller
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Data Not Found."
+                'Message' => 'Data Not Found.',
             ], 422);
         } else {
             $listData = $hasil[1];
             foreach ($listData as $key => $value) {
-                $data[] = (string)$value->t_loc;
+                $data[] = (string) $value->t_loc;
             }
         }
 
         return response()->json(
             [
-                'DataWSA' => $data
+                'DataWSA' => $data,
             ],
             200
         );
@@ -1093,10 +1073,229 @@ class APISingleTransfer extends Controller
     //         }
     //     }
     // }
+
+    public function getItemDataST()
+    {
+        try {
+            $items = xxinvDet::select('xxinv_part')
+                ->distinct()
+                ->orderBy('xxinv_part')
+                ->get();
+
+            return GeneralResources::collection($items);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+ 
+    public function getSiteDataST(Request $req)
+    {
+        $req->validate(['part' => 'required']);
+
+        try {
+            $items = xxinvDet::where('xxinv_part', $req->part)
+                ->select('xxinv_site')
+                ->distinct()
+                ->orderBy('xxinv_site')
+                ->get();
+
+            return GeneralResources::collection($items);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+   
+    public function getLocDataST(Request $req)
+    {
+        $req->validate(['part' => 'required', 'site' => 'required']);
+
+        try {
+            $items = xxinvDet::where('xxinv_part', $req->part)
+                ->where('xxinv_site', $req->site)
+                ->select('xxinv_loc')
+                ->distinct()
+                ->orderBy('xxinv_loc')
+                ->get();
+
+            return GeneralResources::collection($items);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+     
+    public function getLotDataST(Request $req)
+    {
+        $req->validate([
+            'part' => 'required',
+            'site' => 'required',
+            'loc' => 'required',
+        ]);
+
+        try {
+            $items = xxinvDet::where('xxinv_part', $req->part)
+                ->where('xxinv_site', $req->site)
+                ->where('xxinv_loc', $req->loc)
+                ->select('xxinv_lot')
+                ->distinct()
+                ->orderBy('xxinv_lot')
+                ->get();
+
+            return GeneralResources::collection($items);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+  
+    public function getWrhDataST(Request $req)
+    {
+        $req->validate([
+            'part' => 'required',
+            'site' => 'required',
+            'loc' => 'required',
+            'lot' => 'required',
+        ]);
+
+        try {
+            $items = xxinvDet::where('xxinv_part', $req->part)
+                ->where('xxinv_site', $req->site)
+                ->where('xxinv_loc', $req->loc)
+                ->where('xxinv_lot', $req->lot)
+                ->select('xxinv_wrh')
+                ->distinct()
+                ->orderBy('xxinv_wrh')
+                ->get();
+
+            return GeneralResources::collection($items);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+   
+    public function getLevelDataST(Request $req)
+    {
+        $req->validate([
+            'part' => 'required',
+            'site' => 'required',
+            'loc' => 'required',
+            'lot' => 'required',
+            'wrh' => 'required',
+        ]);
+
+        try {
+            $items = xxinvDet::where('xxinv_part', $req->part)
+                ->where('xxinv_site', $req->site)
+                ->where('xxinv_loc', $req->loc)
+                ->where('xxinv_lot', $req->lot)
+                ->where('xxinv_wrh', $req->wrh)
+                ->select('xxinv_level')
+                ->distinct()
+                ->orderBy('xxinv_level')
+                ->get();
+
+            return GeneralResources::collection($items);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    
+    public function getBinDataST(Request $req)
+    {
+        $req->validate([
+            'part' => 'required',
+            'site' => 'required',
+            'loc' => 'required',
+            'lot' => 'required',
+            'wrh' => 'required',
+            'level' => 'required',
+        ]);
+
+        try {
+            $items = xxinvDet::where('xxinv_part', $req->part)
+                ->where('xxinv_site', $req->site)
+                ->where('xxinv_loc', $req->loc)
+                ->where('xxinv_lot', $req->lot)
+                ->where('xxinv_wrh', $req->wrh)
+                ->where('xxinv_level', $req->level)
+                ->select('xxinv_bin', 'xxinv_qtyoh', 'xxinv_ref')
+                ->orderBy('xxinv_bin')
+                ->get();
+
+            return GeneralResources::collection($items);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+ 
+    public function getQtyOnHandST(Request $req)
+    {
+        $req->validate([
+            'part' => 'required',
+            'site' => 'required',
+            'loc' => 'required',
+            'lot' => 'required',
+            'wrh' => 'required',
+            'level' => 'required',
+            'bin' => 'required',
+        ]);
+
+        try {
+            $row = xxinvDet::where('xxinv_part', $req->part)
+                ->where('xxinv_site', $req->site)
+                ->where('xxinv_loc', $req->loc)
+                ->where('xxinv_lot', $req->lot)
+                ->where('xxinv_wrh', $req->wrh)
+                ->where('xxinv_level', $req->level)
+                ->where('xxinv_bin', $req->bin)
+                ->first();
+
+            if (! $row) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Data tidak ditemukan',
+                ], 404);
+            }
+
+            return response()->json([
+                'status' => true,
+                'qtyoh' => $row->xxinv_qtyoh,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    
     public function getLocationData(Request $req)
     {
-
-
 
         $currentPick = '';
         $currentWo = '';
@@ -1104,7 +1303,7 @@ class APISingleTransfer extends Controller
         $master = [];
         $wonbr = [];
         $wonbrstring = '';
-        // $wonbr = $req->wonbr;
+     
         $wonbr = '';
         $item = $req->item;
         $site = $req->site;
@@ -1114,7 +1313,7 @@ class APISingleTransfer extends Controller
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Data Not Found."
+                'Message' => 'Data Not Found.',
             ], 422);
         } else {
             $listData = $hasil[1];
@@ -1123,47 +1322,43 @@ class APISingleTransfer extends Controller
         }
     }
 
-    public function getSiteData(Request $req)
-    {
+    // public function getSiteData(Request $req)
+    // {
 
-        $currentPick = '';
-        $currentWo = '';
-        $detail = [];
-        $master = [];
-        $wonbr = [];
-        $wonbrstring = '';
-        // $wonbr = $req->wonbr;
-        $wonbr = '';
-        $site = $req->site ?? '';
-        $item = $req->item ?? '';
-        $location = $req->location ?? '';
-        $domain = Domain::first();
-        $domainCode = $domain->domain ?? '';
-        $hasil = xxinvDet::select('xxinv_site as t_site')->where('xxinv_domain', $domainCode)
-            ->where('xxinv_part', $item)
-            ->when($site !== '', fn($q) => $q->where('xxinv_site', $site))
-            ->when($location !== '', fn($q) => $q->where('xxinv_loc', $location))
-            ->groupBy('xxinv_site')
-            ->get()
-            ->values(); 
-        // $hasil = (new WSAServices())->wsaGetSiteTransfer($site, $item, $location);
+    //     $currentPick = '';
+    //     $currentWo = '';
+    //     $detail = [];
+    //     $master = [];
+    //     $wonbr = [];
+    //     $wonbrstring = '';
+    //     // $wonbr = $req->wonbr;
+    //     $wonbr = '';
+    //     $site = $req->site ?? '';
+    //     $item = $req->item ?? '';
+    //     $location = $req->location ?? '';
+    //     $domain = Domain::first();
+    //     $domainCode = $domain->domain ?? '';
+    //     $hasil = xxinvDet::select('xxinv_site as t_site')->where('xxinv_domain', $domainCode)
+    //         ->where('xxinv_part', $item)
+    //         ->when($site !== '', fn ($q) => $q->where('xxinv_site', $site))
+    //         ->when($location !== '', fn ($q) => $q->where('xxinv_loc', $location))
+    //         ->groupBy('xxinv_site')
+    //         ->get()
+    //         ->values();
+    //     // $hasil = (new WSAServices())->wsaGetSiteTransfer($site, $item, $location);
 
-        // if ($hasil[0] == 'false') {
-        if($hasil->isEmpty()) {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => "Data Not Found."
-            ], 422);
-        } else {
-            $listData = $hasil;
+    //     // if ($hasil[0] == 'false') {
+    //     if ($hasil->isEmpty()) {
+    //         return response()->json([
+    //             'Status' => 'Error',
+    //             'Message' => 'Data Not Found.',
+    //         ], 422);
+    //     } else {
+    //         $listData = $hasil;
 
-            return response()->json(['DataWSA' => $listData], 200);
-        }
-    }
-
-
-
-
+    //         return response()->json(['DataWSA' => $listData], 200);
+    //     }
+    // }
 
     public function wsaWarehouse(Request $req)
     {
@@ -1173,7 +1368,7 @@ class APISingleTransfer extends Controller
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "No Data Available"
+                'Message' => 'No Data Available',
             ], 422);
         }
 
@@ -1187,11 +1382,11 @@ class APISingleTransfer extends Controller
         $wrh = $req->wrh;
         $item = $req->item;
 
-        $wsaData = (new WSAServices())->wsaGetInvDet($site,  $loc, $wrh, $item);
+        $wsaData = (new WSAServices())->wsaGetInvDet($site, $loc, $wrh, $item);
         if ($wsaData[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "No Data Available"
+                'Message' => 'No Data Available',
             ], 422);
         } else {
             $listData = $wsaData[1];
@@ -1201,6 +1396,7 @@ class APISingleTransfer extends Controller
 
         // return response()->json($wsaData[1]);
     }
+
     public function nullConversion($data)
     {
         if ($data == null || strtolower($data) == 'null') {
@@ -1235,8 +1431,8 @@ class APISingleTransfer extends Controller
             $runningnbr = $prefixTable->stp_running_nbr;
             $nextrunningnbr = (int) $runningnbr + 1;
             $newRunningNbr = str_pad($nextrunningnbr, 6, '0', STR_PAD_LEFT);
-            $newPrefix = $prefix . $newRunningNbr;
-log::info('b');
+            $newPrefix = $prefix.$newRunningNbr;
+            log::info('b');
             $newTransferData = new SingleTransfer();
             $newTransferData->st_trfid = $newPrefix;
             $newTransferData->st_item = $item;
@@ -1255,16 +1451,16 @@ log::info('b');
             $newTransferData->st_lot = $lot;
             $newTransferData->st_status = 'Open';
             $newTransferData->save();
-log::info('c');
+            log::info('c');
             $prefixTable->stp_running_nbr = $newRunningNbr;
             $prefixTable->save();
-log::info('d');
+            log::info('d');
             $newTransactionHistory = new TransactionHistory();
             $newTransactionHistory->tr_nbr = $newPrefix;
             $newTransactionHistory->tr_order = '';
             $newTransactionHistory->tr_program = 'Single Transfer Module';
             $newTransactionHistory->tr_activity = 'Create Single Transfer';
-            $newTransactionHistory->tr_user =  Auth::user()->username ?? '';
+            $newTransactionHistory->tr_user = Auth::user()->username ?? '';
             // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
             $newTransactionHistory->tr_part = $item ?? '';
             $newTransactionHistory->tr_uom = '';
@@ -1280,19 +1476,20 @@ log::info('d');
             $newTransactionHistory->tr_bin = $bin ?? '';
             $newTransactionHistory->tr_remark = '';
             $newTransactionHistory->save();
-log::info('e');
+            log::info('e');
             DB::commit();
 
             return response()->json([
                 'Status' => 'Success',
-                'Message' => "Transfer Item Success for Item : " . $item
+                'Message' => 'Transfer Item Success for Item : '.$item,
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::channel('SingleTransfer')->info($e);
+
             return response()->json([
                 'Status' => 'Error',
-                'Message' => $e->getMessage()
+                'Message' => $e->getMessage(),
             ], 422);
         }
 
@@ -1351,7 +1548,6 @@ log::info('e');
 
     //     // foreach ($listData as $key => $value) {
 
-
     //     //     $wonbrstring = (string)$value->t_wo_nbr;
 
     //     //     if (strlen($wonbrstring) == 0) {
@@ -1367,7 +1563,6 @@ log::info('e');
 
     //     //             if ($currentWo != $wonbrstring) {
     //     //                 $currentWo = $wonbrstring;
-
 
     //     //                 $detail[] = [
     //     //                     'wodpart' => (string)$value->t_wod_part,
@@ -1600,7 +1795,6 @@ log::info('e');
     //         }
     //     }
 
-
     //     // return GeneralResources::collection($data);
     // }
 
@@ -1617,13 +1811,12 @@ log::info('e');
         $level = $req->level ?? '';
         $bin = $req->bin ?? '';
 
-
         $hasil = (new WSAServices())->wsaGetWlb($part, $lot, $site, $loc, $wrh, $level, $bin);
 
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Data Not Found."
+                'Message' => 'Data Not Found.',
             ], 422);
         } else {
 
@@ -1644,7 +1837,7 @@ log::info('e');
         $lot = $req->lot ?? '';
 
         $location = Location::where('location_site', $site)->where('location_code', $loc)->first();
-        if (!$location) {
+        if (! $location) {
             return collect();
         } // 1
         $locationdetail = LocationDetail::query()->where('ld_location_id', $location->id);
@@ -1662,16 +1855,16 @@ log::info('e');
 
         $itemQuery = Item::with('getItemLocation.getLocationDetail')->where('im_item_part', $item)->select('id')->first();
 
-        if (!$itemQuery) {
+        if (! $itemQuery) {
             return collect();
         }
         $arrayloc = [];
         $stringloc = '';
         foreach ($locationdetail as $locdetail) {
-            $stringloc .= $locdetail . ',';
+            $stringloc .= $locdetail.',';
         }
         // dd($stringloc, $itemQuery->id);
-        $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function ($query) use ($lot) {
+        $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function ($query) {
             $query->orderBy('ld_building');
         }])
             ->where('il_item_id', $itemQuery->id)
@@ -1682,11 +1875,10 @@ log::info('e');
         // }
         // dd('a');
 
-
         if (count($getAllItemLocation) == 0) {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "No Data Available"
+                'Message' => 'No Data Available',
             ], 422);
         }
         $hasil = (new WSAServices())->wsaGetWlb($item, $lot, $site, $loc, $warehouse, $level, $bin);
@@ -1695,7 +1887,7 @@ log::info('e');
         //         'Status' => 'Error',
         //         'Message' => "Data Not Found."
         //     ], 422);
-        // } 
+        // }
 
         if ($hasil[0] == 'true') {
             $wsaData = collect($hasil[1]);
@@ -1715,6 +1907,7 @@ log::info('e');
                 return $location;
             });
         }
+
         return response()->json($getAllItemLocation);
     }
 
@@ -1743,7 +1936,7 @@ log::info('e');
             $runningnbr = $prefixTable->pbp_running_nbr;
             $nextrunningnbr = (int) $runningnbr + 1;
             $newRunningNbr = str_pad($nextrunningnbr, 6, '0', STR_PAD_LEFT);
-            $newPrefix = $prefix . $newRunningNbr;
+            $newPrefix = $prefix.$newRunningNbr;
 
             $newTransferData = new PenyerahanBarang();
             $newTransferData->pb_trfid = $newPrefix;
@@ -1772,7 +1965,7 @@ log::info('e');
             $newTransactionHistory->tr_order = '';
             $newTransactionHistory->tr_program = 'Single Transfer Module';
             $newTransactionHistory->tr_activity = 'Receipt Single Transfer';
-            $newTransactionHistory->tr_user =  Auth::user()->username ?? '';
+            $newTransactionHistory->tr_user = Auth::user()->username ?? '';
             // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
             $newTransactionHistory->tr_part = $item ?? '';
             $newTransactionHistory->tr_uom = '';
@@ -1793,14 +1986,15 @@ log::info('e');
 
             return response()->json([
                 'Status' => 'Success',
-                'Message' => "Transfer Item Success for Item : " . $item
+                'Message' => 'Transfer Item Success for Item : '.$item,
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::channel('SingleTransfer')->info($e);
+
             return response()->json([
                 'Status' => 'Error',
-                'Message' => $e->getMessage()
+                'Message' => $e->getMessage(),
             ], 422);
         }
 

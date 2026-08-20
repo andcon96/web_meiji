@@ -49,7 +49,6 @@ Route::get('getAPKLatestVersion', [APIController::class, 'getAPKLatestVersion'])
 Route::post('updatexxinvloc', [APIController::class, 'outboundxxinvDet']);
 
 Route::middleware(['auth:api', 'token.api'])->group(function () {
-
     // PO
     Route::get('getDataPO', [APIPurchaseOrderController::class, 'index']);
     Route::post('saveReceipt', [APIPurchaseOrderController::class, 'saveReceipt']);
@@ -167,10 +166,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post('rejectOtherShipmentPreparation', [APIOtherShipmentPreparationController::class, 'rejectShipmentPreparation']);
     Route::post('approveOtherShipmentPreparation', [APIOtherShipmentPreparationController::class, 'approveShipmentPreparation']);
     Route::get('editOtherShipmentPreparation/{id}', [APIOtherShipmentPreparationController::class, 'editShipmentPreparation']);
-    Route::get('getOtherShipmentPreparationApprovalList', [
-        APIOtherShipmentPreparationController::class,
-        'getOtherShipmentPreparationApprovalList',
-    ]);
+    Route::get('getOtherShipmentPreparationApprovalList', [APIOtherShipmentPreparationController::class, 'getOtherShipmentPreparationApprovalList']);
 
     // Picklist
     Route::get('getDataWo', [APIWorkOrderController::class, 'getDataWo']);
@@ -224,6 +220,15 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getTransferData', [APISingleTransfer::class, 'getTransferData']);
     Route::post('receiptItem', [APISingleTransfer::class, 'receiptItem']);
     Route::get('getSingleTransferData', [APISingleTransfer::class, 'getSingleTransferData']);
+    Route::get('getItemDataST', [APISingleTransfer::class, 'getItemDataST']);
+        Route::get('getSiteDataST', [APISingleTransfer::class, 'getSiteDataST']);
+            Route::get('getLocDataST', [APISingleTransfer::class, 'getLocDataST']);
+                Route::get('getLotDataST', [APISingleTransfer::class, 'getLotDataST']);
+                    Route::get('getWrhDataST', [APISingleTransfer::class, 'getWrhDataST']);
+                        Route::get('getLevelDataST', [APISingleTransfer::class, 'getLevelDataST']);
+       Route::get('getBinDataST', [APISingleTransfer::class, 'getBinDataST']);
+
+ 
 
     Route::post('getWlbData', [APISingleTransfer::class, 'getWlbData']);
 
@@ -300,4 +305,5 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getDetailInventoryByStatus', [APIDashboard::class, 'getDetailInventoryByStatus']);
     Route::get('getInventoryByStatus', [APIDashboard::class, 'getInventoryByStatus']);
 });
+// WSA Picklist
 // WSA Picklist
