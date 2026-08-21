@@ -9,5 +9,9 @@ class PicklistShopping extends Model
 {
     use HasFactory;
 
-    public $table = 'picklist_shopping';
+    protected $table = 'picklist_shopping';
+    public function getPicklistShoppingDetail()
+    {
+        return $this->hasMany(PicklistShoppingDetail::class, 'ps_id');
+    }
 }

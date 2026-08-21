@@ -21,7 +21,7 @@ return new class extends Migration
             $table->String('xxinv_level')->nullable();
             $table->String('xxinv_site')->nullable();
             $table->String('xxinv_wrh')->nullable();
-            $table->decimal('xxinv_qtyoh', 17, 5)->nullable();
+            $table->decimal('xxinv_qtyoh', 27, 10)->nullable();
             $table->decimal('xxinv_qty_pick', 17, 2)->nullable();
             $table->String('xxinv__chr01')->nullable();
             $table->String('xxinv__chr02')->nullable();
@@ -35,10 +35,10 @@ return new class extends Migration
             $table->date('xxinv_due_date')->nullable();
             $table->date('xxinv_rel_date')->nullable();
             $table->date('xxinv_ord_date')->nullable();
-            $table->decimal('xxinv_qty_wrh', 20, 5)->nullable();
-            $table->decimal('xxinv_qty_smp', 20, 5)->nullable();
-            $table->decimal('xxinv_qty_shp', 20, 5)->nullable();
-            $table->decimal('xxinv_qty_wip', 20, 5)->nullable();
+            $table->decimal('xxinv_qty_wrh', 30, 10)->nullable();
+            $table->decimal('xxinv_qty_smp', 30, 10)->nullable();
+            $table->decimal('xxinv_qty_shp', 30, 10)->nullable();
+            $table->decimal('xxinv_qty_wip', 30, 10)->nullable();
 
             $table->timestamps();
         });
