@@ -39,7 +39,7 @@ class APIDashboard extends Controller
 
     }
 
-   
+
 
     public function getInventoryByStatus()
     {
@@ -165,6 +165,104 @@ public function getDetailInventoryByWarehouse(Request $request)
                 'total' => $data->total(),
             ],
         ]);
+    } catch (\Throwable $th) {
+        return response()->json([
+            'status' => false,
+            'message' => $th->getMessage(),
+        ], 500);
+    }
+}
+public function getInventoryByExpDate()
+{
+    try {
+        $startDate = now()->startOfMonth();
+        $endDate = now()->addMonths(6)->endOfMonth();
+
+        $data = xxinvDet::select(
+            DB::raw("DATE_FORMAT(xxinv_exp_date, '%Y-%m') as exp_month"),
+            DB::raw('SUM(xxinv_qtyoh) as total_qty'),
+            DB::raw('SUM(xxinv_qty_wrh) as total_qty_wrh'),
+            DB::raw('COUNT(*) as total_item')
+        )
+            ->whereNotNull('xxinv_exp_date')
+            ->whereBetween('xxinv_exp_date', [$startDate, $endDate])
+            ->groupBy(
+                DB::raw("DATE_FORMAT(xxinv_exp_date, '%Y-%m')")
+            )
+            ->orderBy('exp_month')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $data,
+        ]);
+
+    } catch (\Throwable $th) {
+        return response()->json([
+            'status' => false,
+            'message' => $th->getMessage(),
+        ], 500);
+    }
+}
+
+public function getDetailInventoryByExpDate(Request $request)
+{
+    try {
+        $query = xxinvDet::select(
+            'xxinv_part as part',
+            'xxinv_lot as lot',
+            'xxinv_wrh as wrh',
+            'xxinv_bin as bin',
+            'xxinv_level as level',
+            'xxinv_exp_date as exp_date',
+            'xxinv_qty_wrh as qty_wrh',
+            'xxinv_qtyoh as qty_oh',
+            DB::raw('(xxinv_qty_wrh - xxinv_qtyoh) as qty_diff')
+        )
+        ->whereNotNull('xxinv_exp_date');
+
+        // Filter berdasarkan bulan yang diklik
+        if ($request->filled('exp_month')) {
+            $query->whereRaw(
+                "DATE_FORMAT(xxinv_exp_date, '%Y-%m') = ?",
+                [$request->exp_month]
+            );
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('xxinv_part', 'LIKE', "%{$search}%")
+                    ->orWhere('xxinv_lot', 'LIKE', "%{$search}%")
+                    ->orWhere('xxinv_bin', 'LIKE', "%{$search}%")
+                    ->orWhere('xxinv_level', 'LIKE', "%{$search}%")
+                    ->orWhere('xxinv_wrh', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $data = $query
+            ->orderBy('xxinv_exp_date')
+            ->paginate(10);
+
+        if ($data->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Tidak ada data',
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $data->items(),
+            'meta' => [
+                'current_page' => $data->currentPage(),
+                'last_page' => $data->lastPage(),
+                'per_page' => $data->perPage(),
+                'total' => $data->total(),
+            ],
+        ]);
+
     } catch (\Throwable $th) {
         return response()->json([
             'status' => false,

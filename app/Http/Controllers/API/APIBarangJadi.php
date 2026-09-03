@@ -588,18 +588,22 @@ class APIBarangJadi extends Controller
         }
     }
 
-    public function getStrorage(Request $request)
-    {
-        $storage = xxinvDet::where('xxinv_part', $request->part)->where('xxinv_lot', $request->lot)->get();
+  public function getStrorage(Request $request)
+{
+    $query = xxinvDet::where('xxinv_part', $request->part);
 
-        return response()->json(
-            [
-                'storage' => $storage,
-            ],
-            200,
-        );
-
+ 
+    if ($request->filled('lot')) {
+        $query->where('xxinv_lot', $request->lot);
     }
+
+
+    $storage = $query->get();
+
+    return response()->json([
+        'storage' => $storage,
+    ], 200);
+}
 
     public function wsaWarehouseBarangJadi(Request $req)
     {

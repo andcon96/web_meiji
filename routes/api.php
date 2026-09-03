@@ -231,7 +231,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
                         Route::get('getLevelDataST', [APISingleTransfer::class, 'getLevelDataST']);
        Route::get('getBinDataST', [APISingleTransfer::class, 'getBinDataST']);
 
- 
+
 
     Route::post('getWlbData', [APISingleTransfer::class, 'getWlbData']);
 
@@ -307,6 +307,11 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getDetailInventoryByWarehouse', [APIDashboard::class, 'getDetailInventoryByWarehouse']);
     Route::get('getDetailInventoryByStatus', [APIDashboard::class, 'getDetailInventoryByStatus']);
     Route::get('getInventoryByStatus', [APIDashboard::class, 'getInventoryByStatus']);
+        Route::get('getInventoryByExpDate', [APIDashboard::class, 'getInventoryByExpDate']);
+        Route::get(
+    '/getDetailInventoryByExpDate',
+    [APIDashboard::class, 'getDetailInventoryByExpDate']
+);
 });
 // WSA Picklist
 // WSA Picklist
