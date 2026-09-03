@@ -125,7 +125,7 @@ class APIPurchaseOrderController extends Controller
         $saveData = (new ReceiptServices())->saveDataReceiptPerLot($inputan, $arrayKoneksiImage);
         $poMasterID = $inputan[0]->id_po_mstr;
 
-       
+
 
         if ($saveData[0] == false) {
             $msg = "Failed To Save Receipt Data.";
@@ -539,7 +539,7 @@ class APIPurchaseOrderController extends Controller
             }
             return false;
         })->values();
-      
+
 
         // $dataQAD = $merged->filter(function ($item) use ($getAllItemLocation) {
         //     foreach ($getAllItemLocation as $datas) {
@@ -561,14 +561,14 @@ class APIPurchaseOrderController extends Controller
         // dd($dataQAD);
         // $dataQAD = $dataQAD->select('xxinv_wrh')->groupBy('xxinv_wrh')->sortBy('xxinv_qtyoh')->sortBy('xxinv_wrh')->values();
         $dataQAD = $dataQAD
-    ->groupBy('xxinv_wrh')
-    ->map(function ($items) {
-        $first = $items->first();
-        $first['xxinv_qtyoh'] = $items->sum('xxinv_qtyoh'); // sum() accepts a key shorthand too
-        return $first;
-    })
-    ->sortBy('xxinv_wrh')
-    ->values();
+            ->groupBy('xxinv_wrh')
+            ->map(function ($items) {
+                $first = $items->first();
+                $first['xxinv_qtyoh'] = $items->sum('xxinv_qtyoh'); // sum() accepts a key shorthand too
+                return $first;
+            })
+            ->sortBy('xxinv_wrh')
+            ->values();
         // dd($dataQAD);
         return response()->json($dataQAD);
     }
@@ -1236,10 +1236,15 @@ class APIPurchaseOrderController extends Controller
         }
         if ($req->search) {
             $search = $req->search; // Capture the search parameter
+            if ($search != '') {
+                $levelsearch = explode('|', $search)[0] ?? '';
+                $binSearch = explode('|', $search)[1] ?? '';
+            }
         }
         if ($req->location) {
             $location = $req->location; // Capture the location parameter
         }
+
 
         // Ambil Relati Item ke Location di Web
         // $getAllItemLocation = LocationDetail::query()->with(['getListItem.getItem', 'getMaster']);
@@ -1358,15 +1363,16 @@ class APIPurchaseOrderController extends Controller
         $domainCode = $domain->domain ?? '';
         $results = xxinvDet::query()
             ->where('xxinv_domain', $domainCode)
-            ->where('xxinv_part', $itemCode)
             ->where('xxinv_wrh', $warehouse)
-            ->when($location   !== '', fn($q) => $q->where('xxinv_loc',   $location))
+            ->when($location    !== '', fn($q) => $q->where('xxinv_loc',   $location))
             ->when($binSearch   !== '', fn($q) => $q->where('xxinv_bin',   $binSearch))
             ->when($levelsearch !== '', fn($q) => $q->where('xxinv_level', $levelsearch))
+            ->selectRaw('max(xxinv_part) as xxinv_part, max(xxinv_loc) as xxinv_loc, max(xxinv_lot) as xxinv_lot, xxinv_bin, xxinv_level, xxinv_site, xxinv_wrh, max(xxinv_qty_pick) as xxinv_qty_pick, sum(xxinv_qtyoh) as xxinv_qtyoh')
+            ->groupBy('xxinv_wrh', 'xxinv_level', 'xxinv_bin', 'xxinv_site')
             ->orderBy('xxinv_level')
             ->orderBy('xxinv_bin')
             ->get();
-
+        // dd($results);
         if ($results->isEmpty()) {
             return response()->json([
                 'Status'  => 'Error',
@@ -1378,12 +1384,23 @@ class APIPurchaseOrderController extends Controller
         $totalQtyoh = 0;
 
         foreach ($results as $row) {
-            $totalQtyoh += $row->xxinv_qtyoh;
 
-            $isLastOfBin = $results->last(fn($r) => $r->xxinv_bin === $row->xxinv_bin) === $row;
 
-            if ($isLastOfBin) {
-                // Push as ARRAY to match downstream [] access
+            // $isLastOfBin = $results->last(fn($r) => $r->xxinv_bin === $row->xxinv_bin) === $row;
+
+            // if ($isLastOfBin) {
+            // if ($totalQtyoh <= 0) {
+
+            //check if there is qtyoh
+            $xxinvcheck = xxinvDet::query()
+                ->where('xxinv_domain', $domainCode)
+                ->where('xxinv_site', $row->xxinv_site)
+                ->where('xxinv_wrh', $row->xxinv_wrh)
+                ->where('xxinv_level', $row->xxinv_level)
+                ->where('xxinv_bin', $row->xxinv_bin)
+
+                ->sum('xxinv_qtyoh');
+            if ($xxinvcheck == 0) {
                 $temp->push([
                     't_domain'        => $domainCode,
                     't_inv_part'      => $row->xxinv_part,
@@ -1398,14 +1415,18 @@ class APIPurchaseOrderController extends Controller
                     't_inv_qtyoh'     => $totalQtyoh,
                     't_is_prioritize' => '0',
                 ]);
-
-                $totalQtyoh = 0;
             }
+
+            // }
+
+
+            $totalQtyoh = 0;
+            // }
         }
 
         // Use $temp (processed) instead of $results (raw DB rows)
         $getDataQAD = $temp;
-
+        return response()->json($getDataQAD);
         if ($levelsearch != '') {
             $grouped = $getDataQAD->groupBy(function ($item) {
                 $site  = (string)($item['t_inv_site']  ?? '');
@@ -1424,7 +1445,7 @@ class APIPurchaseOrderController extends Controller
                 return "{$site}-{$wrh}-{$level}-{$bin}";
             });
         }
-
+        // return response()->json($grouped);
         $merged = $grouped->map(function ($items) {
             $first = $items->first();
             $first['t_inv_qtyoh'] = $items->sum(fn($i) => (int)$i['t_inv_qtyoh']);
@@ -1511,7 +1532,7 @@ class APIPurchaseOrderController extends Controller
             }
 
             $allDetails = ReceiptDetail::where('rd_rm_id', $master->id)->get();
-            
+
             foreach ($allDetails as $detail) {
                 $poDetail = PurchaseOrderDetail::find($detail->rd_pod_det_id);
                 $poDetail->pod_qty_rcpt = $poDetail->pod_qty_rcpt - $data->rd_qty_terima;
@@ -1559,5 +1580,43 @@ class APIPurchaseOrderController extends Controller
                 'Message' => "Failed to delete data"
             ], 422);
         }
+    }
+
+    /*po return */
+    public function getPoReturn(Request $req)
+    {
+        $ponbr = $req->search;
+        $purchaseOrder = PurchaseOrderMaster::with([
+            'getDetail',
+            'getReceipt.getDetailReceipt' => function ($query) {
+                $query->selectRaw("rd_pod_det_id, sum(rd_qty_terima * rd_qty_potensi) as total_qty_terima")
+                    ->where('rd_status', '=', 'Approved')
+                    ->groupBy('rd_pod_det_id');
+            }
+        ])->where('po_nbr', $ponbr)->first();
+        // $datareceipt = ReceiptMaster::with('getDetailReceipt')->where('rm_po_nbr', $ponbr)->where('rm_status', '=', 'Approved')->first();
+        if (!$purchaseOrder) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Purchase Order : " . $req->search . " Not Found."
+            ], 422);
+        } else {
+            return response()->json([
+                'DataHeader' => [$purchaseOrder],
+                'DataDetail' => $purchaseOrder->getDetail
+            ], 200);
+        }
+        // $hasil = (new WSAServices())->wsaPurchaseOrder($req->search);
+        // if ($hasil[0] == 'false') {
+        //     return response()->json([
+        //         'Status' => 'Error',
+        //         'Message' => "Purchase Order : " . $req->search . " Not Found."
+        //     ], 422);
+        // }
+
+        // return response()->json([
+        //     'DataHeader' => $hasil[1],
+        //     'DataWSA' => $hasil[2]
+        // ], 200);
     }
 }

@@ -316,7 +316,8 @@ class APIPurchaseOrderApprovalController extends Controller
                             
                             $newxxinv->save();
                         }
-                        $wsaData = (new WSAServices())->wsaInsertCrtWms($site, $dataPurchaseOrderDetail->pod_part, $lotserial, $ref, $dataReceipt->rd_qty_terima);
+                        $qtytotal  = $dataReceipt->rd_qty_terima * $dataReceipt->rd_qty_potensi;
+                        $wsaData = (new WSAServices())->wsaInsertCrtWms($site, $dataPurchaseOrderDetail->pod_part, $lotserial, $ref, $qtytotal);
                         if ($wsaData[0] == 'false') {
                             DB::rollback();
                             return response()->json([

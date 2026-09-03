@@ -261,7 +261,7 @@ class APIController extends Controller
                     'xxinv_qty_pick'  => $item->xxinv_qty_pick,
                     'xxinv_ref'  => $item->xxinv_ref,
                     'xxinv_rel_date' => $item->xxinv_rel_date,
-                    'xxinv_exp_date'  => $item->xxinv_exp_date,                    
+                    'xxinv_exp_date'  => $item->xxinv_exp_date,
                     'xxinv_qty_wrh'  => $item->xxinv_qty_wrh,
                     'xxinv_qty_smp'  => $item->xxinv_qty_smp,
                     'xxinv_qty_shp'  => $item->xxinv_qty_shp,
@@ -278,7 +278,7 @@ class APIController extends Controller
                 ];
             });
 
-            
+
 
             return response()->json([
                 'status' => true,
@@ -834,20 +834,29 @@ class APIController extends Controller
 
     public function outboundxxinvDet(Request $req)
     {
-        Log::channel('customlog')->info('masuk');
+        // Log::channel('customlog')->info('masuk');
+
         DB::beginTransaction();
         try {
-            $xml = simplexml_load_string($req->getContent());
+            $rawContent = $req->getContent();
+            $xml = simplexml_load_string($rawContent);
+
+            // $xml = simplexml_load_string($req->getContent());
+            log::info($xml);
             if ($xml === false) {
+                log::info('error');
                 throw new \Exception('Malformed XML payload');
+            } else {
+                log::info('cont');
             }
 
             $body       = $xml->children('soapenv', true)->Body;
-            $xxlddetwms = $body->children('qdoc', true)->xxlddetwms;
+            $xxlddetwms = $body->children('qdoc', true)->WmsLdDet;
             $dsLdDet    = $xxlddetwms->children('qdoc', true)->dsLd_det;
             $ldDet      = $dsLdDet->children('qdoc', true)->ld_det;
             $fields     = $ldDet->children('qdoc', true);
-
+            // log::info($fields);
+           
             $data = [
                 'operation' => (string) $fields->operation,
                 'ldDomain'  => (string) $fields->ldDomain,
@@ -858,7 +867,7 @@ class APIController extends Controller
                 'ldSite'    => (string) $fields->ldSite,
             ];
 
-            Log::channel('customlog')->info(json_encode($data['ldDomain']));
+            // Log::info(json_encode($data['ldDomain']));
 
             $xxinvDet = xxinvDet::where('xxinv_domain', $data['ldDomain'])
                 ->where('xxinv_site', $data['ldSite'])
@@ -893,7 +902,7 @@ class APIController extends Controller
                 ->header('Content-Type', 'text/xml; charset=utf-8');
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::channel('customlog')->error('outboundxxinvDet error: ' . $e->getMessage());
+            Log::info('outboundxxinvDet error: ' . $e->getMessage());
 
             return response($this->soapAck(false, $e->getMessage()), 500)
                 ->header('Content-Type', 'text/xml; charset=utf-8');

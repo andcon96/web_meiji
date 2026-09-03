@@ -90,6 +90,9 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     // Print WO QR
     Route::post('printQRItemWO', [APIZebraPrinterController::class, 'printQRItemWO']);
 
+    // Po Return
+    Route::post('getPoReturn', [APIPurchaseOrderController::class, 'getPoReturn']);
+
     // WSA PO
     Route::get('wsaWOPrint', [APIPurchaseOrderController::class, 'wsaWOPrint']); //mira
     Route::get('wsaWOMaster', [APIPurchaseOrderController::class, 'wsaWOMaster']); //mira

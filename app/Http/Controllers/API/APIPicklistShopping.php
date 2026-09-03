@@ -586,6 +586,7 @@ class APIPicklistShopping extends Controller
         $wonbrstring = '';
 
         $hasil = (new WSAServices())->wsaGetPickDetail($status, $wonbrreq, $site, $lot);
+        log::info($hasil[0]);
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
@@ -638,6 +639,8 @@ class APIPicklistShopping extends Controller
             if ($currentWo != (string)$value->t_nbr) {
 
                 $currentWo = (string)$value->t_nbr;
+                // log::info('test');
+
                 if ($currentpart != $item) {
                     $locationlist = [];
                     $currentpart = $item;
@@ -646,12 +649,11 @@ class APIPicklistShopping extends Controller
                         // ->when($site !== '', fn($query) => $query->where('xxinv_site', $site))
                         // ->when($lot !== '', fn($query) => $query->where('xxinv_lot', $lot))
                         ->where('xxinv_site', $site)
-                        ->where('xxinv_part', $item)
-                        ->where('xxinv_lot', $lot)
-                        ->where('xxinv_site', $site)
-                        ->where('xxinv_lot', $lot)
-                        ->get();
 
+                        ->where('xxinv_lot', $lot)
+
+                        ->get();
+                    // log::info('item '. $item . ' site '. $site. ' lot '. $lot);
                     if (count($xxinvdet) > 0) {
                         if ($status != 'PICK') {
 
@@ -666,7 +668,7 @@ class APIPicklistShopping extends Controller
 
                             if ($picklistRecord) {
                                 foreach ($xxinvdet as $xxinvdet) {
-                                    if ($xxinvdet->xxinv_part == $item && $xxinvdet->xxinv_lot == $lot && $xxinvdet->xxinv_site == $site) {
+                                    if (strtolower($xxinvdet->xxinv_part) == strtolower($item) && strtolower($xxinvdet->xxinv_lot) == strtolower($lot) && strtolower($xxinvdet->xxinv_site) == strtolower($site)) {
                                         log::info($xxinvdet);
                                         $locationlist[] =  [
                                             // 'id' => (string)$value->t_id ?? '',
@@ -717,16 +719,20 @@ class APIPicklistShopping extends Controller
                             }
                         } else {
                             $picklist = picklistShopping::query();
-                            $picklist->where('ps_approver', Auth::user()->username);
+                            // $picklist->where('ps_approver', Auth::user()->username);
                             $picklist->where('ps_number', (string)$value->t_nbr);
                             $picklist->where('ps_wo_lot', (string)$value->t_id);
                             $picklist->where('ps_part', (string)$value->t_comp);
                             $picklist->where('ps_lot', (string)$value->t_lot);
-
+                            $picklist->where('ps_status', '<>', 'PICK');
                             $picklistRecord  = $picklist->first();
+                            //   if($value->t_nbr == 'woimi-2'){
+                            log::info($value->t_nbr);
+                            // }
                             if (!$picklistRecord) {
+
                                 foreach ($xxinvdet as $xxinvdet) {
-                                    if ($xxinvdet->xxinv_part == $item && $xxinvdet->xxinv_lot == $lot && $xxinvdet->xxinv_site == $site) {
+                                    if (strtolower($xxinvdet->xxinv_part) == strtolower($item) && strtolower($xxinvdet->xxinv_lot) == strtolower($lot) && strtolower($xxinvdet->xxinv_site) == strtolower($site)) {
                                         $locationlist[] =  [
                                             // 'id' => (string)$value->t_id ?? '',
                                             'wrh' => (string)$xxinvdet->xxinv_wrh ?? '',
@@ -941,7 +947,7 @@ class APIPicklistShopping extends Controller
     {
         $data = $req->all();
 
-        log::info($data);
+        // log::info($data);
 
         $countupdated = 0;
         // log::info($data);
@@ -975,7 +981,7 @@ class APIPicklistShopping extends Controller
                                 $level = $locdet['level'];
                                 $bin = $locdet['bin'];
                                 $qty = $locdet['qtyloc'];
-                                log::info($wrh . ' ' . $level . ' ' . $bin . ' ' . $qty);
+                                // log::info($wrh . ' ' . $level . ' ' . $bin . ' ' . $qty);
                                 $qtypick = $det['qtypick'];
                                 $loc = $det['loc'];
                                 $oldloc = $det['oldloc'];
@@ -998,16 +1004,55 @@ class APIPicklistShopping extends Controller
                                     // $xxinvdet->xxinv_qty_shp = $xxinvdet->xxinv_qty_shp + $qty;
                                     // $xxinvdet->xxinv_qty_wrh = $xxinvdet->xxinv_qty_wrh - $qty;
                                     // $xxinvdet->xxinv_qty_shp = $qty;
-                                    $xxinvdet->xxinv_qty_pick = $qty;
-                                    $xxinvdet->xxinv_loc = $loc;
-                                    $xxinvdet->save();
+                                    $qtysisa = $xxinvdet->xxinv_qtyoh;
+                                    $qtykemasan = $det['qtykemasan'];
+                                    $requested = $qty - $qtysisa;
+                                    $packs = ceil($requested / $qtykemasan);
+                                    $toTake = $packs * $qtykemasan;
+                                    //cek WIP
+                                    if ($oldloc == 'WIP') {
+                                        if ($xxinvdet->xxinv_qtyoh < $qty) {
+                                            // find another qty wip
+                                            $xxinvdetblt = xxinvDet::where('xxinv_domain', $domainCode)
+                                                ->where('xxinv_part', $wodpart)
+                                                ->where('xxinv_site', $site)
+                                                ->where('xxinv_loc', '!=', 'WIP')
+                                                ->where('xxinv_lot', $lot)
+                                                ->where('xxinv_wrh', $wrh)
+                                                ->where('xxinv_level', $level)
+                                                ->where('xxinv_bin', $bin)
+                                                ->first();
+                                            if ($xxinvdetblt) {
+
+                                                if (($toTake + $xxinvdetblt->xxinv_qty_pick) <= $xxinvdetblt->xxinv_qtyoh) {
+                                                    $xxinvdetblt->xxinv_qty_pick += $toTake;
+                                                    $xxinvdetblt->save();
+                                                    $xxinvdet->xxinv_qty_pick = $qtysisa;
+                                                    $xxinvdet->save();
+                                                }
+                                            }
+                                        } else {
+                                            return response()->json([
+                                                'Status' => 'Error',
+                                                'Message' => "Qty Pick WIP Tidak Cukup untuk Part : " . $wodpart . " Lot : " . $lot
+                                            ], 422);
+                                        }
+                                    } else {
+                                        $xxinvdet->xxinv_qty_pick = $xxinvdet->xxinv_qty_pick + $toTake;
+                                        $xxinvdet->xxinv_qty_wrh = $xxinvdet->xxinv_qtyoh - $toTake;
+                                        // $xxinvdet->xxinv_loc = $loc;
+                                        $xxinvdet->save();
+                                    }
+
+
 
                                     $countupdated++;
 
                                     $checkpicklistshopping = PicklistShopping::where('ps_number', $wonbr)
                                         ->where('ps_part', $wodpart)
                                         ->where('ps_lot', $lot)
-                                        ->where('ps_status', 'shopping')
+                                        ->where('ps_wo_lot', $wolot)
+                                        ->where('ps_status', 'PICK')
                                         ->where('ps_warehouse', $wrh)
                                         ->where('ps_level', $level)
                                         ->where('ps_bin', $bin)
@@ -1044,6 +1089,25 @@ class APIPicklistShopping extends Controller
                                         $shoppingdetail->psd_status = "shopping";
                                         $shoppingdetail->psd_approver = $approver;
                                         $shoppingdetail->save();
+                                    } else {
+                                        $checkpicklistshopping->ps_status = "shopping";
+
+                                        $checkpicklistshopping->save();
+                                        $picklistshoppingdetail = PicklistShoppingDetail::where('psd_nbr', $wonbr)
+                                            ->where('psd_part', $wodpart)
+                                            ->where('psd_lot', $lot)
+                                            ->where('psd_site', $site)
+                                            ->where('psd_loc', $loc)
+                                            ->where('psd_wh', $wrh)
+                                            ->where('psd_level', $level)
+                                            ->where('psd_bin', $bin)
+                                            ->first();
+                                        if ($picklistshoppingdetail) {
+                                            $picklistshoppingdetail->psd_qty_picked = $qty;
+                                            $picklistshoppingdetail->psd_qty_topick = $det['qtytopick'] ?? 0;
+                                            $picklistshoppingdetail->psd_qty_kemasan = $det['qtykemasan'] ?? 0;
+                                            $picklistshoppingdetail->save();
+                                        }
                                     }
 
                                     $newTransactionHistory = new TransactionHistory();
@@ -1633,7 +1697,7 @@ class APIPicklistShopping extends Controller
             ->where('ps_approver', $req->player)
             ->when($wonbr != '', fn($query) => $query->where('ps_number', $wonbr))
             ->get();
-        // dd($checkpicklistshopping);
+
         if ($checkpicklistshopping) {
             foreach ($checkpicklistshopping as $check) {
                 $statusps = $check->ps_status;
@@ -1644,22 +1708,30 @@ class APIPicklistShopping extends Controller
                 $item = (string)$check->ps_part ?? '';
                 $site = '2100';
                 $lot = (string)$check->ps_lot ?? '';
+                $wrh = $check->ps_warehouse ?? '';
+                $level = $check->ps_level ?? '';
+                $bin = $check->ps_bin ?? '';
                 // dd($lot);
 
                 $xxinvdet = xxinvDet::where('xxinv_part', $item)
                     ->where('xxinv_site', $site)
                     ->where('xxinv_lot', $lot)
+                    ->where('xxinv_wrh', $wrh)
+                    ->where('xxinv_level', $level)
+                    ->where('xxinv_bin', $bin)
                     ->first();
                 // dd($xxinvdet);
 
                 // dd($wonbrps,$status,$siteps,$lotps);
                 $status = '';
                 $hasil = (new WSAServices())->wsaGetPickDetail($status, $wonbrps, $siteps, $lotps);
+
                 if ($hasil[0] == 'false') {
-                    return response()->json([
-                        'Status' => 'Error',
-                        'Message' => "Data Not Found."
-                    ], 422);
+                    continue;
+                    // return response()->json([
+                    //     'Status' => 'Error',
+                    //     'Message' => "Data Not Found."
+                    // ], 422);
                 } else {
                     $listData = $hasil[1];
                     // dd($hasil);
@@ -1671,9 +1743,10 @@ class APIPicklistShopping extends Controller
 
                         if ($xxinvdet) {
                             if (
-                                $xxinvdet->xxinv_loc == $value->t_loc
-                                && $xxinvdet->xxinv_lot == $value->t_lot
-                                && $xxinvdet->xxinv_part == $value->t_comp
+                                strtolower($xxinvdet->xxinv_loc) == strtolower($value->t_loc)
+                                && strtolower($xxinvdet->xxinv_lot) == strtolower($value->t_lot)
+                                && strtolower($xxinvdet->xxinv_part) == strtolower($value->t_comp)
+
                             ) {
                                 // dd((string)$value->t_nbr);
 
@@ -1687,6 +1760,7 @@ class APIPicklistShopping extends Controller
                                         'qtyloc' => (string)$xxinvdet->xxinv_qty_pick ?? '0',
                                         'status' => (string)$check->ps_status ?? '',
                                         'qtyoh' => (string)$xxinvdet->xxinv_qtyoh ?? '0',
+                                        'qtywip' => (string)$xxinvdet->xxinv_qty_wip ?? '0'
                                     ];
 
                                     // dd('b');
@@ -1848,7 +1922,8 @@ class APIPicklistShopping extends Controller
         // $bin = $data['bin'] ?? '';
         // $wonbr = $req->input('wonbr');
         // $locto = $req->query('loc');
-
+        // log::info($data);
+        // dd('stop');
         foreach ($data['detail'] as $key => $value) {
             foreach ($value['locationlist'] as $location) {
                 if (strtolower($location['status']) == 'yes') {
@@ -1869,6 +1944,7 @@ class APIPicklistShopping extends Controller
                         ->where('ps_level', $level)
                         ->where('ps_bin', $bin)
                         ->first();
+
                     if (!$picklistreceipt) {
                         return response()->json([
                             'Status' => 'Error',
@@ -1882,6 +1958,7 @@ class APIPicklistShopping extends Controller
                         ->where('xxinv_level', $picklistreceipt->ps_level)
                         ->where('xxinv_bin', $picklistreceipt->ps_bin)
                         ->first();
+
                     if (!$xxinvdet) {
                         return response()->json([
                             'Status' => 'Error',
@@ -1892,6 +1969,10 @@ class APIPicklistShopping extends Controller
                     try {
                         $picklistreceipt->ps_status = $status;
                         $picklistreceipt->save();
+
+                        // $xxinvdet->xxinv_qty_wip = $xxinvdet->xxinv_qty_pick;
+                        // $xxinvdet->xxinv_qty_pick = 0;
+                        // $xxinvdet->save();
                         // $xxinvdet->xxinv_qty_shp = $xxinvdet->xxinv_qty_shp - $qty;
                         // $xxinvdet->xxinv_qty_wrh = $xxinvdet->xxinv_qty_wrh + $qty;
                         // $xxinvdet->save();
@@ -1958,217 +2039,227 @@ class APIPicklistShopping extends Controller
         $site = $data['site'] ?? '2100';
         $woid = $data['woid'] ?? '';
         $wopart = $data['wopart'] ?? '';
-
-
-        // $picknbr = $req->input('picknbr');
-        // $lot = $data['lot'];
-        // $part = $data['wodpart'];
-        // dd($req->all());
-        // $qty = $data['qtywip'];
         $user = $req->input('username');
-        // $site = $data['site'] ?? '';
         $loc = $data['loc'] ?? '';
-        // $wrh = $data['wrh'] ?? '';
-        // $level = $data['level'] ?? '';
-        // $bin = $data['bin'] ?? '';
         $wonbr = $req->input('wonbr');
-        // $locto = $data['loc'];
-        log::info($data);
-        log::info($req->all());
 
-        if ($status == 'Receipt') {
-            foreach ($data['detail'] as $key => $value) {
-                foreach ($value['locationlist'] as $location) {
-                    if (strtolower($location['status']) == 'yes') {
-                        $part = $value['wodpart'];
-                        $lot = $value['lot'];
-                        $wrh = $location['wrh'];
-                        $level = $location['level'];
-                        $bin = $location['bin'];
-                        $qtypick = $location['qtyloc'];
+        DB::beginTransaction();
+        try {
+            if ($status == 'Receipt') {
+                foreach ($data['detail'] as $key => $value) {
+                    foreach ($value['locationlist'] as $location) {
+                        if (strtolower($location['status']) == 'yes') {
+                            $part = $value['wodpart'];
+                            $lot = $value['lot'];
+                            $wrh = $location['wrh'];
+                            $level = $location['level'];
+                            $bin = $location['bin'];
+                            $qtypick = $location['qtyloc'];
 
-                        $picklist = PicklistShopping::where('ps_number', $wonbr)
-                            ->where('ps_part', $part)
-                            ->where('ps_lot', $lot)
-                            ->where('ps_warehouse', $wrh)
-                            ->where('ps_level', $level)
-                            ->where('ps_bin', $bin)
-                            ->first();
-                        if (!$picklist) {
-                            return response()->json([
-                                'Status' => 'Error',
-                                'Message' => "Receipt Picklist Failed for Picklist : " . $wonbr
-                            ], 422);
-                        } else {
-                            $picklist->ps_status = $status;
-                            $picklist->save();
-                            $newTransactionHistory = new TransactionHistory();
-                            $newTransactionHistory->tr_nbr = $wonbr;
-                            $newTransactionHistory->tr_order = $wonbr;
-                            $newTransactionHistory->tr_program = 'Picklist Module';
-                            $newTransactionHistory->tr_activity = 'Receipt';
-                            $newTransactionHistory->tr_user =  $user ?? '';
-                            // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
-                            $newTransactionHistory->tr_part = $part ?? '';
-                            $newTransactionHistory->tr_uom =  '';
-                            $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-                            $newTransactionHistory->tr_lot =  $lot ?? '';
-                            $newTransactionHistory->tr_qty =  $qty ?? '';
-                            $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                            $newTransactionHistory->tr_reference =  '';
-                            $newTransactionHistory->tr_site =  $site ?? '';
-                            $newTransactionHistory->tr_location = $loc ?? '';
-                            $newTransactionHistory->tr_warehouse =  $wrh ?? '';
-                            $newTransactionHistory->tr_level = $level ?? '';
-                            $newTransactionHistory->tr_bin =  $bin ?? '';
-                            $newTransactionHistory->tr_remark = '';
-                            $newTransactionHistory->save();
+                            $picklist = PicklistShopping::where('ps_number', $wonbr)
+                                ->where('ps_part', $part)
+                                ->where('ps_lot', $lot)
+                                ->where('ps_wo_lot', $woid)
+                                ->where('ps_warehouse', $wrh)
+                                ->where('ps_level', $level)
+                                ->where('ps_bin', $bin)
+                                ->first();
+                            log::info($picklist);
+                            if (!$picklist) {
+                                return response()->json([
+                                    'Status' => 'Error',
+                                    'Message' => "Receipt Picklist Failed for Picklist : " . $wonbr
+                                ], 422);
+                            } else {
+                                $picklist->ps_status = $status;
+                                $picklist->save();
+
+                                $xxinvdet = xxinvDet::where('xxinv_part', $picklist->ps_part)
+                                    ->where('xxinv_site', $site)
+                                    ->where('xxinv_lot', $picklist->ps_lot)
+                                    ->where('xxinv_wrh', $picklist->ps_warehouse)
+                                    ->where('xxinv_level', $picklist->ps_level)
+                                    ->where('xxinv_bin', $picklist->ps_bin)
+                                    ->first();
+                                $xxinvdet->xxinv_qty_wip = $xxinvdet->xxinv_qty_pick;
+                                $xxinvdet->xxinv_qty_pick = 0;
+                                $xxinvdet->save();
+
+                                $newTransactionHistory = new TransactionHistory();
+                                $newTransactionHistory->tr_nbr = $wonbr;
+                                $newTransactionHistory->tr_order = $wonbr;
+                                $newTransactionHistory->tr_program = 'Picklist Module';
+                                $newTransactionHistory->tr_activity = 'Receipt';
+                                $newTransactionHistory->tr_user =  $user ?? '';
+                                // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                                $newTransactionHistory->tr_part = $part ?? '';
+                                $newTransactionHistory->tr_uom =  '';
+                                $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                                $newTransactionHistory->tr_lot =  $lot ?? '';
+                                $newTransactionHistory->tr_qty =  $qty ?? '';
+                                $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                                $newTransactionHistory->tr_reference =  '';
+                                $newTransactionHistory->tr_site =  $site ?? '';
+                                $newTransactionHistory->tr_location = $loc ?? '';
+                                $newTransactionHistory->tr_warehouse =  $wrh ?? '';
+                                $newTransactionHistory->tr_level = $level ?? '';
+                                $newTransactionHistory->tr_bin =  $bin ?? '';
+                                $newTransactionHistory->tr_remark = '';
+                                $newTransactionHistory->save();
+                            }
+                        }
+                    }
+                }
+                // $pickloctodata = PicklistLocationTo::where('picklist_number', $picknbr)->first();
+                // if ($pickloctodata == null) {
+                //     return response()->json([
+                //         'Status' => 'Error',
+                //         'Message' => "Location To for Picklist : " . $picknbr . " Not Found. Please do Transfer Process First."
+                //     ], 422);
+                // }
+                // $picklocto = $pickloctodata->location_to;
+
+
+                // foreach ($wonbr as $wo) {
+                // foreach ($wo['detail'] as $det) {
+                // if ($wo['wonbrnbr'] == 'manual') {
+                //     $wonbr = '';
+                // } else {
+                //     $wonbr = $wo['wonbrnbr'];
+                // }
+                // $wodpart = $data['wodpart'];
+                // $lot = $data['lot'];
+                // $wrh = $data['wrh'];
+                // $level = $data['level'];
+                // $bin = $data['bin'];
+                // $qtypick = $data['qtywip'];
+                // $site = $req->input('site');
+
+                // $loc = $req->input('loc');
+                // dd($req->all(),$status,$pickloctodata,$picklocto);
+                // $qxtendsingleitem = (new QxtendServices())->qxTransferSingleItemWo($wodpart, $wonbr, $site, $site, $loc, $picklocto, $qtypick, '', '', '', $lot);
+                // if ($qxtendsingleitem == 'false') {
+                //     return response()->json([
+                //         'Status' => 'Error',
+                //         'Message' => "Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
+                //     ], 422);
+                // }
+                // }
+                // }
+
+                // $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $status, $qty, $part, $lot);
+                // $picklist = PicklistShopping::where('ps_number', $wonbr)
+                //     ->where('ps_part', $part)
+                //     ->where('ps_lot', $lot)
+                //     ->where('ps_warehouse', $wrh)
+                //     ->where('ps_level', $level)
+                //     ->where('ps_bin', $bin)
+                //     ->first();
+
+
+                // if (!$picklist) {
+                //     return response()->json([
+                //         'Status' => 'Error',
+                //         'Message' => "Receipt Picklist Failed for Picklist : " . $wonbr
+                //     ], 422);
+                // } else {
+                //     $picklist->ps_status = $status;
+                //     $picklist->save();
+                //     $newTransactionHistory = new TransactionHistory();
+                //     $newTransactionHistory->tr_nbr = $wonbr;
+                //     $newTransactionHistory->tr_order = $wonbr;
+                //     $newTransactionHistory->tr_program = 'Picklist Module';
+                //     $newTransactionHistory->tr_activity = 'Receipt';
+                //     $newTransactionHistory->tr_user =  $user ?? '';
+                //     // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                //     $newTransactionHistory->tr_part = $part ?? '';
+                //     $newTransactionHistory->tr_uom =  '';
+                //     $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                //     $newTransactionHistory->tr_lot =  $lot ?? '';
+                //     $newTransactionHistory->tr_qty =  $qty ?? '';
+                //     $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                //     $newTransactionHistory->tr_reference =  '';
+                //     $newTransactionHistory->tr_site =  $site ?? '';
+                //     $newTransactionHistory->tr_location = $loc ?? '';
+                //     $newTransactionHistory->tr_warehouse =  $wrh ?? '';
+                //     $newTransactionHistory->tr_level = $level ?? '';
+                //     $newTransactionHistory->tr_bin =  $bin ?? '';
+                //     $newTransactionHistory->tr_remark = '';
+                //     $newTransactionHistory->save();
+                //     return response()->json(
+                //         'success',
+                //         200
+                //     );
+                // }
+            } else if ($status == 'Deny') {
+                $statusnew = 'PICK';
+                //return to previous status
+                // $status = 'Approve';
+                // $hasil = (new WSAServices())->wsaUpdateStatusPick( $statusnew, $qty, $part, $lot);
+                // if ($hasil[0] == 'false') {
+                //     return response()->json([
+                //         'Status' => 'Error',
+                //         'Message' => "Deny Picklist Failed for Picklist : " . $picknbr
+                //     ], 422);
+                // }
+                foreach ($data['detail'] as $key => $value) {
+                    foreach ($value['locationlist'] as $location) {
+                        if (strtolower($location['status']) == 'yes') {
+                            $part = $value['wodpart'];
+                            $lot = $value['lot'];
+                            $wrh = $location['wrh'];
+                            $level = $location['level'];
+                            $bin = $location['bin'];
+                            $qtypick = $location['qtyloc'];
+
+                            $picklist = PicklistShopping::where('ps_number', $wonbr)
+                                ->where('ps_part', $part)
+                                ->where('ps_lot', $lot)
+                                ->where('ps_warehouse', $wrh)
+                                ->where('ps_level', $level)
+                                ->where('ps_bin', $bin)
+                                ->first();
+                            if (!$picklist) {
+                                return response()->json([
+                                    'Status' => 'Error',
+                                    'Message' => "Receipt Picklist Failed for Picklist : " . $wonbr
+                                ], 422);
+                            } else {
+                                $picklist->ps_status = $statusnew;
+                                $picklist->save();
+                                $newTransactionHistory = new TransactionHistory();
+                                $newTransactionHistory->tr_nbr = $wonbr;
+                                $newTransactionHistory->tr_order = $wonbr;
+                                $newTransactionHistory->tr_program = 'Picklist Module';
+                                $newTransactionHistory->tr_activity = 'Deny Receipt';
+                                $newTransactionHistory->tr_user =  $user ?? '';
+                                // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                                $newTransactionHistory->tr_part = $part ?? '';
+                                $newTransactionHistory->tr_uom =  '';
+                                $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                                $newTransactionHistory->tr_lot =  $lot ?? '';
+                                $newTransactionHistory->tr_qty =  $qty ?? '';
+                                $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                                $newTransactionHistory->tr_reference =  '';
+                                $newTransactionHistory->tr_site =  $site ?? '';
+                                $newTransactionHistory->tr_location = $loc ?? '';
+                                $newTransactionHistory->tr_warehouse =  $wrh ?? '';
+                                $newTransactionHistory->tr_level = $level ?? '';
+                                $newTransactionHistory->tr_bin =  $bin ?? '';
+                                $newTransactionHistory->tr_remark = '';
+                                $newTransactionHistory->save();
+                            }
                         }
                     }
                 }
             }
-            // $pickloctodata = PicklistLocationTo::where('picklist_number', $picknbr)->first();
-            // if ($pickloctodata == null) {
-            //     return response()->json([
-            //         'Status' => 'Error',
-            //         'Message' => "Location To for Picklist : " . $picknbr . " Not Found. Please do Transfer Process First."
-            //     ], 422);
-            // }
-            // $picklocto = $pickloctodata->location_to;
-
-
-            // foreach ($wonbr as $wo) {
-            // foreach ($wo['detail'] as $det) {
-            // if ($wo['wonbrnbr'] == 'manual') {
-            //     $wonbr = '';
-            // } else {
-            //     $wonbr = $wo['wonbrnbr'];
-            // }
-            // $wodpart = $data['wodpart'];
-            // $lot = $data['lot'];
-            // $wrh = $data['wrh'];
-            // $level = $data['level'];
-            // $bin = $data['bin'];
-            // $qtypick = $data['qtywip'];
-            // $site = $req->input('site');
-
-            // $loc = $req->input('loc');
-            // dd($req->all(),$status,$pickloctodata,$picklocto);
-            // $qxtendsingleitem = (new QxtendServices())->qxTransferSingleItemWo($wodpart, $wonbr, $site, $site, $loc, $picklocto, $qtypick, '', '', '', $lot);
-            // if ($qxtendsingleitem == 'false') {
-            //     return response()->json([
-            //         'Status' => 'Error',
-            //         'Message' => "Transfer Qty Pick Failed for Picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $wodpart
-            //     ], 422);
-            // }
-            // }
-            // }
-
-            // $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, $status, $qty, $part, $lot);
-            // $picklist = PicklistShopping::where('ps_number', $wonbr)
-            //     ->where('ps_part', $part)
-            //     ->where('ps_lot', $lot)
-            //     ->where('ps_warehouse', $wrh)
-            //     ->where('ps_level', $level)
-            //     ->where('ps_bin', $bin)
-            //     ->first();
-
-
-            // if (!$picklist) {
-            //     return response()->json([
-            //         'Status' => 'Error',
-            //         'Message' => "Receipt Picklist Failed for Picklist : " . $wonbr
-            //     ], 422);
-            // } else {
-            //     $picklist->ps_status = $status;
-            //     $picklist->save();
-            //     $newTransactionHistory = new TransactionHistory();
-            //     $newTransactionHistory->tr_nbr = $wonbr;
-            //     $newTransactionHistory->tr_order = $wonbr;
-            //     $newTransactionHistory->tr_program = 'Picklist Module';
-            //     $newTransactionHistory->tr_activity = 'Receipt';
-            //     $newTransactionHistory->tr_user =  $user ?? '';
-            //     // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
-            //     $newTransactionHistory->tr_part = $part ?? '';
-            //     $newTransactionHistory->tr_uom =  '';
-            //     $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-            //     $newTransactionHistory->tr_lot =  $lot ?? '';
-            //     $newTransactionHistory->tr_qty =  $qty ?? '';
-            //     $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-            //     $newTransactionHistory->tr_reference =  '';
-            //     $newTransactionHistory->tr_site =  $site ?? '';
-            //     $newTransactionHistory->tr_location = $loc ?? '';
-            //     $newTransactionHistory->tr_warehouse =  $wrh ?? '';
-            //     $newTransactionHistory->tr_level = $level ?? '';
-            //     $newTransactionHistory->tr_bin =  $bin ?? '';
-            //     $newTransactionHistory->tr_remark = '';
-            //     $newTransactionHistory->save();
-            //     return response()->json(
-            //         'success',
-            //         200
-            //     );
-            // }
-        } else if ($status == 'Deny') {
-            $statusnew = 'PICK';
-            //return to previous status
-            // $status = 'Approve';
-            // $hasil = (new WSAServices())->wsaUpdateStatusPick( $statusnew, $qty, $part, $lot);
-            // if ($hasil[0] == 'false') {
-            //     return response()->json([
-            //         'Status' => 'Error',
-            //         'Message' => "Deny Picklist Failed for Picklist : " . $picknbr
-            //     ], 422);
-            // }
-            foreach ($data['detail'] as $key => $value) {
-                foreach ($value['locationlist'] as $location) {
-                    if (strtolower($location['status']) == 'yes') {
-                        $part = $value['wodpart'];
-                        $lot = $value['lot'];
-                        $wrh = $location['wrh'];
-                        $level = $location['level'];
-                        $bin = $location['bin'];
-                        $qtypick = $location['qtyloc'];
-
-                        $picklist = PicklistShopping::where('ps_number', $wonbr)
-                            ->where('ps_part', $part)
-                            ->where('ps_lot', $lot)
-                            ->where('ps_warehouse', $wrh)
-                            ->where('ps_level', $level)
-                            ->where('ps_bin', $bin)
-                            ->first();
-                        if (!$picklist) {
-                            return response()->json([
-                                'Status' => 'Error',
-                                'Message' => "Receipt Picklist Failed for Picklist : " . $wonbr
-                            ], 422);
-                        } else {
-                            $picklist->ps_status = $statusnew;
-                            $picklist->save();
-                            $newTransactionHistory = new TransactionHistory();
-                            $newTransactionHistory->tr_nbr = $wonbr;
-                            $newTransactionHistory->tr_order = $wonbr;
-                            $newTransactionHistory->tr_program = 'Picklist Module';
-                            $newTransactionHistory->tr_activity = 'Deny Receipt';
-                            $newTransactionHistory->tr_user =  $user ?? '';
-                            // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
-                            $newTransactionHistory->tr_part = $part ?? '';
-                            $newTransactionHistory->tr_uom =  '';
-                            $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-                            $newTransactionHistory->tr_lot =  $lot ?? '';
-                            $newTransactionHistory->tr_qty =  $qty ?? '';
-                            $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                            $newTransactionHistory->tr_reference =  '';
-                            $newTransactionHistory->tr_site =  $site ?? '';
-                            $newTransactionHistory->tr_location = $loc ?? '';
-                            $newTransactionHistory->tr_warehouse =  $wrh ?? '';
-                            $newTransactionHistory->tr_level = $level ?? '';
-                            $newTransactionHistory->tr_bin =  $bin ?? '';
-                            $newTransactionHistory->tr_remark = '';
-                            $newTransactionHistory->save();
-                        }
-                    }
-                }
-            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Transaction Failed: " . $e->getMessage()
+            ], 422);
         }
     }
     public function getLocationData(Request $req)
@@ -2588,24 +2679,23 @@ class APIPicklistShopping extends Controller
         // $part = $data['wopart'] ?? '';
         // $qty = $data['qtypick'] ?? '';
         $wonbr = $data['wonbrnbr'] ?? '';
-        $location = $data['loc'] ?? '';
-        $lot = $data['lot'] ?? '';
+        $loc = $data['loc'] ?? '';
+        $woid = $data['woid'] ?? '';
         $effdate = Carbon::today()->format('Y-m-d');
         $part = $data['wopart'] ?? '';
         $site = $data['site'] ?? '2100';
-        $lotserial = $data['woid'] ?? '';
+        // $lotserial = $data['woid'] ?? '';
+        $lotserial = '';
+        $qty = 0;
         // $datawo = $data['wonbr'];
         //  $detail = $datawo['detail'];
         DB::beginTransaction();
         try {
 
-
+            // log::info($data);
+            // dd('stop');
             foreach ($data['detail'] as $key => $value) {
                 // $datadetail = $dw['detail'];
-
-
-
-
                 // $picknbr = $req->picknbr ?? '';
                 // $part = $req->part ?? '';
                 // $lotserial = $req->lot ?? '';
@@ -2616,45 +2706,110 @@ class APIPicklistShopping extends Controller
                 // $effdate = Carbon::today()->format('Y-m-d');
                 // $location = $dw['loc'] ?? '';
                 // $user = $req->approver ?? '';
-                $qty = $value['qtypick'] ?? '0';
+                // $wodpart = $value
+                // $qty = $value['qtypick'] ?? '0';
+                // $lot = $value['lot'] ?? '';
+                $qty = 0;
+                $lotserial = $value['lot'];
+                $loc = $value['loc'];
 
-                $qxtendWoIssue = (new QxtendServices())->qxWorkOrderComponentIssue($wonbr, $location, $lot, $effdate, $part, $qty, $site, $lotserial);
-                // $effdata =
-                if ($qxtendWoIssue[0] == false) {
-                    Log::channel('Picklist')->info("Wo issue failed for picklist WO : " . $wonbr . " Part : " . $part);
 
-                    return response()->json([
-                        'Status' => 'Error',
+                foreach ($value['locationlist'] as $location) {
+                    // if (strtolower($location['status']) == 'yes') {
+                    $wodpart = $value['wodpart'];
+                    $lot = $value['lot'];
+                    $wrh = $location['wrh'];
+                    $level = $location['level'];
+                    $bin = $location['bin'];
+                    $qtypick = $location['qtyloc'];
+                    // $qty = $qty + $location['qtywip'];
+                    $qtyissue = $location['qtyissue'];
+                    $qty = $qty + $qtyissue;
+                    // $loc = $location['loc'];
 
-                        'Message' => $qxtendWoIssue[1] ?? 'Unknown error occurred'
-                    ], 422);
-                    //'Message' => "Wo issue failed for picklist : " . $picknbr . " WO : " . $wonbr. " Part : " . $part
-                } else {
+                    $picklist = PicklistShopping::where('ps_number', $wonbr)
+                        ->where('ps_part', $wodpart)
+                        ->where('ps_lot', $lot)
+                        ->where('ps_wo_lot', $woid)
+                        ->where('ps_warehouse', $wrh)
+                        ->where('ps_level', $level)
+                        ->where('ps_bin', $bin)
+                        ->first();
+                    log::info($wonbr . ' ' . $part . ' ' . $lot . ' ' . $wrh . ' ' . $level . ' ' . $bin);
+                    if (!$picklist) {
+                        Log::channel('Picklist')->info("Issue WO Failed for Picklist : " . $wonbr . " Part : " . $part . ' not found');
+                        return response()->json([
+                            'Status' => 'Error',
+                            'Message' => "Issue WO Failed for Picklist : " . $wonbr . " Part : " . $part . ' not found'
+                        ], 422);
+                    } else {
+                        $picklist->ps_status = 'Issued';
+                        $picklist->save();
 
-                    foreach ($value['locationlist'] as $location) {
-                        // if (strtolower($location['status']) == 'yes') {
-                        $wrh = $location['wrh'];
-                        $level = $location['level'];
-                        $bin = $location['bin'];
-                        $loc = $location['loc'];
-
-                        $picklist = PicklistShopping::where('ps_number', $wonbr)
-                            ->where('ps_part', $part)
-                            ->where('ps_lot', $lot)
-                            ->where('ps_warehouse', $wrh)
-                            ->where('ps_level', $level)
-                            ->where('ps_bin', $bin)
+                        $xxinvdet = xxinvDet::where('xxinv_part', $wodpart)
+                            ->where('xxinv_site', $site)
+                            ->where('xxinv_lot', $lot)
+                            ->where('xxinv_loc', $loc)
+                            ->where('xxinv_wrh', $wrh)
+                            ->where('xxinv_level', $level)
+                            ->where('xxinv_bin', $bin)
                             ->first();
-                        if (!$picklist) {
-                            Log::channel('Picklist')->info("Receipt Picklist Failed for Picklist : " . $wonbr . " Part : " . $part);
-                            return response()->json([
-                                'Status' => 'Error',
-                                'Message' => "Receipt Picklist Failed for Picklist : " . $wonbr . " Part : " . $part
-                            ], 422);
-                        } else {
-                            $picklist->ps_status = 'Issued';
-                            $picklist->save();
-                            
+                        if ($xxinvdet) {
+
+                            $newqty = $xxinvdet->xxinvdet_qty_wip - $qty;
+
+
+
+                            // $xxinvwip = xxinvDet::where('xxinv_part', $wodpart)
+                            //     ->where('xxinv_site', $site)
+                            //     ->where('xxinv_lot', $lot)
+                            //     ->where('xxinv_loc', 'WIP')
+                            //     ->where('xxinv_wrh', $wrh)
+                            //     ->where('xxinv_level', $level)
+                            //     ->where('xxinv_bin', $bin)
+
+                            //     ->first();
+                            // if (!$xxinvwip) {
+                            //     $newxxinvwip = new xxinvDet();
+                            //     $newxxinvwip->xxinv_domain = $xxinvdet->xxinv_domain;
+                            //     $newxxinvwip->xxinv_part = $xxinvdet->xxinv_part;
+                            //     $newxxinvwip->xxinv_loc = 'WIP';
+                            //     $newxxinvwip->xxinv_lot = $xxinvdet->xxinv_lot;
+                            //     $newxxinvwip->xxinv_bin = $xxinvdet->xxinv_bin;
+                            //     $newxxinvwip->xxinv_level = $xxinvdet->xxinv_level;
+                            //     $newxxinvwip->xxinv_wrh = $xxinvdet->xxinv_wrh;
+                            //     $newxxinvwip->xxinv_qtyoh = $newqty;
+                            //     $newxxinvwip->save();
+                            // }
+                            // else{
+                            // if($newqty < $xxinvdet->xxinv_qty_wip && $xxinvdet->xxinv_loc != "WIP"){
+                            //     $xxinvwip->xxinv_qtyoh = $xxinvwip->xxinv_qtyoh + $newqty;
+                            //     $xxinvwip->save();
+                            // }
+                            // }
+
+                            // else{
+                            //     if($xxinvwip->xxinv_qtyoh > 0){
+                            //         $xxinvwip->xxinv_qtyoh = $xxinvwip->xxinv_qtyoh - $xxinvwip->xxinv_qty_wip;
+                            //         $xxinvwip->xxinv_qty_wip = 0;
+                            //         $xxinvwip->save();
+                            //     }
+
+                            // }
+                            // if($xxinvdet->xxinv_loc == 'WIP'){
+                            //     $xxinvdet->xxinv_qtyoh = $xxinvdet->xxinv_qtyoh - $qty;
+                            //     $xxinvdet->xxinv_qty_wip = 0;
+                            //     $xxinvdet->save();
+                            // }
+                            // else{
+                            $xxinvdet->xxinv_qtyoh = $xxinvdet->xxinv_qtyoh - $xxinvdet->xxinv_qty_wip;
+                            $xxinvdet->xxinv_qty_wip = 0;
+                            $xxinvdet->save();
+
+
+                            // }
+
+
                             $newTransactionHistory = new TransactionHistory();
                             $newTransactionHistory->tr_nbr = $wonbr;
                             $newTransactionHistory->tr_order = $wonbr;
@@ -2677,42 +2832,25 @@ class APIPicklistShopping extends Controller
                             $newTransactionHistory->tr_remark = '';
                             $newTransactionHistory->save();
                         }
-                        // }
                     }
-                    // $hasil = (new WSAServices())->wsaUpdateStatusPick($picknbr, 'Issued', $qty, $part, $lot);
-
-
-                    // if ($hasil[0] == 'false') {
-                    //     Log::channel('Picklist')->info("Update status wo issue failed for picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $part);
-                    //     return response()->json([
-                    //         'Status' => 'Error',
-                    //         'Message' => "Update status wo issue failed for picklist : " . $picknbr . " WO : " . $wonbr . " Part : " . $part
-                    //     ], 422);
-                    // } else {
-                    //     $newTransactionHistory = new TransactionHistory();
-                    //     $newTransactionHistory->tr_nbr = $picknbr;
-                    //     $newTransactionHistory->tr_order = $wonbr;
-                    //     $newTransactionHistory->tr_program = 'Picklist Module';
-                    //     $newTransactionHistory->tr_activity = 'WO Issue';
-                    //     $newTransactionHistory->tr_user =  $user ?? '';
-                    //     // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
-                    //     $newTransactionHistory->tr_part = $part ?? '';
-                    //     $newTransactionHistory->tr_uom =  '';
-                    //     $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-                    //     $newTransactionHistory->tr_lot =  $lot ?? '';
-                    //     $newTransactionHistory->tr_qty =  $qty ?? '';
-                    //     $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-                    //     $newTransactionHistory->tr_reference =  '';
-                    //     $newTransactionHistory->tr_site =  $site ?? '';
-                    //     $newTransactionHistory->tr_location = $loc ?? '';
-                    //     $newTransactionHistory->tr_warehouse =  $wrh ?? '';
-                    //     $newTransactionHistory->tr_level = $level ?? '';
-                    //     $newTransactionHistory->tr_bin =  $bin ?? '';
-                    //     $newTransactionHistory->tr_remark = '';
-                    //     $newTransactionHistory->save();
                     // }
                 }
+                $qxtendWoIssue = (new QxtendServices())->qxWorkOrderComponentIssue($wonbr,  $woid, $effdate, $wodpart, $qty, $site, $loc, $lotserial);
+                // $effdata =
+                if ($qxtendWoIssue[0] == false) {
+                    Log::channel('Picklist')->info("Wo issue failed for picklist WO : " . $wonbr . " Part : " . $part);
+
+                    return response()->json([
+                        'Status' => 'Error',
+
+                        'Message' => $qxtendWoIssue[1] ?? 'Unknown error occurred'
+                    ], 422);
+                    //'Message' => "Wo issue failed for picklist : " . $picknbr . " WO : " . $wonbr. " Part : " . $part
+                }
             }
+
+
+            DB::commit();
             return response()->json(
                 'success',
                 200
