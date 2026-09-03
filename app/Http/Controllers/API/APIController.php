@@ -260,6 +260,7 @@ class APIController extends Controller
                     'im_item_um' => $item->im_item_um,
                     'xxinv_qty_pick'  => $item->xxinv_qty_pick,
                     'xxinv_ref'  => $item->xxinv_ref,
+                    'xxinv_rel_date' => $item->xxinv_rel_date,
                     'xxinv_exp_date'  => $item->xxinv_exp_date,                    
                     'xxinv_qty_wrh'  => $item->xxinv_qty_wrh,
                     'xxinv_qty_smp'  => $item->xxinv_qty_smp,

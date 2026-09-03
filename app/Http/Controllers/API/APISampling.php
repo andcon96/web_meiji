@@ -47,7 +47,9 @@ class APISampling extends Controller
         $domainCode = $domain->domain ?? '';
         if ($lot != '') {
             if ($item != '') {
-                $xxinvdet = xxinvDet::where('xxinv_domain', $domainCode)
+                $xxinvdet = xxinvDet::join('item_master', 'item_master.im_item_part',  'xxinv_det.xxinv_part')
+                ->where('xxinv_domain', $domainCode)
+                    
                     ->where('xxinv_loc', 'QC-QRT')
                     ->when($item !== '', fn($query) => $query->where('xxinv_part', $item))
                     ->when($lot !== '', fn($query) => $query->where('xxinv_lot', $lot))
@@ -62,6 +64,7 @@ class APISampling extends Controller
                         'xxinv_qtyoh   as inv_qtyoh',
                         'xxinv_qty_smp as inv_qtysmp',
                         'xxinv_site    as inv_site',
+                        'item_master.im_item_um as inv_um',
                     ])
                     ->get()
                     ->values();
@@ -99,7 +102,8 @@ class APISampling extends Controller
             }
         } else {
 
-            $xxinvdet = xxinvDet::where('xxinv_domain', $domainCode)
+            $xxinvdet = xxinvDet::join('item_master', 'item_master.im_item_part',  'xxinv_det.xxinv_part')
+            ->where('xxinv_domain', $domainCode)
                 ->where('xxinv_loc', 'QC-QRT')
                 ->when($item !== '', fn($query) => $query->where('xxinv_part', $item))
                 ->select([
@@ -110,6 +114,7 @@ class APISampling extends Controller
                     'xxinv_level  as inv_level',
                     'xxinv_bin    as inv_bin',
                     'xxinv_qtyoh  as inv_qtyoh',
+                    'im_item_um    as inv_um',
                 ])
                 ->orderBy('xxinv_part')
                 ->get()
@@ -157,7 +162,8 @@ class APISampling extends Controller
         $lot = $req->search ?? '';
         $domain = Domain::first();
         $domainCode = $domain->domain ?? '';
-        $xxinvDet = xxinvDet::where('xxinv_domain', $domainCode)
+        $xxinvDet = xxinvDet::join('item_master', 'item_master.im_item_part',  'xxinv_det.xxinv_part')
+        ->where('xxinv_domain', $domainCode)
             ->where('xxinv_loc', 'QC-QRT')
             ->where('xxinv_part', $item)
             ->when($lot !== '', fn($query) => $query->where('xxinv_lot', $lot))
@@ -165,6 +171,10 @@ class APISampling extends Controller
                 'xxinv_domain as inv_domain',
                 'xxinv_lot    as inv_lot',
                 'xxinv_site   as inv_site',
+                'item_master.im_item_um as inv_um',
+                'xxinv_qtyoh  as inv_qtyoh',
+                'xxinv_part    as inv_part',
+                
             ])
             ->orderBy('xxinv_lot')
             ->get()
@@ -349,7 +359,7 @@ class APISampling extends Controller
                 'Message' => "No Data Available"
             ], 422);
         } else {
-            return response()->json('success',
+            return response()->json($records->xxinv_qtyoh,
                 200
             );
         }

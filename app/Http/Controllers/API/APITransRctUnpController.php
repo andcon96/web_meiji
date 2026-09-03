@@ -43,16 +43,16 @@ class APITransRctUnpController extends Controller
                 ], 422); //
             }
 
-            $inputSupplier = (new WSAServices)->wsaInputSupplier($req->part, $req->lotserial, $req->supplier);
-            $message = '';
+            // $inputSupplier = (new WSAServices)->wsaInputSupplier($req->part, $req->lotserial, $req->supplier);
+            // $message = '';
 
-            if ($inputSupplier == false) {
-                $message = 'Error Connection: WSA input supplier ';
-            }
+            // if ($inputSupplier == false) {
+            //     $message = 'Error Connection: WSA input supplier ';
+            // }
 
-            if ($inputSupplier == 'false') {
-                $message = 'Error Response: WSA input supplier ';
-            }
+            // if ($inputSupplier == 'false') {
+            //     $message = 'Error Response: WSA input supplier ';
+            // }
 
             $newTransfer = new InvTransHist();
             $newTransfer->trans_type   = 'IN'; //IN = rct-unp, OUT = iss-unp
@@ -91,10 +91,11 @@ class APITransRctUnpController extends Controller
             $newTransactionHistory->tr_remark = '';
             $newTransactionHistory->save();
             DB::commit();
+            
             return response()->json([
                 'Status' => 'success',
                 'Message' => 'Receipt unplanned success',
-                'MessageDetail' => $message
+                'MessageDetail' => 'Receipt unplanned success',
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();

@@ -47,7 +47,8 @@ class APIPengembalian extends Controller
         $inpdomain = $domain->domain ?? '';
         if ($lot != '') {
             if ($item != '') {
-                $records = xxinvDet::where('xxinv_domain', $inpdomain)
+                $records = xxinvDet::join('item_master', 'item_master.im_item_part', '=', 'xxinv_det.xxinv_part')
+                    ->where('xxinv_domain', $inpdomain)
                     ->where('xxinv_loc', 'QC-QRT')
                     ->when($item !== '', fn($query) => $query->where('xxinv_part', $item))
                     ->when($lot !== '', fn($query) => $query->where('xxinv_lot', $lot))
@@ -62,6 +63,7 @@ class APIPengembalian extends Controller
                         'xxinv_qtyoh   as inv_qtyoh',
                         'xxinv_qty_smp as inv_qtysmp',
                         'xxinv_site    as inv_site',
+                        'im_item_um    as inv_um',
                     ])
                     ->get()
                     ->values();
@@ -98,7 +100,8 @@ class APIPengembalian extends Controller
                 // return response()->json($wsaData[1]);
             }
         } else {
-            $records = xxinvDet::where('xxinv_domain', $inpdomain)
+            $records = xxinvDet::join('item_master', 'item_master.im_item_part', '=', 'xxinv_det.xxinv_part')
+                ->where('xxinv_domain', $inpdomain)
                 ->where('xxinv_loc', 'QC-QRT')
                 ->when($item !== '', fn($query) => $query->where('xxinv_part', $item))
                 ->when($lot !== '', fn($query) => $query->where('xxinv_lot', $lot))
@@ -111,6 +114,7 @@ class APIPengembalian extends Controller
                     'xxinv_level  as inv_level',
                     'xxinv_bin    as inv_bin',
                     'xxinv_qtyoh  as inv_qtyoh',
+                    'item_master.im_item_um as inv_um'
                 ])
                 ->orderBy('xxinv_part')
                 ->get()
@@ -207,9 +211,9 @@ class APIPengembalian extends Controller
                     'Message' => "Transfer sampling Item Failed for Item : " . $item
                 ], 422);
             } else {
-                $xxinvdet->xxinv_qty_smp = $xxinvdet->xxinv_qty_smp - $qty;
+                // $xxinvdet->xxinv_qty_smp = $xxinvdet->xxinv_qty_smp - $qty;
                 // $xxinvdet->xxinv_qty_wrh = $xxinvdet->xxinv_qty_wrh + $qty;
-                $xxinvdet->save();
+                // $xxinvdet->save();
 
                 $xxinvdetApproval = new xxinvDetApproval();
                 $xxinvdetApproval->xxinv_domain = $xxinvdet->xxinv_domain;
@@ -370,6 +374,7 @@ class APIPengembalian extends Controller
         $bin = $req->bin ?? '';
         $domain = Domain::first();
         $inpdomain = $domain->domain ?? '';
+        log::info('checkWarehouseReturn: item=' . $item . ', lot=' . $lot . ', wh=' . $wh . ', level=' . $level . ', bin=' . $bin);
         $records = xxinvDet::where('xxinv_domain', $inpdomain)
             ->where('xxinv_loc', 'QC-QRT')
             ->when($item !== '', fn($query) => $query->where('xxinv_part', $item))
@@ -382,20 +387,21 @@ class APIPengembalian extends Controller
                 'xxinv_domain  as inv_domain',
                 'xxinv_part    as inv_part',
                 'xxinv_lot     as inv_lot',
-                'xxinv_wrhfrom     as inv_whfrom',
-                'xxinv_levelfrom   as inv_levelfrom',
-                'xxinv_binfrom     as inv_binfrom',
-                'xxinv_sitefrom    as inv_sitefrom',
-                'xxinv_locfrom    as inv_locfrom',
-                'xxinv_locto    as inv_locto',
-                'xxinv_wrhto     as inv_whto',
-                'xxinv_levelto   as inv_levelto',
-                'xxinv_binto     as inv_binto',
-                'xxinv_siteto    as inv_siteto',
-                'xxinv_locto    as inv_locto',
+                'xxinv_wrh    as inv_whfrom',
+                'xxinv_level   as inv_levelfrom',
+                'xxinv_bin     as inv_binfrom',
+                'xxinv_site    as inv_sitefrom',
+                'xxinv_loc    as inv_locfrom',
+                // 'xxinv_loct    as inv_locto',
+                // 'xxinv_wrhto     as inv_whto',
+                // 'xxinv_levelto   as inv_levelto',
+                // 'xxinv_binto     as inv_binto',
+                // 'xxinv_siteto    as inv_siteto',
+                // 'xxinv_locto    as inv_locto',
                 'xxinv_qtyoh   as inv_qtyoh',
                 'xxinv_qty_smp as inv_qtysmp',
                 'xxinv_qty_pick as inv_qtypick',
+
             ])
             ->get()
             ->values();
@@ -454,7 +460,8 @@ class APIPengembalian extends Controller
     {
         $domain = Domain::first();
         $inpdomain = $domain->domain ?? '';
-        $records = xxinvDetApproval::where('xxinv_domain', $inpdomain)
+        $records = xxinvDetApproval::join('item_master', 'item_master.im_item_part',  'xxinv_det_approval.xxinv_part')
+            ->where('xxinv_domain', $inpdomain)
             ->where('xxinv_status', 'Waiting')
             // ->where('xxinv_approver', auth()->user()->username ?? '')
             ->select([
@@ -476,7 +483,8 @@ class APIPengembalian extends Controller
                 'xxinv_qtyoh   as inv_qtyoh',
                 'xxinv_qty_smp as inv_qtysmp',
                 'xxinv_qty_pick as inv_qtypick',
-                'id'
+                'xxinv_det_approval.id as id',
+                'item_master.im_item_um as inv_um'
             ])
             ->get()
             ->values();
@@ -518,7 +526,7 @@ class APIPengembalian extends Controller
                     $binfrom = $xxinvApproval->xxinv_binfrom;
                     $qty = $xxinvApproval->xxinv_qty_pick;
 
-                     $xxinvDet = xxinvDet::where('xxinv_domain', $inpdomain)
+                    $xxinvDet = xxinvDet::where('xxinv_domain', $inpdomain)
                         ->where('xxinv_part', $xxinvApproval->xxinv_part)
                         ->where('xxinv_lot', $xxinvApproval->xxinv_lot)
                         ->where('xxinv_site', $xxinvApproval->xxinv_sitefrom)
@@ -526,8 +534,11 @@ class APIPengembalian extends Controller
                         ->where('xxinv_level', $xxinvApproval->xxinv_levelfrom)
                         ->where('xxinv_bin', $xxinvApproval->xxinv_binfrom)
                         ->first();
-                        $wsaData = (new WSAServices())->wsaConfirmSampling($item, $lot, 'QC-QRT', $xxinvApproval->xxinv_qty_smp, $siteto);
-
+                    $wsaData = (new WSAServices())->wsaConfirmSampling($item, $lot, 'QC-QRT', $xxinvApproval->xxinv_qty_smp, $siteto);
+                    $xxinvDet->xxinv_qty_wrh = floatval($xxinvDet->xxinv_qty_wrh) + $qty;
+                    $xxinvDet->xxinv_qty_smp = floatval($xxinvDet->xxinv_qty_smp) - $qty;
+                    // log::info($qty);
+                    $xxinvDet->save();
                     if ($wsaData[0] == 'false') {
                         DB::rollback();
                         return response()->json([
