@@ -23,7 +23,7 @@ use App\Http\Controllers\API\PackingReplenishment\APIPackingReplenishmentControl
 use App\Http\Controllers\API\ShipmentSchedule\APIShipmentScheduleController;
 use App\Http\Controllers\API\ShipperConfirm\APIShipperConfirmController;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\API\ApiSIngelTransferLot;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -228,7 +228,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
                         Route::get('getLevelDataST', [APISingleTransfer::class, 'getLevelDataST']);
        Route::get('getBinDataST', [APISingleTransfer::class, 'getBinDataST']);
 
-
+ 
 
     Route::post('getWlbData', [APISingleTransfer::class, 'getWlbData']);
 
@@ -303,12 +303,11 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getInventoryByWarehouse', [APIDashboard::class, 'getInventoryByWarehouse']);
     Route::get('getDetailInventoryByWarehouse', [APIDashboard::class, 'getDetailInventoryByWarehouse']);
     Route::get('getDetailInventoryByStatus', [APIDashboard::class, 'getDetailInventoryByStatus']);
+    
     Route::get('getInventoryByStatus', [APIDashboard::class, 'getInventoryByStatus']);
         Route::get('getInventoryByExpDate', [APIDashboard::class, 'getInventoryByExpDate']);
-        Route::get(
-    '/getDetailInventoryByExpDate',
-    [APIDashboard::class, 'getDetailInventoryByExpDate']
-);
+
+            Route::post('singleTransferLot', [ApiSIngelTransferLot::class, 'store']);
 });
 // WSA Picklist
 // WSA Picklist

@@ -2508,4 +2508,165 @@ class QxtendServices
         }
 
     }
+
+       public function qxTransferLotSerial(
+    $part,
+    $qty,
+    $site,
+    $loc,
+    $lotserFrom,
+    $lotserTo,
+    $rmks = '',
+    $effdate = null,
+    $activeConnection = null
+) {
+    $domain = Domain::first();
+    $domainCode = $domain->domain ?? '';
+    
+    if (!$activeConnection) {
+        $activeConnection = Qxwsa::firstOrFail();
+    }
+
+    $qxUrl = $activeConnection->qx_url;
+    $receiver = 'QADERP';
+    $timeout = 0;
+    $effdate = $effdate ?? date('Y-m-d');
+
+    $qdocHead = '
+    <soapenv:Envelope xmlns="urn:schemas-qad-com:xml-services" xmlns:qcom="urn:schemas-qad-com:xml-services:common" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsa="http://www.w3.org/2005/08/addressing">
+        <soapenv:Header>
+            <wsa:Action/>
+            <wsa:To>urn:services-qad-com:'.$receiver.'</wsa:To>
+            <wsa:MessageID>urn:services-qad-com::'.$receiver.'</wsa:MessageID>
+            <wsa:ReferenceParameters>
+                <qcom:suppressResponseDetail>true</qcom:suppressResponseDetail>
+            </wsa:ReferenceParameters>
+            <wsa:ReplyTo>
+                <wsa:Address>urn:services-qad-com:</wsa:Address>
+            </wsa:ReplyTo>
+        </soapenv:Header>
+        <soapenv:Body>
+            <transferInvCreateShipper>
+                <qcom:dsSessionContext>
+                    <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>domain</qcom:propertyName>
+                        <qcom:propertyValue>'.$domainCode.'</qcom:propertyValue>
+                    </qcom:ttContext>
+                    <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>scopeTransaction</qcom:propertyName>
+                        <qcom:propertyValue>false</qcom:propertyValue>
+                    </qcom:ttContext>
+                    <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>version</qcom:propertyName>
+                        <qcom:propertyValue>ERP3_2</qcom:propertyValue>
+                    </qcom:ttContext>
+                    <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>mnemonicsRaw</qcom:propertyName>
+                        <qcom:propertyValue>false</qcom:propertyValue>
+                    </qcom:ttContext>
+                    <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>action</qcom:propertyName>
+                        <qcom:propertyValue/>
+                    </qcom:ttContext>
+                    <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>entity</qcom:propertyName>
+                        <qcom:propertyValue/>
+                    </qcom:ttContext>
+                    <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>email</qcom:propertyName>
+                        <qcom:propertyValue/>
+                    </qcom:ttContext>
+                    <qcom:ttContext>
+                        <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                        <qcom:propertyName>emailLevel</qcom:propertyName>
+                        <qcom:propertyValue/>
+                    </qcom:ttContext>
+                </qcom:dsSessionContext>
+                <dsItem>
+                    <item>';
+
+    $qdocBody = '
+                        <part>'.$part.'</part>
+                        <itemDetail>
+                            <lotserialQty>'.$qty.'</lotserialQty>
+                            <effDate>'.$effdate.'</effDate>
+                            <rmks>'.$rmks.'</rmks>
+                            <siteFrom>'.$site.'</siteFrom>
+                            <locFrom>'.$loc.'</locFrom>
+                            <lotserFrom>'.$lotserFrom.'</lotserFrom>
+                            <siteTo>'.$site.'</siteTo>
+                            <locTo>'.$loc.'</locTo>
+                            <lotserTo>'.$lotserTo.'</lotserTo>
+                            <yn>true</yn>
+                            <vOk>true</vOk>
+                        </itemDetail>';
+
+    $qdocFoot = '
+                    </item>
+                </dsItem>
+            </transferInvCreateShipper>
+        </soapenv:Body>
+    </soapenv:Envelope>';
+
+    $qdocRequest = $qdocHead . $qdocBody . $qdocFoot;
+
+    $curlOptions = [
+        CURLOPT_URL            => $qxUrl,
+        CURLOPT_CONNECTTIMEOUT => $timeout,
+        CURLOPT_TIMEOUT        => $timeout + 120,
+        CURLOPT_HTTPHEADER     => $this->httpHeader($qdocRequest),
+        CURLOPT_POSTFIELDS     => preg_replace("/\s+/", ' ', $qdocRequest),
+        CURLOPT_POST           => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false,
+    ];
+
+    $curl = curl_init();
+    $qdocResponse = '';
+    if ($curl) {
+        curl_setopt_array($curl, $curlOptions);
+        $qdocResponse = curl_exec($curl);
+        curl_close($curl);
+    }
+
+    if (is_bool($qdocResponse) || empty($qdocResponse)) {
+        return [false, 'WSA Connection Error'];
+    }
+
+    $xmlResp = simplexml_load_string($qdocResponse);
+    if ($xmlResp === false) {
+        return [false, 'Invalid XML Response'];
+    }
+
+    $xmlResp->registerXPathNamespace('ns1', 'urn:schemas-qad-com:xml-services');
+    $resultNodes = $xmlResp->xpath('//ns1:result');
+    $qdocResult = isset($resultNodes[0]) ? (string) $resultNodes[0] : '';
+
+    if ($qdocResult === 'success' || $qdocResult === 'warning') {
+        return [true, ''];
+    } else {
+        $xmlResp->registerXPathNamespace('qcom', 'urn:schemas-qad-com:xml-services:common');
+        $qdocMsgDesc = $xmlResp->xpath('//qcom:temp_err_msg/qcom:tt_msg_desc');
+
+        $output = '';
+        if (!empty($qdocMsgDesc)) {
+            foreach ($qdocMsgDesc as $datas) {
+                $output .= (string) $datas . ' - ';
+            }
+            $output = rtrim($output, ' - ');
+        } else {
+            $output = 'Unknown QAD Error';
+        }
+
+        return [false, $output];
+    }
+}
 }
