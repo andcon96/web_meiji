@@ -785,7 +785,140 @@ class APIController extends Controller
             ], 200);
         }
     }
+    public function cekItemLotWeb(Request $req)
+{
+    $part = $req->query('inppart') ?? '';
+    $lot  = $req->query('inplot') ?? '';
 
+    // Validasi data di tabel xxinvDet
+    $invDet = xxinvDet::where('xxinv_part', $part)
+        ->where('xxinv_lot', $lot)
+        ->first();
+
+    if (!$invDet) {
+        return response()->json([
+            'Status'  => 'Error',
+            'Message' => 'Data Not Found'
+        ], 422);
+    }
+
+    return response()->json([
+        'Status'  => 'Success',
+        'Message' => 'Data Found',
+        'Data'    => $invDet
+    ], 200);
+}public function cekStorageLocation(Request $req)
+{
+    $part      = $req->query('part') ?? '';
+    $lot       = $req->query('lot') ?? '';
+    $site      = $req->query('site') ?? '';
+    $location  = $req->query('location') ?? '';
+    $warehouse = $req->query('warehouse') ?? '';
+    $level     = $req->query('level') ?? '';
+    $bin       = $req->query('bin') ?? '';
+
+    // Pengecekan ketersediaan kombinasi lokasi pada tabel xxinvDet
+    $invDet = xxinvDet::where('xxinv_part', $part)
+        ->when($lot, function ($q) use ($lot) {
+            return $q->where('xxinv_lot', $lot);
+        })
+        ->when($site, function ($q) use ($site) {
+            return $q->where('xxinv_site', $site);
+        })
+        ->when($location, function ($q) use ($location) {
+            return $q->where('xxinv_loc', $location);
+        })
+        ->where('xxinv_wrh', $warehouse)
+        ->where('xxinv_level', $level)
+        ->where('xxinv_bin', $bin)
+        ->first();
+
+    if (!$invDet) {
+        return response()->json([
+            'Status'  => 'Error',
+            'Message' => 'Warehouse / Level / Bin tidak sesuai atau Item tidak tersedia di lokasi tersebut.'
+        ], 422);
+    }
+
+    return response()->json([
+        'Status'  => 'Success',
+        'Message' => 'Lokasi Penyimpanan Valid',
+        'Data'    => $invDet
+    ], 200);
+}
+public function getSiteLocationLookup(Request $req)
+{
+    $part = $req->query('part') ?? '';
+    $lot  = $req->query('lot') ?? '';
+
+    // Mengambil data site & location berdasarkan part & lot dari xxinvDet
+    $invData = xxinvDet::select(
+            'xxinv_site as site',
+            'xxinv_loc as location',
+            'xxinv_wrh as warehouse',
+            'xxinv_level as level',
+            'xxinv_bin as bin'
+        )
+        ->where('xxinv_part', $part)
+        ->when($lot, function ($q) use ($lot) {
+            return $q->where('xxinv_lot', $lot);
+        })
+        ->get();
+
+    if ($invData->isEmpty()) {
+        return response()->json([
+            'Status'  => 'Error',
+            'Message' => 'Data Site/Location tidak ditemukan untuk item tersebut.'
+        ], 404);
+    }
+
+    return response()->json([
+        'Status'  => 'Success',
+        'Message' => 'Data Found',
+        'Data'    => $invData
+    ], 200);
+}
+// Lookup Daftar Site berdasarkan Part & Lot
+public function getSiteLookup(Request $req)
+{
+    $part = $req->query('part') ?? '';
+    $lot  = $req->query('lot') ?? '';
+
+    $sites = xxinvDet::select('xxinv_site as site')
+        ->where('xxinv_part', $part)
+        ->when($lot, function ($q) use ($lot) {
+            return $q->where('xxinv_lot', $lot);
+        })
+        ->groupBy('xxinv_site')
+        ->get();
+
+    return response()->json([
+        'Status' => 'Success',
+        'Data'   => $sites
+    ], 200);
+}
+
+// Lookup Daftar Location berdasarkan Part, Lot, & Site
+public function getLocationLookup(Request $req)
+{
+    $part = $req->query('part') ?? '';
+    $lot  = $req->query('lot') ?? '';
+    $site = $req->query('site') ?? '';
+
+    $locations = xxinvDet::select('xxinv_loc as location')
+        ->where('xxinv_part', $part)
+        ->when($lot, function ($q) use ($lot) {
+            return $q->where('xxinv_lot', $lot);
+        })
+        ->where('xxinv_site', $site)
+        ->groupBy('xxinv_loc')
+        ->get();
+
+    return response()->json([
+        'Status' => 'Success',
+        'Data'   => $locations
+    ], 200);
+}
     public function sendQxCompIssue(SendQxCompIssueRequest $request)
     {
         Log::info($request->all());
@@ -915,12 +1048,12 @@ class APIController extends Controller
 
         return <<<XML
         <?xml version="1.0" encoding="UTF-8"?>
-        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-        <soapenv:Body>
-            <status>{$status}</status>
-            <message>{$escaped}</message>
-        </soapenv:Body>
-        </soapenv:Envelope>
-        XML;
-    }
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+    <soapenv:Body>
+        <status>{$status}</status>
+        <message>{$escaped}</message>
+    </soapenv:Body>
+</soapenv:Envelope>
+XML;
+}
 }

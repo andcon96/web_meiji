@@ -280,6 +280,12 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getHistoryData', [APIController::class, 'getHistoryData']);
 
     Route::get('cekItemLot', [APIController::class, 'cekItemLot']);
+        Route::get('cekItemLotWeb', [APIController::class, 'cekItemLotWeb']);
+                Route::get('cekStorageLocation', [APIController::class, 'cekStorageLocation']);
+
+                       Route::get('getSiteLocationLookup', [APIController::class, 'getSiteLocationLookup']);
+                               Route::get('getSiteLookup', [APIController::class, 'getSiteLookup']);
+                                       Route::get('getLocationLookup', [APIController::class, 'getLocationLookup']);
 
     // Penyerahan Barang
     // Route::get("getLocationData", [APIPicklistShopping::class, "getLocationData"]);

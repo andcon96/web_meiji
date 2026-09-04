@@ -2325,7 +2325,269 @@ class QxtendServices
             $activeConnection
         );
     }
+    
+    public function qxIssueInventoryUnplanned($req, $activeConnection = null)
+{
+    $receiver = 'QADERP';
 
+    $part      = $req->part;
+    $qty       = floatval(str_replace(',', '', $req->qty));
+    $site      = $req->site;
+    $location  = $req->location;
+    $lotserial = $req->lotserial;
+
+    $domain     = Domain::first();
+    $domainCode = $domain->domain ?? '';
+
+    // Ambil koneksi Qxwsa jika activeConnection kosong atau berupa string
+    if (!$activeConnection || is_string($activeConnection)) {
+        $activeConnection = Qxwsa::firstOrFail();
+    }
+
+    $qdocRequest = '<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope
+    xmlns="urn:schemas-qad-com:xml-services"
+    xmlns:qcom="urn:schemas-qad-com:xml-services:common"
+    xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:wsa="http://www.w3.org/2005/08/addressing">
+
+    <soapenv:Header>
+        <wsa:Action/>
+        <wsa:To>urn:services-qad-com:'.$receiver.'</wsa:To>
+        <wsa:MessageID>urn:services-qad-com::'.$receiver.'</wsa:MessageID>
+
+        <wsa:ReferenceParameters>
+            <qcom:suppressResponseDetail>true</qcom:suppressResponseDetail>
+        </wsa:ReferenceParameters>
+
+        <wsa:ReplyTo>
+            <wsa:Address>urn:services-qad-com:</wsa:Address>
+        </wsa:ReplyTo>
+    </soapenv:Header>
+
+    <soapenv:Body>
+        <issueInventory>
+
+            <qcom:dsSessionContext>
+
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>domain</qcom:propertyName>
+                    <qcom:propertyValue>'.$domainCode.'</qcom:propertyValue>
+                </qcom:ttContext>
+
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>scopeTransaction</qcom:propertyName>
+                    <qcom:propertyValue>false</qcom:propertyValue>
+                </qcom:ttContext>
+
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>version</qcom:propertyName>
+                    <qcom:propertyValue>eB_2</qcom:propertyValue>
+                </qcom:ttContext>
+
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>mnemonicsRaw</qcom:propertyName>
+                    <qcom:propertyValue>false</qcom:propertyValue>
+                </qcom:ttContext>
+
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>action</qcom:propertyName>
+                    <qcom:propertyValue/>
+                </qcom:ttContext>
+
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>entity</qcom:propertyName>
+                    <qcom:propertyValue/>
+                </qcom:ttContext>
+
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>email</qcom:propertyName>
+                    <qcom:propertyValue/>
+                </qcom:ttContext>
+
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>emailLevel</qcom:propertyName>
+                    <qcom:propertyValue/>
+                </qcom:ttContext>
+
+            </qcom:dsSessionContext>
+
+            <dsInventoryIssue>
+
+                <inventoryIssue>
+
+                    <ptPart>'.$part.'</ptPart>
+
+                    <lotserialQty>'.$qty.'</lotserialQty>
+
+                    <site>'.$site.'</site>
+
+                    <location>'.$location.'</location>
+
+                    <lotserial>'.$lotserial.'</lotserial>
+
+                    <rmks>Other Transaction</rmks>
+
+                    <yn>true</yn>
+
+                    <yn1>true</yn1>
+
+                </inventoryIssue>
+
+            </dsInventoryIssue>
+
+        </issueInventory>
+    </soapenv:Body>
+
+</soapenv:Envelope>';
+
+    Log::channel('confirmOtherTransaction')->info($qdocRequest);
+
+    return $this->sendQdocRequest(
+        $qdocRequest,
+        $activeConnection
+    );
+}
+public function qxinventoryReceipt($req, $activeConnection = null)
+{
+    $receiver = 'QADERP';
+
+    $part      = $req->part;
+    $qty       = floatval(str_replace(',', '', $req->qty));
+    $site      = $req->site;
+    $location  = $req->location;
+    $lotserial = $req->lotserial;
+
+    $domain     = Domain::first();
+    $domainCode = $domain->domain ?? '';
+
+    // Ambil koneksi Qxwsa jika activeConnection kosong atau bukan object
+    if (!$activeConnection || is_string($activeConnection)) {
+        $activeConnection = Qxwsa::firstOrFail();
+    }
+
+    $qdocRequest = '<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope
+    xmlns="urn:schemas-qad-com:xml-services"
+    xmlns:qcom="urn:schemas-qad-com:xml-services:common"
+    xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:wsa="http://www.w3.org/2005/08/addressing">
+
+    <soapenv:Header>
+        <wsa:Action/>
+        <wsa:To>urn:services-qad-com:'.$receiver.'</wsa:To>
+        <wsa:MessageID>urn:services-qad-com::'.$receiver.'</wsa:MessageID>
+
+        <wsa:ReferenceParameters>
+            <qcom:suppressResponseDetail>true</qcom:suppressResponseDetail>
+        </wsa:ReferenceParameters>
+
+        <wsa:ReplyTo>
+            <wsa:Address>urn:services-qad-com:</wsa:Address>
+        </wsa:ReplyTo>
+    </soapenv:Header>
+
+    <soapenv:Body>
+        <receiveInventory>
+
+            <qcom:dsSessionContext>
+
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>domain</qcom:propertyName>
+                    <qcom:propertyValue>'.$domainCode.'</qcom:propertyValue>
+                </qcom:ttContext>
+
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>scopeTransaction</qcom:propertyName>
+                    <qcom:propertyValue>false</qcom:propertyValue>
+                </qcom:ttContext>
+
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>version</qcom:propertyName>
+                    <qcom:propertyValue>eB_2</qcom:propertyValue>
+                </qcom:ttContext>
+
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>mnemonicsRaw</qcom:propertyName>
+                    <qcom:propertyValue>false</qcom:propertyValue>
+                </qcom:ttContext>
+
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>action</qcom:propertyName>
+                    <qcom:propertyValue/>
+                </qcom:ttContext>
+
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>entity</qcom:propertyName>
+                    <qcom:propertyValue/>
+                </qcom:ttContext>
+
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>email</qcom:propertyName>
+                    <qcom:propertyValue/>
+                </qcom:ttContext>
+
+                <qcom:ttContext>
+                    <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
+                    <qcom:propertyName>emailLevel</qcom:propertyName>
+                    <qcom:propertyValue/>
+                </qcom:ttContext>
+
+            </qcom:dsSessionContext>
+
+            <dsInventoryReceipt>
+
+                <inventoryReceipt>
+
+                    <ptPart>'.$part.'</ptPart>
+
+                    <lotserialQty>'.$qty.'</lotserialQty>
+
+                    <site>'.$site.'</site>
+
+                    <location>'.$location.'</location>
+
+                    <lotserial>'.$lotserial.'</lotserial>
+
+                    <yn>true</yn>
+
+                    <yn1>true</yn1>
+
+                    <receiptDetail>
+                        <serialsYn>true</serialsYn>
+                    </receiptDetail>
+
+                </inventoryReceipt>
+
+            </dsInventoryReceipt>
+
+        </receiveInventory>
+    </soapenv:Body>
+
+</soapenv:Envelope>';
+
+    Log::channel('confirmOtherTransaction')->info($qdocRequest);
+
+    return $this->sendQdocRequest(
+        $qdocRequest,
+        $activeConnection
+    );
+}
     public function qxWorkOrderComponentIssue(
         $wonbr, $lot, $effdate,
         $part, $qty, $site, $location, $lotserial

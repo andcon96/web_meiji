@@ -84,7 +84,11 @@ class APIOtherShipmentScheduleController extends Controller
 
     public function getLocationByPart(Request $request)
     {
-        $items = xxinvDet::where('xxinv_part', $request->search)->get();
+       $items = xxinvDet::where('xxinv_part', $request->search)
+    ->where('xxinv_qtyoh', '>=', 0)
+    ->where('xxinv_loc', '!=', 'QC-QRT')
+    ->where('xxinv_loc', '!=', 'WH-QRT')
+    ->get();
 
         $inventoryData = $items->map(function ($item) {
             return [
@@ -104,38 +108,45 @@ class APIOtherShipmentScheduleController extends Controller
             'inventoryData' => $inventoryData,
         ]);
     }
+public function store(Request $request)
+{
+    // Validasi mandatory field dari request API
+    $request->validate([
+        'otherTransactionNumber' => 'required|string',
+        'items' => 'required|array|min:1',
+    ], [
+        'otherTransactionNumber.required' => 'Other Transaction Number is required.',
+        'items.required' => 'Items are required.',
+    ]);
 
-    public function store(Request $request)
-    {
-        // Log::channel("otherShipmentSchedule")->info(json_encode($request->all()));
+    $otherTransactionNumber = $request->otherTransactionNumber;
+    $customerCode = $request->customer_id;
+    $customerDesc = $request->customer_desc;
+    $items = $request->items;
 
-        $customerCode = $request->customer_id;
-        $customerDesc = $request->customer_desc;
-        $items = $request->items;
+    $otherShipmentScheduleServices = new OtherShipmentScheduleServices();
+    $saveData = $otherShipmentScheduleServices->saveOtherShipmentSchedule($otherTransactionNumber, $customerCode, $customerDesc, $items);
 
-        $otherShipmentScheduleServices = new OtherShipmentScheduleServices();
-        $saveData = $otherShipmentScheduleServices->saveOtherShipmentSchedule($customerCode, $customerDesc, $items);
-
-        if ($saveData == false) {
-            return response()->json(
-                [
-                    'Status' => 'Error',
-                    'Message' => 'Failed To Save Other Shipment Schedule.',
-                ],
-                422,
-            );
-        }
-
+    if ($saveData == false) {
         return response()->json(
             [
-                'status' => 'success',
-                'message' => 'Other Shipment schedule has been created',
+                'Status' => 'Error',
+                'Message' => 'Failed To Save Other Shipment Schedule.',
             ],
-            200,
-            ['Content-Type' => 'application/json'],
-            JSON_UNESCAPED_UNICODE,
+            422,
         );
     }
+
+    return response()->json(
+        [
+            'status' => 'success',
+            'message' => 'Other Shipment schedule has been created',
+        ],
+        200,
+        ['Content-Type' => 'application/json'],
+        JSON_UNESCAPED_UNICODE,
+    );
+}
 
     public function delete(Request $request)
     {
