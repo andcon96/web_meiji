@@ -2327,8 +2327,8 @@ class QxtendServices
     }
 
     public function qxWorkOrderComponentIssue(
-        $wonbr, $location, $lot, $effdate,
-        $part, $qty, $site, $lotserial
+        $wonbr, $lot, $effdate,
+        $part, $qty, $site, $location, $lotserial
     ) {
 
         $domain = Domain::first();

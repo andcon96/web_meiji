@@ -1322,43 +1322,43 @@ class APISingleTransfer extends Controller
         }
     }
 
-    // public function getSiteData(Request $req)
-    // {
+    public function getSiteData(Request $req)
+    {
 
-    //     $currentPick = '';
-    //     $currentWo = '';
-    //     $detail = [];
-    //     $master = [];
-    //     $wonbr = [];
-    //     $wonbrstring = '';
-    //     // $wonbr = $req->wonbr;
-    //     $wonbr = '';
-    //     $site = $req->site ?? '';
-    //     $item = $req->item ?? '';
-    //     $location = $req->location ?? '';
-    //     $domain = Domain::first();
-    //     $domainCode = $domain->domain ?? '';
-    //     $hasil = xxinvDet::select('xxinv_site as t_site')->where('xxinv_domain', $domainCode)
-    //         ->where('xxinv_part', $item)
-    //         ->when($site !== '', fn ($q) => $q->where('xxinv_site', $site))
-    //         ->when($location !== '', fn ($q) => $q->where('xxinv_loc', $location))
-    //         ->groupBy('xxinv_site')
-    //         ->get()
-    //         ->values();
-    //     // $hasil = (new WSAServices())->wsaGetSiteTransfer($site, $item, $location);
+        $currentPick = '';
+        $currentWo = '';
+        $detail = [];
+        $master = [];
+        $wonbr = [];
+        $wonbrstring = '';
+        // $wonbr = $req->wonbr;
+        $wonbr = '';
+        $site = $req->site ?? '';
+        $item = $req->item ?? '';
+        $location = $req->location ?? '';
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+        $hasil = xxinvDet::select('xxinv_site as t_site')->where('xxinv_domain', $domainCode)
+            ->where('xxinv_part', $item)
+            ->when($site !== '', fn ($q) => $q->where('xxinv_site', $site))
+            ->when($location !== '', fn ($q) => $q->where('xxinv_loc', $location))
+            ->groupBy('xxinv_site')
+            ->get()
+            ->values();
+        // $hasil = (new WSAServices())->wsaGetSiteTransfer($site, $item, $location);
 
-    //     // if ($hasil[0] == 'false') {
-    //     if ($hasil->isEmpty()) {
-    //         return response()->json([
-    //             'Status' => 'Error',
-    //             'Message' => 'Data Not Found.',
-    //         ], 422);
-    //     } else {
-    //         $listData = $hasil;
+        // if ($hasil[0] == 'false') {
+        if ($hasil->isEmpty()) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => 'Data Not Found.',
+            ], 422);
+        } else {
+            $listData = $hasil;
 
-    //         return response()->json(['DataWSA' => $listData], 200);
-    //     }
-    // }
+            return response()->json(['DataWSA' => $listData], 200);
+        }
+    }
 
     public function wsaWarehouse(Request $req)
     {
