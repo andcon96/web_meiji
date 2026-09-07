@@ -245,10 +245,17 @@ class APIController extends Controller
                         && $wmsItem['t_lot'] == $item->xxinv_lot;
                 });
 
+                if(!in_array( $item->xxinv_loc, ['qc-qrt', 'WH-QRT'])) {
+                    $loc = 'Pass';
+                }
+                else {
+                    $loc = $item->xxinv_loc;
+                }
+
                 return [
                     // Data dari xxinv_det
-                    'xxinv_part' => $item->xxinv_part,
-                    'xxinv_loc'  => $item->xxinv_loc,
+                    'xxinv_part' => $item->xxinv_part,   
+                    'xxinv_loc'  => $loc,                
                     'xxinv_lot'  => $item->xxinv_lot,
                     'xxinv_bin'  => $item->xxinv_bin,
                     'xxinv_level'  => $item->xxinv_level,
@@ -265,6 +272,8 @@ class APIController extends Controller
                     'xxinv_qty_smp'  => $item->xxinv_qty_smp,
                     'xxinv_qty_shp'  => $item->xxinv_qty_shp,
                     'xxinv_qty_wip'  => $item->xxinv_qty_wip,
+
+                    
 
                     // Data dari WSA
                     't_domain'   => $wms['t_domain'] ?? null,
