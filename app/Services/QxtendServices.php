@@ -2335,6 +2335,7 @@ class QxtendServices
     $site      = $req->site;
     $location  = $req->location;
     $lotserial = $req->lotserial;
+        $um = $req->um;
 
     $domain     = Domain::first();
     $domainCode = $domain->domain ?? '';
@@ -2405,45 +2406,30 @@ class QxtendServices
                     <qcom:propertyName>entity</qcom:propertyName>
                     <qcom:propertyValue/>
                 </qcom:ttContext>
-
                 <qcom:ttContext>
                     <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
                     <qcom:propertyName>email</qcom:propertyName>
                     <qcom:propertyValue/>
                 </qcom:ttContext>
-
                 <qcom:ttContext>
                     <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
                     <qcom:propertyName>emailLevel</qcom:propertyName>
                     <qcom:propertyValue/>
                 </qcom:ttContext>
-
             </qcom:dsSessionContext>
-
             <dsInventoryIssue>
-
                 <inventoryIssue>
-
                     <ptPart>'.$part.'</ptPart>
-
                     <lotserialQty>'.$qty.'</lotserialQty>
-
+                    <um>'.$um.'</um>
                     <site>'.$site.'</site>
-
                     <location>'.$location.'</location>
-
                     <lotserial>'.$lotserial.'</lotserial>
-
                     <rmks>Other Transaction</rmks>
-
                     <yn>true</yn>
-
                     <yn1>true</yn1>
-
                 </inventoryIssue>
-
             </dsInventoryIssue>
-
         </issueInventory>
     </soapenv:Body>
 
@@ -2465,7 +2451,7 @@ public function qxinventoryReceipt($req, $activeConnection = null)
     $site      = $req->site;
     $location  = $req->location;
     $lotserial = $req->lotserial;
-
+    $um = $req->um;
     $domain     = Domain::first();
     $domainCode = $domain->domain ?? '';
 
@@ -2557,7 +2543,7 @@ public function qxinventoryReceipt($req, $activeConnection = null)
                     <ptPart>'.$part.'</ptPart>
 
                     <lotserialQty>'.$qty.'</lotserialQty>
-
+<um>'.$um.'</um>
                     <site>'.$site.'</site>
 
                     <location>'.$location.'</location>

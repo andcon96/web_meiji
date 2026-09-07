@@ -53,6 +53,7 @@ class APITransRctUnpController extends Controller
             $warehouse = $req->warehouse;
             $level = $req->level;
             $bin = $req->bin;
+                  $um = $req->um;
 
             $existingInv = xxinvDet::where('xxinv_part', $part)
                 ->where('xxinv_site', $site)
