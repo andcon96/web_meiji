@@ -47,34 +47,33 @@ class APISingleTransfer extends Controller
         }
     }
 
-    public function getSingleTransferData(Request $req)
-    {
-        $search = $req->search;
+  public function getSingleTransferData(Request $req)
+{
+    $search = $req->search;
 
-        $trfdata = singleTransfer::where('st_status', 'Open');
-        if ($search) {
-            $trfdata = $trfdata->where('st_trfid', 'LIKE', '%'.$search.'%')
-                ->orWhere('st_item', 'LIKE', '%'.$search.'%')
-                ->orWhere('st_lot', 'LIKE', '%'.$search.'%')
-                ->get();
-        }
-        $trfdata = $trfdata->get();
+    $trfdata = singleTransfer::where('st_status', 'Open');
 
-        if (! $trfdata) {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => 'Data Not Found.',
-            ], 422);
-        } else {
-            return GeneralResources::collection($trfdata);
-            // return response()->json(
-            //     [
-            //         'Data' => $trfdata
-            //     ],
-            //     200
-            // );
-        }
+    if ($search) {
+        // Gunakan parameter grouping agar 'Open' tetap berlaku
+        $trfdata->where(function ($query) use ($search) {
+            $query->where('st_trfid', 'LIKE', '%' . $search . '%')
+                  ->orWhere('st_item', 'LIKE', '%' . $search . '%')
+                  ->orWhere('st_lot', 'LIKE', '%' . $search . '%');
+        });
     }
+
+    $trfdata = $trfdata->get();
+
+    if ($trfdata->isEmpty()) {
+        return response()->json([
+            'Status' => 'Error',
+            'Message' => 'Data Not Found.',
+            'data' => []
+        ], 200); // Sebaiknya return status 200 dengan array kosong
+    }
+
+    return GeneralResources::collection($trfdata);
+}
 
 public function receiptItem(Request $req)
 {
