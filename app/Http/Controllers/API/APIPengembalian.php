@@ -534,7 +534,8 @@ class APIPengembalian extends Controller
                         ->where('xxinv_level', $xxinvApproval->xxinv_levelfrom)
                         ->where('xxinv_bin', $xxinvApproval->xxinv_binfrom)
                         ->first();
-                    $wsaData = (new WSAServices())->wsaConfirmSampling($item, $lot, 'QC-QRT', $xxinvApproval->xxinv_qty_smp, $siteto);
+                        $qtysend = $xxinvApproval->xxinv_qty_smp - $qty;
+                    $wsaData = (new WSAServices())->wsaConfirmSampling($item, $lot, 'QC-QRT', $qtysend, $siteto);
                     $xxinvDet->xxinv_qty_wrh = floatval($xxinvDet->xxinv_qty_wrh) + $qty;
                     $xxinvDet->xxinv_qty_smp = floatval($xxinvDet->xxinv_qty_smp) - $qty;
                     // log::info($qty);

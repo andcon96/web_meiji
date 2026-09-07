@@ -92,7 +92,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
 
     // Po Return
     Route::post('getPoReturn', [APIPurchaseOrderController::class, 'getPoReturn']);
-
+    Route::post('wsaCheckItemLot', [APIPurchaseOrderController::class, 'wsaCheckItemLot']);
     // WSA PO
     Route::get('wsaWOPrint', [APIPurchaseOrderController::class, 'wsaWOPrint']); //mira
     Route::get('wsaWOMaster', [APIPurchaseOrderController::class, 'wsaWOMaster']); //mira

@@ -26,8 +26,8 @@ return new class extends Migration
             $table->String('xxinv__chr01')->nullable();
             $table->String('xxinv__chr02')->nullable();
             $table->String('xxinv__long1', 100)->nullable();
-            $table->decimal('xxinv__dec01', 17, 2)->nullable();
-            $table->decimal('xxinv__dec02', 17, 2)->nullable();
+            $table->decimal('xxinv__dec01', 30, 10)->nullable();
+            $table->decimal('xxinv__dec02', 30, 10)->nullable();
             $table->date('xxinv__dte01')->nullable();
             $table->String('xxinv_ref', 18)->nullable();
             $table->date('xxinv_entry_date')->nullable();
