@@ -21,16 +21,16 @@ class ConfirmOtherTransactionServices
         try {
             $otherTransactionConfirm = OtherTransactionConfirm::where('id', $otcApproval['id'])->lockForUpdate()->first();
 
-            if (! $otherTransactionConfirm) {
+            if (!$otherTransactionConfirm) {
                 DB::rollBack();
-                Log::channel('confirmOtherTransaction')->info('OtherTransactionConfirm not found for id: '.$otcApproval['id']);
+                Log::channel('confirmOtherTransaction')->info('OtherTransactionConfirm not found for id: ' . $otcApproval['id']);
 
                 return false;
             }
 
             if ($otherTransactionConfirm->otc_status !== 'Waiting for confirmation') {
                 DB::rollBack();
-                Log::channel('confirmOtherTransaction')->info('Duplicate confirmOtherTransaction request ignored. id: '.$otcApproval['id'].', current status: '.$otherTransactionConfirm->otc_status);
+                Log::channel('confirmOtherTransaction')->info('Duplicate confirmOtherTransaction request ignored. id: ' . $otcApproval['id'] . ', current status: ' . $otherTransactionConfirm->otc_status);
 
                 return true;
             }
@@ -44,7 +44,7 @@ class ConfirmOtherTransactionServices
 
             Log::channel('confirmOtherTransaction')->info(json_encode($request->all()));
 
-            if (! $anotherConfirm) {
+            if (!$anotherConfirm) {
                 $dataOSPM = $otcApproval['get_other_shipment_preparation_mstr'];
 
                 $otherShipmentPreparationMstr = OtherShipmentPreparationMstr::with(['getOtherShipmentPreparationDet.getOtherShipmentScheduleLocation.getOtherShipmentScheduleDet.getOtherShipmentScheduleMaster'])->find($dataOSPM['id']);
@@ -54,23 +54,11 @@ class ConfirmOtherTransactionServices
 
                 $fieldName = 'mji_pack_dock';
 
-                // $wsaServices = new WSAServices();
-                // $locationWSA = $wsaServices->wsaGenCode($fieldName);
-                // if ($locationWSA[0] == 'false') {
-                //     DB::rollBack();
-
-                //     Log::channel('confirmOtherTransaction')->info('Gen code not found');
-
-                //     return false;
-                // }
-
-                // $location = $locationWSA[1][0]['t_value'];
-
                 $qxtendServices = new QxtendServices();
 
                 foreach ($otherShipmentPreparationMstr->getOtherShipmentPreparationDet as $preparationDet) {
                     $locationDetail = $preparationDet->getOtherShipmentScheduleLocation;
-                    if (! $locationDetail) {
+                    if (!$locationDetail) {
                         continue;
                     }
 
@@ -78,7 +66,7 @@ class ConfirmOtherTransactionServices
                     $scheduleMaster = $scheduleDet?->getOtherShipmentScheduleMaster;
 
                     if ($scheduleMaster) {
-                        $scheduleMaster->ossm_status = 'Shipped';
+                        $scheduleMaster->ossm_status = 'Confirm';
                         $scheduleMaster->save();
                     }
 
@@ -103,6 +91,32 @@ class ConfirmOtherTransactionServices
                             'success' => false,
                             'message' => $qxtend[1],
                         ];
+                    }
+
+                    // -------------------------------------------------------------
+                    //  INSERT GENERAL TRANSACTION HISTORY (CONFIRM TRANSACTION)
+                    // -------------------------------------------------------------
+                    if ((float) $locationDetail->ossl_qty_pick > 0) {
+                        $newTransactionHistory = new TransactionHistory();
+                        $newTransactionHistory->tr_nbr = $scheduleMaster->ossm_number ?? '';
+                        $newTransactionHistory->tr_order = '';
+                        $newTransactionHistory->tr_program = 'Other Transaction Module';
+                        $newTransactionHistory->tr_activity = 'Confirm Other Transaction';
+                        $newTransactionHistory->tr_user = Auth::user()->id ?? '';
+                        $newTransactionHistory->tr_part = $scheduleDet->ossd_part ?? '';
+                        $newTransactionHistory->tr_uom = $scheduleDet->ossd_uom ?? '';
+                        $newTransactionHistory->tr_line = '';
+                        $newTransactionHistory->tr_lot = $locationDetail->ossl_lotserial ?? '';
+                        $newTransactionHistory->tr_qty = $locationDetail->ossl_qty_pick;
+                        $newTransactionHistory->tr_date = now();
+                        $newTransactionHistory->tr_reference = $dataOSPM['ospm_number'] ?? '';
+                        $newTransactionHistory->tr_site = $locationDetail->ossl_site ?? '2100';
+                        $newTransactionHistory->tr_location = $locationDetail->ossl_location ?? '';
+                        $newTransactionHistory->tr_warehouse = $locationDetail->ossl_warehouse ?? '';
+                        $newTransactionHistory->tr_level = $locationDetail->ossl_level ?? '0';
+                        $newTransactionHistory->tr_bin = $locationDetail->ossl_bin ?? '0';
+                        $newTransactionHistory->tr_remark = $reason ?? 'Confirmed Other Transaction';
+                        $newTransactionHistory->save();
                     }
 
                     // History Other Shipment Preparation
@@ -182,16 +196,16 @@ class ConfirmOtherTransactionServices
         try {
             $otherTransactionConfirm = OtherTransactionConfirm::where('id', $otcApproval['id'])->lockForUpdate()->first();
 
-            if (! $otherTransactionConfirm) {
+            if (!$otherTransactionConfirm) {
                 DB::rollBack();
-                Log::channel('confirmOtherTransaction')->info('OtherTransactionConfirm not found for id: '.$otcApproval['id']);
+                Log::channel('confirmOtherTransaction')->info('OtherTransactionConfirm not found for id: ' . $otcApproval['id']);
 
                 return false;
             }
 
             if ($otherTransactionConfirm->otc_status !== 'Waiting for confirmation') {
                 DB::rollBack();
-                Log::channel('confirmOtherTransaction')->info('Duplicate rejectOtherTransaction request ignored. id: '.$otcApproval['id'].', current status: '.$otherTransactionConfirm->otc_status);
+                Log::channel('confirmOtherTransaction')->info('Duplicate rejectOtherTransaction request ignored. id: ' . $otcApproval['id'] . ', current status: ' . $otherTransactionConfirm->otc_status);
 
                 return true;
             }
@@ -205,7 +219,7 @@ class ConfirmOtherTransactionServices
 
             Log::channel('confirmOtherTransaction')->info(json_encode($request->all()));
 
-            if (! $anotherConfirm) {
+            if (!$anotherConfirm) {
                 $dataOSPM = $otcApproval['get_other_shipment_preparation_mstr'];
 
                 $otherShipmentPreparationMstr = OtherShipmentPreparationMstr::with(['getOtherShipmentPreparationDet.getOtherShipmentScheduleLocation.getOtherShipmentScheduleDet.getOtherShipmentScheduleMaster'])->find($dataOSPM['id']);
@@ -215,7 +229,7 @@ class ConfirmOtherTransactionServices
 
                 foreach ($otherShipmentPreparationMstr->getOtherShipmentPreparationDet as $preparationDet) {
                     $locationDetail = $preparationDet->getOtherShipmentScheduleLocation;
-                    if (! $locationDetail) {
+                    if (!$locationDetail) {
                         continue;
                     }
 
@@ -227,16 +241,35 @@ class ConfirmOtherTransactionServices
                         $scheduleMaster->save();
                     }
 
+                    $qtyReturned = (float) $locationDetail->ossl_qty_pick;
+
                     // === Pengembalian stok (rollback qty pick ke xxinv_qtyoh) ===
-                    if ($scheduleDet) {
-                        xxinvDet::where('xxinv_part', $scheduleDet->ossd_part)
-                            ->where('xxinv_lot', $locationDetail->ossl_lotserial)
-                            ->where('xxinv_bin', $locationDetail->ossl_bin)
-                            ->where('xxinv_level', $locationDetail->ossl_level)
-                            ->increment(
-                                'xxinv_qtyoh',
-                                (float) $locationDetail->ossl_qty_pick
-                            );
+                    if ($scheduleDet && $qtyReturned > 0) {
+                        xxinvDet::where('xxinv_part', $scheduleDet->ossd_part)->where('xxinv_lot', $locationDetail->ossl_lotserial)->where('xxinv_bin', $locationDetail->ossl_bin)->where('xxinv_level', $locationDetail->ossl_level)->increment('xxinv_qtyoh', $qtyReturned);
+
+                        // -------------------------------------------------------------
+                        //  INSERT GENERAL TRANSACTION HISTORY (REJECT TRANSACTION)
+                        // -------------------------------------------------------------
+                        $newTransactionHistory = new TransactionHistory();
+                        $newTransactionHistory->tr_nbr = $scheduleMaster->ossm_number ?? '';
+                        $newTransactionHistory->tr_order = '';
+                        $newTransactionHistory->tr_program = 'Other Transaction Module';
+                        $newTransactionHistory->tr_activity = 'Reject Other Transaction';
+                        $newTransactionHistory->tr_user = Auth::user()->id ?? '';
+                        $newTransactionHistory->tr_part = $scheduleDet->ossd_part ?? '';
+                        $newTransactionHistory->tr_uom = $scheduleDet->ossd_uom ?? '';
+                        $newTransactionHistory->tr_line = '';
+                        $newTransactionHistory->tr_lot = $locationDetail->ossl_lotserial ?? '';
+                        $newTransactionHistory->tr_qty = $qtyReturned;
+                        $newTransactionHistory->tr_date = now();
+                        $newTransactionHistory->tr_reference = $dataOSPM['ospm_number'] ?? '';
+                        $newTransactionHistory->tr_site = $locationDetail->ossl_site ?? '2100';
+                        $newTransactionHistory->tr_location = $locationDetail->ossl_location ?? '';
+                        $newTransactionHistory->tr_warehouse = $locationDetail->ossl_warehouse ?? '';
+                        $newTransactionHistory->tr_level = $locationDetail->ossl_level ?? '0';
+                        $newTransactionHistory->tr_bin = $locationDetail->ossl_bin ?? '0';
+                        $newTransactionHistory->tr_remark = $reason ?? 'Rejected Other Transaction';
+                        $newTransactionHistory->save();
                     }
 
                     $locationDetail->ossl_qty_pick = 0;

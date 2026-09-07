@@ -23,7 +23,7 @@ use App\Http\Controllers\API\PackingReplenishment\APIPackingReplenishmentControl
 use App\Http\Controllers\API\ShipmentSchedule\APIShipmentScheduleController;
 use App\Http\Controllers\API\ShipperConfirm\APIShipperConfirmController;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\API\ApiSIngelTransferLot;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -49,7 +49,6 @@ Route::get('getAPKLatestVersion', [APIController::class, 'getAPKLatestVersion'])
 Route::post('updatexxinvloc', [APIController::class, 'outboundxxinvDet']);
 
 Route::middleware(['auth:api', 'token.api'])->group(function () {
-
     // PO
     Route::get('getDataPO', [APIPurchaseOrderController::class, 'index']);
     Route::post('saveReceipt', [APIPurchaseOrderController::class, 'saveReceipt']);
@@ -90,6 +89,9 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
 
     // Print WO QR
     Route::post('printQRItemWO', [APIZebraPrinterController::class, 'printQRItemWO']);
+
+    // Po Return
+    Route::post('getPoReturn', [APIPurchaseOrderController::class, 'getPoReturn']);
 
     // WSA PO
     Route::get('wsaWOPrint', [APIPurchaseOrderController::class, 'wsaWOPrint']); //mira
@@ -147,9 +149,12 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getOtherShipmentConfirmation', [APIOtherTransactionConfirmController::class, 'index']);
     Route::post('confirmOtherTransaction', [APIOtherTransactionConfirmController::class, 'store']);
     Route::post('rejectOtherTransaction', [APIOtherTransactionConfirmController::class, 'rejectOtherTransaction']);
+
     // Other Shipment Schedule
     Route::get('getOtherShipmentSchedule', [APIOtherShipmentScheduleController::class, 'index']);
     Route::get('/getItemOSS', [APIOtherShipmentScheduleController::class, 'getItemOSS']);
+    Route::get('/getItemOT', [APIOtherShipmentScheduleController::class, 'getItemOT']);
+    Route::get('/getSiteOT', [APIOtherShipmentScheduleController::class, 'getSiteOT']);
     Route::post('/getLocationByPart', [APIOtherShipmentScheduleController::class, 'getLocationByPart']);
     Route::post('/saveOtherShipmentSchedule', [APIOtherShipmentScheduleController::class, 'store']);
     Route::post('deleteOtherShipmentSchedule', [APIOtherShipmentScheduleController::class, 'delete']);
@@ -164,10 +169,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post('rejectOtherShipmentPreparation', [APIOtherShipmentPreparationController::class, 'rejectShipmentPreparation']);
     Route::post('approveOtherShipmentPreparation', [APIOtherShipmentPreparationController::class, 'approveShipmentPreparation']);
     Route::get('editOtherShipmentPreparation/{id}', [APIOtherShipmentPreparationController::class, 'editShipmentPreparation']);
-    Route::get('getOtherShipmentPreparationApprovalList', [
-        APIOtherShipmentPreparationController::class,
-        'getOtherShipmentPreparationApprovalList',
-    ]);
+    Route::get('getOtherShipmentPreparationApprovalList', [APIOtherShipmentPreparationController::class, 'getOtherShipmentPreparationApprovalList']);
 
     // Picklist
     Route::get('getDataWo', [APIWorkOrderController::class, 'getDataWo']);
@@ -221,6 +223,15 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getTransferData', [APISingleTransfer::class, 'getTransferData']);
     Route::post('receiptItem', [APISingleTransfer::class, 'receiptItem']);
     Route::get('getSingleTransferData', [APISingleTransfer::class, 'getSingleTransferData']);
+    Route::get('getItemDataST', [APISingleTransfer::class, 'getItemDataST']);
+        Route::get('getSiteDataST', [APISingleTransfer::class, 'getSiteDataST']);
+            Route::get('getLocDataST', [APISingleTransfer::class, 'getLocDataST']);
+                Route::get('getLotDataST', [APISingleTransfer::class, 'getLotDataST']);
+                    Route::get('getWrhDataST', [APISingleTransfer::class, 'getWrhDataST']);
+                        Route::get('getLevelDataST', [APISingleTransfer::class, 'getLevelDataST']);
+       Route::get('getBinDataST', [APISingleTransfer::class, 'getBinDataST']);
+
+ 
 
     Route::post('getWlbData', [APISingleTransfer::class, 'getWlbData']);
 
@@ -269,6 +280,12 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getHistoryData', [APIController::class, 'getHistoryData']);
 
     Route::get('cekItemLot', [APIController::class, 'cekItemLot']);
+        Route::get('cekItemLotWeb', [APIController::class, 'cekItemLotWeb']);
+                Route::get('cekStorageLocation', [APIController::class, 'cekStorageLocation']);
+
+                       Route::get('getSiteLocationLookup', [APIController::class, 'getSiteLocationLookup']);
+                               Route::get('getSiteLookup', [APIController::class, 'getSiteLookup']);
+                                       Route::get('getLocationLookup', [APIController::class, 'getLocationLookup']);
 
     // Penyerahan Barang
     // Route::get("getLocationData", [APIPicklistShopping::class, "getLocationData"]);
@@ -287,6 +304,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post('getWlbBarangJadi', [APIBarangJadi::class, 'getWlbBarangJadi']);
     Route::post('getWlbBarangJadi', [APIBarangJadi::class, 'getWlbBarangJadi']);
     Route::post('updateBarangJadi', [APIBarangJadi::class, 'update']);
+    Route::get('getStrorage', [APIBarangJadi::class, 'getStrorage']);
 
     Route::get('getPenyerahanBarang', [APIBarangJadi::class, 'index']);
     Route::get('getItemXxinvDet', [APIBarangJadi::class, 'getItemXxinvDet']);
@@ -294,6 +312,11 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getInventoryByWarehouse', [APIDashboard::class, 'getInventoryByWarehouse']);
     Route::get('getDetailInventoryByWarehouse', [APIDashboard::class, 'getDetailInventoryByWarehouse']);
     Route::get('getDetailInventoryByStatus', [APIDashboard::class, 'getDetailInventoryByStatus']);
+    
     Route::get('getInventoryByStatus', [APIDashboard::class, 'getInventoryByStatus']);
+        Route::get('getInventoryByExpDate', [APIDashboard::class, 'getInventoryByExpDate']);
+
+            Route::post('singleTransferLot', [ApiSIngelTransferLot::class, 'store']);
 });
+// WSA Picklist
 // WSA Picklist

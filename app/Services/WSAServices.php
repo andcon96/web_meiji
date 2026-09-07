@@ -1873,6 +1873,8 @@ class WSAServices
             // '</meiji_get_xxpick_det>'.
             '</Body>' .
             '</Envelope>';
+            // dd($qdocRequest);
+            // log::info($qdocRequest);
         // dd($qdocRequest);
         $curlOptions = [
             CURLOPT_URL => $qxUrl,
@@ -1916,6 +1918,7 @@ class WSAServices
         }
 
         $xmlResp = simplexml_load_string($qdocResponse);
+      
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
         $dataloop = $xmlResp->xpath('//ns1:tempRow');
@@ -5326,16 +5329,16 @@ class WSAServices
             }
             curl_close($curl);
         }
-        // log::info($qdocResponse);
-        //  log::info($qdocRequest);
+        log::info($qdocResponse);
+         log::info($qdocRequest);
         $xmlResp = simplexml_load_string($qdocResponse);
         // dd($qdocRequest,$qdocResponse);
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
         $dataloop    = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-        log::info($qdocRequest);
-        log::info($qdocResponse);
+        // log::info($qdocRequest);
+        // log::info($qdocResponse);
 
         return [
             $qdocResult,

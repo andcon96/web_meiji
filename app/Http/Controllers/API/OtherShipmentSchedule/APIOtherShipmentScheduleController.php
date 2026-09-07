@@ -34,7 +34,7 @@ class APIOtherShipmentScheduleController extends Controller
 
     public function getItemOSS(Request $request)
     {
-        $items = Item::with(['getLoadedBy:id,name', 'getUpdatedBy:id,name'])
+        $items = Item::with(['getLoadedBy:id,name', 'getUpdatedBy:id,name'])->where()
             ->orderBy('im_item_part')
             ->get();
 
@@ -46,9 +46,49 @@ class APIOtherShipmentScheduleController extends Controller
         );
     }
 
+    public function getItemOT(Request $request)
+    {
+        $items = xxinvDet::where('xxinv_det.xxinv_site', $request->site)
+            ->join('item_master', 'item_master.im_item_part', '=', 'xxinv_det.xxinv_part')
+            ->select(
+                'xxinv_det.xxinv_part',
+                'xxinv_det.xxinv_site',
+                'item_master.im_item_desc',
+                'item_master.im_item_um'
+            )
+            ->groupBy(
+                'xxinv_det.xxinv_part',
+                'xxinv_det.xxinv_site',
+                'item_master.im_item_desc',
+                'item_master.im_item_um'
+            )
+            ->get();
+
+        return response()->json([
+            'items' => $items,
+        ], 200);
+    }
+
+    public function getSiteOT(Request $request)
+    {
+        $sites = xxinvDet::query()
+            ->select('xxinv_site')
+            ->distinct()
+            ->orderBy('xxinv_site')
+            ->pluck('xxinv_site');
+
+        return response()->json([
+            'site' => $sites,
+        ], 200);
+    }
+
     public function getLocationByPart(Request $request)
     {
-        $items = xxinvDet::where('xxinv_part', $request->search)->get();
+       $items = xxinvDet::where('xxinv_part', $request->search)
+    ->where('xxinv_qtyoh', '>=', 0)
+    ->where('xxinv_loc', '!=', 'QC-QRT')
+    ->where('xxinv_loc', '!=', 'WH-QRT')
+    ->get();
 
         $inventoryData = $items->map(function ($item) {
             return [
@@ -60,7 +100,7 @@ class APIOtherShipmentScheduleController extends Controller
                 't_inv_site' => $item->xxinv_site,
                 't_inv_wrh' => $item->xxinv_wrh,
                 't_inv_qtyoh' => $item->xxinv_qtyoh,
-                't_inv_uom' => "null", // atau ambil dari tabel Item jika diperlukan
+                't_inv_uom' => 'null', // atau ambil dari tabel Item jika diperlukan
             ];
         });
 
@@ -68,38 +108,45 @@ class APIOtherShipmentScheduleController extends Controller
             'inventoryData' => $inventoryData,
         ]);
     }
+public function store(Request $request)
+{
+    // Validasi mandatory field dari request API
+    $request->validate([
+        'otherTransactionNumber' => 'required|string',
+        'items' => 'required|array|min:1',
+    ], [
+        'otherTransactionNumber.required' => 'Other Transaction Number is required.',
+        'items.required' => 'Items are required.',
+    ]);
 
-    public function store(Request $request)
-    {
-        // Log::channel("otherShipmentSchedule")->info(json_encode($request->all()));
+    $otherTransactionNumber = $request->otherTransactionNumber;
+    $customerCode = $request->customer_id;
+    $customerDesc = $request->customer_desc;
+    $items = $request->items;
 
-        $customerCode = $request->customer_id;
-        $customerDesc = $request->customer_desc;
-        $items = $request->items;
+    $otherShipmentScheduleServices = new OtherShipmentScheduleServices();
+    $saveData = $otherShipmentScheduleServices->saveOtherShipmentSchedule($otherTransactionNumber, $customerCode, $customerDesc, $items);
 
-        $otherShipmentScheduleServices = new OtherShipmentScheduleServices();
-        $saveData = $otherShipmentScheduleServices->saveOtherShipmentSchedule($customerCode, $customerDesc, $items);
-
-        if ($saveData == false) {
-            return response()->json(
-                [
-                    'Status' => 'Error',
-                    'Message' => 'Failed To Save Other Shipment Schedule.',
-                ],
-                422,
-            );
-        }
-
+    if ($saveData == false) {
         return response()->json(
             [
-                'status' => 'success',
-                'message' => 'Other Shipment schedule has been created',
+                'Status' => 'Error',
+                'Message' => 'Failed To Save Other Shipment Schedule.',
             ],
-            200,
-            ['Content-Type' => 'application/json'],
-            JSON_UNESCAPED_UNICODE,
+            422,
         );
     }
+
+    return response()->json(
+        [
+            'status' => 'success',
+            'message' => 'Other Shipment schedule has been created',
+        ],
+        200,
+        ['Content-Type' => 'application/json'],
+        JSON_UNESCAPED_UNICODE,
+    );
+}
 
     public function delete(Request $request)
     {
