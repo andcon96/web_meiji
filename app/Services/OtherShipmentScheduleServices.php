@@ -8,6 +8,7 @@ use App\Models\API\OtherShipmentSchedule\OtherShipmentScheduleHist;
 use App\Models\API\OtherShipmentSchedule\OtherShipmentScheduleLoc;
 use App\Models\API\OtherShipmentSchedule\OtherShipmentScheduleMstr;
 use App\Models\API\OtherShipmentPreparation\OtherShipmentPreparationDet;
+use App\Models\API\TransactionHistory;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,103 +16,122 @@ use Illuminate\Support\Facades\Log;
 
 class OtherShipmentScheduleServices
 {
-    public function saveOtherShipmentSchedule($customerCode, $customerName, $items)
-    {
-        DB::beginTransaction();
+   public function saveOtherShipmentSchedule($otherTransactionNumber, $customerCode, $customerName, $items)
+{
+    DB::beginTransaction();
 
-        try {
-            // Generate Running Number Shipment Schedule
-            $runningNumberServices = new RunningNumberServices();
-            $ossm_number = $runningNumberServices->getRunningNumberOtherShipmentSchedule();
+    try {
+        // Generate Running Number Shipment Schedule
+        $runningNumberServices = new RunningNumberServices();
+        $ossm_number = $runningNumberServices->getRunningNumberOtherShipmentSchedule();
 
-            // Create shipment schedule master
-            $otherShipmentScheduleMstr = new OtherShipmentScheduleMstr();
-            $otherShipmentScheduleMstr->ossm_number = $ossm_number;
-            // $otherShipmentScheduleMstr->ossm_cust_code = $customerCode;
-            // $otherShipmentScheduleMstr->ossm_cust_desc = $customerName;
-            $otherShipmentScheduleMstr->ossm_cust_code = "-";
-            $otherShipmentScheduleMstr->ossm_cust_desc = "-";
-            $otherShipmentScheduleMstr->ossm_status = "New";
-            $otherShipmentScheduleMstr->created_by = Auth::user()->id;
-            $otherShipmentScheduleMstr->save();
+        // Create shipment schedule master
+        $otherShipmentScheduleMstr = new OtherShipmentScheduleMstr();
+        $otherShipmentScheduleMstr->ossm_number = $otherTransactionNumber;
+        $otherShipmentScheduleMstr->ossm_cust_code = "-";
+        $otherShipmentScheduleMstr->ossm_cust_desc = "-";
+        $otherShipmentScheduleMstr->ossm_status = "New";
+        $otherShipmentScheduleMstr->created_by = Auth::user()->id;
+        $otherShipmentScheduleMstr->save();
 
-            // Create shipment schedule detail + insert to history
-            foreach ($items as $item) {
-                $otherShipmentScheduleDet = new OtherShipmentScheduleDet();
-                $otherShipmentScheduleDet->ossm_id = $otherShipmentScheduleMstr->id;
-                $otherShipmentScheduleDet->ossd_part = $item["itemPart"];
-                $otherShipmentScheduleDet->ossd_uom = $item["UM"];
-                $otherShipmentScheduleDet->ossd_desc = $item["itemDesc"];
-                $otherShipmentScheduleDet->ossd_qty_ord = $item["totalQty"];
-                $otherShipmentScheduleDet->ossd_qty_pick = 0.0;
-                $otherShipmentScheduleDet->ossd_status = "New";
-                $otherShipmentScheduleDet->ossd_sent_to_qad = "No";
-                $otherShipmentScheduleDet->created_by = Auth::user()->id;
-                $otherShipmentScheduleDet->save();
+        // Create shipment schedule detail
+        foreach ($items as $item) {
+            $otherShipmentScheduleDet = new OtherShipmentScheduleDet();
+            $otherShipmentScheduleDet->ossm_id = $otherShipmentScheduleMstr->id;
+            $otherShipmentScheduleDet->ossd_part = $item["itemPart"];
+            $otherShipmentScheduleDet->ossd_uom = $item["UM"];
+            $otherShipmentScheduleDet->ossd_desc = $item["itemDesc"];
+            $otherShipmentScheduleDet->ossd_qty_ord = $item["totalQty"];
+            $otherShipmentScheduleDet->ossd_qty_pick = 0.0;
+            $otherShipmentScheduleDet->ossd_status = "New";
+            $otherShipmentScheduleDet->ossd_sent_to_qad = "No";
+            $otherShipmentScheduleDet->created_by = Auth::user()->id;
+            $otherShipmentScheduleDet->save();
 
-                // Create shipment schedule detail locations + insert to history
-                foreach ($item["selectedLocations"] as $location) {
-                    $data = explode("_", $location);
-                    $itemCode = $data[0];
-                    $locationCode = $data[1];
-                    $lotCode = $data[2];
-                    $warehouseCode = $data[3];
-                    $binCode = $data[4];
-                    $levelCode = $data[5];
+            // Create shipment schedule detail locations + insert to histories
+            foreach ($item["selectedLocations"] as $location) {
+                $data = explode("_", $location);
+                $itemCode      = $data[0];
+                $locationCode  = $data[1];
+                $lotCode       = $data[2];
+                $warehouseCode = $data[3];
+                $binCode       = $data[4];
+                $levelCode     = $data[5];
 
-                    $qtyPick = $item["locationQuantities"][$location];
+                $qtyPick = $item["locationQuantities"][$location] ?? 0;
 
-                    $otherShipmentScheduleLocation = new OtherShipmentScheduleLoc();
-                    $otherShipmentScheduleLocation->ossd_id = $otherShipmentScheduleDet->id;
-                    $otherShipmentScheduleLocation->ossl_site = "2100";
-                    $otherShipmentScheduleLocation->ossl_warehouse = $warehouseCode;
-                    $otherShipmentScheduleLocation->ossl_location = $locationCode;
-                    $otherShipmentScheduleLocation->ossl_lotserial = $lotCode;
-                    $otherShipmentScheduleLocation->ossl_level = $levelCode;
-                    $otherShipmentScheduleLocation->ossl_bin = $binCode;
-                    $otherShipmentScheduleLocation->ossl_qty_to_pick = $qtyPick;
-                    $otherShipmentScheduleLocation->ossl_qty_pick = 0.0;
-                    $otherShipmentScheduleLocation->created_by = Auth::user()->id;
-                    $otherShipmentScheduleLocation->save();
+                // 1. Save Location Detail
+                $otherShipmentScheduleLocation = new OtherShipmentScheduleLoc();
+                $otherShipmentScheduleLocation->ossd_id = $otherShipmentScheduleDet->id;
+                $otherShipmentScheduleLocation->ossl_site = "2100";
+                $otherShipmentScheduleLocation->ossl_warehouse = $warehouseCode;
+                $otherShipmentScheduleLocation->ossl_location = $locationCode;
+                $otherShipmentScheduleLocation->ossl_lotserial = $lotCode;
+                $otherShipmentScheduleLocation->ossl_level = $levelCode;
+                $otherShipmentScheduleLocation->ossl_bin = $binCode;
+                $otherShipmentScheduleLocation->ossl_qty_to_pick = $qtyPick;
+                $otherShipmentScheduleLocation->ossl_qty_pick = 0.0;
+                $otherShipmentScheduleLocation->created_by = Auth::user()->id;
+                $otherShipmentScheduleLocation->save();
 
-                    $otherShipmentScheduleHistory = new OtherShipmentScheduleHist();
-                    $otherShipmentScheduleHistory->ossh_number = $otherShipmentScheduleMstr->ossm_number;
-                    $otherShipmentScheduleHistory->ossh_cust_code = $otherShipmentScheduleMstr->ossm_cust_code;
-                    $otherShipmentScheduleHistory->ossh_cust_desc = $otherShipmentScheduleMstr->ossm_cust_desc;
-                    $otherShipmentScheduleHistory->ossh_status_mstr = $otherShipmentScheduleMstr->ossm_status;
-                    $otherShipmentScheduleHistory->ossd_part = $otherShipmentScheduleDet->ossd_part;
-                    $otherShipmentScheduleHistory->ossd_desc = $otherShipmentScheduleDet->ossd_desc;
-                    $otherShipmentScheduleHistory->ossd_uom = $otherShipmentScheduleDet->ossd_uom;
-                    $otherShipmentScheduleHistory->ossd_qty_ord = $otherShipmentScheduleDet->ossd_qty_ord;
-                    $otherShipmentScheduleHistory->ossd_qty_pick = $otherShipmentScheduleDet->ossd_qty_ord;
-                    $otherShipmentScheduleHistory->ossd_status_det = $otherShipmentScheduleDet->ossd_status;
-                    $otherShipmentScheduleHistory->ossl_site = $otherShipmentScheduleLocation->ossl_site;
-                    $otherShipmentScheduleHistory->ossl_warehouse = $otherShipmentScheduleLocation->ossl_warehouse;
-                    $otherShipmentScheduleHistory->ossl_location = $otherShipmentScheduleLocation->ossl_location;
-                    $otherShipmentScheduleHistory->ossl_lotserial = $otherShipmentScheduleLocation->ossl_lotserial;
-                    $otherShipmentScheduleHistory->ossl_level = $otherShipmentScheduleLocation->ossl_level;
-                    $otherShipmentScheduleHistory->ossl_bin = $otherShipmentScheduleLocation->ossl_bin;
-                    $otherShipmentScheduleHistory->ossl_qty_to_pick = $otherShipmentScheduleLocation->ossl_qty_to_pick;
-                    $otherShipmentScheduleHistory->ossl_qty_pick = $otherShipmentScheduleLocation->ossl_qty_pick;
-                    $otherShipmentScheduleHistory->ossl_action = "Create";
-                    $otherShipmentScheduleHistory->created_by = Auth::user()->id;
-                    $otherShipmentScheduleHistory->save();
-                }
+                // 2. Save Other Shipment Schedule History
+                $otherShipmentScheduleHistory = new OtherShipmentScheduleHist();
+                $otherShipmentScheduleHistory->ossh_number = $otherShipmentScheduleMstr->ossm_number;
+                $otherShipmentScheduleHistory->ossh_cust_code = $otherShipmentScheduleMstr->ossm_cust_code;
+                $otherShipmentScheduleHistory->ossh_cust_desc = $otherShipmentScheduleMstr->ossm_cust_desc;
+                $otherShipmentScheduleHistory->ossh_status_mstr = $otherShipmentScheduleMstr->ossm_status;
+                $otherShipmentScheduleHistory->ossd_part = $otherShipmentScheduleDet->ossd_part;
+                $otherShipmentScheduleHistory->ossd_desc = $otherShipmentScheduleDet->ossd_desc;
+                $otherShipmentScheduleHistory->ossd_uom = $otherShipmentScheduleDet->ossd_uom;
+                $otherShipmentScheduleHistory->ossd_qty_ord = $otherShipmentScheduleDet->ossd_qty_ord;
+                $otherShipmentScheduleHistory->ossd_qty_pick = $otherShipmentScheduleDet->ossd_qty_ord;
+                $otherShipmentScheduleHistory->ossd_status_det = $otherShipmentScheduleDet->ossd_status;
+                $otherShipmentScheduleHistory->ossl_site = $otherShipmentScheduleLocation->ossl_site;
+                $otherShipmentScheduleHistory->ossl_warehouse = $otherShipmentScheduleLocation->ossl_warehouse;
+                $otherShipmentScheduleHistory->ossl_location = $otherShipmentScheduleLocation->ossl_location;
+                $otherShipmentScheduleHistory->ossl_lotserial = $otherShipmentScheduleLocation->ossl_lotserial;
+                $otherShipmentScheduleHistory->ossl_level = $otherShipmentScheduleLocation->ossl_level;
+                $otherShipmentScheduleHistory->ossl_bin = $otherShipmentScheduleLocation->ossl_bin;
+                $otherShipmentScheduleHistory->ossl_qty_to_pick = $otherShipmentScheduleLocation->ossl_qty_to_pick;
+                $otherShipmentScheduleHistory->ossl_qty_pick = $otherShipmentScheduleLocation->ossl_qty_pick;
+                $otherShipmentScheduleHistory->ossl_action = "Create";
+                $otherShipmentScheduleHistory->created_by = Auth::user()->id;
+                $otherShipmentScheduleHistory->save();
+
+                // 3. Save General Transaction History (Disesuaikan Per Item & Location)
+                $newTransactionHistory = new TransactionHistory();
+                $newTransactionHistory->tr_nbr       = $otherTransactionNumber;
+                $newTransactionHistory->tr_order     = '';
+                $newTransactionHistory->tr_program   = 'Other Transaction Module';
+                $newTransactionHistory->tr_activity  = 'Create Other Transaction';
+                $newTransactionHistory->tr_user      = Auth::user()->id ?? '';
+                $newTransactionHistory->tr_part      = $item["itemPart"] ?? '';
+                $newTransactionHistory->tr_uom       = $item["UM"] ?? '';
+                $newTransactionHistory->tr_line      = '';
+                $newTransactionHistory->tr_lot       = $lotCode ?? '';
+                $newTransactionHistory->tr_qty       = $qtyPick;
+                $newTransactionHistory->tr_date      = now();
+                $newTransactionHistory->tr_reference = '';
+                $newTransactionHistory->tr_site      = "2100";
+                $newTransactionHistory->tr_location  = $locationCode ?? '';
+                $newTransactionHistory->tr_warehouse = $warehouseCode ?? '';
+                $newTransactionHistory->tr_level     = $levelCode ?? '';
+                $newTransactionHistory->tr_bin       = $binCode ?? '';
+                $newTransactionHistory->tr_remark    = 'Create Other Transaction';
+                $newTransactionHistory->save();
             }
-
-            DB::commit();
-            // dd("stop");
-
-            return true;
-        } catch (Exception $err) {
-            Log::channel("otherShipmentSchedule")->info($err);
-
-            DB::rollBack();
-
-            return false;
         }
-    }
 
+        DB::commit();
+        return true;
+
+    } catch (Exception $err) {
+        Log::channel("otherShipmentSchedule")->info($err);
+        DB::rollBack();
+
+        return false;
+    }
+}
     public function deleteOtherShipmentSchedule($otherShipmentScheduleMstr)
     {
         DB::beginTransaction();
