@@ -54,7 +54,7 @@ class APISingleTransfer extends Controller
     $trfdata = singleTransfer::where('st_status', 'Open');
 
     if ($search) {
-        // Gunakan parameter grouping agar 'Open' tetap berlaku
+         
         $trfdata->where(function ($query) use ($search) {
             $query->where('st_trfid', 'LIKE', '%' . $search . '%')
                   ->orWhere('st_item', 'LIKE', '%' . $search . '%')
@@ -69,7 +69,7 @@ class APISingleTransfer extends Controller
             'Status' => 'Error',
             'Message' => 'Data Not Found.',
             'data' => []
-        ], 200); // Sebaiknya return status 200 dengan array kosong
+        ], 200);  
     }
 
     return GeneralResources::collection($trfdata);
@@ -85,9 +85,7 @@ public function receiptItem(Request $req)
 
         $trfid = $req->trfid;
 
-        // ==========================
-        // GET TRANSFER DATA
-        // ==========================
+        
         $data = singleTransfer::where('st_trfid', $trfid)->first();
 
         if (!$data) {
@@ -172,38 +170,7 @@ public function receiptItem(Request $req)
         // ==========================
         // INVENTORY FROM
         // ==========================
-        $invFrom = xxinvDet::where('xxinv_part', $part)
-            ->where('xxinv_wrh', $buildingfrom)
-            ->where('xxinv_level', $levelfrom)
-            ->where('xxinv_bin', $binfrom)
-            ->first();
-
-        if (!$invFrom) {
-
-            throw new Exception(
-                "Inventory From tidak ditemukan. " .
-                "Part: {$part}, " .
-                "Warehouse: {$buildingfrom}, " .
-                "Level: {$levelfrom}, " .
-                "Bin: {$binfrom}"
-            );
-        }
-
-        // ==========================
-        // CHECK QTY
-        // ==========================
-        if ($invFrom->xxinv_qtyoh < $qtyoh) {
-
-            throw new Exception(
-                "Qty inventory tidak mencukupi. " .
-                "Available: {$invFrom->xxinv_qtyoh}, " .
-                "Request: {$qtyoh}"
-            );
-        }
-
-        // Kurangi inventory asal
-        $invFrom->xxinv_qtyoh -= $qtyoh;
-        $invFrom->save();
+      
 
         // ==========================
         // INVENTORY TO
@@ -253,10 +220,7 @@ public function receiptItem(Request $req)
         $newTransactionHistoryfrom->tr_remark = '';
 
         $newTransactionHistoryfrom->save();
-
-        // ==========================
-        // TRANSACTION HISTORY TO
-        // ==========================
+ 
         $newTransactionHistory = new TransactionHistory();
 
         $newTransactionHistory->tr_nbr = $trfid;
@@ -280,9 +244,7 @@ public function receiptItem(Request $req)
 
         $newTransactionHistory->save();
 
-        // ==========================
-        // COMMIT
-        // ==========================
+       
         DB::commit();
 
         Log::info('receiptItem success', [
@@ -295,10 +257,7 @@ public function receiptItem(Request $req)
         ], 200);
 
     } catch (Exception $e) {
-
-        // ==========================
-        // ROLLBACK
-        // ==========================
+ 
         DB::rollBack();
 
         Log::error('receiptItem failed', [
@@ -1556,6 +1515,40 @@ public function receiptItem(Request $req)
             $newRunningNbr = str_pad($nextrunningnbr, 6, '0', STR_PAD_LEFT);
             $newPrefix = $prefix.$newRunningNbr;
             log::info('b');
+
+            
+              $invFrom = xxinvDet::where('xxinv_part', $item)
+            ->where('xxinv_wrh', $whfrom)
+            ->where('xxinv_level', $levelfrom)
+            ->where('xxinv_bin', $binfrom)
+            ->first();
+
+        if (!$invFrom) {
+
+            throw new Exception(
+                "Inventory From tidak ditemukan. " .
+                "Part: {$item}, " .
+                "Warehouse: {$whfrom}, " .
+                "Level: {$levelfrom}, " .
+                "Bin: {$binfrom}"
+            );
+        }
+
+        // ==========================
+        // CHECK QTY
+        // ==========================
+        if ($invFrom->xxinv_qtyoh < $qty) {
+
+            throw new Exception(
+                "Qty inventory tidak mencukupi. " .
+                "Available: {$invFrom->xxinv_qtyoh}, " .
+                "Request: {$qty}"
+            );
+        }
+
+        // Kurangi inventory asal
+        $invFrom->xxinv_qtyoh -= $qty;
+        $invFrom->save();
             $newTransferData = new SingleTransfer();
             $newTransferData->st_trfid = $newPrefix;
             $newTransferData->st_item = $item;
