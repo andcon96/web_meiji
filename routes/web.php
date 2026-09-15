@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReceiptBookController;
+use App\Http\Controllers\CycleCountController;
 use App\Http\Controllers\Settings\ApprovalReceiptMasterController;
 use App\Http\Controllers\Settings\ApprovalSetupController;
 use App\Http\Controllers\Settings\ConnectionController;
@@ -160,7 +161,16 @@ Route::group(["middleware" => ["auth"]], function () {
     //access role menu web
     Route::resource("rolesWeb", RoleAccessWebController::class);
     Route::post("/updateRoleAccessWeb", [RoleAccessWebController::class, "updateRoleAccess"])->name("updateRoleAccessWeb");
-});
+
+    Route::resource("cyclecount", CycleCountController::class);
+    Route::post('/cyclecountupd', 'CycleCountController@upd')->name('home');
+    Route::get("/cyclecount", "CycleCountController@index")->name("home");
+    Route::post("/cyclecrt", "CycleCountController@create")->name("cyclecrt");
+    Route::get("/uploadcycledetail", [CycleCountController::class, "uploadcycledetail"])->name("uploadcycledetail");
+    Route::post("/checkcycle", [CycleCountController::class, "checkcycle"])->name("checkcycle");
+    Route::post("/confirmcycle", [CycleCountController::class, "confirmcycle"])->name("confirmcycle");
+
+    });
 
 Auth::routes();
 Route::get("/home", "HomeController@index")->name("home");
