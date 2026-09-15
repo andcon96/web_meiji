@@ -5,15 +5,16 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\GeneralResources;
 use App\Models\API\PenyerahanBarang;
+use App\Models\API\PenyerahanBarangPallet;
 use App\Models\API\SingleTransfer;
 use App\Models\API\TransactionHistory;
 use App\Models\API\xxinvDet;
+use App\Models\Settings\Domain;
 use App\Models\Settings\Item;
 use App\Models\Settings\ItemLocation;
 use App\Models\Settings\Location;
 use App\Models\Settings\LocationDetail;
 use App\Models\Settings\PenyerahanBarangPrefix;
-use App\Models\Settings\SingleTransferPrefix;
 use App\Services\QxtendServices;
 use App\Services\WSAServices;
 use Exception;
@@ -36,12 +37,7 @@ class APIBarangJadi extends Controller
             ], 422);
         } else {
             return GeneralResources::collection($trfdata);
-            // return response()->json(
-            //     [
-            //         'Data' => $trfdata
-            //     ],
-            //     200
-            // );
+
         }
     }
 
@@ -73,146 +69,408 @@ class APIBarangJadi extends Controller
 
     public function receiptItempb(Request $req)
     {
-        $trfid = $req->trfid;
-        $locto = $req->locto;
-        $whto = $req->whto;
-        $levelto = $req->levelto;
-        $binto = $req->binto;
+        $log = Log::build([
+            'driver' => 'single',
+            'path' => storage_path('logs/penyerahanBarangJadi-2026-09-07.log'),
+            'level' => 'debug',
+        ]);
 
-        $data = penyerahanBarang::where('pb_trfid', $trfid)->first();
+        $log->info('=== START RECEIPT ITEM PB ===', [
+            'trfid' => $req->trfid,
+            'locto' => $req->locto,
+            'wh' => $req->wh,
+            'pallets' => $req->pallets,
+        ]);
 
-        if (! $data) {
-            return response()->json([
-                'Status' => 'Error',
-                'Message' => 'Transfer ID tidak ditemukan',
-            ], 404);
-        }
-        $remark = $data->pb_remark;
-        $part = $data->pb_item;
-        $qtyoh = $data->pb_qty;
-        $sitefrom = $data->pb_site_from;
-        $siteto = $data->pb_site_to;
-        $locfrom = $data->pb_loc_from;
-        $lotfrom = $data->pb_lot;
-        $lotto = $data->pb_lot;
-        $buildingfrom = $data->pb_wh_from ?? '';
-        $buildingto = $whto ?? '';
-        $levelfrom = $data->pb_level_from ?? '';
-        $binfrom = $data->pb_bin_from ?? '';
-
-        DB::beginTransaction();
         try {
-            // Kurangi stok dari lokasi asal HANYA jika lokasi storage asal spesifik ada.
-            // Kalau wh/level/bin asal kosong, berarti stok asalnya berbasis lokasi saja
-            // (misal hasil produksi di QC-QRT), jadi tidak ada baris xxinvDet untuk dikurangi.
-            if ($buildingfrom !== '' && $levelfrom !== '' && $binfrom !== '') {
-                $invFrom = xxinvDet::where('xxinv_part', $part)
-                    ->where('xxinv_lot', $lotfrom)
-                    ->where('xxinv_wrh', $buildingfrom)
-                    ->where('xxinv_level', $levelfrom)
-                    ->where('xxinv_bin', $binfrom)
-                    ->first();
+            $trfid = $req->trfid;
+            $locto = $req->locto;
+            $whto = $req->wh;
 
-                if (! $invFrom) {
-                    DB::rollBack();
+            $log->info('Request data', [
+                'trfid' => $trfid,
+                'locto' => $locto,
+                'whto' => $whto,
+            ]);
 
-                    return response()->json([
-                        'Status' => 'Error',
-                        'Message' => 'Data storage asal tidak ditemukan',
-                    ], 422);
-                }
+            $palletsRaw = $req->pallets ?? '[]';
+            $pallets = json_decode($palletsRaw, true);
 
-                $invFrom->xxinv_qtyoh = $invFrom->xxinv_qtyoh - $qtyoh;
-                $invFrom->save();
+            $log->info('Pallet data decoded', [
+                'pallets' => $pallets,
+                'total_pallet' => is_array($pallets) ? count($pallets) : 0,
+            ]);
+
+            if (! is_array($pallets) || count($pallets) === 0) {
+                $log->warning('Receipt gagal: data pallet kosong');
+
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => 'Data pallet (Level, Bin, Qty) wajib diisi',
+                ], 422);
             }
 
-            // Tambah/insert stok ke lokasi tujuan (whto/levelto/binto/locto)
-            $invTo = xxinvDet::where('xxinv_part', $part)
-                ->where('xxinv_lot', $lotto)
-                ->where('xxinv_wrh', $buildingto)
-                ->where('xxinv_level', $levelto)
-                ->where('xxinv_bin', $binto)
-                ->first();
+            if (! $whto) {
+                $log->warning('Receipt gagal: Warehouse kosong', [
+                    'trfid' => $trfid,
+                ]);
 
-            if ($invTo) {
-                $invTo->xxinv_qtyoh = $invTo->xxinv_qtyoh + $qtyoh;
-                $invTo->save();
-            } else {
-                // Belum ada baris storage untuk kombinasi ini -> buat baru
-                xxinvDet::create([
-                    'xxinv_part' => $part,
-                    'xxinv_lot' => $lotto,
-                    'xxinv_loc' => $locto,
-                    'xxinv_site' => $siteto,
-                    'xxinv_wrh' => $buildingto,
-                    'xxinv_level' => $levelto,
-                    'xxinv_bin' => $binto,
-                    'xxinv_qtyoh' => $qtyoh,
-                    // isi kolom lain sesuai kebutuhan/default
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => 'Warehouse wajib diisi',
+                ], 422);
+            }
+
+            $data = penyerahanBarang::where('pb_trfid', $trfid)->first();
+
+            if (! $data) {
+                $log->warning('Receipt gagal: Transfer ID tidak ditemukan', [
+                    'trfid' => $trfid,
+                ]);
+
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => 'Transfer ID tidak ditemukan',
+                ], 404);
+            }
+
+            $log->info('Data penyerahan ditemukan', [
+                'id' => $data->id,
+                'trfid' => $data->pb_trfid,
+                'part' => $data->pb_item,
+                'qty' => $data->pb_qty,
+                'site_from' => $data->pb_site_from,
+                'site_to' => $data->pb_site_to,
+                'loc_from' => $data->pb_loc_from,
+                'lot' => $data->pb_lot,
+                'wh_from' => $data->pb_wh_from,
+                'level_from' => $data->pb_level_from,
+                'bin_from' => $data->pb_bin_from,
+            ]);
+
+            $remark = $data->pb_remark;
+            $part = $data->pb_item;
+            $qtyoh = $data->pb_qty;
+            $sitefrom = $data->pb_site_from;
+            $siteto = $data->pb_site_to;
+            $locfrom = $data->pb_loc_from;
+            $lotfrom = $data->pb_lot;
+            $lotto = $data->pb_lot;
+            $buildingfrom = $data->pb_wh_from ?? '';
+            $buildingto = $whto;
+            $levelfrom = $data->pb_level_from ?? '';
+            $binfrom = $data->pb_bin_from ?? '';
+
+            $totalPalletQty = 0;
+
+            foreach ($pallets as $palletRow) {
+                $qty = (float) str_replace(',', '', $palletRow['qty'] ?? 0);
+
+                $totalPalletQty += $qty;
+
+                $log->debug('Pallet qty calculation', [
+                    'level' => $palletRow['level'] ?? '',
+                    'bin' => $palletRow['bin'] ?? '',
+                    'qty' => $qty,
+                    'running_total' => $totalPalletQty,
                 ]);
             }
 
-            $dataupdate = penyerahanBarang::where('pb_trfid', $trfid)->first();
-            $dataupdate->pb_status = 'Received';
-            $dataupdate->pb_loc_to = $locto;
-            $dataupdate->pb_wh_to = $whto;
-            $dataupdate->pb_level_to = $levelto;
-            $dataupdate->pb_bin_to = $binto;
-            $dataupdate->save();
+            $log->info('Validasi total quantity', [
+                'qty_penyerahan' => (float) $qtyoh,
+                'total_pallet_qty' => $totalPalletQty,
+            ]);
 
-            $user = Auth::user()->name;
+            if (abs($totalPalletQty - (float) $qtyoh) > 0.0001) {
+                $log->warning('Receipt gagal: total pallet qty tidak sama', [
+                    'total_pallet_qty' => $totalPalletQty,
+                    'qty_penyerahan' => (float) $qtyoh,
+                    'selisih' => $totalPalletQty - (float) $qtyoh,
+                ]);
 
-            // Transaction History - From
-            $newTransactionHistoryfrom = new TransactionHistory();
-            $newTransactionHistoryfrom->tr_nbr = $trfid;
-            $newTransactionHistoryfrom->tr_program = 'Barang Jadi Module';
-            $newTransactionHistoryfrom->tr_activity = 'Penerimaan Barang Jadi From';
-            $newTransactionHistoryfrom->tr_user = $user ?? '';
-            $newTransactionHistoryfrom->tr_part = $part ?? '';
-            $newTransactionHistoryfrom->tr_uom = '';
-            $newTransactionHistoryfrom->tr_line = '';
-            $newTransactionHistoryfrom->tr_lot = $lotfrom ?? '';
-            $newTransactionHistoryfrom->tr_qty = $qtyoh ?? '';
-            $newTransactionHistoryfrom->tr_date = date('Y-m-d H:i:s');
-            $newTransactionHistoryfrom->tr_reference = '';
-            $newTransactionHistoryfrom->tr_site = $sitefrom ?? '';
-            $newTransactionHistoryfrom->tr_location = $locfrom ?? '';
-            $newTransactionHistoryfrom->tr_warehouse = $buildingfrom ?? '';
-            $newTransactionHistoryfrom->tr_level = $levelfrom ?? '';
-            $newTransactionHistoryfrom->tr_bin = $binfrom ?? '';
-            $newTransactionHistoryfrom->tr_remark = $remark;
-            $newTransactionHistoryfrom->save();
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => 'Total Qty pallet ('.$totalPalletQty.') harus sama dengan Qty Penyerahan ('.$qtyoh.')',
+                ], 422);
+            }
 
-            // Transaction History - To
-            $newTransactionHistory = new TransactionHistory();
-            $newTransactionHistory->tr_nbr = $trfid;
-            $newTransactionHistory->tr_order = '';
-            $newTransactionHistory->tr_program = 'Barang Jadi Module';
-            $newTransactionHistory->tr_activity = 'Penerimaan Barang Jadi To';
-            $newTransactionHistory->tr_user = $user ?? '';
-            $newTransactionHistory->tr_part = $part ?? '';
-            $newTransactionHistory->tr_uom = '';
-            $newTransactionHistory->tr_line = '';
-            $newTransactionHistory->tr_lot = $lotto ?? '';
-            $newTransactionHistory->tr_qty = $qtyoh ?? '';
-            $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-            $newTransactionHistory->tr_reference = '';
-            $newTransactionHistory->tr_site = $siteto ?? '';
-            $newTransactionHistory->tr_location = $locto ?? '';
-            $newTransactionHistory->tr_warehouse = $buildingto ?? '';
-            $newTransactionHistory->tr_level = $levelto ?? '';
-            $newTransactionHistory->tr_bin = $binto ?? '';
-            $newTransactionHistory->tr_remark = $remark;
-            $newTransactionHistory->save();
+            DB::beginTransaction();
 
-            DB::commit();
+            $log->info('Database transaction started', [
+                'trfid' => $trfid,
+            ]);
 
-            return response()->json([
-                'Status' => 'Success',
-                'Message' => 'Receipt Item Successful',
-            ], 200);
+            try {
+
+                if ($buildingfrom !== '' && $levelfrom !== '' && $binfrom !== '') {
+
+                    $log->info('Mencari inventory asal', [
+                        'part' => $part,
+                        'lot' => $lotfrom,
+                        'warehouse' => $buildingfrom,
+                        'level' => $levelfrom,
+                        'bin' => $binfrom,
+                    ]);
+
+                    $invFrom = xxinvDet::where('xxinv_part', $part)
+                        ->where('xxinv_lot', $lotfrom)
+                        ->where('xxinv_wrh', $buildingfrom)
+                        ->where('xxinv_level', $levelfrom)
+                        ->where('xxinv_bin', $binfrom)
+                        ->first();
+
+                    if (! $invFrom) {
+                        $log->error('Inventory asal tidak ditemukan', [
+                            'part' => $part,
+                            'lot' => $lotfrom,
+                            'warehouse' => $buildingfrom,
+                            'level' => $levelfrom,
+                            'bin' => $binfrom,
+                        ]);
+
+                        DB::rollBack();
+
+                        return response()->json([
+                            'Status' => 'Error',
+                            'Message' => 'Data storage asal tidak ditemukan',
+                        ], 422);
+                    }
+
+                    $qtyBefore = $invFrom->xxinv_qtyoh;
+
+                    $invFrom->xxinv_qtyoh = $invFrom->xxinv_qtyoh - $qtyoh;
+                    $invFrom->save();
+
+                    $log->info('Inventory asal berhasil dikurangi', [
+                        'inventory_id' => $invFrom->id ?? null,
+                        'qty_before' => $qtyBefore,
+                        'qty_keluar' => $qtyoh,
+                        'qty_after' => $invFrom->xxinv_qtyoh,
+                    ]);
+                }
+
+                $user = Auth::user()->name;
+
+                $log->info('User receipt', [
+                    'user' => $user,
+                ]);
+
+                $newTransactionHistoryfrom = new TransactionHistory();
+                $newTransactionHistoryfrom->tr_nbr = $trfid;
+                $newTransactionHistoryfrom->tr_program = 'Barang Jadi Module';
+                $newTransactionHistoryfrom->tr_activity = 'Penerimaan Barang Jadi From';
+                $newTransactionHistoryfrom->tr_user = $user ?? '';
+                $newTransactionHistoryfrom->tr_part = $part ?? '';
+                $newTransactionHistoryfrom->tr_uom = '';
+                $newTransactionHistoryfrom->tr_line = '';
+                $newTransactionHistoryfrom->tr_lot = $lotfrom ?? '';
+                $newTransactionHistoryfrom->tr_qty = $qtyoh ?? '';
+                $newTransactionHistoryfrom->tr_date = date('Y-m-d H:i:s');
+                $newTransactionHistoryfrom->tr_reference = '';
+                $newTransactionHistoryfrom->tr_site = $sitefrom ?? '';
+                $newTransactionHistoryfrom->tr_location = $locfrom ?? '';
+                $newTransactionHistoryfrom->tr_warehouse = $buildingfrom ?? '';
+                $newTransactionHistoryfrom->tr_level = $levelfrom ?? '';
+                $newTransactionHistoryfrom->tr_bin = $binfrom ?? '';
+                $newTransactionHistoryfrom->tr_remark = $remark;
+                $newTransactionHistoryfrom->save();
+
+                $log->info('Transaction history FROM berhasil disimpan', [
+                    'tr_nbr' => $trfid,
+                    'part' => $part,
+                    'lot' => $lotfrom,
+                    'qty' => $qtyoh,
+                    'warehouse' => $buildingfrom,
+                    'level' => $levelfrom,
+                    'bin' => $binfrom,
+                ]);
+
+                foreach ($pallets as $index => $palletRow) {
+
+                    $palletLevel = trim((string) ($palletRow['level'] ?? ''));
+                    $palletBin = trim((string) ($palletRow['bin'] ?? ''));
+                    $palletQty = (float) str_replace(',', '', $palletRow['qty'] ?? 0);
+
+                    $log->info('Processing pallet', [
+                        'index' => $index,
+                        'level' => $palletLevel,
+                        'bin' => $palletBin,
+                        'qty' => $palletQty,
+                    ]);
+
+                    if ($palletLevel === '' || $palletBin === '' || $palletQty <= 0) {
+
+                        $log->warning('Data pallet tidak valid', [
+                            'index' => $index,
+                            'level' => $palletLevel,
+                            'bin' => $palletBin,
+                            'qty' => $palletQty,
+                        ]);
+
+                        DB::rollBack();
+
+                        return response()->json([
+                            'Status' => 'Error',
+                            'Message' => 'Level, Bin, dan Qty setiap pallet wajib diisi dengan benar',
+                        ], 422);
+                    }
+
+                    $invTo = xxinvDet::where('xxinv_part', $part)
+                        ->where('xxinv_lot', $lotto)
+                        ->where('xxinv_wrh', $buildingto)
+                        ->where('xxinv_level', $palletLevel)
+                        ->where('xxinv_bin', $palletBin)
+                        ->first();
+
+                    if ($invTo) {
+
+                        $qtyBefore = $invTo->xxinv_qtyoh;
+
+                        $invTo->xxinv_qtyoh = $invTo->xxinv_qtyoh + $palletQty;
+                        $invTo->save();
+
+                        $log->info('Inventory tujuan di-update', [
+                            'inventory_id' => $invTo->id ?? null,
+                            'part' => $part,
+                            'lot' => $lotto,
+                            'warehouse' => $buildingto,
+                            'level' => $palletLevel,
+                            'bin' => $palletBin,
+                            'qty_before' => $qtyBefore,
+                            'qty_masuk' => $palletQty,
+                            'qty_after' => $invTo->xxinv_qtyoh,
+                        ]);
+
+                    } else {
+                        $domain = Domain::first();
+                        $invTo = new xxinvDet();
+
+                        $invTo->xxinv_part = $part;
+                        $invTo->xxinv_lot = $lotto;
+                        $invTo->xxinv_loc = $locto;
+                        $invTo->xxinv_site = $siteto;
+                        $invTo->xxinv_wrh = $buildingto;
+                        $invTo->xxinv_level = $palletLevel;
+                        $invTo->xxinv_bin = $palletBin;
+                        $invTo->xxinv_qtyoh = $palletQty;
+                        $invTo->xxinv__dec01 = $palletQty;
+                        $invTo->xxinv_domain = $domain->domain;
+
+                        $invTo->save();
+
+                        $log->info('Inventory tujuan baru dibuat', [
+                            'inventory_id' => $invTo->id ?? null,
+                            'part' => $part,
+                            'lot' => $lotto,
+                            'warehouse' => $buildingto,
+                            'level' => $palletLevel,
+                            'bin' => $palletBin,
+                            'qty' => $palletQty,
+                        ]);
+                    }
+
+                    $newPallet = new PenyerahanBarangPallet();
+                    $newPallet->pbp_pb_id = $data->id;
+                    $newPallet->pbp_level_penyimpanan = $palletLevel;
+                    $newPallet->pbp_bin_penyimpanan = $palletBin;
+                    $newPallet->pbp_qty_penyimpanan = $palletQty;
+                    $newPallet->save();
+
+                    $log->info('Data pallet berhasil disimpan', [
+                        'pb_id' => $data->id,
+                        'level' => $palletLevel,
+                        'bin' => $palletBin,
+                        'qty' => $palletQty,
+                    ]);
+
+                    $newTransactionHistory = new TransactionHistory();
+                    $newTransactionHistory->tr_nbr = $trfid;
+                    $newTransactionHistory->tr_order = '';
+                    $newTransactionHistory->tr_program = 'Barang Jadi Module';
+                    $newTransactionHistory->tr_activity = 'Penerimaan Barang Jadi To';
+                    $newTransactionHistory->tr_user = $user ?? '';
+                    $newTransactionHistory->tr_part = $part ?? '';
+                    $newTransactionHistory->tr_uom = '';
+                    $newTransactionHistory->tr_line = '';
+                    $newTransactionHistory->tr_lot = $lotto ?? '';
+                    $newTransactionHistory->tr_qty = $palletQty;
+                    $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                    $newTransactionHistory->tr_reference = '';
+                    $newTransactionHistory->tr_site = $siteto ?? '';
+                    $newTransactionHistory->tr_location = $locto ?? '';
+                    $newTransactionHistory->tr_warehouse = $buildingto ?? '';
+                    $newTransactionHistory->tr_level = $palletLevel;
+                    $newTransactionHistory->tr_bin = $palletBin;
+                    $newTransactionHistory->tr_remark = $remark;
+                    $newTransactionHistory->save();
+
+                    $log->info('Transaction history TO berhasil disimpan', [
+                        'tr_nbr' => $trfid,
+                        'part' => $part,
+                        'lot' => $lotto,
+                        'qty' => $palletQty,
+                        'warehouse' => $buildingto,
+                        'level' => $palletLevel,
+                        'bin' => $palletBin,
+                    ]);
+                }
+
+                $dataupdate = penyerahanBarang::where('pb_trfid', $trfid)->first();
+
+                $dataupdate->pb_status = 'Received';
+                $dataupdate->pb_loc_to = $locto;
+                $dataupdate->pb_wh_to = $whto;
+                $dataupdate->save();
+
+                $log->info('Status penyerahan berhasil di-update', [
+                    'trfid' => $trfid,
+                    'status' => 'Received',
+                    'loc_to' => $locto,
+                    'wh_to' => $whto,
+                ]);
+
+                DB::commit();
+
+                $log->info('Database transaction COMMITTED', [
+                    'trfid' => $trfid,
+                    'total_pallet_qty' => $totalPalletQty,
+                ]);
+
+                $log->info('=== RECEIPT ITEM PB SUCCESS ===', [
+                    'trfid' => $trfid,
+                ]);
+
+                return response()->json([
+                    'Status' => 'Success',
+                    'Message' => 'Receipt Item Successful',
+                ], 200);
+
+            } catch (Exception $e) {
+
+                DB::rollBack();
+
+                $log->error('Database transaction ROLLBACK', [
+                    'trfid' => $trfid,
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => 'Receipt Item Failed :'.$e->getMessage(),
+                ], 422);
+            }
+
         } catch (Exception $e) {
-            DB::rollBack();
+
+            $log->error('Unexpected error receiptItempb', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return response()->json([
                 'Status' => 'Error',
@@ -438,12 +696,6 @@ class APIBarangJadi extends Controller
                             'rd' => (string) $value->t_reldate,
                         ];
 
-                        // $wonbr[$currentWo] = [
-                        //     'wonbrnbr' => (string)$value->t_wo_nbr,
-                        //     'wopart' => (string)$value->t_wo_part,
-                        //     'detail' => $detail
-                        // ];
-
                         $master[$currentPick]['wonbr'][$currentWo] = [
                             'wonbrnbr' => (string) $value->t_wo_nbr,
                             'wopart' => (string) $value->t_wo_part,
@@ -466,7 +718,7 @@ class APIBarangJadi extends Controller
                             'od' => (string) $value->t_orddate,
                             'rd' => (string) $value->t_reldate,
                         ];
-                        // dd($master[$currentPick]['wonbr'][$currentWo]['detail'],$hasil[1],$currentWo);
+
                     }
                 }
             }
@@ -510,7 +762,7 @@ class APIBarangJadi extends Controller
                     return response()->json([
                         'Status' => 'Error',
                         'Message' => 'Transfer Qty Pick Failed for Picklist : '.$picknbr.' WO : '.$wonbr.' Part : '.$wodpart,
-                        //'Message'=> $qxtendsingleitem[1];
+
                     ], 422);
                 } else {
                     $hasil = (new WSAServices())->wsaUpdateQtyPick($picknbr, $qtypick, $wonbr, $wodpart, $site, $loc, $lot, $wrh, $level, $bin);
@@ -541,7 +793,7 @@ class APIBarangJadi extends Controller
         $master = [];
         $wonbr = [];
         $wonbrstring = '';
-        // $wonbr = $req->wonbr;
+
         $wonbr = '';
         $item = $req->item;
         $site = $req->site;
@@ -569,7 +821,7 @@ class APIBarangJadi extends Controller
         $master = [];
         $wonbr = [];
         $wonbrstring = '';
-        // $wonbr = $req->wonbr;
+
         $wonbr = '';
         $site = $req->site ?? '';
         $item = $req->item ?? '';
@@ -588,22 +840,21 @@ class APIBarangJadi extends Controller
         }
     }
 
-  public function getStrorage(Request $request)
-{
-    $query = xxinvDet::where('xxinv_part', $request->part);
+    public function getStrorage(Request $request)
+    {
+        $query = xxinvDet::with(['itemMaster:im_item_part,im_item_um'])
+            ->where('xxinv_part', $request->part);
 
- 
-    if ($request->filled('lot')) {
-        $query->where('xxinv_lot', $request->lot);
+        if ($request->filled('lot')) {
+            $query->where('xxinv_lot', $request->lot);
+        }
+
+        $storage = $query->get();
+
+        return response()->json([
+            'storage' => $storage,
+        ], 200);
     }
-
-
-    $storage = $query->get();
-
-    return response()->json([
-        'storage' => $storage,
-    ], 200);
-}
 
     public function wsaWarehouseBarangJadi(Request $req)
     {
@@ -639,7 +890,6 @@ class APIBarangJadi extends Controller
             return response()->json(['DataWSA' => $listData], 200);
         }
 
-        // return response()->json($wsaData[1]);
     }
 
     public function nullConversion($data)
@@ -651,76 +901,9 @@ class APIBarangJadi extends Controller
         }
     }
 
-    // public function sendBarangJadi(Request $req)
-    // {
-    //     DB::beginTransaction();
-    //     try {
-    //         $data = $req->all();
-    //         $item = $data['item'];
-    //         $sitefrom = $data['sitefrom'];
-    //         $siteto = $this->nullConversion($data['siteto']);
-    //         $locfrom = $data['locfrom'];
-    //         $locto = $this->nullConversion($data['locto']);
-    //         $whfrom = $this->nullConversion($data['whfrom']);
-    //         $levelfrom = $this->nullConversion($data['levelfrom']);
-    //         $binfrom = $this->nullConversion($data['binfrom']);
-    //         $qty = $data['qty'];
-    //         $wh = $this->nullConversion($data['wh']);
-    //         $ref = $this->nullConversion($data['ref']);
-    //         $level = $this->nullConversion($data['level']);
-    //         $bin = $this->nullConversion($data['bin']);
-    //         $lot = $this->nullConversion($data['lot']);
-    //         $prefixTable = singleTransferPrefix::first();
-    //         $prefix = $prefixTable->stp_prefix;
-    //         $runningnbr = $prefixTable->stp_running_nbr;
-    //         $nextrunningnbr = (int) $runningnbr + 1;
-    //         $newRunningNbr = str_pad($nextrunningnbr, 6, '0', STR_PAD_LEFT);
-    //         $newPrefix = $prefix . $newRunningNbr;
-
-    //         $newTransferData = new SingleTransfer();
-    //         $newTransferData->st_trfid = $newPrefix;
-    //         $newTransferData->st_item = $item;
-    //         $newTransferData->st_site_from = $sitefrom;
-    //         $newTransferData->st_site_to = $siteto;
-    //         $newTransferData->st_loc_from = $locfrom;
-    //         $newTransferData->st_loc_to = $locto;
-    //         $newTransferData->st_wh_from = $whfrom;
-    //         $newTransferData->st_level_from = $levelfrom;
-    //         $newTransferData->st_bin_from = $binfrom;
-    //         $newTransferData->st_qty = $qty;
-    //         $newTransferData->st_wh = $wh;
-    //         $newTransferData->st_ref = $ref;
-    //         $newTransferData->st_level = $level;
-    //         $newTransferData->st_bin = $bin;
-    //         $newTransferData->st_lot = $lot;
-    //         $newTransferData->st_status = 'Open';
-    //         $newTransferData->save();
-
-    //         $prefixTable->stp_running_nbr = $newRunningNbr;
-    //         $prefixTable->save();
-
-    //         DB::commit();
-
-    //         return response()->json([
-    //             'Status' => 'Success',
-    //             'Message' => "Transfer Item Success for Item : " . $item
-    //         ], 200);
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         Log::channel('SingleTransfer')->info($e);
-    //         return response()->json([
-    //             'Status' => 'Error',
-    //             'Message' => $e->getMessage()
-    //         ], 422);
-    //     }
-
-    // }
-
     public function getWlbBarangJadi(Request $req)
     {
-        //$part = $req->part ?? '';
-        // $site = $req->site ?? '';
-        // $lot = $req->lot ?? '';
+
         $lot = '';
         $loc = $req->loc ?? '';
         $site = '';
@@ -757,7 +940,7 @@ class APIBarangJadi extends Controller
         $location = Location::where('location_site', $site)->where('location_code', $loc)->first();
         if (! $location) {
             return collect();
-        } // 1
+        }
         $locationdetail = LocationDetail::query()->where('ld_location_id', $location->id);
         if ($warehouse != '') {
             $locationdetail->where('ld_building', '=', $warehouse);
@@ -768,7 +951,7 @@ class APIBarangJadi extends Controller
         if ($bin != '') {
             $locationdetail->where('ld_bin', '=', $bin);
         }
-        // $locationdetail = $locationdetail->select('id')->toArray();
+
         $locationdetail = $locationdetail->pluck('id')->toArray();
 
         $itemQuery = Item::with('getItemLocation.getLocationDetail')->where('im_item_part', $item)->select('id')->first();
@@ -781,17 +964,13 @@ class APIBarangJadi extends Controller
         foreach ($locationdetail as $locdetail) {
             $stringloc .= $locdetail.',';
         }
-        // dd($stringloc, $itemQuery->id);
+
         $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function ($query) {
             $query->orderBy('ld_building');
         }])
             ->where('il_item_id', $itemQuery->id)
             ->whereIn('il_ld_id', $locationdetail)
             ->get();
-        // foreach($getAllItemLocation as $key => $value){
-        //     dump($value->getLocationDetail->ld_rak);
-        // }
-        // dd('a');
 
         if (count($getAllItemLocation) == 0) {
             return response()->json([
@@ -800,26 +979,18 @@ class APIBarangJadi extends Controller
             ], 422);
         }
         $hasil = (new WSAServices())->wsaGetWlb($item, $lot, $site, $loc, $warehouse, $level, $bin);
-        // if ($hasil[0] == 'false') {
-        //     return response()->json([
-        //         'Status' => 'Error',
-        //         'Message' => "Data Not Found."
-        //     ], 422);
-        // }
 
         if ($hasil[0] == 'true') {
             $wsaData = collect($hasil[1]);
 
-            // Add qty to each locationDetail
             $getAllItemLocation->transform(function ($location) use ($wsaData) {
-                // Match based on location detail properties
+
                 $matchingWsa = $wsaData
                     ->where('t_wrh', $location->getLocationDetail->ld_building)
                     ->where('t_level', $location->getLocationDetail->ld_rak)
                     ->where('t_bin', $location->getLocationDetail->ld_bin)
                     ->first();
 
-                // Add qty to getLocationDetail
                 $location->getLocationDetail->qty = $matchingWsa['t_qtyoh'] ?? 0;
 
                 return $location;
@@ -835,30 +1006,30 @@ class APIBarangJadi extends Controller
 
         try {
             $data = $req->all();
-
+            $jumlahPallet = $data['jumlahpallet'] ?? 0;
             $item = $data['item'];
             $sitefrom = $data['sitefrom'];
-            // $siteto = $this->nullConversion($data['siteto']);
+            $siteto = $this->nullConversion($data['siteto'] ?? null);
             $locfrom = $data['locfrom'];
-            $remark = $this->nullConversion($data['remark']);
-            // $locto = $this->nullConversion($data['locto']);
-            // $whfrom = $this->nullConversion($data['whfrom']);
-            // $levelfrom = $this->nullConversion($data['levelfrom']);
-            // $binfrom = $this->nullConversion($data['binfrom']);
+            $locto = $this->nullConversion($data['locto'] ?? null);
+            $whfrom = $this->nullConversion($data['whfrom'] ?? null);
+            $levelfrom = $this->nullConversion($data['levelfrom'] ?? null);
+            $binfrom = $this->nullConversion($data['binfrom'] ?? null);
+            $remark = $this->nullConversion($data['remark'] ?? null);
             $qty = $data['qty'];
-            // $wh = $this->nullConversion($data['wh']);
-            // $ref = $this->nullConversion($data['ref']);
-            // $level = $this->nullConversion($data['level']);
-            // $bin = $this->nullConversion($data['bin']);
-            $lot = $this->nullConversion($data['lot']);
+            $wh = $this->nullConversion($data['wh'] ?? null);
+            $ref = $this->nullConversion($data['ref'] ?? null);
+            $level = $this->nullConversion($data['level'] ?? null);
+            $bin = $this->nullConversion($data['bin'] ?? null);
+            $lot = $this->nullConversion($data['lot'] ?? null);
 
-            /*
-            |--------------------------------------------------------------------------
-            | Ambil prefix + lock row
-            |--------------------------------------------------------------------------
-            | lockForUpdate() mencegah 2 request mendapatkan running number
-            | yang sama ketika diproses bersamaan.
-            */
+            $palletRaw = $data['pallet'] ?? '[]';
+            $palletList = json_decode($palletRaw, true);
+
+            if (! is_array($palletList)) {
+                $palletList = [];
+            }
+
             $prefixTable = penyerahanBarangPrefix::lockForUpdate()->first();
 
             if ($prefixTable) {
@@ -872,11 +1043,6 @@ class APIBarangJadi extends Controller
                 $runningnbr = 0;
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Generate running number berikutnya
-            |--------------------------------------------------------------------------
-            */
             $nextrunningnbr = $runningnbr + 1;
 
             $newRunningNbr = str_pad(
@@ -888,47 +1054,49 @@ class APIBarangJadi extends Controller
 
             $newPrefix = $prefix.$newRunningNbr;
 
-            /*
-            |--------------------------------------------------------------------------
-            | Simpan data penyerahan barang
-            |--------------------------------------------------------------------------
-            */
             $newPenyerahanBarang = new PenyerahanBarang();
 
             $newPenyerahanBarang->pb_trfid = $newPrefix;
             $newPenyerahanBarang->pb_item = $item;
             $newPenyerahanBarang->pb_site_from = $sitefrom;
-            // $newPenyerahanBarang->pb_site_to = $siteto;
+            $newPenyerahanBarang->pb_site_to = $siteto;
             $newPenyerahanBarang->pb_loc_from = $locfrom;
-            // $newPenyerahanBarang->pb_loc_to = $locto;
-            // $newPenyerahanBarang->pb_wh_from = $whfrom;
+            $newPenyerahanBarang->pb_loc_to = $locto;
+            $newPenyerahanBarang->pb_wh_from = $whfrom;
+            $newPenyerahanBarang->pb_wh_to = $wh;
+            $newPenyerahanBarang->pb_ref = $ref;
             $newPenyerahanBarang->pb_remark = $remark;
             $newPenyerahanBarang->pb_qty = $qty;
-            // $newPenyerahanBarang->pb_wh_to = $wh;
-            // $newPenyerahanBarang->pb_ref = $ref;
-            // $newPenyerahanBarang->pb_level_from = $levelfrom;
-            // $newPenyerahanBarang->pb_level_to = $level;
-            // $newPenyerahanBarang->pb_bin_from = $binfrom;
-            // $newPenyerahanBarang->pb_bin_to = $bin;
+            $newPenyerahanBarang->pb_level_from = $levelfrom;
+            $newPenyerahanBarang->pb_level_to = $level;
+            $newPenyerahanBarang->pb_bin_from = $binfrom;
+            $newPenyerahanBarang->pb_bin_to = $bin;
             $newPenyerahanBarang->pb_lot = $lot;
             $newPenyerahanBarang->pb_status = 'Open';
-
+            $newPenyerahanBarang->pb_qty_pallete = (int) $jumlahPallet;
             $newPenyerahanBarang->save();
 
-            /*
-            |--------------------------------------------------------------------------
-            | Update / insert running number
-            |--------------------------------------------------------------------------
-            */
+            foreach ($palletList as $palletRow) {
+                $newPallet = new PenyerahanBarangPallet();
+
+                $newPallet->pbp_pb_id = $newPenyerahanBarang->id;
+
+                $newPallet->pbp_level_penyimpanan = $palletRow['level'] ?? null;
+                $newPallet->pbp_bin_penyimpanan = $palletRow['bin'] ?? null;
+                $newPallet->pbp_qty_penyimpanan = isset($palletRow['qty'])
+                    ? str_replace(',', '', $palletRow['qty'])
+                    : null;
+
+                $newPallet->save();
+            }
+
             if ($prefixTable) {
 
-                // Record prefix sudah ada → UPDATE
                 $prefixTable->pbp_running_nbr = $nextrunningnbr;
                 $prefixTable->save();
 
             } else {
 
-                // Record prefix belum ada → INSERT
                 $insertprefix = new penyerahanBarangPrefix();
 
                 $insertprefix->pbp_prefix = $prefix;
@@ -937,11 +1105,6 @@ class APIBarangJadi extends Controller
                 $insertprefix->save();
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Commit transaction
-            |--------------------------------------------------------------------------
-            */
             DB::commit();
 
             return response()->json([
@@ -961,6 +1124,22 @@ class APIBarangJadi extends Controller
                 'Message' => $e->getMessage(),
             ], 422);
         }
+    }
+
+    public function getpaletpenyerahanbarang(Request $request)
+    {
+        $item = $request->item;
+        $domain = 'MIPI';
+        $hasil = (new WSAServices())->wsaGetPalletPenyerahanBarang($item, $domain);
+
+        if ($hasil[0] !== 'true') {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => $hasil[2] ?: 'Data Not Found.',
+            ], 422);
+        }
+
+        return response()->json(['DataWSA' => $hasil[1]], 200);
     }
 
     public function getItemXxinvDet(Request $request)

@@ -3,34 +3,23 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SendQxCompIssueRequest;
+use App\Http\Resources\GeneralResources;
+use App\Models\API\MobileApk;
+use App\Models\API\TransactionHistory;
+use App\Models\API\WorkOrderQAD;
+use App\Models\API\xxinvDet;
+use App\Models\API\xxinvDetApproval;
+use App\Models\Settings\Item;
 use App\Models\Settings\User;
+use App\Services\QxtendServices;
+use App\Services\WSAServices;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use App\Services\RunningNumberServices;
-use App\Services\WSAServices;
-use App\Models\API\xxinvDet;
-use App\Models\API\xxinvDetApproval;
-use App\Services\APIServices;
-use App\Services\QxtendServices;
-use App\Models\QadData;
-use App\Models\SalesOrderShopify;
-use App\Models\API\MobileApk;
-use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Http\Resources\QadDataResources;
-use App\Jobs\API\LoadShopifySO;
-use App\Jobs\API\EmailPOS;
-use App\Jobs\API\PendingInvoiceEpointJob;
-use App\Models\API\SummaryDetailEpoint;
-use App\Models\API\SummaryEpoint;
-use App\Models\API\WorkOrderQAD;
-use App\Models\API\TransactionHistory;
-use App\Http\Resources\GeneralResources;
-use App\Http\Requests\SendQxCompIssueRequest;
-
-use Carbon\Carbon;
 
 class APIController extends Controller
 {
@@ -52,7 +41,7 @@ class APIController extends Controller
                 $strToken = $objToken->accessToken;
                 $expiration = $objToken->token->expires_at->toDateString();
 
-                $success['token'] =  $strToken;
+                $success['token'] = $strToken;
                 $success['expirationDate'] = $expiration;
 
                 return response()->json(
@@ -61,12 +50,13 @@ class APIController extends Controller
                         'user' => $usercheck,
                         'username' => $usercheck->id,
                         'success' => $success,
-                        'menuaccess' => $menuaccess
+                        'menuaccess' => $menuaccess,
                     ],
                     $this->successStatus
                 );
             } else {
-                $response = ["message" => "Error"];
+                $response = ['message' => 'Error'];
+
                 return response($response, 422);
             }
         } else {
@@ -83,9 +73,9 @@ class APIController extends Controller
 
         $hasher = app('hash');
 
-        $users = DB::table("users")
+        $users = DB::table('users')
             ->select('id', 'password')
-            ->where("users.username", $username)
+            ->where('users.username', $username)
             ->first();
 
         if ($hasher->check($oldpass, $users->password)) {
@@ -119,29 +109,28 @@ class APIController extends Controller
         foreach ($data as $datas) {
             foreach ($datas->wod_det as $detailData) {
                 $dataDetail[] = [
-                    'wodPart' => (string)$detailData->wodPart,
-                    'wodQtyReq' => (string)$detailData->wodQtyReq,
+                    'wodPart' => (string) $detailData->wodPart,
+                    'wodQtyReq' => (string) $detailData->wodQtyReq,
                 ];
             }
 
             $dataArray[] = [
-                'operation' => (string)$datas->operation,
-                'woDomain' => (string)$datas->woDomain,
-                'woNbr' => (string)$datas->woNbr,
-                'woLot' => (string)$datas->woLot,
-                'woOrdDate' => (string)$datas->woOrdDate,
-                'woDueDate' => (string)$datas->woDueDate,
-                'woPart' => (string)$datas->woPart,
-                'woQtyOrd' => (string)$datas->woQtyOrd,
-                'woStatus' => (string)$datas->woStatus,
-                'detail' => $dataDetail
+                'operation' => (string) $datas->operation,
+                'woDomain' => (string) $datas->woDomain,
+                'woNbr' => (string) $datas->woNbr,
+                'woLot' => (string) $datas->woLot,
+                'woOrdDate' => (string) $datas->woOrdDate,
+                'woDueDate' => (string) $datas->woDueDate,
+                'woPart' => (string) $datas->woPart,
+                'woQtyOrd' => (string) $datas->woQtyOrd,
+                'woStatus' => (string) $datas->woStatus,
+                'detail' => $dataDetail,
             ];
         }
 
-
         $flagKirimData = 1;
-        // Check Existing ato ga 
-        $checkData = WorkOrderQAD::where('wo_nbr', (string)$datas->woNbr)->where('wo_lot', (string)$datas->woLot)->orderBy('id', 'DESC')->first();
+        // Check Existing ato ga
+        $checkData = WorkOrderQAD::where('wo_nbr', (string) $datas->woNbr)->where('wo_lot', (string) $datas->woLot)->orderBy('id', 'DESC')->first();
         if ($checkData) {
             if ($checkData->wo_status == 'R') {
                 $flagKirimData = 0;
@@ -150,9 +139,9 @@ class APIController extends Controller
 
         // Save Data ke DB
         $newdata = new WorkOrderQAD();
-        $newdata->wo_nbr = (string)$datas->woNbr;
-        $newdata->wo_lot = (string)$datas->woLot;
-        $newdata->wo_status = (string)$datas->woStatus;
+        $newdata->wo_nbr = (string) $datas->woNbr;
+        $newdata->wo_lot = (string) $datas->woLot;
+        $newdata->wo_status = (string) $datas->woStatus;
         $newdata->wo_qad_data = json_encode($dataArray);
         $newdata->save();
 
@@ -160,13 +149,12 @@ class APIController extends Controller
         if ($flagKirimData == 1) {
         }
 
-
         return response($request->getContent(), 200)->header('Content-Type', 'text/xml;charset="utf-8"')->header('Accept', 'text/xml')->header('SOAPAction', '""');
     }
 
     public function getInvWms(Request $req)
     {
-        // dd($req->query('inppart')); 
+        // dd($req->query('inppart'));
 
         try {
             /* throw new Exception('test exception'); */
@@ -192,7 +180,7 @@ class APIController extends Controller
 
             // $items = $query->get();
 
-            //  dd($items); 
+            //  dd($items);
 
             $dat = (new WSAServices)->wsaInvWms(
                 $req->query('inppart') ?? '',
@@ -247,51 +235,46 @@ class APIController extends Controller
 
                 if(!in_array( $item->xxinv_loc, ['qc-qrt', 'WH-QRT','WIP'])) {
                     $loc = 'Pass';
-                }
-                else {
+                } else {
                     $loc = $item->xxinv_loc;
                 }
 
                 return [
                     // Data dari xxinv_det
-                    'xxinv_part' => $item->xxinv_part,   
-                    'xxinv_loc'  => $loc,                
-                    'xxinv_lot'  => $item->xxinv_lot,
-                    'xxinv_bin'  => $item->xxinv_bin,
-                    'xxinv_level'  => $item->xxinv_level,
-                    'xxinv_site'  => $item->xxinv_site,
-                    'xxinv_wrh'  => $item->xxinv_wrh,
-                    'xxinv_qtyoh'  => $item->xxinv_qtyoh,
+                    'xxinv_part' => $item->xxinv_part,
+                    'xxinv_loc' => $loc,
+                    'xxinv_lot' => $item->xxinv_lot,
+                    'xxinv_bin' => $item->xxinv_bin,
+                    'xxinv_level' => $item->xxinv_level,
+                    'xxinv_site' => $item->xxinv_site,
+                    'xxinv_wrh' => $item->xxinv_wrh,
+                    'xxinv_qtyoh' => $item->xxinv_qtyoh,
                     'im_item_part' => $item->im_item_part,
                     'im_item_desc' => $item->im_item_desc,
                     'im_item_um' => $item->im_item_um,
-                    'xxinv_qty_pick'  => $item->xxinv_qty_pick,
-                    'xxinv_ref'  => $item->xxinv_ref,
+                    'xxinv_qty_pick' => $item->xxinv_qty_pick,
+                    'xxinv_ref' => $item->xxinv_ref,
                     'xxinv_rel_date' => $item->xxinv_rel_date,
-                    'xxinv_exp_date'  => $item->xxinv_exp_date,
-                    'xxinv_qty_wrh'  => $item->xxinv_qty_wrh,
-                    'xxinv_qty_smp'  => $item->xxinv_qty_smp,
-                    'xxinv_qty_shp'  => $item->xxinv_qty_shp,
-                    'xxinv_qty_wip'  => $item->xxinv_qty_wip,
-
-                    
+                    'xxinv_exp_date' => $item->xxinv_exp_date,
+                    'xxinv_qty_wrh' => $item->xxinv_qty_wrh,
+                    'xxinv_qty_smp' => $item->xxinv_qty_smp,
+                    'xxinv_qty_shp' => $item->xxinv_qty_shp,
+                    'xxinv_qty_wip' => $item->xxinv_qty_wip,
 
                     // Data dari WSA
-                    't_domain'   => $wms['t_domain'] ?? null,
-                    't_item'     => $wms['t_item'] ?? null,
-                    't_site'     => $wms['t_site'] ?? null,
-                    't_loc'      => $wms['t_loc'] ?? null,
-                    't_lot'      => $wms['t_lot'] ?? null,
-                    't_exp_fuc'  => $wms['t_exp_fuc'] ?? null,
-                    't_status'   => $wms['t_status'] ?? null,
+                    't_domain' => $wms['t_domain'] ?? null,
+                    't_item' => $wms['t_item'] ?? null,
+                    't_site' => $wms['t_site'] ?? null,
+                    't_loc' => $wms['t_loc'] ?? null,
+                    't_lot' => $wms['t_lot'] ?? null,
+                    't_exp_fuc' => $wms['t_exp_fuc'] ?? null,
+                    't_status' => $wms['t_status'] ?? null,
                 ];
             });
 
-
-
             return response()->json([
                 'status' => true,
-                'Items'   => $result
+                'Items' => $result,
             ]);
             // if ($items == false) { //jika error koneksi wsa
             //     return response()->json([
@@ -315,6 +298,7 @@ class APIController extends Controller
         } catch (\Exception $e) {
             dd($e);
             Log::error($e);
+
             return response()->json([
                 'Status' => 'Error',
                 'Message' => 'Internal server error',
@@ -335,43 +319,44 @@ class APIController extends Controller
             if ($checkpallet == false) { //jika error koneksi wsa
                 return response()->json([
                     'Status' => 'Error',
-                    'Message' => 'WSA Error Connection'
+                    'Message' => 'WSA Error Connection',
                 ], 500);
             }
 
-            if ($checkpallet[0] == "true") { //jika lot ada
+            if ($checkpallet[0] == 'true') { //jika lot ada
 
                 $result = [];
 
                 foreach ($checkpallet[1] as $item) {
                     $result[] = [
-                        't_domain' => (string)$item->t_domain,
-                        't_part' => (string)$item->t_part,
-                        't_partdesc' => (string)$item->t_partdesc,  // Otomatis jadi "" kalau kosong
-                        't_site' => (string)$item->t_site,
-                        't_loc' => (string)$item->t_loc,
-                        't_lot' => (string)$item->t_lot,
-                        't_ref' => (string)$item->t_ref,  // Otomatis jadi "" kalau kosong
-                        't_qtyoh' => (string)$item->t_qtyoh,
-                        't_balancetotalstok' => (float)$item->t_balancetotalstok,
-                        't_supplier' => (string)$item->t_supplier,  // Otomatis jadi "" kalau kosong
+                        't_domain' => (string) $item->t_domain,
+                        't_part' => (string) $item->t_part,
+                        't_partdesc' => (string) $item->t_partdesc,  // Otomatis jadi "" kalau kosong
+                        't_site' => (string) $item->t_site,
+                        't_loc' => (string) $item->t_loc,
+                        't_lot' => (string) $item->t_lot,
+                        't_ref' => (string) $item->t_ref,  // Otomatis jadi "" kalau kosong
+                        't_qtyoh' => (string) $item->t_qtyoh,
+                        't_balancetotalstok' => (float) $item->t_balancetotalstok,
+                        't_supplier' => (string) $item->t_supplier,  // Otomatis jadi "" kalau kosong
                     ];
                 }
 
                 return response()->json([
                     'Status' => 'success',
-                    'Available' => True,
-                    'Data' => $result
+                    'Available' => true,
+                    'Data' => $result,
                 ], 200);
             } else { //jika lot tidak ada
                 return response()->json([
                     'Status' => 'success',
-                    'Available' => False,
-                    'Data' => ''
+                    'Available' => false,
+                    'Data' => '',
                 ], 200);
             }
         } catch (\Exception $e) {
             Log::error($e);
+
             return response()->json([
                 'Status' => 'Error',
                 'Message' => 'Internal server error',
@@ -392,23 +377,24 @@ class APIController extends Controller
             if ($isLocExist == false) { //jika error koneksi wsa
                 return response()->json([
                     'Status' => 'Error',
-                    'Message' => "WSA Error Connection"
+                    'Message' => 'WSA Error Connection',
                 ], 500);
             }
 
-            if ($isLocExist[0] == "false") { //jika error response wsa
+            if ($isLocExist[0] == 'false') { //jika error response wsa
                 return response()->json([
                     'Status' => 'Not found',
-                    'Message' => "Location doesn't exist!"
+                    'Message' => "Location doesn't exist!",
                 ], 404); //not found
             }
 
             return response()->json([
                 'Status' => 'success',
-                'Message' => 'Location exist'
+                'Message' => 'Location exist',
             ], 200);
         } catch (\Exception $e) {
             Log::error($e);
+
             return response()->json([
                 'Status' => 'Error',
                 'Message' => 'Internal server error',
@@ -429,24 +415,25 @@ class APIController extends Controller
             if ($isItemExist == false) { //jika error koneksi wsa
                 return response()->json([
                     'Status' => 'Error',
-                    'Message' => "WSA Item Error Connection"
+                    'Message' => 'WSA Item Error Connection',
                 ], 500);
             }
 
-            if ($isItemExist[0] == "false") { //jika error response wsa
+            if ($isItemExist[0] == 'false') { //jika error response wsa
                 return response()->json([
                     'Status' => 'Not found',
-                    'Message' => "Item doesn't exist!"
+                    'Message' => "Item doesn't exist!",
                 ], 404); //not found
             }
 
             return response()->json([
                 'Status' => 'success',
                 'Message' => 'Item exist',
-                'Item' => $isItemExist[1][0]
+                'Item' => $isItemExist[1][0],
             ], 200);
         } catch (\Exception $e) {
             Log::error($e);
+
             return response()->json([
                 'Status' => 'Error',
                 'Message' => 'Item Internal server error',
@@ -467,23 +454,24 @@ class APIController extends Controller
             if ($isSupplierExist == false) { //jika error koneksi wsa
                 return response()->json([
                     'Status' => 'Error',
-                    'Message' => "WSA Supplier Error Connection"
+                    'Message' => 'WSA Supplier Error Connection',
                 ], 500);
             }
 
-            if ($isSupplierExist[0] == "false") { //jika error response wsa
+            if ($isSupplierExist[0] == 'false') { //jika error response wsa
                 return response()->json([
                     'Status' => 'Not found',
-                    'Message' => "Supplier doesn't exist!"
+                    'Message' => "Supplier doesn't exist!",
                 ], 404); //not found
             }
 
             return response()->json([
                 'Status' => 'success',
-                'Message' => 'Supplier exist'
+                'Message' => 'Supplier exist',
             ], 200);
         } catch (\Exception $e) {
             Log::error($e);
+
             return response()->json([
                 'Status' => 'Error',
                 'Message' => 'Supplier Internal server error',
@@ -502,11 +490,11 @@ class APIController extends Controller
             if ($getdatainquiry == false) { //jika error koneksi wsa
                 return response()->json([
                     'Status' => 'Error',
-                    'Message' => 'WSA Error Connection'
+                    'Message' => 'WSA Error Connection',
                 ], 500);
             }
 
-            if ($getdatainquiry[0] == "true") { //jika lot ada
+            if ($getdatainquiry[0] == 'true') { //jika lot ada
 
                 $part = $getdatainquiry[1];
                 $partdesc = $getdatainquiry[2];
@@ -523,15 +511,15 @@ class APIController extends Controller
                 $detail = [];
                 foreach ($getdatainquiry[4] as $item) {
                     $detail[] = [
-                        't_domain' => (string)$item->t_domain,
-                        't_partdesc' => (string)$item->t_partdesc,
-                        't_site' => (string)$item->t_site,
-                        't_loc' => (string)$item->t_loc,
-                        't_lot' => (string)$item->t_lot,
-                        't_ref' => (string)$item->t_ref,
-                        't_qtyoh' => (string)$item->t_qtyoh,
-                        't_supplier' => (string)$item->t_supplier,
-                        't_createdate' => (string)$item->t_create_date,
+                        't_domain' => (string) $item->t_domain,
+                        't_partdesc' => (string) $item->t_partdesc,
+                        't_site' => (string) $item->t_site,
+                        't_loc' => (string) $item->t_loc,
+                        't_lot' => (string) $item->t_lot,
+                        't_ref' => (string) $item->t_ref,
+                        't_qtyoh' => (string) $item->t_qtyoh,
+                        't_supplier' => (string) $item->t_supplier,
+                        't_createdate' => (string) $item->t_create_date,
                         't_createtime' => sprintf(
                             '%02d:%02d',
                             floor($item->t_create_time / 3600),
@@ -548,18 +536,19 @@ class APIController extends Controller
 
                 return response()->json([
                     'Status' => 'success',
-                    'Available' => True,
-                    'Data' => $result
+                    'Available' => true,
+                    'Data' => $result,
                 ], 200);
             } else { //jika lot tidak ada
                 return response()->json([
                     'Status' => 'success',
-                    'Available' => False,
-                    'Data' => ''
+                    'Available' => false,
+                    'Data' => '',
                 ], 200);
             }
         } catch (\Exception $e) {
             Log::error($e);
+
             return response()->json([
                 'Status' => 'Error',
                 'Message' => 'Internal server error',
@@ -570,7 +559,6 @@ class APIController extends Controller
     public function checkPalletLoc(Request $req)
     {
 
-
         try {
             /* throw new Exception('test internal server error'); */
 
@@ -580,43 +568,44 @@ class APIController extends Controller
             if ($checkpallet == false) { //jika error koneksi wsa
                 return response()->json([
                     'Status' => 'Error',
-                    'Message' => 'WSA Error Connection'
+                    'Message' => 'WSA Error Connection',
                 ], 500);
             }
 
-            if ($checkpallet[0] == "true") { //jika lot ada
+            if ($checkpallet[0] == 'true') { //jika lot ada
 
                 $result = [];
 
                 foreach ($checkpallet[1] as $item) {
                     $result[] = [
-                        't_domain' => (string)$item->t_domain,
-                        't_part' => (string)$item->t_part,
-                        't_partdesc' => (string)$item->t_partdesc,  // Otomatis jadi "" kalau kosong
-                        't_site' => (string)$item->t_site,
-                        't_loc' => (string)$item->t_loc,
-                        't_lot' => (string)$item->t_lot,
-                        't_ref' => (string)$item->t_ref,  // Otomatis jadi "" kalau kosong
-                        't_qtyoh' => (string)$item->t_qtyoh,
-                        't_balancetotalstok' => (float)$item->t_balancetotalstok,
-                        't_supplier' => (string)$item->t_supplier,  // Otomatis jadi "" kalau kosong
+                        't_domain' => (string) $item->t_domain,
+                        't_part' => (string) $item->t_part,
+                        't_partdesc' => (string) $item->t_partdesc,  // Otomatis jadi "" kalau kosong
+                        't_site' => (string) $item->t_site,
+                        't_loc' => (string) $item->t_loc,
+                        't_lot' => (string) $item->t_lot,
+                        't_ref' => (string) $item->t_ref,  // Otomatis jadi "" kalau kosong
+                        't_qtyoh' => (string) $item->t_qtyoh,
+                        't_balancetotalstok' => (float) $item->t_balancetotalstok,
+                        't_supplier' => (string) $item->t_supplier,  // Otomatis jadi "" kalau kosong
                     ];
                 }
 
                 return response()->json([
                     'Status' => 'success',
-                    'Available' => True,
-                    'Data' => $result
+                    'Available' => true,
+                    'Data' => $result,
                 ], 200);
             } else { //jika lot tidak ada
                 return response()->json([
                     'Status' => 'success',
-                    'Available' => False,
-                    'Data' => ''
+                    'Available' => false,
+                    'Data' => '',
                 ], 200);
             }
         } catch (\Exception $e) {
             Log::error($e);
+
             return response()->json([
                 'Status' => 'Error',
                 'Message' => 'Internal server error',
@@ -637,7 +626,7 @@ class APIController extends Controller
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Data Not Found."
+                'Message' => 'Data Not Found.',
             ], 422);
         } else {
             $listData = $hasil[1];
@@ -645,7 +634,6 @@ class APIController extends Controller
             return response()->json(['DataWSA' => $listData], 200);
         }
     }
-
 
     public function getSites(Request $req)
     {
@@ -659,7 +647,7 @@ class APIController extends Controller
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Data Not Found."
+                'Message' => 'Data Not Found.',
             ], 422);
         } else {
             $listData = $hasil[1];
@@ -667,7 +655,6 @@ class APIController extends Controller
             return response()->json(['DataWSA' => $listData], 200);
         }
     }
-
 
     public function getWrhData(Request $req)
     {
@@ -683,7 +670,7 @@ class APIController extends Controller
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Data Not Found."
+                'Message' => 'Data Not Found.',
             ], 422);
         } else {
             $listData = $hasil[1];
@@ -691,7 +678,6 @@ class APIController extends Controller
             return response()->json(['DataWSA' => $listData], 200);
         }
     }
-
 
     public function getLevelData(Request $req)
     {
@@ -708,7 +694,7 @@ class APIController extends Controller
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Data Not Found."
+                'Message' => 'Data Not Found.',
             ], 422);
         } else {
             $listData = $hasil[1];
@@ -716,7 +702,6 @@ class APIController extends Controller
             return response()->json(['DataWSA' => $listData], 200);
         }
     }
-
 
     public function getBinData(Request $req)
     {
@@ -734,7 +719,7 @@ class APIController extends Controller
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Data Not Found."
+                'Message' => 'Data Not Found.',
             ], 422);
         } else {
             $listData = $hasil[1];
@@ -749,20 +734,20 @@ class APIController extends Controller
         $part = $req->query('part') ?? '';
         $program = $req->query('program') ?? '';
         $lot = $req->query('lot') ?? '';
-        $page    = $req->query('page')    ?? 1;
+        $page = $req->query('page') ?? 1;
         $perPage = $req->query('per_page') ?? 20; // let frontend control this
         $data = TransactionHistory::query();
-        if (!empty($number)) {
-            $data->where('tr_nbr', 'LIKE', '%' . $number . '%');
+        if (! empty($number)) {
+            $data->where('tr_nbr', 'LIKE', '%'.$number.'%');
         }
-        if (!empty($part)) {
-            $data->where('tr_part', 'LIKE', '%' . $part . '%');
+        if (! empty($part)) {
+            $data->where('tr_part', 'LIKE', '%'.$part.'%');
         }
-        if (!empty($program)) {
-            $data->where('tr_program', 'LIKE', '%' . $program . '%');
+        if (! empty($program)) {
+            $data->where('tr_program', 'LIKE', '%'.$program.'%');
         }
-        if (!empty($lot)) {
-            $data->where('tr_lot', 'LIKE', '%' . $lot . '%');
+        if (! empty($lot)) {
+            $data->where('tr_lot', 'LIKE', '%'.$lot.'%');
         }
 
         // $data = $data->orderBy('id', 'DESC')->get();
@@ -778,11 +763,10 @@ class APIController extends Controller
 
         $hasil = (new WSAServices())->wsaCekItemLot($req->query('inppart') ?? '', $req->query('inplot') ?? '');
 
-
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => $hasil[1] //Data Not Found
+                'Message' => $hasil[1], //Data Not Found
             ], 422);
         } else {
             // $listData = $hasil[1];
@@ -790,157 +774,162 @@ class APIController extends Controller
             return response()->json([
                 'Status' => 'Success',
                 'Message' => $hasil[1], //Data Found
-                'DataWSA' => $hasil[0]
+                'DataWSA' => $hasil[0],
             ], 200);
         }
     }
+
     public function cekItemLotWeb(Request $req)
-{
-    $part = $req->query('inppart') ?? '';
-    $lot  = $req->query('inplot') ?? '';
+    {
+        $part = $req->query('inppart') ?? '';
+        $lot = $req->query('inplot') ?? '';
 
-    // Validasi data di tabel xxinvDet
-    $invDet = xxinvDet::where('xxinv_part', $part)
-        ->where('xxinv_lot', $lot)
-        ->first();
+        // Validasi data di tabel xxinvDet
+        $invDet = xxinvDet::where('xxinv_part', $part)
+            ->where('xxinv_lot', $lot)
+            ->first();
 
-    if (!$invDet) {
+        if (! $invDet) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => 'Data Not Found',
+            ], 422);
+        }
+
         return response()->json([
-            'Status'  => 'Error',
-            'Message' => 'Data Not Found'
-        ], 422);
+            'Status' => 'Success',
+            'Message' => 'Data Found',
+            'Data' => $invDet,
+        ], 200);
     }
 
-    return response()->json([
-        'Status'  => 'Success',
-        'Message' => 'Data Found',
-        'Data'    => $invDet
-    ], 200);
-}public function cekStorageLocation(Request $req)
-{
-    $part      = $req->query('part') ?? '';
-    $lot       = $req->query('lot') ?? '';
-    $site      = $req->query('site') ?? '';
-    $location  = $req->query('location') ?? '';
-    $warehouse = $req->query('warehouse') ?? '';
-    $level     = $req->query('level') ?? '';
-    $bin       = $req->query('bin') ?? '';
+    public function cekStorageLocation(Request $req)
+    {
+        $part = $req->query('part') ?? '';
+        $lot = $req->query('lot') ?? '';
+        $site = $req->query('site') ?? '';
+        $location = $req->query('location') ?? '';
+        $warehouse = $req->query('warehouse') ?? '';
+        $level = $req->query('level') ?? '';
+        $bin = $req->query('bin') ?? '';
 
-    // Pengecekan ketersediaan kombinasi lokasi pada tabel xxinvDet
-    $invDet = xxinvDet::where('xxinv_part', $part)
-        ->when($lot, function ($q) use ($lot) {
-            return $q->where('xxinv_lot', $lot);
-        })
-        ->when($site, function ($q) use ($site) {
-            return $q->where('xxinv_site', $site);
-        })
-        ->when($location, function ($q) use ($location) {
-            return $q->where('xxinv_loc', $location);
-        })
-        ->where('xxinv_wrh', $warehouse)
-        ->where('xxinv_level', $level)
-        ->where('xxinv_bin', $bin)
-        ->first();
+        // Pengecekan ketersediaan kombinasi lokasi pada tabel xxinvDet
+        $invDet = xxinvDet::where('xxinv_part', $part)
+            ->when($lot, function ($q) use ($lot) {
+                return $q->where('xxinv_lot', $lot);
+            })
+            ->when($site, function ($q) use ($site) {
+                return $q->where('xxinv_site', $site);
+            })
+            ->when($location, function ($q) use ($location) {
+                return $q->where('xxinv_loc', $location);
+            })
+            ->where('xxinv_wrh', $warehouse)
+            ->where('xxinv_level', $level)
+            ->where('xxinv_bin', $bin)
+            ->first();
 
-    if (!$invDet) {
+        if (! $invDet) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => 'Warehouse / Level / Bin tidak sesuai atau Item tidak tersedia di lokasi tersebut.',
+            ], 422);
+        }
+
         return response()->json([
-            'Status'  => 'Error',
-            'Message' => 'Warehouse / Level / Bin tidak sesuai atau Item tidak tersedia di lokasi tersebut.'
-        ], 422);
+            'Status' => 'Success',
+            'Message' => 'Lokasi Penyimpanan Valid',
+            'Data' => $invDet,
+        ], 200);
     }
 
-    return response()->json([
-        'Status'  => 'Success',
-        'Message' => 'Lokasi Penyimpanan Valid',
-        'Data'    => $invDet
-    ], 200);
-}
-public function getSiteLocationLookup(Request $req)
-{
-    $part = $req->query('part') ?? '';
-    $lot  = $req->query('lot') ?? '';
+    public function getSiteLocationLookup(Request $req)
+    {
+        $part = $req->query('part') ?? '';
+        $lot = $req->query('lot') ?? '';
 
-    // Mengambil data site & location berdasarkan part & lot dari xxinvDet
-    $invData = xxinvDet::select(
+        // Mengambil data site & location berdasarkan part & lot dari xxinvDet
+        $invData = xxinvDet::select(
             'xxinv_site as site',
             'xxinv_loc as location',
             'xxinv_wrh as warehouse',
             'xxinv_level as level',
             'xxinv_bin as bin'
         )
-        ->where('xxinv_part', $part)
-        ->when($lot, function ($q) use ($lot) {
-            return $q->where('xxinv_lot', $lot);
-        })
-        ->get();
+            ->where('xxinv_part', $part)
+            ->when($lot, function ($q) use ($lot) {
+                return $q->where('xxinv_lot', $lot);
+            })
+            ->get();
 
-    if ($invData->isEmpty()) {
+        if ($invData->isEmpty()) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => 'Data Site/Location tidak ditemukan untuk item tersebut.',
+            ], 404);
+        }
+
         return response()->json([
-            'Status'  => 'Error',
-            'Message' => 'Data Site/Location tidak ditemukan untuk item tersebut.'
-        ], 404);
+            'Status' => 'Success',
+            'Message' => 'Data Found',
+            'Data' => $invData,
+        ], 200);
     }
 
-    return response()->json([
-        'Status'  => 'Success',
-        'Message' => 'Data Found',
-        'Data'    => $invData
-    ], 200);
-}
-// Lookup Daftar Site berdasarkan Part & Lot
-public function getSiteLookup(Request $req)
-{
-    $part = $req->query('part') ?? '';
-    $lot  = $req->query('lot') ?? '';
+    // Lookup Daftar Site berdasarkan Part & Lot
+    public function getSiteLookup(Request $req)
+    {
+        $part = $req->query('part') ?? '';
+        $lot = $req->query('lot') ?? '';
 
-    $sites = xxinvDet::select('xxinv_site as site')
-        ->where('xxinv_part', $part)
-        ->when($lot, function ($q) use ($lot) {
-            return $q->where('xxinv_lot', $lot);
-        })
-        ->groupBy('xxinv_site')
-        ->get();
+        $sites = xxinvDet::select('xxinv_site as site')
+            ->where('xxinv_part', $part)
+            ->when($lot, function ($q) use ($lot) {
+                return $q->where('xxinv_lot', $lot);
+            })
+            ->groupBy('xxinv_site')
+            ->get();
 
-    return response()->json([
-        'Status' => 'Success',
-        'Data'   => $sites
-    ], 200);
-}
+        return response()->json([
+            'Status' => 'Success',
+            'Data' => $sites,
+        ], 200);
+    }
 
-// Lookup Daftar Location berdasarkan Part, Lot, & Site
-public function getLocationLookup(Request $req)
-{
-    $part = $req->query('part') ?? '';
-    $lot  = $req->query('lot') ?? '';
-    $site = $req->query('site') ?? '';
+    // Lookup Daftar Location berdasarkan Part, Lot, & Site
+    public function getLocationLookup(Request $req)
+    {
+        $part = $req->query('part') ?? '';
+        $lot = $req->query('lot') ?? '';
+        $site = $req->query('site') ?? '';
 
-    $locations = xxinvDet::select('xxinv_loc as location')
-        ->where('xxinv_part', $part)
-        ->when($lot, function ($q) use ($lot) {
-            return $q->where('xxinv_lot', $lot);
-        })
-        ->where('xxinv_site', $site)
-        ->groupBy('xxinv_loc')
-        ->get();
+        $locations = xxinvDet::select('xxinv_loc as location')
+            ->where('xxinv_part', $part)
+            ->when($lot, function ($q) use ($lot) {
+                return $q->where('xxinv_lot', $lot);
+            })
+            ->where('xxinv_site', $site)
+            ->groupBy('xxinv_loc')
+            ->get();
 
-    return response()->json([
-        'Status' => 'Success',
-        'Data'   => $locations
-    ], 200);
-}
+        return response()->json([
+            'Status' => 'Success',
+            'Data' => $locations,
+        ], 200);
+    }
+
     public function sendQxCompIssue(SendQxCompIssueRequest $request)
     {
         Log::info($request->all());
 
-
-        $wonbr      = $request->wonbr;
-        $location   = $request->location;
-        $lot        = $request->lot;
-        $effdate    = $request->effdate;
-        $part       = $request->part;
-        $qty        = $request->qty;
-        $site       = $request->site;
-        $lotserial  = $request->lotserial;
+        $wonbr = $request->wonbr;
+        $location = $request->location;
+        $lot = $request->lot;
+        $effdate = $request->effdate;
+        $part = $request->part;
+        $qty = $request->qty;
+        $site = $request->site;
+        $lotserial = $request->lotserial;
         // $wonbr    = $data['wonbr'] ?? null;
         // $location = $data['location'] ?? null;
         // $lot      = $data['lot'] ?? null;
@@ -950,17 +939,16 @@ public function getLocationLookup(Request $req)
         // $site     = isset($data['site']) && $data['site'] !== '' ? explode(';', $data['site']) : [];
         // $lotserial = isset($data['lotserial']) && $data['lotserial'] !== '' ? explode(';', $data['lotserial']) : [];
 
-
         $sendQxCompIssue = (new QxtendServices())->qxWorkOrderComponentIssue($wonbr, $location, $lot, $effdate, $part, $qty, $site, $lotserial);
         if ($sendQxCompIssue[0] == 'true') {
             return response()->json([
                 'Status' => 'Success',
-                'Message' => $sendQxCompIssue[1]
+                'Message' => $sendQxCompIssue[1],
             ], 200);
         } else {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => $sendQxCompIssue[1]
+                'Message' => $sendQxCompIssue[1],
             ], 422);
         }
     }
@@ -972,6 +960,18 @@ public function getLocationLookup(Request $req)
             ->first();
 
         return response()->json($data);
+    }
+
+    public function getUm(Request $request)
+    {
+        $data = Item::where('im_item_part', $request->item)
+
+            ->first();
+
+        return response()->json([
+            'Status' => 'Success',
+            'Data' => $data->im_item_um,
+        ], 200);
     }
 
     public function outboundxxinvDet(Request $req)
@@ -992,21 +992,21 @@ public function getLocationLookup(Request $req)
                 log::info('cont');
             }
 
-            $body       = $xml->children('soapenv', true)->Body;
+            $body = $xml->children('soapenv', true)->Body;
             $xxlddetwms = $body->children('qdoc', true)->WmsLdDet;
-            $dsLdDet    = $xxlddetwms->children('qdoc', true)->dsLd_det;
-            $ldDet      = $dsLdDet->children('qdoc', true)->ld_det;
-            $fields     = $ldDet->children('qdoc', true);
+            $dsLdDet = $xxlddetwms->children('qdoc', true)->dsLd_det;
+            $ldDet = $dsLdDet->children('qdoc', true)->ld_det;
+            $fields = $ldDet->children('qdoc', true);
             // log::info($fields);
-           
+
             $data = [
                 'operation' => (string) $fields->operation,
-                'ldDomain'  => (string) $fields->ldDomain,
-                'ldLoc'     => (string) $fields->ldLoc,
-                'ldLot'     => (string) $fields->ldLot,
-                'ldPart'    => (string) $fields->ldPart,
-                'ldRef'     => (string) $fields->ldRef,
-                'ldSite'    => (string) $fields->ldSite,
+                'ldDomain' => (string) $fields->ldDomain,
+                'ldLoc' => (string) $fields->ldLoc,
+                'ldLot' => (string) $fields->ldLot,
+                'ldPart' => (string) $fields->ldPart,
+                'ldRef' => (string) $fields->ldRef,
+                'ldSite' => (string) $fields->ldSite,
             ];
 
             // Log::info(json_encode($data['ldDomain']));
@@ -1044,15 +1044,16 @@ public function getLocationLookup(Request $req)
                 ->header('Content-Type', 'text/xml; charset=utf-8');
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::info('outboundxxinvDet error: ' . $e->getMessage());
+            Log::info('outboundxxinvDet error: '.$e->getMessage());
 
             return response($this->soapAck(false, $e->getMessage()), 500)
                 ->header('Content-Type', 'text/xml; charset=utf-8');
         }
     }
+
     private function soapAck(bool $success = true, string $message = 'Success')
     {
-        $status  = $success ? 'SUCCESS' : 'ERROR';
+        $status = $success ? 'SUCCESS' : 'ERROR';
         $escaped = htmlspecialchars($message);
 
         return <<<XML
@@ -1064,5 +1065,5 @@ public function getLocationLookup(Request $req)
     </soapenv:Body>
 </soapenv:Envelope>
 XML;
-}
+    }
 }
