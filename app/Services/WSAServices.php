@@ -20,7 +20,7 @@ class WSAServices
             'Cache-Control: no-cache',
             'Pragma: no-cache',
             'SOAPAction: ""',        // jika tidak pakai SOAPAction, isinya harus ada tanda petik 2 --> ""
-            'Content-length: ' . strlen(preg_replace("/\s+/", ' ', $req)),
+            'Content-length: '.strlen(preg_replace("/\s+/", ' ', $req)),
         ];
     }
 
@@ -64,7 +64,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -103,14 +103,14 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_last_batch xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpbatch>' . $batch . '</inpbatch>' .
-            '<inpitem>' . $item . '</inpitem>' .
-            '</meiji_last_batch>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_last_batch xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpbatch>'.$batch.'</inpbatch>'.
+            '<inpitem>'.$item.'</inpitem>'.
+            '</meiji_last_batch>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -144,7 +144,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -199,13 +199,13 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_gen_code xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpfldname>' . $fldname . '</inpfldname>' .
-            '</meiji_gen_code>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_gen_code xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpfldname>'.$fldname.'</inpfldname>'.
+            '</meiji_gen_code>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -239,7 +239,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -279,12 +279,12 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_item_mstr xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '</meiji_item_mstr>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_item_mstr xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '</meiji_item_mstr>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -318,7 +318,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -358,12 +358,12 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_loc_mstr xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '</meiji_loc_mstr>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_loc_mstr xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '</meiji_loc_mstr>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -397,7 +397,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -437,17 +437,16 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_purchase_order xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpponbr>' . $poNbr . '</inpponbr>' .
-            '</meiji_purchase_order>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_purchase_order xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpponbr>'.$poNbr.'</inpponbr>'.
+            '</meiji_purchase_order>'.
+            '</Body>'.
             '</Envelope>';
 
-
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
             CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
@@ -457,7 +456,7 @@ class WSAServices
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_SSL_VERIFYHOST => false,
-        );
+        ];
 
         $getInfo = '';
         $httpCode = 0;
@@ -478,7 +477,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -492,8 +491,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
 
         $dataHeader = [];
@@ -501,32 +499,32 @@ class WSAServices
             return [
                 $qdocResult,
                 $dataHeader,
-                []
+                [],
             ];
         }
         $dataMaster = PurchaseOrderMaster::firstOrNew(
             ['po_nbr' => (string) $dataloop[0]->t_poNbr]
         );
-        $dataMaster->po_vend = (string)$dataloop[0]->t_poVend;
-        $dataMaster->po_vend_desc = (string)$dataloop[0]->t_poVendDesc;
-        $dataMaster->po_ord_date = (string)$dataloop[0]->t_poOrdDate;
-        $dataMaster->po_due_date = (string)$dataloop[0]->t_poDueDate;
-        $dataMaster->po_rmks = (string)$dataloop[0]->t_poRmks;
-        $dataMaster->po_stat = (string)$dataloop[0]->t_poStat;
-        $dataMaster->po_site = (string)$dataloop[0]->t_poSite;
+        $dataMaster->po_vend = (string) $dataloop[0]->t_poVend;
+        $dataMaster->po_vend_desc = (string) $dataloop[0]->t_poVendDesc;
+        $dataMaster->po_ord_date = (string) $dataloop[0]->t_poOrdDate;
+        $dataMaster->po_due_date = (string) $dataloop[0]->t_poDueDate;
+        $dataMaster->po_rmks = (string) $dataloop[0]->t_poRmks;
+        $dataMaster->po_stat = (string) $dataloop[0]->t_poStat;
+        $dataMaster->po_site = (string) $dataloop[0]->t_poSite;
         // $dataMaster->po_loc_def = (string)$dataloop[0]->t_poLoc;
         $dataMaster->po_loc_def = 'WH-QRT';
         $dataMaster->save();
         // dd($dataloop[0]->t_poLoc);
         $dataHeader[] = [
             'id' => $dataMaster->id,
-            'po_nbr' => (string)$dataloop[0]->t_poNbr,
-            'po_vend' => (string)$dataloop[0]->t_poVend,
-            'po_vend_desc' => (string)$dataloop[0]->t_poVendDesc,
-            'po_ord_date' => (string)$dataloop[0]->t_poOrdDate,
-            'po_due_date' => (string)$dataloop[0]->t_poDueDate,
-            'po_stat' => (string)$dataloop[0]->t_poStat,
-            'po_site' => (string)$dataloop[0]->t_poSite,
+            'po_nbr' => (string) $dataloop[0]->t_poNbr,
+            'po_vend' => (string) $dataloop[0]->t_poVend,
+            'po_vend_desc' => (string) $dataloop[0]->t_poVendDesc,
+            'po_ord_date' => (string) $dataloop[0]->t_poOrdDate,
+            'po_due_date' => (string) $dataloop[0]->t_poDueDate,
+            'po_stat' => (string) $dataloop[0]->t_poStat,
+            'po_site' => (string) $dataloop[0]->t_poSite,
             // 'po_loc_def' => (string)$dataloop[0]->t_poLoc,
             'po_loc_def' => 'WH-QRT',
         ];
@@ -539,28 +537,28 @@ class WSAServices
                     'pod_line' => (string) $listDatas->t_podLine,
                 ]
             );
-            $newDataDetail->pod_part = (string)$listDatas->t_podPart;
-            $newDataDetail->pod_part_desc = (string)$listDatas->t_podPartDesc;
-            $newDataDetail->pod_part_desc1 = (string)$listDatas->t_partDesc1;
-            $newDataDetail->pod_part_desc2 = (string)$listDatas->t_partDesc2;
-            $newDataDetail->pod_qty_ord = (string)$listDatas->t_podQtyOrd ?? 0;
+            $newDataDetail->pod_part = (string) $listDatas->t_podPart;
+            $newDataDetail->pod_part_desc = (string) $listDatas->t_podPartDesc;
+            $newDataDetail->pod_part_desc1 = (string) $listDatas->t_partDesc1;
+            $newDataDetail->pod_part_desc2 = (string) $listDatas->t_partDesc2;
+            $newDataDetail->pod_qty_ord = (string) $listDatas->t_podQtyOrd ?? 0;
             $newDataDetail->pod_qty_rcpt = (string) ($newDataDetail->pod_qty_rcpt != null ? $newDataDetail->pod_qty_rcpt : 0);
             // $newDataDetail->pod_qty_rcpt = (string)$listDatas->t_podQtyRcpt;
-            $newDataDetail->pod_qty_potensi = (string)$listDatas->t_potensi ?? 0;
-            $newDataDetail->pod_um = (string)$listDatas->t_podUm;
-            $newDataDetail->pod_pt_um = (string)$listDatas->t_ptUm;
-            $newDataDetail->pod_pallete = (string)$listDatas->t_ptPallete;
+            $newDataDetail->pod_qty_potensi = (string) $listDatas->t_potensi ?? 0;
+            $newDataDetail->pod_um = (string) $listDatas->t_podUm;
+            $newDataDetail->pod_pt_um = (string) $listDatas->t_ptUm;
+            $newDataDetail->pod_pallete = (string) $listDatas->t_ptPallete;
             $newDataDetail->save();
 
             $dataDetail[] = [
                 'id' => $newDataDetail->id,
                 'po_mstr_id' => $dataMaster->id,
-                'pod_line' => (string)$listDatas->t_podLine,
-                'pod_part' => (string)$listDatas->t_podPart,
-                'pod_part_desc' => (string)$listDatas->t_podPartDesc,
-                'pod_part_desc1' => (string)$listDatas->t_partDesc1,
-                'pod_part_desc2' => (string)$listDatas->t_partDesc2,
-                'pod_qty_ord' => (string)$listDatas->t_podQtyOrd ?? '0',
+                'pod_line' => (string) $listDatas->t_podLine,
+                'pod_part' => (string) $listDatas->t_podPart,
+                'pod_part_desc' => (string) $listDatas->t_podPartDesc,
+                'pod_part_desc1' => (string) $listDatas->t_partDesc1,
+                'pod_part_desc2' => (string) $listDatas->t_partDesc2,
+                'pod_qty_ord' => (string) $listDatas->t_podQtyOrd ?? '0',
                 // 'pod_qty_rcpt' => (string)$listDatas->t_podQtyRcpt,
                 'pod_qty_rcpt' => (string) ($newDataDetail->pod_qty_rcpt != null ? $newDataDetail->pod_qty_rcpt : '0'),
                 'pod_qty_ongoing' => '0',
@@ -597,15 +595,15 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_update_pod_um_conv xmlns="' . $wsa->wsa_path . '">' .
-            '<inpDomain>' . $domainCode . '</inpDomain>' .
-            '<inpPoNbr>' . $poNbr . '</inpPoNbr>' .
-            '<inpLine>' . $podLine . '</inpLine>' .
-            '<inpQtyUmConv>' . $qtyUmConv . '</inpQtyUmConv>' .
-            '</meiji_update_pod_um_conv>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_update_pod_um_conv xmlns="'.$wsa->wsa_path.'">'.
+            '<inpDomain>'.$domainCode.'</inpDomain>'.
+            '<inpPoNbr>'.$poNbr.'</inpPoNbr>'.
+            '<inpLine>'.$podLine.'</inpLine>'.
+            '<inpQtyUmConv>'.$qtyUmConv.'</inpQtyUmConv>'.
+            '</meiji_update_pod_um_conv>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -639,7 +637,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -653,7 +651,7 @@ class WSAServices
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK');
         // log::info($xmlResp->xpath('//ns1:outOK'));
 
@@ -671,25 +669,25 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_update_xxinv_det xmlns="' . $wsa->wsa_path . '">' .
-            '<inpDomain>' . $domainCode . '</inpDomain>' .
-            '<inpPart>' . $part . '</inpPart>' .
-            '<inpLoc>' . $loc . '</inpLoc>' .
-            '<inpLot>' . $lot . '</inpLot>' .
-            '<inpSite>' . $site . '</inpSite>' .
-            '<inpLvl>' . $lvl . '</inpLvl>' .
-            '<inpBin>' . $bin . '</inpBin>' .
-            '<inpWrh>' . $building . '</inpWrh>' .
-            '<inpQty>' . $qty . '</inpQty>' .
-            '<inpEntryDate>' . $entryDate . '</inpEntryDate>' .
-            '<inpExpDate>' . $expDate . '</inpExpDate>' .
-            '<inpTestDate>' . $testDate . '</inpTestDate>' .
-            '<inpPotensi>' . $potensi . '</inpPotensi>' .
-            '<inpRef>' . $ref . '</inpRef>' .
-            '</meiji_update_xxinv_det>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_update_xxinv_det xmlns="'.$wsa->wsa_path.'">'.
+            '<inpDomain>'.$domainCode.'</inpDomain>'.
+            '<inpPart>'.$part.'</inpPart>'.
+            '<inpLoc>'.$loc.'</inpLoc>'.
+            '<inpLot>'.$lot.'</inpLot>'.
+            '<inpSite>'.$site.'</inpSite>'.
+            '<inpLvl>'.$lvl.'</inpLvl>'.
+            '<inpBin>'.$bin.'</inpBin>'.
+            '<inpWrh>'.$building.'</inpWrh>'.
+            '<inpQty>'.$qty.'</inpQty>'.
+            '<inpEntryDate>'.$entryDate.'</inpEntryDate>'.
+            '<inpExpDate>'.$expDate.'</inpExpDate>'.
+            '<inpTestDate>'.$testDate.'</inpTestDate>'.
+            '<inpPotensi>'.$potensi.'</inpPotensi>'.
+            '<inpRef>'.$ref.'</inpRef>'.
+            '</meiji_update_xxinv_det>'.
+            '</Body>'.
             '</Envelope>';
         // Log::info($qdocRequest);
         $curlOptions = [
@@ -723,7 +721,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -760,13 +758,13 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_ld_det xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inppart>' . $itemCode . '</inppart>' .
-            '</meiji_ld_det>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_ld_det xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inppart>'.$itemCode.'</inppart>'.
+            '</meiji_ld_det>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -800,7 +798,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -840,19 +838,19 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_xxinv_det_wrh xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inppart>' . $itemCode . '</inppart>' .
-            '<inplot>' . $lot . '</inplot>' .
-            '<inpbin>' . $bin . '</inpbin>' .
-            '<inpwrh>' . $warehouse . '</inpwrh>' .
-            '<inplevel>' . $level . '</inplevel>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_xxinv_det_wrh xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inppart>'.$itemCode.'</inppart>'.
+            '<inplot>'.$lot.'</inplot>'.
+            '<inpbin>'.$bin.'</inpbin>'.
+            '<inpwrh>'.$warehouse.'</inpwrh>'.
+            '<inplevel>'.$level.'</inplevel>'.
 
-            '</meiji_xxinv_det_wrh>' .
-            '</Body>' .
+            '</meiji_xxinv_det_wrh>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -886,7 +884,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -927,19 +925,19 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_xxinv_det_wrh xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inppart>' . $itemCode . '</inppart>' .
-            '<inplot>' . $lot . '</inplot>' .
-            '<inpbin>' . $bin . '</inpbin>' .
-            '<inpwrh>' . $warehouse . '</inpwrh>' .
-            '<inplevel>' . $level . '</inplevel>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_xxinv_det_wrh xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inppart>'.$itemCode.'</inppart>'.
+            '<inplot>'.$lot.'</inplot>'.
+            '<inpbin>'.$bin.'</inpbin>'.
+            '<inpwrh>'.$warehouse.'</inpwrh>'.
+            '<inplevel>'.$level.'</inplevel>'.
 
-            '</meiji_xxinv_det_wrh>' .
-            '</Body>' .
+            '</meiji_xxinv_det_wrh>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -973,7 +971,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -1013,18 +1011,18 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_xxinv_det_transfer xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inppart>' . $itemCode . '</inppart>' .
-            '<inplot>' . $lot . '</inplot>' .
-            '<inpbin>' . $bin . '</inpbin>' .
-            '<inpwrh>' . $warehouse . '</inpwrh>' .
-            '<inplevel>' . $level . '</inplevel>' .
-            '</meiji_xxinv_det_transfer>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_xxinv_det_transfer xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inppart>'.$itemCode.'</inppart>'.
+            '<inplot>'.$lot.'</inplot>'.
+            '<inpbin>'.$bin.'</inpbin>'.
+            '<inpwrh>'.$warehouse.'</inpwrh>'.
+            '<inplevel>'.$level.'</inplevel>'.
+            '</meiji_xxinv_det_transfer>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -1058,7 +1056,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -1098,12 +1096,12 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_sample_desti xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '</meiji_sample_desti>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_sample_desti xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '</meiji_sample_desti>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -1137,7 +1135,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -1168,8 +1166,8 @@ class WSAServices
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
                 <Body>
-                    <meiji_cust_mstr xmlns="' . $wsa->wsa_path . '">
-                        <inpdomain>' . $domainCode . '</inpdomain>
+                    <meiji_cust_mstr xmlns="'.$wsa->wsa_path.'">
+                        <inpdomain>'.$domainCode.'</inpdomain>
                     </meiji_cust_mstr>
                 </Body>
             </Envelope>';
@@ -1185,9 +1183,9 @@ class WSAServices
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
                 <Body>
-                    <meiji_get_SO xmlns="' . $wsa->wsa_path . '">
-                        <inpdomain>' . $domainCode . '</inpdomain>
-                        <inpcust>' . $customer . '</inpcust>
+                    <meiji_get_SO xmlns="'.$wsa->wsa_path.'">
+                        <inpdomain>'.$domainCode.'</inpdomain>
+                        <inpcust>'.$customer.'</inpcust>
                     </meiji_get_SO>
                 </Body>
             </Envelope>';
@@ -1201,18 +1199,18 @@ class WSAServices
         $domain = Domain::first();
         $domainCode = $domain->domain ?? '';
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_xxinv_det_fifo xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inppart>' . $itemCode . '</inppart>' .
-            '<inplot>' . $lot . '</inplot>' .
-            '<inpbin></inpbin>' .
-            '<inpwrh></inpwrh>' .
-            '<inplevel></inplevel>' .
-            '</meiji_xxinv_det_fifo>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_xxinv_det_fifo xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inppart>'.$itemCode.'</inppart>'.
+            '<inplot>'.$lot.'</inplot>'.
+            '<inpbin></inpbin>'.
+            '<inpwrh></inpwrh>'.
+            '<inplevel></inplevel>'.
+            '</meiji_xxinv_det_fifo>'.
+            '</Body>'.
             '</Envelope>';
 
         Log::channel('shipmentSchedule')->info($qdocRequest);
@@ -1228,10 +1226,10 @@ class WSAServices
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
                 <Body>
-                    <meiji_get_shipper_number xmlns="' . $wsa->wsa_path . '">
-                        <inpdomain>' . $domainCode . '</inpdomain>
-                        <inpship>' . $site . '</inpship>
-                        <inpidref>' . $packingReplenishmentID . '</inpidref>
+                    <meiji_get_shipper_number xmlns="'.$wsa->wsa_path.'">
+                        <inpdomain>'.$domainCode.'</inpdomain>
+                        <inpship>'.$site.'</inpship>
+                        <inpidref>'.$packingReplenishmentID.'</inpidref>
                     </meiji_get_shipper_number>
                 </Body>
             </Envelope>';
@@ -1258,14 +1256,14 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_wo_mstr xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpwonbr>' . $wonbr . '</inpwonbr>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_wo_mstr xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpwonbr>'.$wonbr.'</inpwonbr>'.
 
-            '</meiji_get_wo_mstr>' .
-            '</Body>' .
+            '</meiji_get_wo_mstr>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -1299,7 +1297,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -1356,13 +1354,13 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_wo_det xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpwo>' . $wonbr . '</inpwo>' .
-            '</meiji_get_wo_det>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_wo_det xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpwo>'.$wonbr.'</inpwo>'.
+            '</meiji_get_wo_det>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -1396,7 +1394,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -1439,13 +1437,13 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_picklist_detail xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpwo>' . $wonbr . '</inpwo>' .
-            '</meiji_get_picklist_detail>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_picklist_detail xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpwo>'.$wonbr.'</inpwo>'.
+            '</meiji_get_picklist_detail>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -1479,7 +1477,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -1519,12 +1517,12 @@ class WSAServices
         $qdocRequest = '
         <Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
             <Body>
-                <meiji_update_xxinv_qtyoh xmlns="' . $wsa->wsa_path . '">
-                    <inpdomain>' . $domainCode . '</inpdomain>
-                    <inpsite>' . $site . '</inpsite>
-                    <inpitem>' . $item . '</inpitem>
-                    <inplot>' . $lot . '</inplot>
-                    <inppick>' . $qty . '</inppick>
+                <meiji_update_xxinv_qtyoh xmlns="'.$wsa->wsa_path.'">
+                    <inpdomain>'.$domainCode.'</inpdomain>
+                    <inpsite>'.$site.'</inpsite>
+                    <inpitem>'.$item.'</inpitem>
+                    <inplot>'.$lot.'</inplot>
+                    <inppick>'.$qty.'</inppick>
                 </meiji_update_xxinv_qtyoh>
             </Body>
         </Envelope>
@@ -1563,7 +1561,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -1601,12 +1599,12 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_item_mstr_wo xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '</meiji_item_mstr_wo>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_item_mstr_wo xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '</meiji_item_mstr_wo>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -1640,7 +1638,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -1682,15 +1680,15 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_picklist_detail_item xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpitem>' . $item . '</inpitem>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inploc>' . $loc . '</inploc>' .
-            '</meiji_get_picklist_detail_item>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_picklist_detail_item xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpitem>'.$item.'</inpitem>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inploc>'.$loc.'</inploc>'.
+            '</meiji_get_picklist_detail_item>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -1724,7 +1722,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -1766,13 +1764,13 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_xxpick_mstr xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpstatus></inpstatus>' .
-            '</meiji_get_xxpick_mstr>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_xxpick_mstr xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpstatus></inpstatus>'.
+            '</meiji_get_xxpick_mstr>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -1806,7 +1804,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -1858,23 +1856,23 @@ class WSAServices
         //     '</Envelope>';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_wo_mstrx xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpwo>' . $wonbr . '</inpwo>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inplot>' . $lot . '</inplot>' .
-            '</meiji_wo_mstrx>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_wo_mstrx xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpwo>'.$wonbr.'</inpwo>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inplot>'.$lot.'</inplot>'.
+            '</meiji_wo_mstrx>'.
             // '<meiji_get_xxpick_det xmlns="'.$wsa->wsa_path.'">'.
             // '<meiji_get_xxpick_det xmlns="'.$wsa->wsa_path.'">'.
             // '<inpdomain>'.$domainCode.'</inpdomain>'.
             // '<inpstatus>'.$status.'</inpstatus>'.
             // '</meiji_get_xxpick_det>'.
-            '</Body>' .
+            '</Body>'.
             '</Envelope>';
-            // dd($qdocRequest);
-            // log::info($qdocRequest);
+        // dd($qdocRequest);
+        // log::info($qdocRequest);
         // dd($qdocRequest);
         $curlOptions = [
             CURLOPT_URL => $qxUrl,
@@ -1907,7 +1905,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -1918,7 +1916,7 @@ class WSAServices
         }
 
         $xmlResp = simplexml_load_string($qdocResponse);
-      
+
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
         $dataloop = $xmlResp->xpath('//ns1:tempRow');
@@ -1950,17 +1948,17 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_update_status_xxpick xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>
-            <inppick>' . $picknbr . '</inppick>
-            <inpstatus>' . $status . '</inpstatus>' .
-            '<inpqty>' . $qty . '</inpqty>
-            <inppart>' . $part . '</inppart>
-            <inplot>' . $lot . '</inplot>' .
-            '</meiji_update_status_xxpick>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_update_status_xxpick xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>
+            <inppick>'.$picknbr.'</inppick>
+            <inpstatus>'.$status.'</inpstatus>'.
+            '<inpqty>'.$qty.'</inpqty>
+            <inppart>'.$part.'</inppart>
+            <inplot>'.$lot.'</inplot>'.
+            '</meiji_update_status_xxpick>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -1994,7 +1992,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -2037,23 +2035,23 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_send_qtypick_xxpick xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>
-            <inppick>' . $picknbr . '</inppick>
-            <inpwo>' . $wonbr . '</inpwo>
-            <inpwodpart>' . $wodpart . '</inpwodpart>
-            <inpsite>' . $site . '</inpsite>
-            <inploc>' . $loc . '</inploc>
-            <inplot>' . $lot . '</inplot>
-            <inpwrh>' . $wrh . '</inpwrh>
-            <inplevel>' . $level . '</inplevel>
-            <inpbin>' . $bin . '</inpbin>
-            <inpqtypick>' . $qtypick . '</inpqtypick>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_send_qtypick_xxpick xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>
+            <inppick>'.$picknbr.'</inppick>
+            <inpwo>'.$wonbr.'</inpwo>
+            <inpwodpart>'.$wodpart.'</inpwodpart>
+            <inpsite>'.$site.'</inpsite>
+            <inploc>'.$loc.'</inploc>
+            <inplot>'.$lot.'</inplot>
+            <inpwrh>'.$wrh.'</inpwrh>
+            <inplevel>'.$level.'</inplevel>
+            <inpbin>'.$bin.'</inpbin>
+            <inpqtypick>'.$qtypick.'</inpqtypick>'.
 
-            '</meiji_send_qtypick_xxpick>' .
-            '</Body>' .
+            '</meiji_send_qtypick_xxpick>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -2087,7 +2085,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -2127,14 +2125,14 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_loc_xxpick xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>
-            <inpsite>' . $site . '</inpsite>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_loc_xxpick xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>
+            <inpsite>'.$site.'</inpsite>'.
 
-            '</meiji_get_loc_xxpick>' .
-            '</Body>' .
+            '</meiji_get_loc_xxpick>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -2168,7 +2166,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -2201,10 +2199,10 @@ class WSAServices
         $qdocRequest =
             '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
                 <Body>
-                    <meiji_uom_conversion xmlns="' . $wsa->wsa_path . '">
-                        <inpdomain>' . $domainCode . '</inpdomain>
-                        <inpnbr>' . $sodNbr . '</inpnbr>
-                        <inpline>' . $sodLine . '</inpline>
+                    <meiji_uom_conversion xmlns="'.$wsa->wsa_path.'">
+                        <inpdomain>'.$domainCode.'</inpdomain>
+                        <inpnbr>'.$sodNbr.'</inpnbr>
+                        <inpline>'.$sodLine.'</inpline>
                     </meiji_uom_conversion>
                 </Body>
             </Envelope>';
@@ -2231,16 +2229,16 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_loc_transfer xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inpwonbr>' . $wonbr . '</inpwonbr>' .
-            '<inpitem>' . $item . '</inpitem>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_loc_transfer xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inpwonbr>'.$wonbr.'</inpwonbr>'.
+            '<inpitem>'.$item.'</inpitem>'.
 
-            '</meiji_get_loc_transfer>' .
-            '</Body>' .
+            '</meiji_get_loc_transfer>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -2274,7 +2272,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -2316,16 +2314,16 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_site_transfer xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>
-            <inpsite>' . $site . '</inpsite>' .
-            '<inpitem>' . $item . '</inpitem>' .
-            '<inplocation>' . $location . '</inplocation>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_site_transfer xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>
+            <inpsite>'.$site.'</inpsite>'.
+            '<inpitem>'.$item.'</inpitem>'.
+            '<inplocation>'.$location.'</inplocation>'.
 
-            '</meiji_get_site_transfer>' .
-            '</Body>' .
+            '</meiji_get_site_transfer>'.
+            '</Body>'.
             '</Envelope>';
         // dd($qdocRequest);
         $curlOptions = [
@@ -2359,7 +2357,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -2403,7 +2401,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_sites xmlns='" . $wsa->wsa_path . "'>
+                    <meiji_get_sites xmlns='".$wsa->wsa_path."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
@@ -2443,7 +2441,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -2487,7 +2485,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_loc_data xmlns='" . $wsa->wsa_path . "'>
+                    <meiji_get_loc_data xmlns='".$wsa->wsa_path."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
@@ -2528,7 +2526,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -2568,19 +2566,19 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_xxinv_det_pick xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inppart>' . $item . '</inppart>' .
-            '<inplot></inplot>' .
-            '<inpbin/>' .
-            '<inpwrh>' . $warehouse . '</inpwrh>' .
-            '<inplevel/>' .
-            '<inploc>' . $loc . '</inploc>' .
-            '</meiji_xxinv_det_pick>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_xxinv_det_pick xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inppart>'.$item.'</inppart>'.
+            '<inplot></inplot>'.
+            '<inpbin/>'.
+            '<inpwrh>'.$warehouse.'</inpwrh>'.
+            '<inplevel/>'.
+            '<inploc>'.$loc.'</inploc>'.
+            '</meiji_xxinv_det_pick>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -2614,7 +2612,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -2654,19 +2652,19 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_insert_xxinvdet xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inploc>' . $loc . '</inploc>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_insert_xxinvdet xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inploc>'.$loc.'</inploc>'.
 
-            '<inpbin>' . $bin . '</inpbin>' .
-            '<inpwrh>' . $wrh . '</inpwrh>' .
-            '<inplevel>' . $level . '</inplevel>' .
-            '<inpqty>' . $qty . '</inpqty>' .
-            '</meiji_insert_xxinvdet>' .
-            '</Body>' .
+            '<inpbin>'.$bin.'</inpbin>'.
+            '<inpwrh>'.$wrh.'</inpwrh>'.
+            '<inplevel>'.$level.'</inplevel>'.
+            '<inpqty>'.$qty.'</inpqty>'.
+            '</meiji_insert_xxinvdet>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -2700,7 +2698,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -2739,13 +2737,13 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_womstr xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpwonbr>' . $wonbr . '</inpwonbr>' .
-            '</meiji_get_womstr>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_womstr xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpwonbr>'.$wonbr.'</inpwonbr>'.
+            '</meiji_get_womstr>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -2779,7 +2777,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -2822,14 +2820,14 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_pick_issue xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpstatus>' . $status . '</inpstatus>' .
-            '<inppick>' . $picknbr . '</inppick>' .
-            '</meiji_get_pick_issue>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_pick_issue xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpstatus>'.$status.'</inpstatus>'.
+            '<inppick>'.$picknbr.'</inppick>'.
+            '</meiji_get_pick_issue>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -2863,7 +2861,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -2889,7 +2887,6 @@ class WSAServices
     public function wsaInvWms(string $inppart, string $inplot)
     {
         $wsa = qxwsa::first();
-       
 
         $qxUrl = $wsa->wsa_url;
         $qxReceiver = '';
@@ -2903,14 +2900,14 @@ class WSAServices
         $domain = Domain::first();
         $domainCode = $domain->domain ?? '';
 
-        $qdocRequest = '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_inv_wms xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inppart>' . $inppart . '</inppart>' .
-            '<inplot>' . $inplot . '</inplot>' .
-            ' </meiji_inv_wms>' .
-            '</Body>' .
+        $qdocRequest = '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_inv_wms xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inppart>'.$inppart.'</inppart>'.
+            '<inplot>'.$inplot.'</inplot>'.
+            ' </meiji_inv_wms>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -2944,7 +2941,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -2957,8 +2954,6 @@ class WSAServices
         if (is_bool($qdocResponse)) {
             return false;
         }
-
-       
 
         $xmlResp = simplexml_load_string($qdocResponse);
 
@@ -3079,15 +3074,15 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<rdi_update_supp_ld_det xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inppart>' . $part . '</inppart>' .
-            '<inplot>' . $lot . '</inplot>' .
-            '<inpsupplier>' . $inpsupplier . '</inpsupplier>' .
-            '</rdi_update_supp_ld_det>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<rdi_update_supp_ld_det xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inppart>'.$part.'</inppart>'.
+            '<inplot>'.$lot.'</inplot>'.
+            '<inpsupplier>'.$inpsupplier.'</inpsupplier>'.
+            '</rdi_update_supp_ld_det>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -3121,7 +3116,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -3163,13 +3158,13 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<rdi_check_location xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inploc>' . $location . '</inploc>' .
-            '</rdi_check_location>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<rdi_check_location xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inploc>'.$location.'</inploc>'.
+            '</rdi_check_location>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -3203,7 +3198,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -3248,13 +3243,13 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<rdi_check_item xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpPart>' . $item . '</inpPart>' .
-            '</rdi_check_item>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<rdi_check_item xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpPart>'.$item.'</inpPart>'.
+            '</rdi_check_item>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -3288,7 +3283,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -3333,13 +3328,13 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<rdi_check_supplier xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpSupp>' . $supplier . '</inpSupp>' .
-            '</rdi_check_supplier>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<rdi_check_supplier xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpSupp>'.$supplier.'</inpSupp>'.
+            '</rdi_check_supplier>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -3373,7 +3368,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -3418,10 +3413,10 @@ class WSAServices
 
         $qdocRequest = '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
                     <Body>
-                        <rdi_check_item_data_inquiry xmlns="' . $wsa->wsa_path . '">
-                            <inpdomain>' . $domainCode . '</inpdomain>
-                            <inpitem>' . $item . '</inpitem>
-                            <inploc>' . $location . '</inploc>
+                        <rdi_check_item_data_inquiry xmlns="'.$wsa->wsa_path.'">
+                            <inpdomain>'.$domainCode.'</inpdomain>
+                            <inpitem>'.$item.'</inpitem>
+                            <inploc>'.$location.'</inploc>
                         </rdi_check_item_data_inquiry>
                     </Body>
                 </Envelope>';
@@ -3457,7 +3452,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -3508,10 +3503,10 @@ class WSAServices
 
         $qdocRequest = '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
                     <Body>
-                        <rdi_check_loc_lot xmlns="' . $wsa->wsa_path . '">
-                            <inpdomain>' . $domainCode . '</inpdomain>
-                            <inplot>' . $lotpallet . '</inplot>
-                            <inploc>' . $location . '</inploc>
+                        <rdi_check_loc_lot xmlns="'.$wsa->wsa_path.'">
+                            <inpdomain>'.$domainCode.'</inpdomain>
+                            <inplot>'.$lotpallet.'</inplot>
+                            <inploc>'.$location.'</inploc>
                         </rdi_check_loc_lot>
                     </Body>
                 </Envelope>';
@@ -3547,7 +3542,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -3591,16 +3586,16 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_sampling_data xmlns="' . $wsa->wsa_path . '">
-                <inpdomain>' . $domainCode . '</inpdomain>
-                <inploc>' . $status . '</inploc>
-                <inppart>' . $item . '</inppart>
-                <inplot>' . $lot . '</inplot>
-            </meiji_get_sampling_data>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_sampling_data xmlns="'.$wsa->wsa_path.'">
+                <inpdomain>'.$domainCode.'</inpdomain>
+                <inploc>'.$status.'</inploc>
+                <inppart>'.$item.'</inppart>
+                <inplot>'.$lot.'</inplot>
+            </meiji_get_sampling_data>'.
 
-            '</Body>' .
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -3634,7 +3629,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -3674,16 +3669,16 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_warehouse_sampling xmlns="' . $wsa->wsa_path . '">
-                <inpdomain>' . $domainCode . '</inpdomain>
-                <inploc>' . $status . '</inploc>
-                <inppart>' . $item . '</inppart>
-                <inplot>' . $lot . '</inplot>
-            </meiji_get_warehouse_sampling>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_warehouse_sampling xmlns="'.$wsa->wsa_path.'">
+                <inpdomain>'.$domainCode.'</inpdomain>
+                <inploc>'.$status.'</inploc>
+                <inppart>'.$item.'</inppart>
+                <inplot>'.$lot.'</inplot>
+            </meiji_get_warehouse_sampling>'.
 
-            '</Body>' .
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -3717,7 +3712,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -3757,16 +3752,16 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_lot_sampling xmlns="' . $wsa->wsa_path . '">
-                <inpdomain>' . $domainCode . '</inpdomain>
-                <inploc>' . $status . '</inploc>
-                <inppart>' . $item . '</inppart>
-                <inplot>' . $lot . '</inplot>
-            </meiji_get_lot_sampling>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_lot_sampling xmlns="'.$wsa->wsa_path.'">
+                <inpdomain>'.$domainCode.'</inpdomain>
+                <inploc>'.$status.'</inploc>
+                <inppart>'.$item.'</inppart>
+                <inplot>'.$lot.'</inplot>
+            </meiji_get_lot_sampling>'.
 
-            '</Body>' .
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -3800,7 +3795,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -3840,21 +3835,21 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_transfer_sampling xmlns="' . $wsa->wsa_path . '">
-                <inpdomain>' . $domainCode . '</inpdomain>
-                <inppart>' . $item . '</inppart>
-                <inplot>' . $lot . '</inplot>
-                <inpsite>' . $site . '</inpsite>
-                <inploc>' . $loc . '</inploc>
-                <inplocto>' . $locto . '</inplocto>
-                <inpwarehouse>' . $warehouse . '</inpwarehouse>
-                <inplevel>' . $level . '</inplevel>
-                <inpbin>' . $bin . '</inpbin>
-                <inpqtyoh>' . $qtyoh . '</inpqtyoh>
-            </meiji_transfer_sampling>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_transfer_sampling xmlns="'.$wsa->wsa_path.'">
+                <inpdomain>'.$domainCode.'</inpdomain>
+                <inppart>'.$item.'</inppart>
+                <inplot>'.$lot.'</inplot>
+                <inpsite>'.$site.'</inpsite>
+                <inploc>'.$loc.'</inploc>
+                <inplocto>'.$locto.'</inplocto>
+                <inpwarehouse>'.$warehouse.'</inpwarehouse>
+                <inplevel>'.$level.'</inplevel>
+                <inpbin>'.$bin.'</inpbin>
+                <inpqtyoh>'.$qtyoh.'</inpqtyoh>
+            </meiji_transfer_sampling>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -3888,7 +3883,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -3942,7 +3937,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_wrh_data xmlns='" . $wsa->wsa_path . "'>
+                    <meiji_get_wrh_data xmlns='".$wsa->wsa_path."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
@@ -3984,7 +3979,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -4033,7 +4028,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_level_data xmlns='" . $wsa->wsa_path . "'>
+                    <meiji_get_level_data xmlns='".$wsa->wsa_path."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
@@ -4076,7 +4071,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -4126,7 +4121,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_bin_data xmlns='" . $wsa->wsa_path . "'>
+                    <meiji_get_bin_data xmlns='".$wsa->wsa_path."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
@@ -4170,7 +4165,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -4214,7 +4209,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_level_for_po xmlns='" . $wsa->wsa_path . "'>
+                    <meiji_get_level_for_po xmlns='".$wsa->wsa_path."'>
                          <inpdomain>$domainCode</inpdomain>
                         <inppart>$part</inppart>
                         <inplot>$lot</inplot>
@@ -4257,7 +4252,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -4301,7 +4296,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_bin_for_po xmlns='" . $wsa->wsa_path . "'>
+                    <meiji_get_bin_for_po xmlns='".$wsa->wsa_path."'>
                          <inpdomain>$domainCode</inpdomain>
                         <inppart>$part</inppart>
                         <inplot>$lot</inplot>
@@ -4345,7 +4340,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -4389,7 +4384,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_cek_itemlot xmlns='" . $wsa->wsa_path . "'>
+                    <meiji_cek_itemlot xmlns='".$wsa->wsa_path."'>
                         <inpdomain>$domainCode</inpdomain>
                         <inppart>$inppart</inppart>
                         <inplot>$inplot</inplot>
@@ -4429,7 +4424,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -4475,7 +4470,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_potensi xmlns='" . $wsa->wsa_path . "'>
+                    <meiji_get_potensi xmlns='".$wsa->wsa_path."'>
                          <inpdomain>$domainCode</inpdomain>
                         <inppart>$part</inppart>
                         <inplot>$lot</inplot>
@@ -4518,7 +4513,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -4558,19 +4553,19 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_get_warehouse xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inppart>' . $itemCode . '</inppart>' .
-            '<inplot>' . $lot . '</inplot>' .
-            '<inpbin>' . $bin . '</inpbin>' .
-            '<inpwrh>' . $warehouse . '</inpwrh>' .
-            '<inplevel>' . $level . '</inplevel>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_get_warehouse xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inppart>'.$itemCode.'</inppart>'.
+            '<inplot>'.$lot.'</inplot>'.
+            '<inpbin>'.$bin.'</inpbin>'.
+            '<inpwrh>'.$warehouse.'</inpwrh>'.
+            '<inplevel>'.$level.'</inplevel>'.
 
-            '</meiji_get_warehouse>' .
-            '</Body>' .
+            '</meiji_get_warehouse>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -4604,7 +4599,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -4644,19 +4639,19 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_xxinv_det_palet xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inppart>' . $itemCode . '</inppart>' .
-            '<inplot>' . $lot . '</inplot>' .
-            '<inpbin>' . $bin . '</inpbin>' .
-            '<inpwrh>' . $warehouse . '</inpwrh>' .
-            '<inplevel>' . $level . '</inplevel>' .
-            '<inploc>' . $location . '</inploc>' .
-            '</meiji_xxinv_det_palet>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_xxinv_det_palet xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inppart>'.$itemCode.'</inppart>'.
+            '<inplot>'.$lot.'</inplot>'.
+            '<inpbin>'.$bin.'</inpbin>'.
+            '<inpwrh>'.$warehouse.'</inpwrh>'.
+            '<inplevel>'.$level.'</inplevel>'.
+            '<inploc>'.$location.'</inploc>'.
+            '</meiji_xxinv_det_palet>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -4690,7 +4685,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -4735,7 +4730,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_wlb_transfer xmlns='" . $wsa->wsa_path . "'>
+                    <meiji_get_wlb_transfer xmlns='".$wsa->wsa_path."'>
                          <inpdomain>$domainCode</inpdomain>
                         <inppart>$part</inppart>
                         <inplot>$lot</inplot>
@@ -4779,7 +4774,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -4823,7 +4818,7 @@ class WSAServices
         $qdocRequest =
             "<Envelope xmlns='http://schemas.xmlsoap.org/soap/envelope/'>
                 <Body>
-                    <meiji_get_pt_um xmlns='" . $wsa->wsa_path . "'>
+                    <meiji_get_pt_um xmlns='".$wsa->wsa_path."'>
                          <inpdomain>$domainCode</inpdomain>
                         <inppart>$part</inppart>
 
@@ -4862,7 +4857,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -4902,19 +4897,19 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_check_warehouse_sampling xmlns="' . $wsa->wsa_path . '">
-                <inpdomain>' . $domainCode . '</inpdomain>
-                <inploc>' . $status . '</inploc>
-                <inppart>' . $item . '</inppart>
-                <inplot>' . $lot . '</inplot>
-                <inpwarehouse>' . $warehouse . '</inpwarehouse>
-                <inplevel>' . $level . '</inplevel>
-                <inpbin>' . $bin . '</inpbin>
-            </meiji_check_warehouse_sampling>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_check_warehouse_sampling xmlns="'.$wsa->wsa_path.'">
+                <inpdomain>'.$domainCode.'</inpdomain>
+                <inploc>'.$status.'</inploc>
+                <inppart>'.$item.'</inppart>
+                <inplot>'.$lot.'</inplot>
+                <inpwarehouse>'.$warehouse.'</inpwarehouse>
+                <inplevel>'.$level.'</inplevel>
+                <inpbin>'.$bin.'</inpbin>
+            </meiji_check_warehouse_sampling>'.
 
-            '</Body>' .
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -4948,7 +4943,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -4990,25 +4985,25 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_update_penerimaan_barang xmlns="' . $wsa->wsa_path . '">' .
-            '<inpDomain>' . $domainCode . '</inpDomain>' .
-            '<inpPart>' . $part . '</inpPart>' .
-            '<inpLoc>' . $loc . '</inpLoc>' .
-            '<inpLocTo>' . $locto . '</inpLocTo>' .
-            '<inpLot>' . $lot . '</inpLot>' .
-            '<inpSite>' . $site . '</inpSite>' .
-            '<inpSiteTo>' . $siteto . '</inpSiteTo>' .
-            '<inpLvl>' . $level . '</inpLvl>' .
-            '<inpLvlTo>' . $levelto . '</inpLvlTo>' .
-            '<inpBin>' . $bin . '</inpBin>' .
-            '<inpBinTo>' . $binto . '</inpBinTo>' .
-            '<inpWrh>' . $wrh . '</inpWrh>' .
-            '<inpWrhTo>' . $wrhto . '</inpWrhTo>' .
-            '<inpQty>' . $qty . '</inpQty>' .
-            '</meiji_update_penerimaan_barang>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_update_penerimaan_barang xmlns="'.$wsa->wsa_path.'">'.
+            '<inpDomain>'.$domainCode.'</inpDomain>'.
+            '<inpPart>'.$part.'</inpPart>'.
+            '<inpLoc>'.$loc.'</inpLoc>'.
+            '<inpLocTo>'.$locto.'</inpLocTo>'.
+            '<inpLot>'.$lot.'</inpLot>'.
+            '<inpSite>'.$site.'</inpSite>'.
+            '<inpSiteTo>'.$siteto.'</inpSiteTo>'.
+            '<inpLvl>'.$level.'</inpLvl>'.
+            '<inpLvlTo>'.$levelto.'</inpLvlTo>'.
+            '<inpBin>'.$bin.'</inpBin>'.
+            '<inpBinTo>'.$binto.'</inpBinTo>'.
+            '<inpWrh>'.$wrh.'</inpWrh>'.
+            '<inpWrhTo>'.$wrhto.'</inpWrhTo>'.
+            '<inpQty>'.$qty.'</inpQty>'.
+            '</meiji_update_penerimaan_barang>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -5042,7 +5037,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -5085,17 +5080,17 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_wo_print xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inpwo>' . $wo . '</inpwo>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inppart>' . $part . '</inppart>' .
-            '<inplot>' . $lot . '</inplot>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_wo_print xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpwo>'.$wo.'</inpwo>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inppart>'.$part.'</inppart>'.
+            '<inplot>'.$lot.'</inplot>'.
 
-            '</meiji_wo_print>' .
-            '</Body>' .
+            '</meiji_wo_print>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -5129,7 +5124,7 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -5179,18 +5174,18 @@ class WSAServices
 
         $qxUrl = $wsa->wsa_url;
         $timeout = 0;
-    
+
         $domain = Domain::first();
         $domainCode = $domain->domain ?? '';
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_abs_mstr xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .  // ← lowercase
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inpparid>' . $shipperNumber . '</inpparid>' .
-            '</meiji_abs_mstr>' .
-            '</Body>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_abs_mstr xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.  // ← lowercase
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inpparid>'.$shipperNumber.'</inpparid>'.
+            '</meiji_abs_mstr>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -5278,102 +5273,18 @@ class WSAServices
         $domainCode = $domain->domain ?? '';
 
         $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_crt_wms xmlns="' . $wsa->wsa_path . '">' .
-            '<inpdomain>' . $domainCode . '</inpdomain>' .
-            '<inppart>' . $itemCode . '</inppart>' .
-            '<inpsite>' . $site . '</inpsite>' .
-            '<inplot>' . $lot . '</inplot>' .
-            '<inpref>' . $ref . '</inpref>' .
-            '<inpQty>' . $qty . '</inpQty>' .
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_crt_wms xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inppart>'.$itemCode.'</inppart>'.
+            '<inpsite>'.$site.'</inpsite>'.
+            '<inplot>'.$lot.'</inplot>'.
+            '<inpref>'.$ref.'</inpref>'.
+            '<inpQty>'.$qty.'</inpQty>'.
 
-
-            '</meiji_crt_wms>' .
-            '</Body>' .
-            '</Envelope>';
-
-        $curlOptions = array(
-            CURLOPT_URL => $qxUrl,
-            CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
-            CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
-            CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
-            CURLOPT_POSTFIELDS => preg_replace("/\s+/", " ", $qdocRequest),
-            CURLOPT_POST => true,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false
-        );
-
-        $getInfo = '';
-        $httpCode = 0;
-        $curlErrno = 0;
-        $curlError = '';
-        $qdocResponse = '';
-
-        $curl = curl_init();
-        if ($curl) {
-            curl_setopt_array($curl, $curlOptions);
-            $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
-            $curlErrno    = curl_errno($curl);
-            $curlError    = curl_error($curl);
-            $first        = true;
-
-            foreach (curl_getinfo($curl) as $key => $value) {
-                if (gettype($value) != 'array') {
-                    if (!$first) $getInfo .= ", ";
-                    $getInfo = $getInfo . $key . '=>' . $value;
-                    $first = false;
-                    if ($key == 'http_code') $httpCode = $value;
-                }
-            }
-            curl_close($curl);
-        }
-        log::info($qdocResponse);
-         log::info($qdocRequest);
-        $xmlResp = simplexml_load_string($qdocResponse);
-        // dd($qdocRequest,$qdocResponse);
-        $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
-
-        $dataloop    = $xmlResp->xpath('//ns1:tempRow');
-        $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
-        // log::info($qdocRequest);
-        // log::info($qdocResponse);
-
-        return [
-            $qdocResult,
-            json_decode(json_encode($dataloop), true),
-        ];
-    }
-
-    public function wsaConfirmSampling($item, $lot, $loc, $qty, $site)
-    {
-        $wsa = qxwsa::first();
-
-        $qxUrl = $wsa->wsa_url;
-        $qxReceiver = '';
-        $qxSuppRes = 'false';
-        $qxScopeTrx = '';
-        $qdocName = '';
-        $qdocVersion = '';
-        $dsName = '';
-        $timeout = 0;
-
-        $domain = Domain::first();
-        $domainCode = $domain->domain ?? '';
-
-        $qdocRequest =
-            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">' .
-            '<Body>' .
-            '<meiji_confirm_sampling xmlns="' . $wsa->wsa_path . '">
-                <inpdomain>' . $domainCode . '</inpdomain>
-                <inpsite>' . $site . '</inpsite>
-                <inploc>' . $loc . '</inploc>
-                <inppart>' . $item . '</inppart>
-                <inplot>' . $lot . '</inplot>
-                <inpqty>' . $qty . '</inpqty>
-            </meiji_confirm_sampling>' .
-            '</Body>' .
+            '</meiji_crt_wms>'.
+            '</Body>'.
             '</Envelope>';
 
         $curlOptions = [
@@ -5407,7 +5318,94 @@ class WSAServices
                     if (! $first) {
                         $getInfo .= ', ';
                     }
-                    $getInfo = $getInfo . $key . '=>' . $value;
+                    $getInfo = $getInfo.$key.'=>'.$value;
+                    $first = false;
+                    if ($key == 'http_code') {
+                        $httpCode = $value;
+                    }
+                }
+            }
+            curl_close($curl);
+        }
+        log::info($qdocResponse);
+        log::info($qdocRequest);
+        $xmlResp = simplexml_load_string($qdocResponse);
+        // dd($qdocRequest,$qdocResponse);
+        $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
+
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
+        $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
+        // log::info($qdocRequest);
+        // log::info($qdocResponse);
+
+        return [
+            $qdocResult,
+            json_decode(json_encode($dataloop), true),
+        ];
+    }
+
+    public function wsaConfirmSampling($item, $lot, $loc, $qty, $site)
+    {
+        $wsa = qxwsa::first();
+
+        $qxUrl = $wsa->wsa_url;
+        $qxReceiver = '';
+        $qxSuppRes = 'false';
+        $qxScopeTrx = '';
+        $qdocName = '';
+        $qdocVersion = '';
+        $dsName = '';
+        $timeout = 0;
+
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+
+        $qdocRequest =
+            '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+            '<Body>'.
+            '<meiji_confirm_sampling xmlns="'.$wsa->wsa_path.'">
+                <inpdomain>'.$domainCode.'</inpdomain>
+                <inpsite>'.$site.'</inpsite>
+                <inploc>'.$loc.'</inploc>
+                <inppart>'.$item.'</inppart>
+                <inplot>'.$lot.'</inplot>
+                <inpqty>'.$qty.'</inpqty>
+            </meiji_confirm_sampling>'.
+            '</Body>'.
+            '</Envelope>';
+
+        $curlOptions = [
+            CURLOPT_URL => $qxUrl,
+            CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
+            CURLOPT_TIMEOUT => $timeout + 120, // The maximum number of seconds to allow cURL functions to execute. must be greater than CURLOPT_CONNECTTIMEOUT
+            CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
+
+        $getInfo = '';
+        $httpCode = 0;
+        $curlErrno = 0;
+        $curlError = '';
+        $qdocResponse = '';
+
+        $curl = curl_init();
+        if ($curl) {
+            curl_setopt_array($curl, $curlOptions);
+            $qdocResponse = curl_exec($curl);           // sending qdocRequest here, the result is qdocResponse.
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+            $first = true;
+
+            foreach (curl_getinfo($curl) as $key => $value) {
+                if (gettype($value) != 'array') {
+                    if (! $first) {
+                        $getInfo .= ', ';
+                    }
+                    $getInfo = $getInfo.$key.'=>'.$value;
                     $first = false;
                     if ($key == 'http_code') {
                         $httpCode = $value;
@@ -5428,5 +5426,97 @@ class WSAServices
             $qdocResult,
             json_decode(json_encode($dataloop), true),
         ];
+    }
+
+    public function wsaGetPalletPenyerahanBarang($Item, $domain)
+    {
+        $wsa = qxwsa::first();
+
+        if (! $wsa) {
+            return ['false', [], 'WSA configuration not found'];
+        }
+
+        $qxUrl = $wsa->wsa_url;
+        $timeout = 0;
+        // dd($wsa->wsa_path);
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+        $qdocRequest =
+
+     '    <Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+'    <Body>'.
+       ' <meiji_get_pallette xmlns="'.$wsa->wsa_path.'">'.
+            '<inpdomain>'.$domainCode.'</inpdomain>'.
+            '<inpitempart>'.$Item.'</inpitempart>'.
+       ' </meiji_get_pallette>'.
+'    </Body>'.
+'</Envelope>';
+
+        $curlOptions = [
+            CURLOPT_URL => $qxUrl,
+            CURLOPT_CONNECTTIMEOUT => $timeout,
+            CURLOPT_TIMEOUT => $timeout + 120,
+            CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
+
+        $qdocResponse = '';
+        $curlErrno = 0;
+        $curlError = '';
+        $httpCode = 0;
+
+        $curl = curl_init();
+        if ($curl) {
+            curl_setopt_array($curl, $curlOptions);
+            $qdocResponse = curl_exec($curl);
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+
+            foreach (curl_getinfo($curl) as $key => $value) {
+                if ($key === 'http_code') {
+                    $httpCode = $value;
+                }
+            }
+            curl_close($curl);
+        }
+
+        // Log untuk debugging
+        Log::info('[WSA] listShipmentScheduleWSA Request', ['payload' => $qdocRequest]);
+        Log::info('[WSA] listShipmentScheduleWSA Response', ['response' => $qdocResponse]);
+
+        // Tangani cURL error
+        if ($curlErrno !== 0) {
+            Log::error('[WSA] cURL Error', ['errno' => $curlErrno, 'error' => $curlError]);
+
+            return ['false', [], $curlError];
+        }
+
+        // Tangani HTTP error
+        if ($httpCode !== 200) {
+            Log::error('[WSA] HTTP Error', ['http_code' => $httpCode]);
+
+            return ['false', [], "HTTP Error: $httpCode"];
+        }
+
+        // Parse XML response
+        $xmlResp = simplexml_load_string($qdocResponse);
+
+        if ($xmlResp === false) {
+            Log::error('[WSA] Failed to parse XML response');
+
+            return ['false', [], 'Invalid XML response'];
+        }
+
+        $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
+
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
+        $qdocResult = (string) ($xmlResp->xpath('//ns1:outOK')[0] ?? 'false');
+        $qdocMessage = (string) ($xmlResp->xpath('//ns1:outMsg')[0] ?? '');
+
+        return [$qdocResult, $dataloop, $qdocMessage];
     }
 }
