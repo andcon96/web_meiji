@@ -95,11 +95,13 @@ function formatNumberCustom($number, $minDecimals = 2, $maxDecimals = 5) {
             'is_pabrikpembuat' => $dataReceipt->getKemasan->rdk_is_pabrik_pembuat,
             'is_alamatpembuat' => $dataReceipt->getKemasan->rdk_is_alamat_pembuat,
             'is_agenpemasok' => $dataReceipt->getKemasan->rdk_is_agen_pemasuk,
+            'is_halal' => $dataReceipt->getKemasan->rdk_is_halal,
 
             'qty_jeniskemasanluar' => $dataReceipt->getKemasan->rdk_jenis_kemasan_luar,
             'qty_jeniskemasandalam' => $dataReceipt->getKemasan->rdk_jenis_kemasan_dalam,
             'qty_isiberatperkemasan' => $dataReceipt->getKemasan->rdk_isi_per_kemasan,
             'qty_isiberattotalkemasan' => $dataReceipt->getKemasan->rdk_isi_total_kemasan,
+            'halal' => $dataReceipt->getKemasan->rdk_is_halal,
 
             'qty_jumlahkemasanluar' => $dataReceipt->getKemasan->rdk_jumlah_kemasan_luar,
             'qty_jumlahkemasandalam' => $dataReceipt->getKemasan->rdk_jumlah_kemasan_luar_baik,
