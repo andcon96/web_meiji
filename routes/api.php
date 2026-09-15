@@ -244,6 +244,9 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
 
     // getum
     Route::get('/getUm', [APIController::class, 'getUm']);
+    Route::get('/getItem', [APIController::class, 'getItem']);
+     Route::get('/getLocation', [APIController::class, 'getLocation']);
+         Route::get('/getLotWSA', [APIController::class, 'getLotWSA']);
     //Transaksi Out
     Route::post('/submitout', [APITransIssUnpController::class, 'submitIssOut']);
 

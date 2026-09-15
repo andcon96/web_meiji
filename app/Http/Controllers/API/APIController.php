@@ -11,6 +11,7 @@ use App\Models\API\WorkOrderQAD;
 use App\Models\API\xxinvDet;
 use App\Models\API\xxinvDetApproval;
 use App\Models\Settings\Item;
+use App\Models\Settings\Location;
 use App\Models\Settings\User;
 use App\Services\QxtendServices;
 use App\Services\WSAServices;
@@ -972,6 +973,64 @@ class APIController extends Controller
             'Status' => 'Success',
             'Data' => $data->im_item_um,
         ], 200);
+    }
+
+    public function getItem()
+    {
+        $data = Item::get();
+
+        return response()->json([
+            'Status' => 'Success',
+            'Data' => $data,
+        ], 200);
+    }
+
+    public function getLocation()
+    {
+        $data = Location::get();
+
+        return response()->json([
+            'Status' => 'Success',
+            'Data' => $data,
+        ], 200);
+    }
+
+    public function getLotWsa(Request $request)
+    {
+
+        try {
+
+            $isLotExist = (new WSAServices)->wsaGetLot($request->item, $request->site);
+
+            // dd($isLotExist);
+
+            if ($isLotExist == false) { //jika error koneksi wsa
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => 'WSA Item Error Connection',
+                ], 500);
+            }
+
+            if ($isLotExist[0] == 'false') { //jika error response wsa
+                return response()->json([
+                    'Status' => 'Not found',
+                    'Message' => "Item doesn't exist!",
+                ], 404); //not found
+            }
+
+            return response()->json([
+                'Status' => 'success',
+                'Message' => 'lot exist',
+                'Item' => $isLotExist,
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error($e);
+
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => 'Item Internal server error',
+            ], 500);
+        }
     }
 
     public function outboundxxinvDet(Request $req)
