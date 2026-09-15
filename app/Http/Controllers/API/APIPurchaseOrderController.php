@@ -955,25 +955,7 @@ class APIPurchaseOrderController extends Controller
             ->orderBy('xxinv_bin')
             ->get();
         return response()->json($xxinvDet);
-        //     $locationDetail = Location::query()->with(['getDetailLocation' => function($query){
-        // $query->select('ld_location_id','ld_building','ld_level','ld_bin')->groupBy('ld_bin')->orderBy('ld_bin');}])
-        // ->where('location_site', $site)
-        // ->where('location_code', $loc)
-        // ->whereRelation('getDetailLocation', 'ld_building', '=', $wrh)
-        // ->whereRelation('getDetailLocation', 'ld_level', '=', $level);
-        // if ($bin != '') {
-        //     $locationDetail->whereRelation('getDetailLocation', 'ld_bin', '=', $bin);
-        // }
-
-        // $getAllItemLocation = $locationDetail->get();
-
-        // if (count($getAllItemLocation) == 0) {
-        //     return response()->json([
-        //         'Status' => 'Error',
-        //         'Message' => "No Data Available"
-        //     ], 422);
-        // }
-        // return response()->json($getAllItemLocation);
+       
     }
     public function wsaGetPotensi(Request $req)
     {
@@ -1246,119 +1228,14 @@ class APIPurchaseOrderController extends Controller
         }
 
 
-        // Ambil Relati Item ke Location di Web
-        // $getAllItemLocation = LocationDetail::query()->with(['getListItem.getItem', 'getMaster']);
-        // if ($itemCode) {
-        //     $getAllItemLocation->whereRelation('getListItem.getItem', 'im_item_part', '=', $itemCode);
-        // }
-        // if ($req->wh) {
-        //     $getAllItemLocation->where('ld_building', $warehouse);
-        // }
-        // $getAllItemLocation = $getAllItemLocation->get();
-
-        // $receiptDetail = ReceiptDetail::with('getPallet')->query()->where('rd_status', '!=', 'Approved')->where('rd_status', '!=', 'Reject');
-        // if ($warehouse != '') {
-        //     $receiptDetail->where('rd_building_penyimpanan', $warehouse);
-        // }
-        // if ($levelsearch != '') {
-        //     $receiptDetail->where('rd_level_penyimpanan', $levelsearch);
-        // }
-        // if ($binSearch != '') {
-        //     $receiptDetail->where('rd_bin_penyimpanan', $binSearch);
-        // }
-
-        // $receiptDetail = $receiptDetail
-        //     ->select('rd_building_penyimpanan', 'rd_level_penyimpanan', 'rd_bin_penyimpanan')
-        //     ->distinct()
-        //     ->get();
+     
         $receiptDetail = ReceiptPallet::with('getDetail')
             ->whereRelation('getDetail', 'rd_status', '!=', 'Approved')
             ->whereRelation('getDetail', 'rd_status', '!=', 'Reject')
             ->distinct()
             ->get();
 
-        // log::info('receiptDetail', [$receiptDetail]);
-
-        // $wsaData = (new WSAServices())->wsaPenyimpananPalet('', $itemCode, '', $binSearch, $warehouse, $levelsearch, $location);
-        // if ($wsaData[0] == 'false') {
-        //     return response()->json([
-        //         'Status' => 'Error',
-        //         'Message' => "No Data Available"
-        //     ], 422);
-        // }
-
-        // // Prioritaskan Location yang ada di Web by order.
-        // $getDataQAD = collect($wsaData[1]);
-
-        // // dd($getDataQAD);
-        // if ($levelsearch != '') {
-        //     $grouped = $getDataQAD->groupBy(function ($item) {
-        //         $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
-        //         $loc   = is_array($item['t_inv_loc']) ? '' : (string)($item['t_inv_loc'] ?? '');
-        //         $bin   = is_array($item['t_inv_bin']) ? '' : (string) ($item['t_inv_bin'] ?? '');
-        //         $wrh   = is_array($item['t_inv_wrh']) ? '' : (string) ($item['t_inv_wrh'] ?? '');
-        //         $level = is_array($item['t_inv_level']) ? '' : (string) ($item['t_inv_level'] ?? '');
-        //         return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
-        //     });
-        // } else {
-        //     $grouped = $getDataQAD->groupBy(function ($item) {
-        //         $site  =  is_array($item['t_inv_site']) ? '' : (string) ($item['t_inv_site'] ?? '');
-        //         $wrh   = is_array($item['t_inv_wrh']) ? '' : (string) ($item['t_inv_wrh'] ?? '');
-        //         $level = is_array($item['t_inv_level']) ? '' : (string) ($item['t_inv_level'] ?? '');
-        //         $bin   = is_array($item['t_inv_bin']) ? '' : (string) ($item['t_inv_bin'] ?? '');
-        //         return "{$site}-{$wrh}-{$level}-{$bin}";
-        //     });
-        // }
-
-
-
-
-
-        // $merged = $grouped->map(function ($items) {
-        //     $first = $items->first(); // take base data from the first item
-        //     $first['t_inv_qtyoh'] = $items->sum(function ($i) {
-        //         return (int)$i['t_inv_qtyoh'];
-        //     });
-        //     return $first;
-        // })
-        //     // ->filter(function ($item) {
-        //     //     return (int) $item['t_inv_qtyoh'] <= 0;
-        //     // })
-        //     ->values();
-
-
-
-        // $dataQAD = $merged->map(function ($item) use ($receiptDetail) {
-        //     foreach ($receiptDetail as $datas) {
-
-        //         if (
-        //             $item['t_inv_wrh'] == $datas->getDetail->rd_building_penyimpanan &&
-        //             $item['t_inv_level'] == $datas->rdp_level_penyimpanan &&
-        //             $item['t_inv_bin'] == $datas->rdp_bin_penyimpanan
-        //         ) {
-        //             $item['t_is_prioritize'] = '1';
-        //             break;
-        //         }
-        //     }
-        //     return $item;
-        // });
-
-        // // Add search filter for level OR bin
-        // if ($search != '') {
-        //     $dataQAD = $dataQAD->filter(function ($item) use ($search) {
-        //         $level = is_array($item['t_inv_level']) ? '' : (string)($item['t_inv_level'] ?? '');
-        //         $bin = is_array($item['t_inv_bin']) ? '' : (string)($item['t_inv_bin'] ?? '');
-
-        //         // Search in both level and bin (case-insensitive partial match)
-        //         return stripos($level, $search) !== false || stripos($bin, $search) !== false;
-        //     });
-        // }
-        // // $dataQAD = $dataQAD->where('t_is_prioritize','0')->values();
-        // $dataQAD = $dataQAD->where('t_is_prioritize', '0')
-        //     ->sortBy('t_inv_wrh')
-        //     ->sortBy('t_inv_qtyoh')
-        //     ->values();
-        // return response()->json($dataQAD);
+     
         $domain = Domain::first();
         $domainCode = $domain->domain ?? '';
         $results = xxinvDet::query()
@@ -1623,8 +1500,19 @@ class APIPurchaseOrderController extends Controller
     public function wsaCheckItemLot(Request $req){
         $item = $req->input('item');
         $lot = $req->input('lot');
-        $poid = $req->input('poid');
-
+        $podid = $req->input('podid');
+        $poddata = PurchaseOrderDetail::with('getReceiptDetail')->where('id',$podid)->first();
+        
+         return response()->json([
+            'DataHeader' => $poddata,
+            'DataWSA' => $poddata->getReceiptDetail
+        ], 200);
+        
+        // return response()->json([
+        //     'DataHeader' => $item,
+        //     'DataWSA' => $lot,
+        //     'poid' => $poid
+        // ], 200); 
         
 
     }

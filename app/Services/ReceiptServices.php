@@ -196,6 +196,7 @@ class ReceiptServices
                 $newReceiptDetailKemasan->rdk_rd_det_id = $newReceiptDetail->id;
                 $newReceiptDetailKemasan->rdk_is_pabrik_pembuat = $dataDetail->is_pabrik_pembuat == true ? 1 : 0;
                 $newReceiptDetailKemasan->rdk_is_alamat_pembuat = $dataDetail->is_alamat_pembuat == true ? 1 : 0;
+                $newReceiptDetailKemasan->rdk_is_halal = $dataDetail->is_halal == true ? 1 : 0;
                 $newReceiptDetailKemasan->rdk_is_agen_pemasuk = $dataDetail->is_agen_pembuat == true ? 1 : 0;
                 $newReceiptDetailKemasan->rdk_jenis_kemasan_luar = $dataDetail->jenis_kemasan_luar;
                 $newReceiptDetailKemasan->rdk_jenis_kemasan_dalam = $dataDetail->jenis_kemasan_dalam;
@@ -207,6 +208,7 @@ class ReceiptServices
                 $newReceiptDetailKemasan->rdk_jumlah_kemasan_dalam = $dataDetail->qty_kemasan_dalam;
                 $newReceiptDetailKemasan->rdk_jumlah_kemasan_dalam_baik = $dataDetail->qty_kemasan_dalam_baik;
                 $newReceiptDetailKemasan->rdk_jumlah_kemasan_dalam_tidak_baik = $dataDetail->qty_kemasan_dalam_tidak_baik;
+                $newReceiptDetailKemasan->rdk_is_halal = $dataDetail->is_halal == true ? 1 : 0;
                 $newReceiptDetailKemasan->save();
 
                 // Kendaraan
@@ -335,6 +337,7 @@ class ReceiptServices
             $newReceiptDetailKemasan = ReceiptKemasan::findOrFail($data->get_kemasan->id);
             $newReceiptDetailKemasan->rdk_is_pabrik_pembuat = $data->get_kemasan->rdk_is_pabrik_pembuat;
             $newReceiptDetailKemasan->rdk_is_alamat_pembuat = $data->get_kemasan->rdk_is_alamat_pembuat;
+            $newReceiptDetailKemasan->rdk_is_halal =$data->get_kemasan->rdk_is_halal;
             $newReceiptDetailKemasan->rdk_is_agen_pemasuk = $data->get_kemasan->rdk_is_agen_pemasuk;
             $newReceiptDetailKemasan->rdk_jenis_kemasan_luar = $data->get_kemasan->rdk_jenis_kemasan_luar;
             $newReceiptDetailKemasan->rdk_jenis_kemasan_dalam = $data->get_kemasan->rdk_jenis_kemasan_dalam;

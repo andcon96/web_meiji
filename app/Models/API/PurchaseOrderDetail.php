@@ -20,4 +20,8 @@ class PurchaseOrderDetail extends Model
     {
         return $this->belongsTo(PurchaseOrderMaster::class, 'pod_po_mstr_id');
     }
+    public function getReceiptDetail()
+    {
+        return $this->hasMany(ReceiptDetail::class, 'rd_pod_det_id');
+    }
 }

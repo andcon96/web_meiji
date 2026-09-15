@@ -269,16 +269,16 @@ class PackingReplenishmentServices
             $fieldName = 'mji_pack_dock';
 
             $wsaServices = new WSAServices();
-            $locationWSA = $wsaServices->wsaGenCode($fieldName);
-            if ($locationWSA[0] == 'false') {
-                DB::rollBack();
+            // $locationWSA = $wsaServices->wsaGenCode($fieldName);
+            // if ($locationWSA[0] == 'false') {
+            //     DB::rollBack();
 
-                Log::channel('packingReplenishment')->info('Gen code not found');
+            //     Log::channel('packingReplenishment')->info('Gen code not found');
 
-                return false;
-            }
+            //     return false;
+            // }
 
-            $location = $locationWSA[1][0]['t_value'];
+            // $location = $locationWSA[1][0]['t_value'];
             $shipmentScheduleDetails = $shipmentScheduleMaster;
 
             DB::commit();

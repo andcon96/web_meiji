@@ -95,6 +95,7 @@ function formatNumberCustom($number, $minDecimals = 2, $maxDecimals = 5) {
             'is_pabrikpembuat' => $dataReceipt->getKemasan->rdk_is_pabrik_pembuat,
             'is_alamatpembuat' => $dataReceipt->getKemasan->rdk_is_alamat_pembuat,
             'is_agenpemasok' => $dataReceipt->getKemasan->rdk_is_agen_pemasuk,
+            'is_halal' => $dataReceipt->getKemasan->rdk_is_halal,
 
             'qty_jeniskemasanluar' => $dataReceipt->getKemasan->rdk_jenis_kemasan_luar,
             'qty_jeniskemasandalam' => $dataReceipt->getKemasan->rdk_jenis_kemasan_dalam,
