@@ -355,7 +355,13 @@
 
             <td>{{ $qty_isiberattotalkemasan }}</td>
 
-            <td colspan="3"></td>
+            <td colspan="3">Daftar Sertifikasi Validitas Halal 
+                @if ($halal == 1)
+                    (Ada / <s>Tidak Ada</s>)
+                @else
+                    (<s>Ada</s> / Tidak Ada)
+                @endif</td>
+            
         </tr>
     </table>
 

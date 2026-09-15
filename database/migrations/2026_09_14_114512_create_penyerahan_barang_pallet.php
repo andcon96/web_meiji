@@ -15,7 +15,7 @@ return new class extends Migration
 
             $table->id();
             $table->unsignedBigInteger('pbp_pb_id')->index();
-            $table->foreign('pbp_pb_id')->references('id')->on('penyerahabarang')->onDelete('restrict');
+            $table->foreign('pbp_pb_id')->references('id')->on('penyerahan_barang')->onDelete('restrict');
             $table->string('pbp_level_penyimpanan')->nullable();
             $table->string('pbp_bin_penyimpanan')->nullable();
             $table->string('pbp_qty_penyimpanan')->nullable();
