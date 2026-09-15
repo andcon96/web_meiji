@@ -1619,4 +1619,13 @@ class APIPurchaseOrderController extends Controller
         //     'DataWSA' => $hasil[2]
         // ], 200);
     }
+
+    public function wsaCheckItemLot(Request $req){
+        $item = $req->input('item');
+        $lot = $req->input('lot');
+        $poid = $req->input('poid');
+
+        
+
+    }
 }

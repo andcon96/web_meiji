@@ -588,15 +588,14 @@ class APIBarangJadi extends Controller
         }
     }
 
-  public function getStrorage(Request $request)
+ public function getStrorage(Request $request)
 {
-    $query = xxinvDet::where('xxinv_part', $request->part);
+    $query = xxinvDet::with(['itemMaster:im_item_part,im_item_um'])  
+        ->where('xxinv_part', $request->part);
 
- 
     if ($request->filled('lot')) {
         $query->where('xxinv_lot', $request->lot);
     }
-
 
     $storage = $query->get();
 

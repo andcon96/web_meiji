@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\API\TransactionHistory;
 use App\Services\QxtendServices;
+use App\Models\API\xxinvDet;
 class APITransIssUnpController extends Controller
 {
     public function submitIssOut(Request $req)
