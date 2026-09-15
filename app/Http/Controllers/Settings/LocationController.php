@@ -142,6 +142,28 @@ class LocationController extends Controller
         return response()->json(['data' => $sheetData, 'imageName' => $imageName]);
     }
 
+    public function checkcycle(Request $request)
+    {
+        $extension = $request->file('file')->extension();
+        $data = Excel::toArray([], $request->file('file'));
+        $sheetData = $data[0];
+
+        if ($extension != 'xls' && $extension != 'xlsx') {
+            return response()->json(['File Extension Must Be .XLS or .XLSX'], 500);
+        }
+
+        if (count($sheetData[0]) != 6 && $sheetData[0][0] != 'Location') {
+            return response()->json(['Template Berbeda, Pastikan menggunakan template yang disediakan'], 500);
+        }
+
+        $image = $request->file('file');
+
+        $imageName = time() . '-' . strtoupper(Str::random(10)) . '.' . $image->extension();
+        $image->move(public_path('upload/temp'), $imageName);
+
+        return response()->json(['data' => $sheetData, 'imageName' => $imageName]);
+    }
+
     public function confirmFileUploadLocation(Request $request)
     {
         ini_set('max_execution_time', 3000);
