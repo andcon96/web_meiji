@@ -22,6 +22,6 @@ class PurchaseOrderDetail extends Model
     }
     public function getReceiptDetail()
     {
-        return $this->hasMany(ReceiptDetail::class, 'rd_pod_det_id');
+        return $this->hasMany(ReceiptDetail::class, 'rd_pod_det_id','id');
     }
 }

@@ -1497,23 +1497,19 @@ class APIPurchaseOrderController extends Controller
         // ], 200);
     }
 
-    public function wsaCheckItemLot(Request $req){
+    public function getItemLotDetail(Request $req){
         $item = $req->input('item');
         $lot = $req->input('lot');
         $podid = $req->input('podid');
-        $poddata = PurchaseOrderDetail::with('getReceiptDetail')->where('id',$podid)->first();
+        $poddata = PurchaseOrderDetail::with(['getMaster','getReceiptDetail.getMaster'])->where('id',$podid)->first();
+        // dd($poddata);
         
          return response()->json([
-            'DataHeader' => $poddata,
-            'DataWSA' => $poddata->getReceiptDetail
+            'DataHeader' => [$poddata->getReceiptDetail[0]->getMaster],
+            'DataDetail' => $poddata->getReceiptDetail,
+            'DataPod' => [$poddata],
+            'DataMaster' => [$poddata->getMaster]
+            
         ], 200);
-        
-        // return response()->json([
-        //     'DataHeader' => $item,
-        //     'DataWSA' => $lot,
-        //     'poid' => $poid
-        // ], 200); 
-        
-
     }
 }
