@@ -47,232 +47,253 @@ class APISingleTransfer extends Controller
         }
     }
 
-  public function getSingleTransferData(Request $req)
-{
-    $search = $req->search;
+    public function getSingleTransferData(Request $req)
+    {
+        $search = $req->search;
 
-    $trfdata = singleTransfer::where('st_status', 'Open');
+        $trfdata = singleTransfer::where('st_status', 'Open');
 
-    if ($search) {
-         
-        $trfdata->where(function ($query) use ($search) {
-            $query->where('st_trfid', 'LIKE', '%' . $search . '%')
-                  ->orWhere('st_item', 'LIKE', '%' . $search . '%')
-                  ->orWhere('st_lot', 'LIKE', '%' . $search . '%');
-        });
+        if ($search) {
+
+            $trfdata->where(function ($query) use ($search) {
+                $query->where('st_trfid', 'LIKE', '%'.$search.'%')
+                    ->orWhere('st_item', 'LIKE', '%'.$search.'%')
+                    ->orWhere('st_lot', 'LIKE', '%'.$search.'%');
+            });
+        }
+
+        $trfdata = $trfdata->get();
+
+        if ($trfdata->isEmpty()) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => 'Data Not Found.',
+                'data' => [],
+            ], 200);
+        }
+
+        return GeneralResources::collection($trfdata);
     }
 
-    $trfdata = $trfdata->get();
+    public function receiptItem(Request $req)
+    {
+        Log::info('receiptItem start');
 
-    if ($trfdata->isEmpty()) {
-        return response()->json([
-            'Status' => 'Error',
-            'Message' => 'Data Not Found.',
-            'data' => []
-        ], 200);  
+        DB::beginTransaction();
+
+        try {
+            $trfid = $req->trfid;
+
+            // 1. Validasi Parameter TRFID
+            if (empty($trfid)) {
+                throw new Exception('TRFID wajib diisi.');
+            }
+
+            // 2. Lock Record Transfer untuk mencegah Race Condition / Double Submit
+            $data = singleTransfer::where('st_trfid', $trfid)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $data) {
+                throw new Exception("Transfer dengan TRFID '{$trfid}' tidak ditemukan.");
+            }
+
+            // 3. Validasi Status Double Receipt
+            if (strtoupper($data->st_status) === 'RECEIVED') {
+                throw new Exception("Transfer '{$trfid}' sudah pernah diproses (Status: Received).");
+            }
+
+            $part = $data->st_item;
+            $qtyoh = (float) $data->st_qty;
+
+            $sitefrom = $data->st_site_from;
+            $siteto = $data->st_site_to;
+
+            $locfrom = $data->st_loc_from;
+
+            $lotfrom = $data->st_lot;
+            $lotto = $data->st_lot;
+
+            $buildingfrom = $data->st_wh_from ?? '';
+            $levelfrom = $data->st_level_from ?? '';
+            $binfrom = $data->st_bin_from ?? '';
+
+            // Destination dari request
+            $locto = $req->locto ?? '';
+            $buildingto = $req->whto ?? '';
+            $levelto = $req->levelto ?? '';
+            $binto = $req->binto ?? '';
+
+            // ==========================
+            // VALIDASI DESTINATION & QTY
+            // ==========================
+            if (empty($locto)) {
+                throw new Exception('Location To wajib diisi.');
+            }
+
+            if (empty($buildingto)) {
+                throw new Exception('Warehouse To wajib diisi.');
+            }
+
+            if (empty($levelto)) {
+                throw new Exception('Level To wajib diisi.');
+            }
+
+            if (empty($binto)) {
+                throw new Exception('Bin To wajib diisi.');
+            }
+
+            if ($qtyoh <= 0) {
+                throw new Exception("Qty transfer tidak valid: {$qtyoh}");
+            }
+
+            // ==========================
+            // VALIDASI STOK ASAL (INVENTORY FROM)
+            // ==========================
+            $invFrom = xxinvDet::where('xxinv_part', $part)
+                ->where('xxinv_wrh', $buildingfrom)
+                ->where('xxinv_level', $levelfrom)
+                ->where('xxinv_bin', $binfrom)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $invFrom) {
+                throw new Exception(
+                    "Stok asal tidak ditemukan pada Warehouse: {$buildingfrom}, Level: {$levelfrom}, Bin: {$binfrom}."
+                );
+            }
+
+            if ($invFrom->xxinv_qtyoh < $qtyoh) {
+                throw new Exception(
+                    "Stok asal tidak mencukupi! Stok tersedia: {$invFrom->xxinv_qtyoh}, Qty diminta: {$qtyoh}."
+                );
+            }
+
+            // Potong Stok Asal
+            $invFrom->xxinv_qtyoh -= $qtyoh;
+            $invFrom->save();
+
+            Log::info('Transfer data valid', [
+                'trfid' => $trfid,
+                'part' => $part,
+                'qty' => $qtyoh,
+            ]);
+
+            // ==========================
+            // UPDATE TRANSFER STATUS
+            // ==========================
+            $data->st_loc_to = $locto;
+            $data->st_wh = $buildingto;
+            $data->st_level = $levelto;
+            $data->st_bin = $binto;
+            $data->st_status = 'Received';
+            $data->save();
+
+            // ==========================
+            // USER
+            // ==========================
+            $user = Auth::user()->name ?? '';
+
+            // ==========================
+            // INVENTORY TO (UPSERT LOGIC)
+            // ==========================
+            $invTo = xxinvDet::where('xxinv_part', $part)
+                ->where('xxinv_wrh', $buildingto)
+                ->where('xxinv_level', $levelto)
+                ->where('xxinv_bin', $binto)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $invTo) {
+                $invTo = new xxinvDet();
+                $invTo->xxinv_part = $part;
+                $invTo->xxinv_site = $siteto ?? '';
+                $invTo->xxinv_loc = $locto;
+                $invTo->xxinv_wrh = $buildingto;
+                $invTo->xxinv_level = $levelto;
+                $invTo->xxinv_bin = $binto;
+                $invTo->xxinv_lot = $lotto ?? '';
+                $invTo->xxinv_qtyoh = 0;
+            }
+
+            // Tambah inventory tujuan & simpan
+            $invTo->xxinv_qtyoh += $qtyoh;
+            $invTo->save();
+
+            // ==========================
+            // TRANSACTION HISTORY FROM
+            // ==========================
+            $newTransactionHistoryfrom = new TransactionHistory();
+            $newTransactionHistoryfrom->tr_nbr = $trfid;
+            $newTransactionHistoryfrom->tr_program = 'Single Transfer Module';
+            $newTransactionHistoryfrom->tr_activity = 'Single Transfer From';
+            $newTransactionHistoryfrom->tr_user = $user;
+            $newTransactionHistoryfrom->tr_part = $part ?? '';
+            $newTransactionHistoryfrom->tr_uom = '';
+            $newTransactionHistoryfrom->tr_line = '';
+            $newTransactionHistoryfrom->tr_lot = $lotfrom ?? '';
+            $newTransactionHistoryfrom->tr_qty = $qtyoh;
+            $newTransactionHistoryfrom->tr_date = now();
+            $newTransactionHistoryfrom->tr_reference = '';
+            $newTransactionHistoryfrom->tr_site = $sitefrom ?? '';
+            $newTransactionHistoryfrom->tr_location = $locfrom ?? '';
+            $newTransactionHistoryfrom->tr_warehouse = $buildingfrom ?? '';
+            $newTransactionHistoryfrom->tr_level = $levelfrom ?? '';
+            $newTransactionHistoryfrom->tr_bin = $binfrom ?? '';
+            $newTransactionHistoryfrom->tr_remark = '';
+            $newTransactionHistoryfrom->save();
+
+            // ==========================
+            // TRANSACTION HISTORY TO
+            // ==========================
+            $newTransactionHistory = new TransactionHistory();
+            $newTransactionHistory->tr_nbr = $trfid;
+            $newTransactionHistory->tr_order = '';
+            $newTransactionHistory->tr_program = 'Single Transfer Module';
+            $newTransactionHistory->tr_activity = 'Single Transfer To';
+            $newTransactionHistory->tr_user = $user;
+            $newTransactionHistory->tr_part = $part ?? '';
+            $newTransactionHistory->tr_uom = '';
+            $newTransactionHistory->tr_line = '';
+            $newTransactionHistory->tr_lot = $lotto ?? '';
+            $newTransactionHistory->tr_qty = $qtyoh;
+            $newTransactionHistory->tr_date = now();
+            $newTransactionHistory->tr_reference = '';
+            $newTransactionHistory->tr_site = $siteto ?? '';
+            $newTransactionHistory->tr_location = $locto;
+            $newTransactionHistory->tr_warehouse = $buildingto;
+            $newTransactionHistory->tr_level = $levelto;
+            $newTransactionHistory->tr_bin = $binto;
+            $newTransactionHistory->tr_remark = '';
+            $newTransactionHistory->save();
+
+            DB::commit();
+
+            Log::info('receiptItem success', [
+                'trfid' => $trfid,
+            ]);
+
+            return response()->json([
+                'Status' => 'Success',
+                'Message' => 'Receipt Item Successful',
+            ], 200);
+
+        } catch (Exception $e) {
+            DB::rollBack();
+
+            Log::error('receiptItem failed', [
+                'trfid' => $req->trfid ?? null,
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => $e->getMessage(),
+            ], 422);
+        }
     }
-
-    return GeneralResources::collection($trfdata);
-}
-
-public function receiptItem(Request $req)
-{
-    Log::info('receiptItem start');
-
-    DB::beginTransaction();
-
-    try {
-
-        $trfid = $req->trfid;
-
-        
-        $data = singleTransfer::where('st_trfid', $trfid)->first();
-
-        if (!$data) {
-            throw new Exception(
-                "Transfer dengan TRFID '{$trfid}' tidak ditemukan."
-            );
-        }
-
-        $part = $data->st_item;
-        $qtyoh = $data->st_qty;
-
-        $sitefrom = $data->st_site_from;
-        $siteto = $data->st_site_to;
-
-        $locfrom = $data->st_loc_from;
-
-        $lotfrom = $data->st_lot;
-        $lotto = $data->st_lot;
-
-        $buildingfrom = $data->st_wh_from ?? '';
-        $levelfrom = $data->st_level_from ?? '';
-        $binfrom = $data->st_bin_from ?? '';
-
-        // Destination dari request
-        $locto = $req->locto ?? '';
-        $buildingto = $req->whto ?? '';
-        $levelto = $req->levelto ?? '';
-        $binto = $req->binto ?? '';
-
-        // ==========================
-        // VALIDASI DESTINATION
-        // ==========================
-        if (empty($locto)) {
-            throw new Exception('Location To wajib diisi.');
-        }
-
-        if (empty($buildingto)) {
-            throw new Exception('Warehouse To wajib diisi.');
-        }
-
-        if (empty($levelto)) {
-            throw new Exception('Level To wajib diisi.');
-        }
-
-        if (empty($binto)) {
-            throw new Exception('Bin To wajib diisi.');
-        }
-
-        if ($qtyoh <= 0) {
-            throw new Exception("Qty transfer tidak valid: {$qtyoh}");
-        }
-
-        Log::info('Transfer data valid', [
-            'trfid' => $trfid,
-            'part' => $part,
-            'qty' => $qtyoh,
-        ]);
-
-        // ==========================
-        // UPDATE TRANSFER
-        // ==========================
-        $dataupdate = singleTransfer::where('st_trfid', $trfid)->first();
-
-        if (!$dataupdate) {
-            throw new Exception(
-                "Data transfer '{$trfid}' tidak ditemukan."
-            );
-        }
-
-        $dataupdate->st_loc_to = $locto;
-        $dataupdate->st_wh = $buildingto;
-        $dataupdate->st_level = $levelto;
-        $dataupdate->st_bin = $binto;
-        $dataupdate->st_status = 'Received';
-        $dataupdate->save();
-
-        // ==========================
-        // USER
-        // ==========================
-        $user = Auth::user()->name ?? '';
-
-        // ==========================
-        // INVENTORY FROM
-        // ==========================
-      
-
-        // ==========================
-        // INVENTORY TO
-        // ==========================
-        $invTo = xxinvDet::where('xxinv_part', $part)
-            ->where('xxinv_wrh', $buildingto)
-            ->where('xxinv_level', $levelto)
-            ->where('xxinv_bin', $binto)
-            ->first();
-
-        if (!$invTo) {
-
-            throw new Exception(
-                "Inventory To tidak ditemukan. " .
-                "Part: {$part}, " .
-                "Warehouse: {$buildingto}, " .
-                "Level: {$levelto}, " .
-                "Bin: {$binto}"
-            );
-        }
-
-        // Tambah inventory tujuan
-        $invTo->xxinv_qtyoh += $qtyoh;
-        $invTo->save();
-
-        // ==========================
-        // TRANSACTION HISTORY FROM
-        // ==========================
-        $newTransactionHistoryfrom = new TransactionHistory();
-
-        $newTransactionHistoryfrom->tr_nbr = $trfid;
-        $newTransactionHistoryfrom->tr_program = 'Single Transfer Module';
-        $newTransactionHistoryfrom->tr_activity = 'Single Transfer From';
-        $newTransactionHistoryfrom->tr_user = $user;
-        $newTransactionHistoryfrom->tr_part = $part ?? '';
-        $newTransactionHistoryfrom->tr_uom = '';
-        $newTransactionHistoryfrom->tr_line = '';
-        $newTransactionHistoryfrom->tr_lot = $lotfrom ?? '';
-        $newTransactionHistoryfrom->tr_qty = $qtyoh;
-        $newTransactionHistoryfrom->tr_date = now();
-        $newTransactionHistoryfrom->tr_reference = '';
-        $newTransactionHistoryfrom->tr_site = $sitefrom ?? '';
-        $newTransactionHistoryfrom->tr_location = $locfrom ?? '';
-        $newTransactionHistoryfrom->tr_warehouse = $buildingfrom ?? '';
-        $newTransactionHistoryfrom->tr_level = $levelfrom ?? '';
-        $newTransactionHistoryfrom->tr_bin = $binfrom ?? '';
-        $newTransactionHistoryfrom->tr_remark = '';
-
-        $newTransactionHistoryfrom->save();
- 
-        $newTransactionHistory = new TransactionHistory();
-
-        $newTransactionHistory->tr_nbr = $trfid;
-        $newTransactionHistory->tr_order = '';
-        $newTransactionHistory->tr_program = 'Single Transfer Module';
-        $newTransactionHistory->tr_activity = 'Single Transfer To';
-        $newTransactionHistory->tr_user = $user;
-        $newTransactionHistory->tr_part = $part ?? '';
-        $newTransactionHistory->tr_uom = '';
-        $newTransactionHistory->tr_line = '';
-        $newTransactionHistory->tr_lot = $lotto ?? '';
-        $newTransactionHistory->tr_qty = $qtyoh;
-        $newTransactionHistory->tr_date = now();
-        $newTransactionHistory->tr_reference = '';
-        $newTransactionHistory->tr_site = $siteto ?? '';
-        $newTransactionHistory->tr_location = $locto;
-        $newTransactionHistory->tr_warehouse = $buildingto;
-        $newTransactionHistory->tr_level = $levelto;
-        $newTransactionHistory->tr_bin = $binto;
-        $newTransactionHistory->tr_remark = '';
-
-        $newTransactionHistory->save();
-
-       
-        DB::commit();
-
-        Log::info('receiptItem success', [
-            'trfid' => $trfid,
-        ]);
-
-        return response()->json([
-            'Status' => 'Success',
-            'Message' => 'Receipt Item Successful',
-        ], 200);
-
-    } catch (Exception $e) {
- 
-        DB::rollBack();
-
-        Log::error('receiptItem failed', [
-            'trfid' => $req->trfid ?? null,
-            'message' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-        ]);
-
-        return response()->json([
-            'Status' => 'Error',
-            'Message' => $e->getMessage(),
-        ], 422);
-    }
-}
     // public function getLocation(Request $req)
     // {
 
@@ -1172,7 +1193,7 @@ public function receiptItem(Request $req)
             ], 500);
         }
     }
- 
+
     public function getSiteDataST(Request $req)
     {
         $req->validate(['part' => 'required']);
@@ -1193,7 +1214,6 @@ public function receiptItem(Request $req)
         }
     }
 
-   
     public function getLocDataST(Request $req)
     {
         $req->validate(['part' => 'required', 'site' => 'required']);
@@ -1215,7 +1235,6 @@ public function receiptItem(Request $req)
         }
     }
 
-     
     public function getLotDataST(Request $req)
     {
         $req->validate([
@@ -1242,7 +1261,6 @@ public function receiptItem(Request $req)
         }
     }
 
-  
     public function getWrhDataST(Request $req)
     {
         $req->validate([
@@ -1271,7 +1289,6 @@ public function receiptItem(Request $req)
         }
     }
 
-   
     public function getLevelDataST(Request $req)
     {
         $req->validate([
@@ -1302,7 +1319,6 @@ public function receiptItem(Request $req)
         }
     }
 
-    
     public function getBinDataST(Request $req)
     {
         $req->validate([
@@ -1333,7 +1349,7 @@ public function receiptItem(Request $req)
             ], 500);
         }
     }
- 
+
     public function getQtyOnHandST(Request $req)
     {
         $req->validate([
@@ -1375,7 +1391,6 @@ public function receiptItem(Request $req)
         }
     }
 
-    
     public function getLocationData(Request $req)
     {
 
@@ -1385,7 +1400,7 @@ public function receiptItem(Request $req)
         $master = [];
         $wonbr = [];
         $wonbrstring = '';
-     
+
         $wonbr = '';
         $item = $req->item;
         $site = $req->site;
@@ -1516,39 +1531,38 @@ public function receiptItem(Request $req)
             $newPrefix = $prefix.$newRunningNbr;
             log::info('b');
 
-            
-              $invFrom = xxinvDet::where('xxinv_part', $item)
-            ->where('xxinv_wrh', $whfrom)
-            ->where('xxinv_level', $levelfrom)
-            ->where('xxinv_bin', $binfrom)
-            ->first();
+            $invFrom = xxinvDet::where('xxinv_part', $item)
+                ->where('xxinv_wrh', $whfrom)
+                ->where('xxinv_level', $levelfrom)
+                ->where('xxinv_bin', $binfrom)
+                ->first();
 
-        if (!$invFrom) {
+            if (! $invFrom) {
 
-            throw new Exception(
-                "Inventory From tidak ditemukan. " .
-                "Part: {$item}, " .
-                "Warehouse: {$whfrom}, " .
-                "Level: {$levelfrom}, " .
-                "Bin: {$binfrom}"
-            );
-        }
+                throw new Exception(
+                    'Inventory From tidak ditemukan. '.
+                    "Part: {$item}, ".
+                    "Warehouse: {$whfrom}, ".
+                    "Level: {$levelfrom}, ".
+                    "Bin: {$binfrom}"
+                );
+            }
 
-        // ==========================
-        // CHECK QTY
-        // ==========================
-        if ($invFrom->xxinv_qtyoh < $qty) {
+            // ==========================
+            // CHECK QTY
+            // ==========================
+            if ($invFrom->xxinv_qtyoh < $qty) {
 
-            throw new Exception(
-                "Qty inventory tidak mencukupi. " .
-                "Available: {$invFrom->xxinv_qtyoh}, " .
-                "Request: {$qty}"
-            );
-        }
+                throw new Exception(
+                    'Qty inventory tidak mencukupi. '.
+                    "Available: {$invFrom->xxinv_qtyoh}, ".
+                    "Request: {$qty}"
+                );
+            }
 
-        // Kurangi inventory asal
-        $invFrom->xxinv_qtyoh -= $qty;
-        $invFrom->save();
+            // Kurangi inventory asal
+            $invFrom->xxinv_qtyoh -= $qty;
+            $invFrom->save();
             $newTransferData = new SingleTransfer();
             $newTransferData->st_trfid = $newPrefix;
             $newTransferData->st_item = $item;
