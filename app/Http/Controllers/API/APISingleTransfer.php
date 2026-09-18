@@ -151,6 +151,7 @@ class APISingleTransfer extends Controller
             // VALIDASI STOK ASAL (INVENTORY FROM)
             // ==========================
             $invFrom = xxinvDet::where('xxinv_part', $part)
+                          ->where('xxinv_lot',$lotfrom)
                 ->where('xxinv_wrh', $buildingfrom)
                 ->where('xxinv_level', $levelfrom)
                 ->where('xxinv_bin', $binfrom)
@@ -198,6 +199,7 @@ class APISingleTransfer extends Controller
             // INVENTORY TO (UPSERT LOGIC)
             // ==========================
             $invTo = xxinvDet::where('xxinv_part', $part)
+                ->where('xxinv_lot',$lotto)
                 ->where('xxinv_wrh', $buildingto)
                 ->where('xxinv_level', $levelto)
                 ->where('xxinv_bin', $binto)
@@ -1541,6 +1543,7 @@ class APISingleTransfer extends Controller
 
                 throw new Exception(
                     'Inventory From tidak ditemukan. '.
+                    "lot:{$lot}".
                     "Part: {$item}, ".
                     "Warehouse: {$whfrom}, ".
                     "Level: {$levelfrom}, ".
@@ -1548,9 +1551,6 @@ class APISingleTransfer extends Controller
                 );
             }
 
-            // ==========================
-            // CHECK QTY
-            // ==========================
             if ($invFrom->xxinv_qtyoh < $qty) {
 
                 throw new Exception(
