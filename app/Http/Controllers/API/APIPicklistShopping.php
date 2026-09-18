@@ -1755,6 +1755,7 @@ class APIPicklistShopping extends Controller
             ->when($lot != '', fn($query)=>$query->where('ps_lot',$lot))
             ->get();
             // dd($checkpicklistshopping, $req->all(),$wonbr,$statusreq);
+            
         if ($checkpicklistshopping) {
             foreach ($checkpicklistshopping as $check) {
                 $statusps = $check->ps_status;
@@ -1776,17 +1777,20 @@ class APIPicklistShopping extends Controller
                     ->where('xxinv_lot', $lot)
                     ->where('xxinv_wrh', $wrh)
                     ->where('xxinv_level', $level)
-                    ->where('xxinv_bin', $bin)
-                    ->where('xxinv_loc', $loc)
+                    ->where('xxinv_bin', $bin);
+                    if($statusreq == 'Receipt'){
+                        $xxinvdet->where('xxinv_loc', 'WIP');
+                    }
+                    else{
+                        $xxinvdet->where('xxinv_loc', $loc);
+                    }
+                    
+                    
                     // ->where('xxinv_qty_wrh','<>',null)
                     // ->where('xxinv_qty_wrh','>',0)
-                    ->first();
-
-                // dd($xxinvdet);
-
-                // dd($check->getPicklistShoppingDetail[0]->psd_loc);
-
-                // dd($wonbrps,$status,$siteps,$lotps);
+                    $xxinvdet = $xxinvdet->first();
+                    
+       
                 $status = '';
                 $hasil = (new WSAServices())->wsaGetPickDetail($status, $wonbrps, $siteps, $lotps);
                 
@@ -1798,7 +1802,7 @@ class APIPicklistShopping extends Controller
                     // ], 422);
                 } else {
                     $listData = $hasil[1];
-                    // dd($hasil);
+                    
 
 
                     foreach ($listData as $key => $value) {
@@ -1910,7 +1914,7 @@ class APIPicklistShopping extends Controller
                     }
                 }
             }
-
+            // dd($wonbrarray);
             if (count($wonbrarray) > 0) {
 
 
@@ -2910,7 +2914,7 @@ class APIPicklistShopping extends Controller
                         ->where('ps_level', $level)
                         ->where('ps_bin', $bin)
                         ->first();
-                    log::info($wonbr . ' ' . $part . ' ' . $lot . ' ' . $wrh . ' ' . $level . ' ' . $bin);
+                    
                     if (!$picklist) {
                         Log::channel('Picklist')->info("Issue WO Failed for Picklist : " . $wonbr . " Part : " . $part . ' not found');
                         return response()->json([
@@ -2978,7 +2982,7 @@ class APIPicklistShopping extends Controller
                             //     $xxinvdet->save();
                             // }
                             // else{
-                            $xxinvdet->xxinv_qty_wrh = $xxinvdet->xxinv_qty_wrh + $newqty;
+                            // $xxinvdet->xxinv_qty_wrh = $xxinvdet->xxinv_qty_wrh + $newqty;
                             $xxinvdet->xxinv_qtyoh = $xxinvdet->xxinv_qtyoh - $xxinvdet->xxinv_qty_wip;
                             $xxinvdet->xxinv_qty_wip = 0;
                             $xxinvdet->save();

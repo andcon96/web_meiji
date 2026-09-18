@@ -1532,6 +1532,7 @@ class APISingleTransfer extends Controller
             log::info('b');
 
             $invFrom = xxinvDet::where('xxinv_part', $item)
+                ->where('xxinv_lot',$lot)
                 ->where('xxinv_wrh', $whfrom)
                 ->where('xxinv_level', $levelfrom)
                 ->where('xxinv_bin', $binfrom)
@@ -1551,6 +1552,7 @@ class APISingleTransfer extends Controller
             // ==========================
             // CHECK QTY
             // ==========================
+            
             if ($invFrom->xxinv_qtyoh < $qty) {
 
                 throw new Exception(

@@ -64,4 +64,6 @@ class ReceiptDetail extends Model
     {
         return $this->hasMany(ReceiptPallet::class, 'rdp_rd_det_id', 'id');
     }
+
+    
 }

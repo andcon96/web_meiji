@@ -234,7 +234,7 @@ class APIController extends Controller
                         && $wmsItem['t_lot'] == $item->xxinv_lot;
                 });
 
-                if(!in_array( $item->xxinv_loc, ['qc-qrt', 'WH-QRT','WIP'])) {
+                if (!in_array(strtolower($item->xxinv_loc), ['qc-qrt', 'wh-qrt', 'wip'])) {
                     $loc = 'Pass';
                 } else {
                     $loc = $item->xxinv_loc;

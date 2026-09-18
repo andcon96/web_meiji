@@ -190,7 +190,7 @@ class ReceiptServices
                 $newReceiptDetailDokumen->rdd_is_surat_jalan = $dataDetail->is_sj == true ? 1 : 0;
                 $newReceiptDetailDokumen->rdd_surat_jalan = $dataDetail->nomor_sj;
                 $newReceiptDetailDokumen->save();
-
+                
                 // Kemasan
                 $newReceiptDetailKemasan = new ReceiptKemasan();
                 $newReceiptDetailKemasan->rdk_rd_det_id = $newReceiptDetail->id;
@@ -208,7 +208,7 @@ class ReceiptServices
                 $newReceiptDetailKemasan->rdk_jumlah_kemasan_dalam = $dataDetail->qty_kemasan_dalam;
                 $newReceiptDetailKemasan->rdk_jumlah_kemasan_dalam_baik = $dataDetail->qty_kemasan_dalam_baik;
                 $newReceiptDetailKemasan->rdk_jumlah_kemasan_dalam_tidak_baik = $dataDetail->qty_kemasan_dalam_tidak_baik;
-                $newReceiptDetailKemasan->rdk_is_halal = $dataDetail->is_halal == true ? 1 : 0;
+                
                 $newReceiptDetailKemasan->save();
 
                 // Kendaraan
@@ -294,6 +294,7 @@ class ReceiptServices
             // if($data->rd_tanggal_datang != null){
             //     $tanggaldatang = Carbon::createFromFormat('d/m/Y', $data->rd_tanggal_datang)->format('Y/m/d');
             // }
+            
             $findReceiptDetail = ReceiptDetail::findOrFail($data->id);
             $findReceiptDetail->rd_tanggal_datang = $data->rd_tanggal_datang;
             $findReceiptDetail->rd_nama_barang = $data->rd_nama_barang;
@@ -332,7 +333,7 @@ class ReceiptServices
             $newReceiptDetailDokumen->rdd_is_surat_jalan = $data->get_dokumen->rdd_is_surat_jalan;
             $newReceiptDetailDokumen->rdd_surat_jalan = $data->get_dokumen->rdd_surat_jalan;
             $newReceiptDetailDokumen->save();
-
+            // log::info($data->get_kemasan);
             // Kemasan
             $newReceiptDetailKemasan = ReceiptKemasan::findOrFail($data->get_kemasan->id);
             $newReceiptDetailKemasan->rdk_is_pabrik_pembuat = $data->get_kemasan->rdk_is_pabrik_pembuat;

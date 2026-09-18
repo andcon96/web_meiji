@@ -150,7 +150,7 @@ class APIPurchaseOrderController extends Controller
         $data = $req->all();
         $inputan = json_decode($req->data);
         $approval = json_decode($req->userApprove);
-
+        log::info($req->data);
         // Cek Approval
 
         if (empty($approval)) {
@@ -955,7 +955,6 @@ class APIPurchaseOrderController extends Controller
             ->orderBy('xxinv_bin')
             ->get();
         return response()->json($xxinvDet);
-       
     }
     public function wsaGetPotensi(Request $req)
     {
@@ -1228,14 +1227,14 @@ class APIPurchaseOrderController extends Controller
         }
 
 
-     
+
         $receiptDetail = ReceiptPallet::with('getDetail')
             ->whereRelation('getDetail', 'rd_status', '!=', 'Approved')
             ->whereRelation('getDetail', 'rd_status', '!=', 'Reject')
             ->distinct()
             ->get();
 
-     
+
         $domain = Domain::first();
         $domainCode = $domain->domain ?? '';
         $results = xxinvDet::query()
@@ -1497,19 +1496,133 @@ class APIPurchaseOrderController extends Controller
         // ], 200);
     }
 
-    public function getItemLotDetail(Request $req){
+    public function getItemLotDetail(Request $req)
+    {
         $item = $req->input('item');
         $lot = $req->input('lot');
         $podid = $req->input('podid');
-        $poddata = PurchaseOrderDetail::with(['getMaster','getReceiptDetail.getMaster'])->where('id',$podid)->first();
-        // dd($poddata);
-        
-         return response()->json([
+        // $poddata = PurchaseOrderDetail::with(['getMaster', 'getReceiptDetail.getMaster'])
+        //     ->where('id', $podid)->first();
+        // // dd($poddata);
+        $poddata = PurchaseOrderDetail::with([
+            'getMaster',
+            'getReceiptDetail' => function ($query) {
+                $query->with('getMaster')
+                    ->join('xxinv_det', function ($e) {
+                        $e->on('receipt_det.rd_nama_barang', '=', 'xxinv_det.xxinv_part');
+                        $e->on('receipt_det.rd_batch', '=', 'xxinv_det.xxinv_lot');
+                    })
+                    ->where('xxinv_det.xxinv_loc', 'WH-QRT')
+                    ->select('receipt_det.*', 'xxinv_det.*')
+                    ->orderBy('xxinv_det.xxinv_wrh')
+                    ->orderBy('xxinv_det.xxinv_level')
+                    ->orderBy('xxinv_det.xxinv_bin');
+            }
+        ])->where('id', $podid)->first();
+
+        return response()->json([
             'DataHeader' => [$poddata->getReceiptDetail[0]->getMaster],
             'DataDetail' => $poddata->getReceiptDetail,
             'DataPod' => [$poddata],
             'DataMaster' => [$poddata->getMaster]
-            
+
         ], 200);
+    }
+    public function getxxinvdet(Request $req)
+    {
+        $item = $req->input('item');
+        $lot = $req->input('lot');
+        $podid = $req->input('podid');
+        $loc = 'WH-QRT';
+        $xxinvdet = xxinvDet::where('xxinv_part', $item)->where('xxinv_lot', $lot)
+            ->where('xxinv_loc', $loc)
+            ->orderBy('xxinv_wrh')
+            ->orderBy('xxinv_level')
+            ->orderBy('xxinv_bin')
+            ->get();
+        // $poddata = PurchaseOrderDetail::with(['getMaster','getReceiptDetail.getMaster'])->where('id',$podid)->first();
+        // dd($poddata);
+
+        return response()->json([
+            'DataXxinv' => [$xxinvdet],
+
+
+        ], 200);
+    }
+    public function sendQtyReturn(Request $req)
+    {
+        $part = $req->input('part');
+        $lot = $req->input('lot');
+        $loc = $req->input('loc');
+        $warehouse = $req->input('warehouse');
+        $level = $req->input('level');
+        $bin = $req->input('bin');
+        $qtyreturn = $req->input('qtyreturn');
+        $poid = $req->input('poid');
+        $approver = $req->input('approver');
+        $podata = PurchaseOrderMaster::with('getReceipt')->where('id', $poid)->first();
+
+        DB::beginTransaction();
+        try {
+            foreach ($qtyreturn as $key => $return) {
+                if (doubleval($return) != 0) {
+                    $xxinvdet = xxinvDet::where('xxinv_part', $part)
+                        ->where('xxinv_lot', $lot)
+                        ->where('xxinv_loc', $loc)
+                        ->where('xxinv_wrh', $warehouse[$key])
+                        ->where('xxinv_level', $level[$key])
+                        ->where('xxinv_bin', $bin[$key])
+                        ->first();
+
+                    if ($xxinvdet) {
+                        $xxinvdet->xxinv_qtyoh = $xxinvdet->xxinv_qtyoh - $return;
+                        $xxinvdet->xxinv_qty_wrh = $xxinvdet->xxinv_qty_wrh - $return;
+                        $xxinvdet->save();
+
+                        $newTransactionHistory = new TransactionHistory();
+                        $newTransactionHistory->tr_nbr = $podata->po_nbr;
+                        $newTransactionHistory->tr_order = $podata->po_nbr;
+                        $newTransactionHistory->tr_program = 'PO Return';
+                        $newTransactionHistory->tr_activity = 'PO Return';
+                        $newTransactionHistory->tr_user =  Auth::user()->username ?? '';
+                        // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
+                        $newTransactionHistory->tr_part = $part ?? '';
+                        $newTransactionHistory->tr_uom =   '';
+                        $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
+                        $newTransactionHistory->tr_lot = $xxinvdet->xxinv_batch ?? '';
+                        $newTransactionHistory->tr_qty = $return ?? '';
+                        $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+                        $newTransactionHistory->tr_reference = '';
+                        $newTransactionHistory->tr_site = $xxinvdet->xxinv_site ?? '';
+                        $newTransactionHistory->tr_location = $xxinvdet->xxinv_loc ?? '';
+                        $newTransactionHistory->tr_warehouse = $xxinvdet->xxinv_wrh ?? '';
+                        $newTransactionHistory->tr_level = $xxinvdet->xxinv_level ?? '';
+                        $newTransactionHistory->tr_bin = $xxinvdet->xxinv_bin ?? '';
+                        $newTransactionHistory->tr_remark = '';
+                        $newTransactionHistory->save();
+                        
+                    } else {
+                        DB::rollback();
+                        log::info('data not found for po return ' . $part . ' lot ' . $lot . ' warehouse ' . $warehouse[$key] . ' level ' . $level[$key] . ' bin ' . $bin[$key]);
+                        return response()->json([
+                            'Status' => 'Error',
+                            'Message' => "Data not found in DB"
+                        ], 422);
+                    }
+                }
+            }
+            DB::commit();
+            return response()->json([
+                'Status' => 'Success',
+                'Message' => "Data has been returned"
+            ], 200);
+        } catch (Exception $err) {
+            DB::rollback();
+            log::info('error po return item' . $part . ' : ' . $err);
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => "Error when returning data"
+            ], 422);
+        }
     }
 }

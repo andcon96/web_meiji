@@ -2654,7 +2654,7 @@ public function qxinventoryReceipt($req, $activeConnection = null)
             <woLot>'.$lot.'</woLot>
             <effDate>'.$effdate.'</effDate>
             <fillAll>false</fillAll>
-            <fillPick>true</fillPick>
+            <fillPick>false</fillPick>
             <yn>true</yn>
             <yn1>true</yn1>
             <yn2>true</yn2>
