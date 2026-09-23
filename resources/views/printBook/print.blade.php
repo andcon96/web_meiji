@@ -438,7 +438,7 @@
         <tr class="center">
             <th>Uraian</th>
             <th>Pemeriksa</th>
-            <th>Kepala Grup</th>
+            <th>Group</th>
             <th>Seksi</th>
         </tr>
         <tr class="center">

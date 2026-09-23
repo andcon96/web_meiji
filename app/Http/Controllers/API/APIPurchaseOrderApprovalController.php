@@ -309,6 +309,7 @@ class APIPurchaseOrderApprovalController extends Controller
                             $newxxinv->xxinv_bin = $dataPallet->rdp_bin_penyimpanan ?? '';
                             $newxxinv->xxinv_wrh = $dataReceipt->rd_building_penyimpanan ?? '';
                             $newxxinv->xxinv_qtyoh = $dataPallet->rdp_qty_penyimpanan ?? 0;
+                            $newxxinv->xxinv_qty_wrh = $dataPallet->rdp_qty_penyimpanan ?? 0;
                             $newxxinv->xxinv_ref = $ref;
                             $newxxinv->xxinv_entry_date = $dataReceipt->rd_tanggal_datang;
                             $newxxinv->xxinv_exp_date = $expireddate;

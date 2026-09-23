@@ -73,6 +73,7 @@ class APITransRctUnpController extends Controller
             if ($existingInv) {
  
                 $existingInv->xxinv_qtyoh = $existingInv->xxinv_qtyoh + $qty;
+                $existingInv->xxinv_qty_wrh = $existingInv->xxinv_qty_wrh + $qty;
                 $existingInv->save();
             } else {
  
@@ -86,6 +87,7 @@ class APITransRctUnpController extends Controller
                 $newInv->xxinv_level = $level;
                 $newInv->xxinv_bin = $bin;
                 $newInv->xxinv_qtyoh = $qty;
+                $newInv->xxinv_qty_wrh = $qty;
                 $newInv->xxinv_ref = $req->lotref ?? null;
                 $newInv->xxinv_exp_date = $req->exp_date ?? null;
                 $newInv->save();

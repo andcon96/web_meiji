@@ -241,6 +241,8 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
 
     //Work Order Issue
     //Route::get("getIssueData", [APIWorkOrderController::class, "getIssueData"]);
+    
+    Route::get("getWorkOrderIssue", [APIPicklistShopping::class, "getWorkOrderIssue"]);
     Route::post('issueWorkOrder', [APIPicklistShopping::class, 'issueWorkOrder']);
 
     // Inventory WMS
