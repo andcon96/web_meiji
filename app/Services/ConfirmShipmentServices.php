@@ -95,6 +95,25 @@ class ConfirmShipmentServices
                     $packingReplenishmentHist->created_by = Auth::user()->name;
                     $packingReplenishmentHist->save();
 
+                     $shipmentScheduleLocation = $packingReplenishmentDet->getShipmentScheduleLocation;
+                    $shipmentScheduleDet = $shipmentScheduleLocation->getShipmentScheduleDet;
+
+                xxinvDet::where('xxinv_part', $shipmentScheduleDet->ssd_sod_part)
+                        ->where('xxinv_lot', $shipmentScheduleLocation->ssl_lotserial)
+                        ->where('xxinv_bin', $shipmentScheduleLocation->ssl_bin)
+                        ->where('xxinv_level', $shipmentScheduleLocation->ssl_level)
+                        ->update([
+                             'xxinv_qty_shp' => DB::raw(
+                             'xxinv_qty_shp - ' . (float) $shipmentScheduleLocation->ssl_qty_pick
+                        ),
+                         'xxinv_qtyoh' => DB::raw(
+                         'xxinv_qtyoh - ' . (float) $shipmentScheduleLocation->ssl_qty_pick
+                        ),                  
+                        ]);
+
+                    $shipmentScheduleLocation->ssl_qty_pick = 0;
+                    $shipmentScheduleLocation->save();
+
                     $dataShipmentScheduleDet = $packingReplenishmentDet->getShipmentScheduleLocation->getShipmentScheduleDet;
                     if ($dataShipmentScheduleDet->ssd_sod_qty_pick < $dataShipmentScheduleDet->ssd_sod_qty_ord) {
                         $dataShipmentScheduleDet->ssd_status = 'Shipped (Partial)';
@@ -235,10 +254,15 @@ class ConfirmShipmentServices
                         ->where('xxinv_lot', $shipmentScheduleLocation->ssl_lotserial)
                         ->where('xxinv_bin', $shipmentScheduleLocation->ssl_bin)
                         ->where('xxinv_level', $shipmentScheduleLocation->ssl_level)
-                        ->increment(
-                            'xxinv_qtyoh',
-                            (float) $shipmentScheduleLocation->ssl_qty_pick
-                        );
+                        ->update([
+        'xxinv_qty_shp' => DB::raw(
+            'xxinv_qty_shp - ' . (float) $shipmentScheduleLocation->ssl_qty_pick
+        ),
+        'xxinv_qty_wrh' => DB::raw(
+            'xxinv_qty_wrh + ' . (float) $shipmentScheduleLocation->ssl_qty_pick
+        ),
+                   
+                ]);
 
                     $shipmentScheduleLocation->ssl_qty_pick = 0;
                     $shipmentScheduleLocation->save();

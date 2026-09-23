@@ -116,7 +116,8 @@ class PackingReplenishmentServices
                             throw new \Exception('Inventory tidak ditemukan.');
                         }
 
-                        $inventory->xxinv_qtyoh = max(0, (float) $inventory->xxinv_qtyoh - $qtyPick);
+                        $inventory->xxinv_qty_wrh = max(0, (float) $inventory->xxinv_qty_wrh - $qtyPick);
+                        $inventory->xxinv_qty_shp = max(0, (float) $inventory->xxinv_qty_shp + $qtyPick);
                         $inventory->save();
                     }
                 }
@@ -198,13 +199,17 @@ class PackingReplenishmentServices
                 }
 
                 xxinvDet::where('xxinv_part', $shipmentScheduleDet->ssd_sod_part)
-                    ->where('xxinv_lot', $shipmentScheduleLocation->ssl_lotserial)
-                    ->where('xxinv_bin', $shipmentScheduleLocation->ssl_bin)
-                    ->where('xxinv_level', $shipmentScheduleLocation->ssl_level)
-                    ->increment(
-                        'xxinv_qtyoh',
-                        (float) $shipmentScheduleLocation->ssl_qty_pick
-                    );
+    ->where('xxinv_lot', $shipmentScheduleLocation->ssl_lotserial)
+    ->where('xxinv_bin', $shipmentScheduleLocation->ssl_bin)
+    ->where('xxinv_level', $shipmentScheduleLocation->ssl_level)
+    ->update([
+        'xxinv_qty_shp' => DB::raw(
+            'xxinv_qty_shp - ' . (float) $shipmentScheduleLocation->ssl_qty_pick
+        ),
+        'xxinv_qty_wrh' => DB::raw(
+            'xxinv_qty_wrh + ' . (float) $shipmentScheduleLocation->ssl_qty_pick
+        ),
+    ]);
                 $shipmentScheduleLocation->ssl_qty_pick = 0;
                 $shipmentScheduleLocation->save();
 
