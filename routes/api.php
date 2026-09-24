@@ -43,6 +43,7 @@ Route::post('getWorkOrderQad', [APIController::class, 'getWorkOrderQad']);
 
 // API DKP
 Route::post('sendQxCompIssue', [APIController::class, 'sendQxCompIssue']);
+Route::get('getWipItem', [APIController::class, 'getWipItem']);
 
 // Get APK Latest Version
 Route::get('getAPKLatestVersion', [APIController::class, 'getAPKLatestVersion']);
@@ -130,6 +131,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('editShipmentSchedule/{id}', [APIShipmentScheduleController::class, 'edit']);
     Route::put('updateShipmentSchedule/{id}', [APIShipmentScheduleController::class, 'update']);
     Route::get('getDefaultSampleLoc', [APITrasnferStockController::class, 'getDefaultSampleLoc']);
+    Route::post('deleteDraftShipment', [APIShipmentScheduleController::class, 'deleteDraft']);
 
     // Packing Replenishment
     Route::get('getPackingReplenishment', [APIPackingReplenishmentController::class, 'index']);

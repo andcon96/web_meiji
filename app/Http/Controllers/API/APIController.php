@@ -4,6 +4,9 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SendQxCompIssueRequest;
+use App\Http\Requests\SendQxIssueUnplannedRequest;
+
+use App\Http\Requests\GetWipData;
 use App\Http\Resources\GeneralResources;
 use App\Models\API\MobileApk;
 use App\Models\API\TransactionHistory;
@@ -739,16 +742,16 @@ class APIController extends Controller
         $perPage = $req->query('per_page') ?? 20; // let frontend control this
         $data = TransactionHistory::query();
         if (! empty($number)) {
-            $data->where('tr_nbr', 'LIKE', '%'.$number.'%');
+            $data->where('tr_nbr', 'LIKE', '%' . $number . '%');
         }
         if (! empty($part)) {
-            $data->where('tr_part', 'LIKE', '%'.$part.'%');
+            $data->where('tr_part', 'LIKE', '%' . $part . '%');
         }
         if (! empty($program)) {
-            $data->where('tr_program', 'LIKE', '%'.$program.'%');
+            $data->where('tr_program', 'LIKE', '%' . $program . '%');
         }
         if (! empty($lot)) {
-            $data->where('tr_lot', 'LIKE', '%'.$lot.'%');
+            $data->where('tr_lot', 'LIKE', '%' . $lot . '%');
         }
 
         // $data = $data->orderBy('id', 'DESC')->get();
@@ -940,7 +943,7 @@ class APIController extends Controller
         // $site     = isset($data['site']) && $data['site'] !== '' ? explode(';', $data['site']) : [];
         // $lotserial = isset($data['lotserial']) && $data['lotserial'] !== '' ? explode(';', $data['lotserial']) : [];
 
-        $sendQxCompIssue = (new QxtendServices())->qxWorkOrderComponentIssue($wonbr,$lot,$effdate, $part, $qty, $site, $location, $lotserial);
+        $sendQxCompIssue = (new QxtendServices())->qxWorkOrderComponentIssue($wonbr, $lot, $effdate, $part, $qty, $site, $location, $lotserial);
         if ($sendQxCompIssue[0] == 'true') {
             return response()->json([
                 'Status' => 'Success',
@@ -1103,7 +1106,7 @@ class APIController extends Controller
                 ->header('Content-Type', 'text/xml; charset=utf-8');
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::info('outboundxxinvDet error: '.$e->getMessage());
+            Log::info('outboundxxinvDet error: ' . $e->getMessage());
 
             return response($this->soapAck(false, $e->getMessage()), 500)
                 ->header('Content-Type', 'text/xml; charset=utf-8');
@@ -1117,12 +1120,173 @@ class APIController extends Controller
 
         return <<<XML
         <?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-    <soapenv:Body>
-        <status>{$status}</status>
-        <message>{$escaped}</message>
-    </soapenv:Body>
-</soapenv:Envelope>
-XML;
+        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+            <soapenv:Body>
+                <status>{$status}</status>
+                <message>{$escaped}</message>
+            </soapenv:Body>
+        </soapenv:Envelope>
+        XML;
+    }
+
+    public function getWipItem()
+    {
+        // Log::info($request->all());
+
+        // $wonbr = $request->wonbr;
+        // $location = $request->location;
+        // $lot = $request->lot;
+        // $effdate = $request->effdate;
+        // $part = $request->part;
+        // $qty = $request->qty;
+        // $site = $request->site;
+        // $lotserial = $request->lotserial;
+        // $wonbr    = $data['wonbr'] ?? null;
+        // $location = $data['location'] ?? null;
+        // $lot      = $data['lot'] ?? null;
+        // $effdate  = $data['effdate'] ?? null;
+        // $part     = isset($data['part']) &&  $data['part'] !== '' ? explode(';', $data['part']) : [];
+        // $qty      = isset($data['qty']) && $data['qty'] !== '' ? explode(';', $data['qty']) : [];
+        // $site     = isset($data['site']) && $data['site'] !== '' ? explode(';', $data['site']) : [];
+        // $lotserial = isset($data['lotserial']) && $data['lotserial'] !== '' ? explode(';', $data['lotserial']) : [];
+        $xxinvdet = xxinvDet::where('xxinv_loc', 'WIP')->orderBy('xxinv_part')->select('xxinv_part as part', 'xxinv_lot as lot', 'xxinv_wrh as warehouse', 'xxinv_level as level', 'xxinv_bin as bin', 'xxinv_qty_wrh as qty_wrh')->get();
+        return response()->json($xxinvdet);
+    }
+    public function apiIssueUnplanned(SendQxIssueUnplannedRequest $request)
+    {
+        try {
+
+
+            DB::beginTransaction();
+
+                  
+            $qty = floatval(str_replace(',', '', $request->qty));
+
+            $qxtendServices = new QxtendServices();
+
+            $qxtend = $qxtendServices->qxIssueInventoryUnplanned($request);
+
+            if ($qxtend[0] == false) {
+                DB::rollback();
+
+                Log::channel('confirmOtherTransaction')->info($qxtend[1]);
+
+                return response()->json(
+                    [
+                        'Status' => 'Unprocessable',
+                        'Message' => $qxtend[1],
+                    ],
+                    422,
+                );
+            }
+ $wonbr = $request->wonbr;
+            $wolot = $request->wolot;
+            $effdate = $request->effdate;
+            $part = $request->part;
+            $site = $request->site;
+            $location = $request->location;
+            $lotserial = $request->lotserial;
+            $qty = $request->qty;
+
+            // $part = $request->part;
+            // $site = $req->site;
+            // $location = $req->location;
+            // $lotserial = $req->lotserial;
+            // $warehouse = $req->warehouse;
+            // $level = $req->level;
+            // $bin = $req->bin;
+
+            // $existingInv = xxinvDet::where('xxinv_part', $part)
+            //     ->where('xxinv_site', $site)
+            //     ->where('xxinv_loc', $location)
+            //     ->where('xxinv_lot', $lotserial)
+            //     ->when($warehouse, function ($q) use ($warehouse) {
+            //         return $q->where('xxinv_wrh', $warehouse);
+            //     })
+            //     ->when($level, function ($q) use ($level) {
+            //         return $q->where('xxinv_level', $level);
+            //     })
+            //     ->when($bin, function ($q) use ($bin) {
+            //         return $q->where('xxinv_bin', $bin);
+            //     })
+            //     ->first();
+
+            // if ($existingInv) {
+
+            //     $existingInv->xxinv_qtyoh = $existingInv->xxinv_qtyoh - $qty;
+            //     $existingInv->xxinv_qty_wrh = $existingInv->xxinv_qty_wrh - $qty;
+            //     $existingInv->save();
+            // } else {
+
+            //     $newInv = new xxinvDet();
+            //     $newInv->xxinv_domain = 'MIPI';
+            //     $newInv->xxinv_part = $part;
+            //     $newInv->xxinv_site = $site;
+            //     $newInv->xxinv_loc = $location;
+            //     $newInv->xxinv_lot = $lotserial;
+            //     $newInv->xxinv_wrh = $warehouse;
+            //     $newInv->xxinv_level = $level;
+            //     $newInv->xxinv_bin = $bin;
+            //     $newInv->xxinv_qtyoh = $qty;
+            //     $newInv->xxinv_ref = $req->lotref ?? null;
+            //     $newInv->xxinv_exp_date = $req->exp_date ?? null;
+            //     $newInv->save();
+            // }
+
+            // $newTransfer = new InvTransHist();
+            // $newTransfer->trans_type = 'IN';
+            // $newTransfer->product_code = $req->part;
+            // $newTransfer->product_name = $req->partdesc;
+            // $newTransfer->supplier = $req->supplier;
+
+            // $newTransfer->location = $req->location;
+            // $newTransfer->pallet_no = $req->lotserial;
+            // $newTransfer->batch_no = $req->lotref;
+            // $newTransfer->quantity = $qty;
+            // $newTransfer->created_by = Auth::user()->id;
+            // $newTransfer->save();
+
+            // $newTransactionHistory = new TransactionHistory();
+            // $newTransactionHistory->tr_nbr = '';
+            // $newTransactionHistory->tr_order = '';
+            // $newTransactionHistory->tr_program = 'Issues Unplanned Module';
+            // $newTransactionHistory->tr_activity = 'Submit Issues';
+            // $newTransactionHistory->tr_user = Auth::user()->username ?? '';
+            // $newTransactionHistory->tr_part = $req->part ?? '';
+            // $newTransactionHistory->tr_uom = '';
+            // $newTransactionHistory->tr_line = '';
+            // $newTransactionHistory->tr_lot = $req->lotserial ?? '';
+            // $newTransactionHistory->tr_qty = $qty;
+            // $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+            // $newTransactionHistory->tr_reference = $req->lotref ?? '';
+            // $newTransactionHistory->tr_site = $req->site ?? '';
+            // $newTransactionHistory->tr_location = $req->location ?? '';
+            // $newTransactionHistory->tr_warehouse = $req->warehouse ?? '';
+            // $newTransactionHistory->tr_level = $req->level ?? '';
+            // $newTransactionHistory->tr_bin = $req->bin ?? '';
+            // $newTransactionHistory->tr_remark = '';
+            // $newTransactionHistory->save();
+
+            DB::commit();
+
+            return response()->json(
+                [
+                    'Status' => 'success',
+                    'Message' => 'issues unplanned success',
+                    'MessageDetail' => 'issues unplanned success',
+                ],
+                200,
+            );
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error($e);
+            return response()->json(
+                [
+                    'Status' => 'Error',
+                    'Message' => 'Internal server error',
+                ],
+                500,
+            );
+        }
     }
 }
