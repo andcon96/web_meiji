@@ -1003,7 +1003,7 @@ class APIController extends Controller
 
         try {
 
-            $isLotExist = (new WSAServices)->wsaGetLot($request->item, $request->site);
+            $isLotExist = (new WSAServices)->wsaGetLot($request->item );
 
             // dd($isLotExist);
 
