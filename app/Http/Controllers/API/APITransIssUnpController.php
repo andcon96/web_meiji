@@ -18,18 +18,18 @@ class APITransIssUnpController extends Controller
 {
     public function submitIssOut(Request $req)
  {
-        
+
 
         try {
-          
+
 
             DB::beginTransaction();
 
-          
+
             $qty = floatval(str_replace(',', '', $req->qty));
- 
+
             $qxtendServices = new QxtendServices();
-            
+
             $qxtend = $qxtendServices->qxIssueInventoryUnplanned($req);
 
             if ($qxtend[0] == false) {
@@ -45,7 +45,7 @@ class APITransIssUnpController extends Controller
                     422,
                 );
             }
-          
+
             $part = $req->part;
             $site = $req->site;
             $location = $req->location;
@@ -70,11 +70,11 @@ class APITransIssUnpController extends Controller
                 ->first();
 
             if ($existingInv) {
- 
+
                 $existingInv->xxinv_qtyoh = $existingInv->xxinv_qtyoh - $qty;
                 $existingInv->save();
             } else {
- 
+
                 $newInv = new xxinvDet();
                 $newInv->xxinv_domain = 'MIPI';
                 $newInv->xxinv_part = $part;
@@ -91,14 +91,14 @@ class APITransIssUnpController extends Controller
             }
 
             $newTransfer = new InvTransHist();
-            $newTransfer->trans_type = 'IN';  
+            $newTransfer->trans_type = 'IN';
             $newTransfer->product_code = $req->part;
             $newTransfer->product_name = $req->partdesc;
             $newTransfer->supplier = $req->supplier;
- 
+
             $newTransfer->location = $req->location;
-            $newTransfer->pallet_no = $req->lotserial;  
-            $newTransfer->batch_no = $req->lotref; 
+            $newTransfer->pallet_no = $req->lotserial;
+            $newTransfer->batch_no = $req->lotref;
             $newTransfer->quantity = $qty;
             $newTransfer->created_by = Auth::user()->id;
             $newTransfer->save();
@@ -209,7 +209,7 @@ class APITransIssUnpController extends Controller
     //             $newTransfer->created_by = Auth::user()->id;
     //             $newTransfer->save();
     //         }
-            
+
 
     //         $newTransactionHistory = new TransactionHistory();
     //         $newTransactionHistory->tr_nbr = '';

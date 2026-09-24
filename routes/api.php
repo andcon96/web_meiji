@@ -95,15 +95,15 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post('getItemLotDetail', [APIPurchaseOrderController::class, 'getItemLotDetail']);
     Route::post('getxxinvdet', [APIPurchaseOrderController::class, 'getxxinvdet']);
     Route::post('sendQtyReturn', [APIPurchaseOrderController::class, 'sendQtyReturn']);
-    
-    
+
+
     // WSA PO
     Route::get('wsaWOPrint', [APIPurchaseOrderController::class, 'wsaWOPrint']); //mira
     Route::get('wsaWOMaster', [APIPurchaseOrderController::class, 'wsaWOMaster']); //mira
     Route::post('wsaDataPO', [APIPurchaseOrderController::class, 'wsaDataPO']);
     Route::post('wsaLotBatch', [APIPurchaseOrderController::class, 'wsaLotBatch']);
     Route::post('wsaPenyimpanan', [APIPurchaseOrderController::class, 'wsaPenyimpanan']);
-    Route::post('wsaPenyimpananWarehouse', [APIPurchaseOrderController::class, 'wsaPenyimpananWarehouse']);
+    Route::get('wsaPenyimpananWarehouse', [APIPurchaseOrderController::class, 'wsaPenyimpananWarehouse']);
     Route::post('wsaWarehouse', [APIPurchaseOrderController::class, 'wsaWarehouse']);
     Route::post('wsaLevel', [APIPurchaseOrderController::class, 'wsaPenyimpananPalet']);
     Route::post('wsaBin', [APIPurchaseOrderController::class, 'wsaPenyimpananPalet']);
