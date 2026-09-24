@@ -1827,7 +1827,8 @@ class WSAServices
         ];
     }
 
-    public function wsaGetPickDetail($status, $wonbr, $site, $lot)
+    // public function wsaGetPickDetail($status, $wonbr, $site, $lot)
+    public function wsaGetPickDetail($status, $part, $batch)
     {
 
         $wsa = qxwsa::first();
@@ -1860,9 +1861,11 @@ class WSAServices
             '<Body>'.
             '<meiji_wo_mstrx xmlns="'.$wsa->wsa_path.'">'.
             '<inpdomain>'.$domainCode.'</inpdomain>'.
-            '<inpwo>'.$wonbr.'</inpwo>'.
-            '<inpsite>'.$site.'</inpsite>'.
-            '<inplot>'.$lot.'</inplot>'.
+            '<inppart>'.$part.'</inppart>'.
+            '<inpbatch>'.$batch.'</inpbatch>'.
+            // '<inpwo>'.$wonbr.'</inpwo>'.
+            // '<inpsite>'.$site.'</inpsite>'.
+            // '<inplot>'.$lot.'</inplot>'.
             '</meiji_wo_mstrx>'.
             // '<meiji_get_xxpick_det xmlns="'.$wsa->wsa_path.'">'.
             // '<meiji_get_xxpick_det xmlns="'.$wsa->wsa_path.'">'.

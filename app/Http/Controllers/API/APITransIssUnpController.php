@@ -72,6 +72,7 @@ class APITransIssUnpController extends Controller
             if ($existingInv) {
 
                 $existingInv->xxinv_qtyoh = $existingInv->xxinv_qtyoh - $qty;
+                $existingInv->xxinv_qty_wrh = $existingInv->xxinv_qty_wrh - $qty;
                 $existingInv->save();
             } else {
 

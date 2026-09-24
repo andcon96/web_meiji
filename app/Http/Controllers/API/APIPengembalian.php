@@ -586,8 +586,9 @@ class APIPengembalian extends Controller
             } else if ($status == 'reject') {
                 $xxinvApproval = xxinvDetApproval::where('id', $id)->where('xxinv_status', 'Waiting')->first();
                 if ($xxinvApproval) {
-                    $xxinvApproval->xxinv_status = 'Rejected';
-                    $xxinvApproval->save();
+                    $xxinvApproval->delete();
+                    // $xxinvApproval->xxinv_status = 'Rejected';
+                    // $xxinvApproval->save();
                     $xxinvDet = xxinvDet::where('xxinv_domain', $inpdomain)
                         ->where('xxinv_part', $xxinvApproval->xxinv_part)
                         ->where('xxinv_lot', $xxinvApproval->xxinv_lot)
@@ -597,19 +598,19 @@ class APIPengembalian extends Controller
                         ->where('xxinv_bin', $xxinvApproval->xxinv_binfrom)
                         ->first();
                     if ($xxinvDet) {
-                        $qty = $xxinvApproval->xxinv_qty_pick;
-                        $xxinvDet->xxinv_qty_smp = $xxinvDet->xxinv_qty_smp + $qty;
-                        // $xxinvDet->xxinv_qty_wrh = $xxinvDet->xxinv_qty_wrh - $qty;
-                        $xxinvDet->save();
+                        // $qty = $xxinvApproval->xxinv_qty_pick;
+                        // $xxinvDet->xxinv_qty_smp = $xxinvDet->xxinv_qty_smp + $qty;
+                        // // $xxinvDet->xxinv_qty_wrh = $xxinvDet->xxinv_qty_wrh - $qty;
+                        // $xxinvDet->save();
 
-                        $user = Auth::user()->name;
-                        $item = $xxinvApproval->xxinv_part;
-                        $lot = $xxinvApproval->xxinv_lot;
-                        $siteto = $xxinvApproval->xxinv_siteto;
-                        $locto = $xxinvApproval->xxinv_locto;
-                        $whfrom = $xxinvApproval->xxinv_wrhfrom;
-                        $levelfrom = $xxinvApproval->xxinv_levelfrom;
-                        $binfrom = $xxinvApproval->xxinv_binfrom;
+                        // $user = Auth::user()->name;
+                        // $item = $xxinvApproval->xxinv_part;
+                        // $lot = $xxinvApproval->xxinv_lot;
+                        // $siteto = $xxinvApproval->xxinv_siteto;
+                        // $locto = $xxinvApproval->xxinv_locto;
+                        // $whfrom = $xxinvApproval->xxinv_wrhfrom;
+                        // $levelfrom = $xxinvApproval->xxinv_levelfrom;
+                        // $binfrom = $xxinvApproval->xxinv_binfrom;
 
                         // Transaction History
                         $newTransactionHistory = new TransactionHistory();

@@ -392,7 +392,7 @@
 
         </tr>
         <tr>
-            <td>Suhu Penyimpanan</td>
+            <td>Suhu Penyimpanan (&deg;C)</td>
 
             <td>{{ $suhu_penanda ?? '-' }}</td>
 
@@ -438,7 +438,7 @@
         <tr class="center">
             <th>Uraian</th>
             <th>Pemeriksa</th>
-            <th>Kepala Grup</th>
+            <th>Group</th>
             <th>Seksi</th>
         </tr>
         <tr class="center">

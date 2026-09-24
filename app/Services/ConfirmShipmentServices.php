@@ -5,11 +5,13 @@ namespace App\Services;
 use App\Models\API\PackingReplenishment\PackingReplenishmentHist;
 use App\Models\API\PackingReplenishment\PackingReplenishmentMstr;
 use App\Models\API\ShipperConfirm\ShipperConfirm;
+use App\Models\API\TransactionHistory;
 use App\Models\API\xxinvDet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+
 
 class ConfirmShipmentServices
 {
@@ -95,6 +97,25 @@ class ConfirmShipmentServices
                     $packingReplenishmentHist->created_by = Auth::user()->name;
                     $packingReplenishmentHist->save();
 
+                     $shipmentScheduleLocation = $packingReplenishmentDet->getShipmentScheduleLocation;
+                    $shipmentScheduleDet = $shipmentScheduleLocation->getShipmentScheduleDet;
+
+                xxinvDet::where('xxinv_part', $shipmentScheduleDet->ssd_sod_part)
+                        ->where('xxinv_lot', $shipmentScheduleLocation->ssl_lotserial)
+                        ->where('xxinv_bin', $shipmentScheduleLocation->ssl_bin)
+                        ->where('xxinv_level', $shipmentScheduleLocation->ssl_level)
+                        ->update([
+                             'xxinv_qty_shp' => DB::raw(
+                             'xxinv_qty_shp - ' . (float) $shipmentScheduleLocation->ssl_qty_pick
+                        ),
+                         'xxinv_qtyoh' => DB::raw(
+                         'xxinv_qtyoh - ' . (float) $shipmentScheduleLocation->ssl_qty_pick
+                        ),                  
+                        ]);
+
+                    $shipmentScheduleLocation->ssl_qty_pick = 0;
+                    $shipmentScheduleLocation->save();
+
                     $dataShipmentScheduleDet = $packingReplenishmentDet->getShipmentScheduleLocation->getShipmentScheduleDet;
                     if ($dataShipmentScheduleDet->ssd_sod_qty_pick < $dataShipmentScheduleDet->ssd_sod_qty_ord) {
                         $dataShipmentScheduleDet->ssd_status = 'Shipped (Partial)';
@@ -105,6 +126,26 @@ class ConfirmShipmentServices
                     $dataShipmentScheduleDet->updated_by = Auth::user()->id;
                     $dataShipmentScheduleDet->save();
                 }
+   $newTransactionHistory = new TransactionHistory();
+                        $newTransactionHistory->tr_nbr       = $shipmentScheduleDet->ssd_sod_nbr ?? '';
+                        $newTransactionHistory->tr_order     = '';
+                        $newTransactionHistory->tr_program   = 'Shipment Module';
+                        $newTransactionHistory->tr_activity  = 'Shipment Confirm Reject';
+                        $newTransactionHistory->tr_user      = Auth::user()->username ?? '';
+                        $newTransactionHistory->tr_part      = $shipmentScheduleDet->ssd_sod_part ?? '';
+                        $newTransactionHistory->tr_uom       = $shipmentScheduleDet->ssd_uom ?? '';
+                        $newTransactionHistory->tr_line      = $shipmentScheduleDet->ssd_sod_line ?? 0;
+                        $newTransactionHistory->tr_lot       = $shipmentScheduleLocation->ssl_lotserial ?? '';
+                        $newTransactionHistory->tr_qty       = $shipmentScheduleLocation->ssl_qty_to_pick ?? 0;
+                        $newTransactionHistory->tr_date      = now();
+                        $newTransactionHistory->tr_reference = '';
+                        $newTransactionHistory->tr_site      = $shipmentScheduleLocation->ssl_site  ?? '2100';
+                        $newTransactionHistory->tr_location  = $shipmentScheduleLocation->ssl_location ?? '';
+                        $newTransactionHistory->tr_warehouse = $shipmentScheduleLocation->ssl_warehouse  ?? '';
+                        $newTransactionHistory->tr_level     = $shipmentScheduleLocation->ssl_level ?? '0';
+                        $newTransactionHistory->tr_bin       = $shipmentScheduleLocation->ssl_bin ?? '0';
+                        $newTransactionHistory->tr_remark    = 'Shipment Confirm Reject';
+                        $newTransactionHistory->save();
 
                 $dataArray = array_values($dataArray);
 
@@ -230,17 +271,49 @@ class ConfirmShipmentServices
                     // === Pengembalian stok (rollback qty pick ke xxinv_qtyoh) ===
                     $shipmentScheduleLocation = $packingReplenishmentDet->getShipmentScheduleLocation;
                     $shipmentScheduleDet = $shipmentScheduleLocation->getShipmentScheduleDet;
-
+                    // log::info($shipmentScheduleDet);
+                    // log::info($shipmentScheduleLocation);
+                    // DB::rollback();
+                    // dd('stop');
                     xxinvDet::where('xxinv_part', $shipmentScheduleDet->ssd_sod_part)
                         ->where('xxinv_lot', $shipmentScheduleLocation->ssl_lotserial)
                         ->where('xxinv_bin', $shipmentScheduleLocation->ssl_bin)
                         ->where('xxinv_level', $shipmentScheduleLocation->ssl_level)
-                        ->increment(
-                            'xxinv_qtyoh',
-                            (float) $shipmentScheduleLocation->ssl_qty_pick
-                        );
+                        ->update([
+        'xxinv_qty_shp' => DB::raw(
+            'xxinv_qty_shp - ' . (float) $shipmentScheduleLocation->ssl_qty_pick
+        ),
+        'xxinv_qty_wrh' => DB::raw(
+            'xxinv_qty_wrh + ' . (float) $shipmentScheduleLocation->ssl_qty_pick
+        ),
+                   
+                ]);
 
-                    $shipmentScheduleLocation->ssl_qty_pick = 0;
+
+                $newTransactionHistory = new TransactionHistory();
+                        $newTransactionHistory->tr_nbr       = $shipmentScheduleDet->ssd_sod_nbr ?? '';
+                        $newTransactionHistory->tr_order     = '';
+                        $newTransactionHistory->tr_program   = 'Shipment Module';
+                        $newTransactionHistory->tr_activity  = 'Shipment Confirm Reject';
+                        $newTransactionHistory->tr_user      = Auth::user()->username ?? '';
+                        $newTransactionHistory->tr_part      = $shipmentScheduleDet->ssd_sod_part ?? '';
+                        $newTransactionHistory->tr_uom       = $shipmentScheduleDet->ssd_uom ?? '';
+                        $newTransactionHistory->tr_line      = $shipmentScheduleDet->ssd_sod_line ?? 0;
+                        $newTransactionHistory->tr_lot       = $shipmentScheduleLocation->ssl_lotserial ?? '';
+                        $newTransactionHistory->tr_qty       = $shipmentScheduleLocation->ssl_qty_pick ?? 0;
+                        $newTransactionHistory->tr_date      = now();
+                        $newTransactionHistory->tr_reference = '';
+                        $newTransactionHistory->tr_site      = $shipmentScheduleLocation->ssl_site  ?? '2100';
+                        $newTransactionHistory->tr_location  = $shipmentScheduleLocation->ssl_location ?? '';
+                        $newTransactionHistory->tr_warehouse = $shipmentScheduleLocation->ssl_warehouse  ?? '';
+                        $newTransactionHistory->tr_level     = $shipmentScheduleLocation->ssl_level ?? '0';
+                        $newTransactionHistory->tr_bin       = $shipmentScheduleLocation->ssl_bin ?? '0';
+                        $newTransactionHistory->tr_remark    = 'Shipment Confirm Reject';
+                        $newTransactionHistory->save();
+
+
+
+                    $shipmentScheduleLocation->ssl_qty_to_pick = 0;
                     $shipmentScheduleLocation->save();
                     // === akhir pengembalian stok ===
 

@@ -524,7 +524,7 @@ class APIPurchaseOrderController extends Controller
                 return (float) $item['xxinv_qtyoh'] > 0;
             })
             ->values();
- 
+
         $dataQAD = $merged->filter(function ($item) use ($getAllItemLocation) {
             foreach ($getAllItemLocation as $datas) {
                 if (
@@ -1198,7 +1198,174 @@ class APIPurchaseOrderController extends Controller
         return response()->json($wsaData[1]);
     }
 
+    // public function wsaPenyimpananPaletSearch(Request $req)
+    // {
+    //     // $itemCode = $req->search;
+    //     // Request Xena 1609
+    //     $itemCode = '';
+    //     $warehouse = '';
+    //     $levelsearch = '';
+    //     $binSearch = '';
+    //     $search = '';
+    //     $location = '';
+    //     if ($req->wh) {
+    //         $warehouse = $req->wh ?? '';
+    //     }
+    //     if ($req->item) {
+    //         $itemCode = $req->item;
+    //     }
+    //     if ($req->level) {
+    //         $levelsearch = $req->level ?? '';
+    //     }
+    //     if ($req->bin) {
+    //         $binSearch = $req->bin ?? '';
+    //     }
+    //     if ($req->search) {
+    //         $search = $req->search; // Capture the search parameter
+    //         if ($search != '') {
+    //             $levelsearch = explode('|', $search)[0] ?? '';
+    //             $binSearch = explode('|', $search)[1] ?? '';
+    //         }
+    //     }
+    //     if ($req->location) {
+    //         $location = $req->location; // Capture the location parameter
+    //     }
+
+    //    Log::info('time1 : ' . now());
+
+    //     $receiptDetail = ReceiptPallet::with('getDetail')
+    //         ->whereRelation('getDetail', 'rd_status', '!=', 'Approved')
+    //         ->whereRelation('getDetail', 'rd_status', '!=', 'Reject')
+    //         ->distinct()
+    //         ->get();
+
+
+    //     $domain = Domain::first();
+    //     $domainCode = $domain->domain ?? '';
+    //     $results = xxinvDet::query()
+    //         ->where('xxinv_domain', $domainCode)
+    //         ->where('xxinv_wrh', $warehouse)
+    //         ->when($location    !== '', fn($q) => $q->where('xxinv_loc',   $location))
+    //         ->when($binSearch   !== '', fn($q) => $q->where('xxinv_bin',   $binSearch))
+    //         ->when($levelsearch !== '', fn($q) => $q->where('xxinv_level', $levelsearch))
+    //         ->selectRaw('max(xxinv_part) as xxinv_part, max(xxinv_loc) as xxinv_loc, max(xxinv_lot) as xxinv_lot, xxinv_bin, xxinv_level, xxinv_site, xxinv_wrh, max(xxinv_qty_pick) as xxinv_qty_pick, sum(xxinv_qtyoh) as xxinv_qtyoh')
+    //         ->groupBy('xxinv_wrh', 'xxinv_level', 'xxinv_bin', 'xxinv_site')
+    //         ->orderBy('xxinv_level')
+    //         ->orderBy('xxinv_bin')
+    //         ->get();
+    //         Log::info('time2 : ' . now());
+    //     // dd($results);
+    //     if ($results->isEmpty()) {
+    //         return response()->json([
+    //             'Status'  => 'Error',
+    //             'Message' => 'No Data Available'
+    //         ], 422);
+    //     }
+
+    //     $temp       = collect();
+    //     $totalQtyoh = 0;
+
+    //     foreach ($results as $row) {
+
+
+    //         // $isLastOfBin = $results->last(fn($r) => $r->xxinv_bin === $row->xxinv_bin) === $row;
+
+    //         // if ($isLastOfBin) {
+    //         // if ($totalQtyoh <= 0) {
+
+    //         //check if there is qtyoh
+    //         $xxinvcheck = xxinvDet::query()
+    //             ->where('xxinv_domain', $domainCode)
+    //             ->where('xxinv_site', $row->xxinv_site)
+    //             ->where('xxinv_wrh', $row->xxinv_wrh)
+    //             ->where('xxinv_level', $row->xxinv_level)
+    //             ->where('xxinv_bin', $row->xxinv_bin)
+
+    //             ->sum('xxinv_qtyoh');
+    //         if ($xxinvcheck == 0) {
+    //             $temp->push([
+    //                 't_domain'        => $domainCode,
+    //                 't_inv_part'      => $row->xxinv_part,
+    //                 't_inv_part_desc' => '',
+    //                 't_inv_loc'       => $row->xxinv_loc,
+    //                 't_inv_lot'       => $row->xxinv_lot,
+    //                 't_inv_bin'       => $row->xxinv_bin,
+    //                 't_inv_level'     => $row->xxinv_level,
+    //                 't_inv_site'      => $row->xxinv_site,
+    //                 't_inv_wrh'       => $row->xxinv_wrh,
+    //                 't_inv_qty_pick'  => $row->xxinv_qty_pick,
+    //                 't_inv_qtyoh'     => $totalQtyoh,
+    //                 't_is_prioritize' => '0',
+    //             ]);
+    //         }
+
+    //         // }
+
+
+    //         $totalQtyoh = 0;
+    //         // }
+    //     }
+    //     Log::info('time3 : ' . now());
+
+    //     // Use $temp (processed) instead of $results (raw DB rows)
+    //     $getDataQAD = $temp;
+    //     return response()->json($getDataQAD);
+    //     if ($levelsearch != '') {
+    //         $grouped = $getDataQAD->groupBy(function ($item) {
+    //             $site  = (string)($item['t_inv_site']  ?? '');
+    //             $loc   = (string)($item['t_inv_loc']   ?? '');
+    //             $bin   = (string)($item['t_inv_bin']   ?? '');
+    //             $wrh   = (string)($item['t_inv_wrh']   ?? '');
+    //             $level = (string)($item['t_inv_level'] ?? '');
+    //             return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
+    //         });
+    //     } else {
+    //         $grouped = $getDataQAD->groupBy(function ($item) {
+    //             $site  = (string)($item['t_inv_site']  ?? '');
+    //             $wrh   = (string)($item['t_inv_wrh']   ?? '');
+    //             $level = (string)($item['t_inv_level'] ?? '');
+    //             $bin   = (string)($item['t_inv_bin']   ?? '');
+    //             return "{$site}-{$wrh}-{$level}-{$bin}";
+    //         });
+    //     }
+    //     // return response()->json($grouped);
+    //     $merged = $grouped->map(function ($items) {
+    //         $first = $items->first();
+    //         $first['t_inv_qtyoh'] = $items->sum(fn($i) => (int)$i['t_inv_qtyoh']);
+    //         return $first;
+    //     })->values();
+
+    //     $dataQAD = $merged->map(function ($item) use ($receiptDetail) {
+    //         foreach ($receiptDetail as $datas) {
+    //             if (
+    //                 $item['t_inv_wrh']   == $datas->getDetail->rd_building_penyimpanan &&
+    //                 $item['t_inv_level'] == $datas->rdp_level_penyimpanan &&
+    //                 $item['t_inv_bin']   == $datas->rdp_bin_penyimpanan
+    //             ) {
+    //                 $item['t_is_prioritize'] = '1';
+    //                 break;
+    //             }
+    //         }
+    //         return $item;
+    //     });
+
+    //     if ($search != '') {
+    //         $dataQAD = $dataQAD->filter(function ($item) use ($search) {
+    //             $level = (string)($item['t_inv_level'] ?? '');
+    //             $bin   = (string)($item['t_inv_bin']   ?? '');
+    //             return stripos($level, $search) !== false || stripos($bin, $search) !== false;
+    //         });
+    //     }
+
+    //     $dataQAD = $dataQAD->where('t_is_prioritize', '0')
+    //         ->sortBy('t_inv_wrh')
+    //         ->sortBy('t_inv_qtyoh')
+    //         ->values();
+
+    //     return response()->json($dataQAD);
+    // }
     public function wsaPenyimpananPaletSearch(Request $req)
+
     {
         // $itemCode = $req->search;
         // Request Xena 1609
@@ -1363,6 +1530,98 @@ class APIPurchaseOrderController extends Controller
 
         return response()->json($dataQAD);
     }
+
+
+{
+    $itemCode    = '';
+    $warehouse   = '';
+    $levelsearch = '';
+    $binSearch   = '';
+    $search      = '';
+    $location    = '';
+
+    if ($req->wh) {
+        $warehouse = $req->wh ?? '';
+    }
+    if ($req->item) {
+        $itemCode = $req->item;
+    }
+    if ($req->level) {
+        $levelsearch = $req->level ?? '';
+    }
+    if ($req->bin) {
+        $binSearch = $req->bin ?? '';
+    }
+    if ($req->search) {
+        $search = $req->search;
+        if ($search != '') {
+            $levelsearch = explode('|', $search)[0] ?? '';
+            $binSearch   = explode('|', $search)[1] ?? '';
+        }
+    }
+    if ($req->location) {
+        $location = $req->location;
+    }
+
+    Log::info('time1 : ' . now());
+
+    $receiptDetail = ReceiptPallet::with('getDetail')
+        ->whereRelation('getDetail', 'rd_status', '!=', 'Approved')
+        ->whereRelation('getDetail', 'rd_status', '!=', 'Reject')
+        ->distinct()
+        ->get();
+
+    $domain     = Domain::first();
+    $domainCode = $domain->domain ?? '';
+
+    $results = xxinvDet::query()
+        ->where('xxinv_domain', $domainCode)
+        ->where('xxinv_wrh', $warehouse)
+        ->when($location    !== '', fn($q) => $q->where('xxinv_loc',   $location))
+        ->when($binSearch   !== '', fn($q) => $q->where('xxinv_bin',   $binSearch))
+        ->when($levelsearch !== '', fn($q) => $q->where('xxinv_level', $levelsearch))
+        ->selectRaw('max(xxinv_part) as xxinv_part, max(xxinv_loc) as xxinv_loc, max(xxinv_lot) as xxinv_lot, xxinv_bin, xxinv_level, xxinv_site, xxinv_wrh, max(xxinv_qty_pick) as xxinv_qty_pick, sum(xxinv_qtyoh) as xxinv_qtyoh')
+        ->groupBy('xxinv_wrh', 'xxinv_level', 'xxinv_bin', 'xxinv_site')
+        ->orderBy('xxinv_level')
+        ->orderBy('xxinv_bin')
+        ->get();
+
+    Log::info('time2 : ' . now());
+
+    if ($results->isEmpty()) {
+        return response()->json([
+            'Status'  => 'Error',
+            'Message' => 'No Data Available'
+        ], 422);
+    }
+
+    $temp = collect();
+
+    foreach ($results as $row) {
+        if ($row->xxinv_qtyoh == 0) {
+            $temp->push([
+                't_domain'        => $domainCode,
+                't_inv_part'      => $row->xxinv_part,
+                't_inv_part_desc' => '',
+                't_inv_loc'       => $row->xxinv_loc,
+                't_inv_lot'       => $row->xxinv_lot,
+                't_inv_bin'       => $row->xxinv_bin,
+                't_inv_level'     => $row->xxinv_level,
+                't_inv_site'      => $row->xxinv_site,
+                't_inv_wrh'       => $row->xxinv_wrh,
+                't_inv_qty_pick'  => $row->xxinv_qty_pick,
+                't_inv_qtyoh'     => 0,
+                't_is_prioritize' => '0',
+            ]);
+        }
+    }
+
+    Log::info('time3 : ' . now());
+
+    // Use $temp (processed) instead of $results (raw DB rows)
+    $getDataQAD = $temp;
+    return response()->json($getDataQAD);
+}
 
     public function deleteDraft(Request $req)
     {

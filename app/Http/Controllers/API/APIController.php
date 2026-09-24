@@ -940,7 +940,7 @@ class APIController extends Controller
         // $site     = isset($data['site']) && $data['site'] !== '' ? explode(';', $data['site']) : [];
         // $lotserial = isset($data['lotserial']) && $data['lotserial'] !== '' ? explode(';', $data['lotserial']) : [];
 
-        $sendQxCompIssue = (new QxtendServices())->qxWorkOrderComponentIssue($wonbr, $location, $lot, $effdate, $part, $qty, $site, $lotserial);
+        $sendQxCompIssue = (new QxtendServices())->qxWorkOrderComponentIssue($wonbr,$lot,$effdate, $part, $qty, $site, $location, $lotserial);
         if ($sendQxCompIssue[0] == 'true') {
             return response()->json([
                 'Status' => 'Success',
