@@ -392,7 +392,7 @@
 
         </tr>
         <tr>
-            <td>Suhu Penyimpanan</td>
+            <td>Suhu Penyimpanan (&deg;C)</td>
 
             <td>{{ $suhu_penanda ?? '-' }}</td>
 
