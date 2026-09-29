@@ -1874,7 +1874,7 @@ class WSAServices
             // '</meiji_get_xxpick_det>'.
             '</Body>'.
             '</Envelope>';
-        // dd($qdocRequest);
+        
         // log::info($qdocRequest);
         // dd($qdocRequest);
         $curlOptions = [
@@ -1919,7 +1919,7 @@ class WSAServices
         }
 
         $xmlResp = simplexml_load_string($qdocResponse);
-
+        
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
 
         $dataloop = $xmlResp->xpath('//ns1:tempRow');

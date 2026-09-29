@@ -1561,9 +1561,10 @@ class APIPurchaseOrderController extends Controller
         $purchaseOrder = PurchaseOrderMaster::with([
             'getDetail',
             'getReceipt.getDetailReceipt' => function ($query) {
-                $query->selectRaw('rd_pod_det_id, sum(rd_qty_terima * rd_qty_potensi) as total_qty_terima')
-                    ->where('rd_status', '=', 'Approved')
-                    ->groupBy('rd_pod_det_id');
+                // $query->selectRaw('rd_pod_det_id, sum(rd_qty_terima * rd_qty_potensi) as total_qty_terima')
+                    $query->where('rd_status', '=', 'Approved')
+                    ->with('getPurchaseOrderDetail');
+                //     ->groupBy('rd_pod_det_id');
             },
         ])->where('po_nbr', $ponbr)->first();
         // $datareceipt = ReceiptMaster::with('getDetailReceipt')->where('rm_po_nbr', $ponbr)->where('rm_status', '=', 'Approved')->first();
@@ -1607,7 +1608,7 @@ class APIPurchaseOrderController extends Controller
                     ->join('xxinv_det', function ($e) {
                         $e->on('receipt_det.rd_nama_barang', '=', 'xxinv_det.xxinv_part');
                         $e->on('receipt_det.rd_batch', '=', 'xxinv_det.xxinv_lot');
-                    })
+                    })->orderBy('rd_nama_barang')
                     ->where('xxinv_det.xxinv_loc', 'WH-QRT')
                     ->select('receipt_det.*', 'xxinv_det.*')
                     ->orderBy('xxinv_det.xxinv_wrh')

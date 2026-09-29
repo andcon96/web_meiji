@@ -44,6 +44,7 @@ Route::post('getWorkOrderQad', [APIController::class, 'getWorkOrderQad']);
 // API DKP
 Route::post('sendQxCompIssue', [APIController::class, 'sendQxCompIssue']);
 Route::get('getWipItem', [APIController::class, 'getWipItem']);
+Route::post('sendIssueUnplanned',[APIController::class,'apiIssueUnplanned']);
 
 // Get APK Latest Version
 Route::get('getAPKLatestVersion', [APIController::class, 'getAPKLatestVersion']);

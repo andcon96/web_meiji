@@ -1003,7 +1003,7 @@ class APIController extends Controller
 
         try {
 
-            $isLotExist = (new WSAServices)->wsaGetLot($request->item );
+            $isLotExist = (new WSAServices)->wsaGetLot($request->item);
 
             // dd($isLotExist);
 
@@ -1077,6 +1077,7 @@ class APIController extends Controller
                 ->where('xxinv_site', $data['ldSite'])
                 ->where('xxinv_lot', $data['ldLot'])
                 ->where('xxinv_part', $data['ldPart'])
+                ->where('xxinv_loc', '!=', 'WIP')
                 ->get();
             // $xxinvDet2 = xxinvDet::where('xxinv_domain', $data['ldDomain'])
             //     ->where('xxinv_site', $data['ldSite'])
@@ -1149,7 +1150,47 @@ class APIController extends Controller
         // $qty      = isset($data['qty']) && $data['qty'] !== '' ? explode(';', $data['qty']) : [];
         // $site     = isset($data['site']) && $data['site'] !== '' ? explode(';', $data['site']) : [];
         // $lotserial = isset($data['lotserial']) && $data['lotserial'] !== '' ? explode(';', $data['lotserial']) : [];
-        $xxinvdet = xxinvDet::where('xxinv_loc', 'WIP')->orderBy('xxinv_part')->select('xxinv_part as part', 'xxinv_lot as lot', 'xxinv_wrh as warehouse', 'xxinv_level as level', 'xxinv_bin as bin', 'xxinv_qty_wrh as qty_wrh')->get();
+        // $xxinvdet = xxinvDet::from('xxinvdet as n')
+        // ->leftjoin()
+        // ->where('xxinv_loc', 'WIP')->orderBy('xxinv_part')
+
+        // ->select(
+        //     'xxinv_part as part', 
+        //     'xxinv_lot as lot', 
+        //     'xxinv_site as site', 
+        //     'xxinv_loc as location',
+        //     'xxinv_wrh as warehouse', 
+        //     'xxinv_level as level', 
+        //     'xxinv_bin as bin', 
+        //     'xxinv_qty_wrh as qty_wrh')->get();
+
+        $xxinvdet = xxinvDet::from('xxinv_det as w')
+            ->leftJoin('xxinv_det as n', function ($join) {
+                $join->on('w.xxinv_part',  '=', 'n.xxinv_part')
+                    ->on('w.xxinv_lot',   '=', 'n.xxinv_lot')
+                    ->on('w.xxinv_site',  '=', 'n.xxinv_site')
+                    ->on('w.xxinv_wrh',   '=', 'n.xxinv_wrh')
+                    ->on('w.xxinv_level', '=', 'n.xxinv_level')
+                    ->on('w.xxinv_bin',   '=', 'n.xxinv_bin')
+                    ->where('n.xxinv_loc', '!=', 'WIP');   // moved into the join
+            })
+            ->where('w.xxinv_loc', 'WIP')                    // only this stays in WHERE
+            ->orderBy('w.xxinv_part')
+            ->select(
+                'w.xxinv_part as part',
+                'w.xxinv_lot as lot',
+                'w.xxinv_site as site',
+                'w.xxinv_loc as loc',        // NULL when no non-WIP match
+                'w.xxinv_wrh as warehouse',
+                'w.xxinv_level as level',
+                'w.xxinv_bin as bin',
+                'n.xxinv_loc as oriloc'      // always WIP
+            )
+            ->get();
+        $xxinvdet = $xxinvdet->map(function ($row) {
+            $row->oriloc = $row->oriloc ?? '';
+            return $row;
+        });
         return response()->json($xxinvdet);
     }
     public function apiIssueUnplanned(SendQxIssueUnplannedRequest $request)
@@ -1159,12 +1200,40 @@ class APIController extends Controller
 
             DB::beginTransaction();
 
-                  
+
+            $part = $request->part;
+            $site = $request->site;
+            $location = $request->location;
+            $lotserial = $request->lotserial;
+            $qty = $request->qty;
+            $warehouse = $request->warehouse;
+            $level = $request->level;
+            $bin = $request->bin;
+            $oriloc = $request->oriloc;
+
             $qty = floatval(str_replace(',', '', $request->qty));
 
+            $xxinvdet = xxinvDet::where('xxinv_part', $part)
+                ->where('xxinv_lot', $lotserial)
+                ->where('xxinv_loc', '!=', $location)
+                ->where('xxinv_site', $site)
+                ->where('xxinv_wrh', $warehouse)
+                ->where('xxinv_level', $level)
+                ->where('xxinv_bin', $bin)
+                ->first();
+
+            if (!$xxinvdet) {
+                return response()->json(
+                    [
+                        'Status' => 'Error',
+                        'Message' => 'Please contact admin',
+                    ],
+                    422,
+                );
+            }
             $qxtendServices = new QxtendServices();
 
-            $qxtend = $qxtendServices->qxIssueInventoryUnplanned($request);
+            $qxtend = $qxtendServices->qxIssueUnplannedApi($request, $xxinvdet);
 
             if ($qxtend[0] == false) {
                 DB::rollback();
@@ -1179,14 +1248,8 @@ class APIController extends Controller
                     422,
                 );
             }
- $wonbr = $request->wonbr;
-            $wolot = $request->wolot;
-            $effdate = $request->effdate;
-            $part = $request->part;
-            $site = $request->site;
-            $location = $request->location;
-            $lotserial = $request->lotserial;
-            $qty = $request->qty;
+
+
 
             // $part = $request->part;
             // $site = $req->site;
@@ -1196,76 +1259,65 @@ class APIController extends Controller
             // $level = $req->level;
             // $bin = $req->bin;
 
-            // $existingInv = xxinvDet::where('xxinv_part', $part)
-            //     ->where('xxinv_site', $site)
-            //     ->where('xxinv_loc', $location)
-            //     ->where('xxinv_lot', $lotserial)
-            //     ->when($warehouse, function ($q) use ($warehouse) {
-            //         return $q->where('xxinv_wrh', $warehouse);
-            //     })
-            //     ->when($level, function ($q) use ($level) {
-            //         return $q->where('xxinv_level', $level);
-            //     })
-            //     ->when($bin, function ($q) use ($bin) {
-            //         return $q->where('xxinv_bin', $bin);
-            //     })
-            //     ->first();
+            $existingInv = xxinvDet::where('xxinv_part', $part)
+                ->where('xxinv_site', $site)
+                ->where('xxinv_loc', $location)
+                ->where('xxinv_lot', $lotserial)
+                ->when($warehouse, function ($q) use ($warehouse) {
+                    return $q->where('xxinv_wrh', $warehouse);
+                })
+                ->when($level, function ($q) use ($level) {
+                    return $q->where('xxinv_level', $level);
+                })
+                ->when($bin, function ($q) use ($bin) {
+                    return $q->where('xxinv_bin', $bin);
+                })
+                ->first();
 
-            // if ($existingInv) {
+            if ($existingInv) {
 
-            //     $existingInv->xxinv_qtyoh = $existingInv->xxinv_qtyoh - $qty;
-            //     $existingInv->xxinv_qty_wrh = $existingInv->xxinv_qty_wrh - $qty;
-            //     $existingInv->save();
-            // } else {
+                $existingInv->xxinv_qtyoh = $existingInv->xxinv_qtyoh - $qty;
+                $existingInv->xxinv_qty_wrh = $existingInv->xxinv_qty_wrh - $qty;
+                $existingInv->save();
+            } else {
 
-            //     $newInv = new xxinvDet();
-            //     $newInv->xxinv_domain = 'MIPI';
-            //     $newInv->xxinv_part = $part;
-            //     $newInv->xxinv_site = $site;
-            //     $newInv->xxinv_loc = $location;
-            //     $newInv->xxinv_lot = $lotserial;
-            //     $newInv->xxinv_wrh = $warehouse;
-            //     $newInv->xxinv_level = $level;
-            //     $newInv->xxinv_bin = $bin;
-            //     $newInv->xxinv_qtyoh = $qty;
-            //     $newInv->xxinv_ref = $req->lotref ?? null;
-            //     $newInv->xxinv_exp_date = $req->exp_date ?? null;
-            //     $newInv->save();
-            // }
+                $newInv = new xxinvDet();
+                $newInv->xxinv_domain = 'MIPI';
+                $newInv->xxinv_part = $part;
+                $newInv->xxinv_site = $site;
+                $newInv->xxinv_loc = $location;
+                $newInv->xxinv_lot = $lotserial;
+                $newInv->xxinv_wrh = $warehouse;
+                $newInv->xxinv_level = $level;
+                $newInv->xxinv_bin = $bin;
+                $newInv->xxinv_qtyoh = $qty;
+                $newInv->xxinv_ref = '';
+                $newInv->xxinv_exp_date = '';
+                $newInv->save();
+            }
 
-            // $newTransfer = new InvTransHist();
-            // $newTransfer->trans_type = 'IN';
-            // $newTransfer->product_code = $req->part;
-            // $newTransfer->product_name = $req->partdesc;
-            // $newTransfer->supplier = $req->supplier;
 
-            // $newTransfer->location = $req->location;
-            // $newTransfer->pallet_no = $req->lotserial;
-            // $newTransfer->batch_no = $req->lotref;
-            // $newTransfer->quantity = $qty;
-            // $newTransfer->created_by = Auth::user()->id;
-            // $newTransfer->save();
 
-            // $newTransactionHistory = new TransactionHistory();
-            // $newTransactionHistory->tr_nbr = '';
-            // $newTransactionHistory->tr_order = '';
-            // $newTransactionHistory->tr_program = 'Issues Unplanned Module';
-            // $newTransactionHistory->tr_activity = 'Submit Issues';
-            // $newTransactionHistory->tr_user = Auth::user()->username ?? '';
-            // $newTransactionHistory->tr_part = $req->part ?? '';
-            // $newTransactionHistory->tr_uom = '';
-            // $newTransactionHistory->tr_line = '';
-            // $newTransactionHistory->tr_lot = $req->lotserial ?? '';
-            // $newTransactionHistory->tr_qty = $qty;
-            // $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-            // $newTransactionHistory->tr_reference = $req->lotref ?? '';
-            // $newTransactionHistory->tr_site = $req->site ?? '';
-            // $newTransactionHistory->tr_location = $req->location ?? '';
-            // $newTransactionHistory->tr_warehouse = $req->warehouse ?? '';
-            // $newTransactionHistory->tr_level = $req->level ?? '';
-            // $newTransactionHistory->tr_bin = $req->bin ?? '';
-            // $newTransactionHistory->tr_remark = '';
-            // $newTransactionHistory->save();
+            $newTransactionHistory = new TransactionHistory();
+            $newTransactionHistory->tr_nbr = '';
+            $newTransactionHistory->tr_order = '';
+            $newTransactionHistory->tr_program = 'Issues Unplanned Module';
+            $newTransactionHistory->tr_activity = 'Submit Issues API';
+            $newTransactionHistory->tr_user = 'DKP';
+            $newTransactionHistory->tr_part = $part ?? '';
+            $newTransactionHistory->tr_uom = '';
+            $newTransactionHistory->tr_line = '';
+            $newTransactionHistory->tr_lot = $lotserial ?? '';
+            $newTransactionHistory->tr_qty = $qty;
+            $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
+            $newTransactionHistory->tr_reference = '';
+            $newTransactionHistory->tr_site = $site ?? '';
+            $newTransactionHistory->tr_location = $location ?? '';
+            $newTransactionHistory->tr_warehouse = $warehouse ?? '';
+            $newTransactionHistory->tr_level = $level ?? '';
+            $newTransactionHistory->tr_bin = $bin ?? '';
+            $newTransactionHistory->tr_remark = 'Issue Unplanned from API';
+            $newTransactionHistory->save();
 
             DB::commit();
 

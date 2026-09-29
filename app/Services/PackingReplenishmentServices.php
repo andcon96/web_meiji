@@ -221,44 +221,43 @@ class PackingReplenishmentServices
                 }
 
                 xxinvDet::where('xxinv_part', $shipmentScheduleDet->ssd_sod_part)
-    ->where('xxinv_lot', $shipmentScheduleLocation->ssl_lotserial)
-    ->where('xxinv_bin', $shipmentScheduleLocation->ssl_bin)
-    ->where('xxinv_level', $shipmentScheduleLocation->ssl_level)
-    ->update([
-        'xxinv_qty_shp' => DB::raw(
-            'xxinv_qty_shp - ' . (float) $shipmentScheduleLocation->ssl_qty_pick
-        ),
-        'xxinv_qty_wrh' => DB::raw(
-            'xxinv_qty_wrh + ' . (float) $shipmentScheduleLocation->ssl_qty_pick
-        ),
-    ]);
-               
+                    ->where('xxinv_lot', $shipmentScheduleLocation->ssl_lotserial)
+                    ->where('xxinv_bin', $shipmentScheduleLocation->ssl_bin)
+                    ->where('xxinv_level', $shipmentScheduleLocation->ssl_level)
+                    ->update([
+                        'xxinv_qty_shp' => DB::raw(
+                            'xxinv_qty_shp - ' . (float) $shipmentScheduleLocation->ssl_qty_pick
+                        ),
+                        'xxinv_qty_wrh' => DB::raw(
+                            'xxinv_qty_wrh + ' . (float) $shipmentScheduleLocation->ssl_qty_pick
+                        ),
+                    ]);
+
 
 
                 $newTransactionHistory = new TransactionHistory();
-                        $newTransactionHistory->tr_nbr       = $shipmentScheduleDet->ssd_sod_nbr ?? '';
-                        $newTransactionHistory->tr_order     = '';
-                        $newTransactionHistory->tr_program   = 'Shipment Module';
-                        $newTransactionHistory->tr_activity  = 'Shipment Reject';
-                        $newTransactionHistory->tr_user      = Auth::user()->username ?? '';
-                        $newTransactionHistory->tr_part      = $shipmentScheduleDet->ssd_sod_part ?? '';
-                        $newTransactionHistory->tr_uom       = $shipmentScheduleDet->ssd_uom ?? '';
-                        $newTransactionHistory->tr_line      = $shipmentScheduleDet->ssd_sod_line ?? 0;
-                        $newTransactionHistory->tr_lot       = $shipmentScheduleLocation->ssl_lotserial ?? '';
-                        $newTransactionHistory->tr_qty       = $shipmentScheduleLocation->ssl_qty_pick ?? 0;
-                        $newTransactionHistory->tr_date      = now();
-                        $newTransactionHistory->tr_reference = '';
-                        $newTransactionHistory->tr_site      = $shipmentScheduleLocation->ssl_site  ?? '2100';
-                        $newTransactionHistory->tr_location  = $shipmentScheduleLocation->ssl_location ?? '';
-                        $newTransactionHistory->tr_warehouse = $shipmentScheduleLocation->ssl_warehouse  ?? '';
-                        $newTransactionHistory->tr_level     = $shipmentScheduleLocation->ssl_level ?? '0';
-                        $newTransactionHistory->tr_bin       = $shipmentScheduleLocation->ssl_bin ?? '0';
-                        $newTransactionHistory->tr_remark    = 'Shipment Reject';
-                        $newTransactionHistory->save();
+                $newTransactionHistory->tr_nbr       = $shipmentScheduleDet->ssd_sod_nbr ?? '';
+                $newTransactionHistory->tr_order     = '';
+                $newTransactionHistory->tr_program   = 'Shipment Module';
+                $newTransactionHistory->tr_activity  = 'Shipment Reject';
+                $newTransactionHistory->tr_user      = Auth::user()->username ?? '';
+                $newTransactionHistory->tr_part      = $shipmentScheduleDet->ssd_sod_part ?? '';
+                $newTransactionHistory->tr_uom       = $shipmentScheduleDet->ssd_uom ?? '';
+                $newTransactionHistory->tr_line      = $shipmentScheduleDet->ssd_sod_line ?? 0;
+                $newTransactionHistory->tr_lot       = $shipmentScheduleLocation->ssl_lotserial ?? '';
+                $newTransactionHistory->tr_qty       = $shipmentScheduleLocation->ssl_qty_pick ?? 0;
+                $newTransactionHistory->tr_date      = now();
+                $newTransactionHistory->tr_reference = '';
+                $newTransactionHistory->tr_site      = $shipmentScheduleLocation->ssl_site  ?? '2100';
+                $newTransactionHistory->tr_location  = $shipmentScheduleLocation->ssl_location ?? '';
+                $newTransactionHistory->tr_warehouse = $shipmentScheduleLocation->ssl_warehouse  ?? '';
+                $newTransactionHistory->tr_level     = $shipmentScheduleLocation->ssl_level ?? '0';
+                $newTransactionHistory->tr_bin       = $shipmentScheduleLocation->ssl_bin ?? '0';
+                $newTransactionHistory->tr_remark    = 'Shipment Reject';
+                $newTransactionHistory->save();
 
                 $shipmentScheduleLocation->ssl_qty_pick = 0;
                 $shipmentScheduleLocation->save();
-
             }
 
             $packingReplenishmentMstr->prm_status = 'Draft';
@@ -267,7 +266,6 @@ class PackingReplenishmentServices
             DB::commit();
 
             return true;
-
         } catch (Exception $err) {
 
             DB::rollBack();
@@ -306,7 +304,7 @@ class PackingReplenishmentServices
             $packingReplenishmentMaster = PackingReplenishmentMstr::with(['getPackingReplenishmentDet'])
                 ->where('id', $packingReplenishment['get_packing_replenishment_mstr']['id'])
                 ->first();
-                
+
             $packingReplenishmentDetails = PackingReplenishmentDet::where(
                 'prm_id',
                 $packingReplenishmentMaster->id
@@ -324,31 +322,31 @@ class PackingReplenishmentServices
                 if (! $shipmentScheduleDet) {
                     continue;
                 }
-                        
-               $newTransactionHistory = new TransactionHistory();
-                        $newTransactionHistory->tr_nbr       = $shipmentScheduleDet->ssd_sod_nbr ?? '';
-                        $newTransactionHistory->tr_order     = '';
-                        $newTransactionHistory->tr_program   = 'Shipment Module';
-                        $newTransactionHistory->tr_activity  = 'Shipment Approve';
-                        $newTransactionHistory->tr_user      = Auth::user()->username ?? '';
-                        $newTransactionHistory->tr_part      = $shipmentScheduleDet->ssd_sod_part ?? '';
-                        $newTransactionHistory->tr_uom       = $shipmentScheduleDet->ssd_uom ?? '';
-                        $newTransactionHistory->tr_line      = $shipmentScheduleDet->ssd_sod_line ?? 0;
-                        $newTransactionHistory->tr_lot       = $shipmentScheduleLocation->ssl_lotserial ?? '';
-                    
-                        $newTransactionHistory->tr_qty       = $shipmentScheduleLocation->ssl_qty_pick ?? 0;
-                        $newTransactionHistory->tr_date      = now();
-                        $newTransactionHistory->tr_reference = '';
-                        $newTransactionHistory->tr_site      = $shipmentScheduleLocation->ssl_site  ?? '2100';
-                        $newTransactionHistory->tr_location  = $shipmentScheduleLocation->ssl_location ?? '';
-                        $newTransactionHistory->tr_warehouse = $shipmentScheduleLocation->ssl_warehouse  ?? '';
-                        $newTransactionHistory->tr_level     = $shipmentScheduleLocation->ssl_level ?? '0';
-                        $newTransactionHistory->tr_bin       = $shipmentScheduleLocation->ssl_bin ?? '0';
-                        $newTransactionHistory->tr_remark    = 'Shipment Approve';
-                        // dd(  $shipmentScheduleLocation);
-                        $newTransactionHistory->save();
 
-           
+                $newTransactionHistory = new TransactionHistory();
+                $newTransactionHistory->tr_nbr       = $shipmentScheduleDet->ssd_sod_nbr ?? '';
+                $newTransactionHistory->tr_order     = '';
+                $newTransactionHistory->tr_program   = 'Shipment Module';
+                $newTransactionHistory->tr_activity  = 'Shipment Approve';
+                $newTransactionHistory->tr_user      = Auth::user()->username ?? '';
+                $newTransactionHistory->tr_part      = $shipmentScheduleDet->ssd_sod_part ?? '';
+                $newTransactionHistory->tr_uom       = $shipmentScheduleDet->ssd_uom ?? '';
+                $newTransactionHistory->tr_line      = $shipmentScheduleDet->ssd_sod_line ?? 0;
+                $newTransactionHistory->tr_lot       = $shipmentScheduleLocation->ssl_lotserial ?? '';
+
+                $newTransactionHistory->tr_qty       = $shipmentScheduleLocation->ssl_qty_pick ?? 0;
+                $newTransactionHistory->tr_date      = now();
+                $newTransactionHistory->tr_reference = '';
+                $newTransactionHistory->tr_site      = $shipmentScheduleLocation->ssl_site  ?? '2100';
+                $newTransactionHistory->tr_location  = $shipmentScheduleLocation->ssl_location ?? '';
+                $newTransactionHistory->tr_warehouse = $shipmentScheduleLocation->ssl_warehouse  ?? '';
+                $newTransactionHistory->tr_level     = $shipmentScheduleLocation->ssl_level ?? '0';
+                $newTransactionHistory->tr_bin       = $shipmentScheduleLocation->ssl_bin ?? '0';
+                $newTransactionHistory->tr_remark    = 'Shipment Approve';
+                // dd(  $shipmentScheduleLocation);
+                $newTransactionHistory->save();
+
+
                 // $shipmentScheduleLocation->ssl_qty_pick = 0;
                 // $shipmentScheduleLocation->save();
 
@@ -364,7 +362,7 @@ class PackingReplenishmentServices
             $shipperConfirm->created_by = Auth::user()->id;
             $shipperConfirm->save();
 
-             $fieldName = 'mji_pack_dock';
+            $fieldName = 'mji_pack_dock';
 
             $wsaServices = new WSAServices();
             // $locationWSA = $wsaServices->wsaGenCode($fieldName);

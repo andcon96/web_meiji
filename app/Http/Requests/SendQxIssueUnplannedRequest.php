@@ -23,15 +23,18 @@ class SendQxIssueUnplannedRequest extends FormRequest
     {
         
         return [
-            'wonbr'     => 'required|string',
-            'wolot'     => 'required|string',
-            'effdate'   => 'required|string',
+            
 
             'part'      => 'required|string',
             'site'      => 'required|string',
             'location'  => 'required|string',
             'lotserial' => 'required|string',
+            'warehouse' => 'required|string',
+            'level'     => 'required|string',
+            'bin'       => 'required|string',
             'qty'       => 'required|string',
+            'oriloc'       => 'required|string',
+            
 
             
         ];
