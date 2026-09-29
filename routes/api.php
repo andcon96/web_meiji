@@ -139,6 +139,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('listShipmentSchedule', [APIPackingReplenishmentController::class, 'listShipmentSchedule']);
     Route::post('savePackingReplenishment', [APIPackingReplenishmentController::class, 'store']);
     Route::get('approverList', [APIPackingReplenishmentController::class, 'approverList']);
+    Route::get('shipList', [APIPackingReplenishmentController::class, 'shiperList']);
     Route::post('rejectPackingReplenishment', [APIPackingReplenishmentController::class, 'rejectPackingReplenishment']);
     Route::post('approvePackingReplenishment', [APIPackingReplenishmentController::class, 'approvePackingReplenishment']);
     Route::get('editPackingReplenishment/{id}', [APIPackingReplenishmentController::class, 'editPackingReplenishment']);
