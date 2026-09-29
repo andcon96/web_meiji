@@ -2303,9 +2303,9 @@ class QxtendServices
 
                         <rmks>Other Transaction</rmks>
 
-                        <yn>true</yn>
+                            <yn>true</yn>
 
-                        <yn1>true</yn1>
+                            <yn1>true</yn1>
 
                     </inventoryIssue>
 
@@ -2323,6 +2323,7 @@ class QxtendServices
             $activeConnection
         );
     }
+
 
     public function qxIssueInventoryUnplanned($req, $activeConnection = null)
     {

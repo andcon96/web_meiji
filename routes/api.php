@@ -10,6 +10,7 @@ use App\Http\Controllers\API\APIPurchaseOrderController;
 use App\Http\Controllers\API\APIPurchaseOrderRecheckController;
 use App\Http\Controllers\API\APIQualityInfoController;
 use App\Http\Controllers\API\APISampling;
+use App\Http\Controllers\API\ApiSIngelTransferLot;
 use App\Http\Controllers\API\APISingleTransfer;
 use App\Http\Controllers\API\APITransIssUnpController;
 use App\Http\Controllers\API\APITransRctUnpController;
@@ -23,7 +24,7 @@ use App\Http\Controllers\API\PackingReplenishment\APIPackingReplenishmentControl
 use App\Http\Controllers\API\ShipmentSchedule\APIShipmentScheduleController;
 use App\Http\Controllers\API\ShipperConfirm\APIShipperConfirmController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\ApiSIngelTransferLot;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -97,7 +98,6 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::post('getItemLotDetail', [APIPurchaseOrderController::class, 'getItemLotDetail']);
     Route::post('getxxinvdet', [APIPurchaseOrderController::class, 'getxxinvdet']);
     Route::post('sendQtyReturn', [APIPurchaseOrderController::class, 'sendQtyReturn']);
-
 
     // WSA PO
     Route::get('wsaWOPrint', [APIPurchaseOrderController::class, 'wsaWOPrint']); //mira
@@ -238,14 +238,12 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getLevelDataST', [APISingleTransfer::class, 'getLevelDataST']);
     Route::get('getBinDataST', [APISingleTransfer::class, 'getBinDataST']);
 
-
-
     Route::post('getWlbData', [APISingleTransfer::class, 'getWlbData']);
 
     //Work Order Issue
     //Route::get("getIssueData", [APIWorkOrderController::class, "getIssueData"]);
-    
-    Route::get("getWorkOrderIssue", [APIPicklistShopping::class, "getWorkOrderIssue"]);
+
+    Route::get('getWorkOrderIssue', [APIPicklistShopping::class, 'getWorkOrderIssue']);
     Route::post('issueWorkOrder', [APIPicklistShopping::class, 'issueWorkOrder']);
 
     // Inventory WMS
@@ -254,8 +252,9 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     // getum
     Route::get('/getUm', [APIController::class, 'getUm']);
     Route::get('/getItem', [APIController::class, 'getItem']);
-     Route::get('/getLocation', [APIController::class, 'getLocation']);
-         Route::get('/getLotWSA', [APIController::class, 'getLotWSA']);
+    Route::get('/getLocation', [APIController::class, 'getLocation']);
+    Route::get('/getLotWSA', [APIController::class, 'getLotWSA']);
+    Route::get('/getWhLevelBin', [APIController::class, 'getWhLevelBin']);
     //Transaksi Out
     Route::post('/submitout', [APITransIssUnpController::class, 'submitIssOut']);
 
@@ -314,6 +313,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getpaletpenyerahanbarang', [APIBarangJadi::class, 'getpaletpenyerahanbarang']);
     Route::get('getTransferData', [APIBarangJadi::class, 'getTransferBarangJadi']);
     Route::post('receiptItempb', [APIBarangJadi::class, 'receiptItempb']);
+    Route::post('rejectItempb', [APIBarangJadi::class, 'rejectItempb']);
     Route::get('getPenerimaanBarangData', [APIBarangJadi::class, 'getPenerimaanBarangData']);
     Route::post('getWlbBarangJadi', [APIBarangJadi::class, 'getWlbBarangJadi']);
     Route::post('getWlbBarangJadi', [APIBarangJadi::class, 'getWlbBarangJadi']);
@@ -331,8 +331,6 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getInventoryByExpDate', [APIDashboard::class, 'getInventoryByExpDate']);
 
     Route::post('singleTransferLot', [ApiSIngelTransferLot::class, 'store']);
-
-
 
 });
 // WSA Picklist

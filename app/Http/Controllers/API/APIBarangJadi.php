@@ -67,6 +67,91 @@ class APIBarangJadi extends Controller
         return GeneralResources::collection($trfdata);
     }
 
+    public function rejectItempb(Request $req)
+    {
+        $trfid = $req->trfid;
+        $reason = $req->reason ?? '';
+
+        if (! $trfid) {
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => 'Transfer ID wajib diisi',
+            ], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $data = PenyerahanBarang::where('pb_trfid', $trfid)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $data) {
+                DB::rollBack();
+
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => 'Transfer ID tidak ditemukan',
+                ], 404);
+            }
+
+            if (strtolower($data->pb_status) !== 'open') {
+                DB::rollBack();
+
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => 'Transfer ID sudah berstatus '.$data->pb_status.', tidak bisa di-reject',
+                ], 422);
+            }
+
+            $data->pb_status = 'Rejected';
+            if ($reason !== '') {
+                $data->pb_remark = trim(($data->pb_remark ? $data->pb_remark.' | ' : '').'Reject: '.$reason);
+            }
+            $data->save();
+
+            $history = new TransactionHistory();
+            $history->tr_nbr = $trfid;
+            $history->tr_order = '';
+            $history->tr_program = 'Barang Jadi Module';
+            $history->tr_activity = 'Penolakan Barang Jadi';
+            $history->tr_user = Auth::user()->name ?? '';
+            $history->tr_part = $data->pb_item ?? '';
+            $history->tr_uom = '';
+            $history->tr_line = '';
+            $history->tr_lot = $data->pb_lot ?? '';
+            $history->tr_qty = $data->pb_qty ?? '';
+            $history->tr_date = date('Y-m-d H:i:s');
+            $history->tr_reference = '';
+            $history->tr_site = $data->pb_site_from ?? '';
+            $history->tr_location = $data->pb_loc_from ?? '';
+            $history->tr_warehouse = $data->pb_wh_from ?? '';
+            $history->tr_level = $data->pb_level_from ?? '';
+            $history->tr_bin = $data->pb_bin_from ?? '';
+            $history->tr_remark = $reason;
+            $history->save();
+
+            DB::commit();
+
+            return response()->json([
+                'Status' => 'Success',
+                'Message' => 'Reject Item Successful',
+            ], 200);
+        } catch (Exception $e) {
+            DB::rollBack();
+
+            Log::channel('SingleTransfer')->error('rejectItempb failed', [
+                'trfid' => $trfid,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => 'Reject Item Failed :'.$e->getMessage(),
+            ], 422);
+        }
+    }
+
     public function receiptItempb(Request $req)
     {
         $log = Log::build([
@@ -1171,7 +1256,7 @@ class APIBarangJadi extends Controller
     {
         $data = PenyerahanBarang::query()
             ->leftJoin('item_master', 'item_master.im_item_part', '=', 'penyerahan_barang.pb_item')
-            ->where('pb_status', 'open')
+            ->whereIn('penyerahan_barang.pb_status', ['Open', 'Rejected'])
             ->select(
                 'penyerahan_barang.*',
                 'item_master.im_item_desc'
