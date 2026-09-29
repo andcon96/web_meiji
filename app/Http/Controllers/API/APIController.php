@@ -998,11 +998,11 @@ class APIController extends Controller
 
     public function getLotWsa(Request $request)
     {
-
+        
         try {
 
             $isLotExist = (new WSAServices)->wsaGetLot($request->item);
-
+            log::info($isLotExist);
             // dd($isLotExist);
 
             if ($isLotExist == false) { //jika error koneksi wsa
