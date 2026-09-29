@@ -574,6 +574,7 @@ class APIPurchaseOrderController extends Controller
         // dd($dataQAD);
         return response()->json($dataQAD);
     }
+      
 
     private function normalize($value)
     {
