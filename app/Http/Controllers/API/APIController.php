@@ -5,8 +5,6 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SendQxCompIssueRequest;
 use App\Http\Requests\SendQxIssueUnplannedRequest;
-
-use App\Http\Requests\GetWipData;
 use App\Http\Resources\GeneralResources;
 use App\Models\API\MobileApk;
 use App\Models\API\TransactionHistory;
@@ -237,7 +235,7 @@ class APIController extends Controller
                         && $wmsItem['t_lot'] == $item->xxinv_lot;
                 });
 
-                if (!in_array(strtolower($item->xxinv_loc), ['qc-qrt', 'wh-qrt', 'wip'])) {
+                if (! in_array(strtolower($item->xxinv_loc), ['qc-qrt', 'wh-qrt', 'wip'])) {
                     $loc = 'Pass';
                 } else {
                     $loc = $item->xxinv_loc;
@@ -742,16 +740,16 @@ class APIController extends Controller
         $perPage = $req->query('per_page') ?? 20; // let frontend control this
         $data = TransactionHistory::query();
         if (! empty($number)) {
-            $data->where('tr_nbr', 'LIKE', '%' . $number . '%');
+            $data->where('tr_nbr', 'LIKE', '%'.$number.'%');
         }
         if (! empty($part)) {
-            $data->where('tr_part', 'LIKE', '%' . $part . '%');
+            $data->where('tr_part', 'LIKE', '%'.$part.'%');
         }
         if (! empty($program)) {
-            $data->where('tr_program', 'LIKE', '%' . $program . '%');
+            $data->where('tr_program', 'LIKE', '%'.$program.'%');
         }
         if (! empty($lot)) {
-            $data->where('tr_lot', 'LIKE', '%' . $lot . '%');
+            $data->where('tr_lot', 'LIKE', '%'.$lot.'%');
         }
 
         // $data = $data->orderBy('id', 'DESC')->get();
@@ -1003,7 +1001,7 @@ class APIController extends Controller
 
         try {
 
-            $isLotExist = (new WSAServices)->wsaGetLot($request->item );
+            $isLotExist = (new WSAServices)->wsaGetLot($request->item);
 
             // dd($isLotExist);
 
@@ -1034,6 +1032,22 @@ class APIController extends Controller
                 'Message' => 'Item Internal server error',
             ], 500);
         }
+    }
+
+    public function getWhLevelBin(Request $request)
+    {
+        $xxinvDet = xxinvDet::select('xxinv_wrh', 'xxinv_level', 'xxinv_bin')
+            ->where('xxinv_site', $request->site)
+            ->where('xxinv_lot', $request->lot)
+            ->where('xxinv_part', $request->part)
+            ->where('xxinv_qtyoh', '==', 0)
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data warehouse level & bin berhasil diambil',
+            'data' => $xxinvDet,
+        ], 200);
     }
 
     public function outboundxxinvDet(Request $req)
@@ -1106,7 +1120,7 @@ class APIController extends Controller
                 ->header('Content-Type', 'text/xml; charset=utf-8');
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::info('outboundxxinvDet error: ' . $e->getMessage());
+            Log::info('outboundxxinvDet error: '.$e->getMessage());
 
             return response($this->soapAck(false, $e->getMessage()), 500)
                 ->header('Content-Type', 'text/xml; charset=utf-8');
@@ -1150,16 +1164,16 @@ class APIController extends Controller
         // $site     = isset($data['site']) && $data['site'] !== '' ? explode(';', $data['site']) : [];
         // $lotserial = isset($data['lotserial']) && $data['lotserial'] !== '' ? explode(';', $data['lotserial']) : [];
         $xxinvdet = xxinvDet::where('xxinv_loc', 'WIP')->orderBy('xxinv_part')->select('xxinv_part as part', 'xxinv_lot as lot', 'xxinv_wrh as warehouse', 'xxinv_level as level', 'xxinv_bin as bin', 'xxinv_qty_wrh as qty_wrh')->get();
+
         return response()->json($xxinvdet);
     }
+
     public function apiIssueUnplanned(SendQxIssueUnplannedRequest $request)
     {
         try {
 
-
             DB::beginTransaction();
 
-                  
             $qty = floatval(str_replace(',', '', $request->qty));
 
             $qxtendServices = new QxtendServices();
@@ -1179,7 +1193,7 @@ class APIController extends Controller
                     422,
                 );
             }
- $wonbr = $request->wonbr;
+            $wonbr = $request->wonbr;
             $wolot = $request->wolot;
             $effdate = $request->effdate;
             $part = $request->part;
@@ -1280,6 +1294,7 @@ class APIController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e);
+
             return response()->json(
                 [
                     'Status' => 'Error',

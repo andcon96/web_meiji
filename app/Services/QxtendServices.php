@@ -2305,9 +2305,9 @@ class QxtendServices
 
                         <rmks>Other Transaction</rmks>
 
-                        <yn>true</yn>
+                            <yn>true</yn>
 
-                        <yn1>true</yn1>
+                            <yn1>true</yn1>
 
                     </inventoryIssue>
 
@@ -2325,7 +2325,7 @@ class QxtendServices
             $activeConnection
         );
     }
-    
+
     public function qxIssueInventoryUnplanned($req, $activeConnection = null)
 {
     $receiver = 'QADERP';
@@ -2770,7 +2770,7 @@ public function qxinventoryReceipt($req, $activeConnection = null)
 ) {
     $domain = Domain::first();
     $domainCode = $domain->domain ?? '';
-    
+
     if (!$activeConnection) {
         $activeConnection = Qxwsa::firstOrFail();
     }
