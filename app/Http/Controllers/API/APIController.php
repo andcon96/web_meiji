@@ -1186,19 +1186,20 @@ class APIController extends Controller
                     ->on('w.xxinv_wrh',   '=', 'n.xxinv_wrh')
                     ->on('w.xxinv_level', '=', 'n.xxinv_level')
                     ->on('w.xxinv_bin',   '=', 'n.xxinv_bin')
-                    ->where('n.xxinv_loc', '!=', 'WIP');   // moved into the join
+                    ->where('n.xxinv_loc', '!=', 'WIP');   
             })
-            ->where('w.xxinv_loc', 'WIP')                    // only this stays in WHERE
+            ->where('w.xxinv_loc', 'WIP')                    
             ->orderBy('w.xxinv_part')
             ->select(
                 'w.xxinv_part as part',
                 'w.xxinv_lot as lot',
                 'w.xxinv_site as site',
-                'w.xxinv_loc as loc',        // NULL when no non-WIP match
+                'w.xxinv_loc as loc',        
                 'w.xxinv_wrh as warehouse',
                 'w.xxinv_level as level',
                 'w.xxinv_bin as bin',
-                'n.xxinv_loc as oriloc'      // always WIP
+                'w.xxinv_qty_wrh as qty_wrh',
+                'n.xxinv_loc as oriloc'     
             )
             ->get();
         $xxinvdet = $xxinvdet->map(function ($row) {
@@ -1229,7 +1230,7 @@ class APIController extends Controller
 
             $xxinvdet = xxinvDet::where('xxinv_part', $part)
                 ->where('xxinv_lot', $lotserial)
-                ->where('xxinv_loc', '!=', $location)
+                ->where('xxinv_loc', '=', $oriloc)
                 ->where('xxinv_site', $site)
                 ->where('xxinv_wrh', $warehouse)
                 ->where('xxinv_level', $level)

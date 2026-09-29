@@ -384,9 +384,9 @@ class APIPurchaseOrderController extends Controller
         if ($req->wh) {
             $warehouse = $req->wh;
         }
-        if ($req->search) {
-            $warehouse = $req->search;
-        }
+        // if ($req->search) {
+        //     $itemCode = $req->search;
+        // }
         if ($req->item) {
             $itemCode = $req->item;
         }
@@ -492,7 +492,7 @@ class APIPurchaseOrderController extends Controller
 
         return response()->json($dataQAD);
         */
-
+        
         /**get daata from sql   */
         $xxinvDet = xxinvDet::query()
             ->where('xxinv_domain', $domainCode)
@@ -500,7 +500,7 @@ class APIPurchaseOrderController extends Controller
             ->when($warehouse !== '', fn ($q) => $q->where('xxinv_wrh', $warehouse))
             ->get();
         $getDataQAD = $xxinvDet;
-
+        // dd($xxinvDet);
         $grouped = $getDataQAD->groupBy(function ($item) {
             $site = (string) ($item['xxinv_site'] ?? '');
             $loc = (string) ($item['xxinv_loc'] ?? '');
@@ -510,7 +510,7 @@ class APIPurchaseOrderController extends Controller
 
             return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
         });
-
+        // dd($grouped);
         $merged = $grouped->map(function ($items) {
             $first = $items->first();
             $first['xxinv_qtyoh'] = $items->sum(function ($i) {
@@ -521,12 +521,13 @@ class APIPurchaseOrderController extends Controller
         })
             ->filter(function ($item) {
                 // Ubah logika filter ke > 0 jika ingin mengambil stok yang tersedia
-                return (float) $item['xxinv_qtyoh'] > 0;
+                return (float) $item['xxinv_qtyoh'] == 0;
             })
             ->values();
-
+        // dd($merged);
         $dataQAD = $merged->filter(function ($item) use ($getAllItemLocation) {
             foreach ($getAllItemLocation as $datas) {
+                // dd($item['xxinv_loc'], $datas->getMaster->location_code);
                 if (
                     $this->normalize($item['xxinv_level']) == $this->normalize($datas->ld_rak) &&
                     $this->normalize($item['xxinv_wrh']) == $this->normalize($datas->ld_building) &&
@@ -539,7 +540,7 @@ class APIPurchaseOrderController extends Controller
 
             return false;
         })->values();
-
+        
         // $dataQAD = $merged->filter(function ($item) use ($getAllItemLocation) {
         //     foreach ($getAllItemLocation as $datas) {
         //         // dd($datas->getItem);
