@@ -5523,7 +5523,7 @@ class WSAServices
         return [$qdocResult, $dataloop, $qdocMessage];
     }
 
-    public function wsaGetLot($Item )
+    public function wsaGetLot($Item)
     {
         $wsa = qxwsa::first();
 
@@ -5543,7 +5543,7 @@ class WSAServices
         '<meiji_ld_wms xmlns="'.$wsa->wsa_path.'">'.
             '<inpdomain>'.$domainCode.'</inpdomain>'.
             '<inppart>'.$Item.'</inppart>'.
-
+         
         '</meiji_ld_wms>'.
     '</Body>'.
 '</Envelope>';

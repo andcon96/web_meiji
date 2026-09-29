@@ -1038,7 +1038,7 @@ class APIController extends Controller
     {
         $xxinvDet = xxinvDet::select('xxinv_wrh', 'xxinv_level', 'xxinv_bin')
             ->where('xxinv_site', $request->site)
-            ->where('xxinv_lot', $request->lot)
+            ->where('xxinv_wrh', $request->wrh)
             ->where('xxinv_part', $request->part)
             ->where('xxinv_qtyoh', '==', 0)
             ->get();
