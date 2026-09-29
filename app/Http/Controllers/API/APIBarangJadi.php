@@ -1101,13 +1101,13 @@ class APIBarangJadi extends Controller
             $levelfrom = $this->nullConversion($data['levelfrom'] ?? null);
             $binfrom = $this->nullConversion($data['binfrom'] ?? null);
             $remark = $this->nullConversion($data['remark'] ?? null);
+            $exp = $this->nullConversion($data['exp'] ?? null);
             $qty = $data['qty'];
             $wh = $this->nullConversion($data['wh'] ?? null);
             $ref = $this->nullConversion($data['ref'] ?? null);
             $level = $this->nullConversion($data['level'] ?? null);
             $bin = $this->nullConversion($data['bin'] ?? null);
             $lot = $this->nullConversion($data['lot'] ?? null);
-
             $palletRaw = $data['pallet'] ?? '[]';
             $palletList = json_decode($palletRaw, true);
 
@@ -1152,6 +1152,7 @@ class APIBarangJadi extends Controller
             $newPenyerahanBarang->pb_ref = $ref;
             $newPenyerahanBarang->pb_remark = $remark;
             $newPenyerahanBarang->pb_qty = $qty;
+            $newPenyerahanBarang->pb_exp_date = $exp;
             $newPenyerahanBarang->pb_level_from = $levelfrom;
             $newPenyerahanBarang->pb_level_to = $level;
             $newPenyerahanBarang->pb_bin_from = $binfrom;
