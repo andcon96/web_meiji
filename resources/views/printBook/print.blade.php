@@ -434,13 +434,14 @@
     </table>
 
     <div class="section-title">VI. Pemeriksa</div>
-    <table class="signature-table">
-        <tr class="center">
-            <th>Uraian</th>
-            <th>Pemeriksa</th>
-            <th>Group</th>
-            <th>Seksi</th>
-        </tr>
+   <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+    <tr class="center">
+        <th style="width: 25%;">Uraian</th>
+        <th style="width: 25%;">Pemeriksa</th>
+        <th style="width: 25%;">Group</th>
+        <th style="width: 25%;">Seksi</th>
+    </tr>
+
         <tr class="center">
             <td>Approval</td>
             <td>{{ $approver[0][0][0] ?? '' }}</td>

@@ -69,6 +69,31 @@ class APIPackingReplenishmentController extends Controller
             200,
         );
     }
+    public function shiperList(Request $request)
+    {
+        $site = $request->query('site') ?? $request->site;
+        $hasil = (new WSAServices())->listshipWSA($site);
+        [$qdocResult, $dataloop, $qdocMessage] = $hasil;
+
+        if ($qdocResult !== 'true') {
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => $qdocMessage ?: 'Failed to fetch shipment schedule from WSA',
+                    'data' => [],
+                ],
+                422,
+            );
+        }
+
+         return response()->json(
+            [
+                'shiper' => $hasil,
+            ],
+            200,
+        );
+
+    }
 
     public function listShipmentScheduleWSA(Request $request)
     {
@@ -222,6 +247,8 @@ class APIPackingReplenishmentController extends Controller
             200,
         );
     }
+
+
 
     public function rejectPackingReplenishment(Request $request)
     {

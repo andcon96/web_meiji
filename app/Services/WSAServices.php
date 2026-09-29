@@ -5166,6 +5166,96 @@ class WSAServices
             $dataWO,
         ];
     }
+    public function listshipWSA($site)
+    {
+      $wsa = qxwsa::first();
+
+        if (! $wsa) {
+            return ['false', [], 'WSA configuration not found'];
+        }
+
+        $qxUrl = $wsa->wsa_url;
+        $timeout = 0;
+
+        $domain = Domain::first();
+        $domainCode = $domain->domain ?? '';
+        $qdocRequest =
+        '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">'.
+        '<Body>'.
+        '<meiji_absid xmlns="'.$wsa->wsa_path.'">'.      
+            '<inpdomain>' .$domainCode. '</inpdomain>'.
+            '<inpsite>' .$site. '</inpsite>'.
+        '</meiji_absid>'.
+        '</Body>'.
+        '</Envelope>';
+         $curlOptions = [
+            CURLOPT_URL => $qxUrl,
+            CURLOPT_CONNECTTIMEOUT => $timeout,
+            CURLOPT_TIMEOUT => $timeout + 120,
+            CURLOPT_HTTPHEADER => $this->httpHeader($qdocRequest),
+            CURLOPT_POSTFIELDS => preg_replace("/\s+/", ' ', $qdocRequest),
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+        ];
+
+        $qdocResponse = '';
+        $curlErrno = 0;
+        $curlError = '';
+        $httpCode = 0;
+
+        $curl = curl_init();
+        if ($curl) {
+            curl_setopt_array($curl, $curlOptions);
+            $qdocResponse = curl_exec($curl);
+            $curlErrno = curl_errno($curl);
+            $curlError = curl_error($curl);
+
+            foreach (curl_getinfo($curl) as $key => $value) {
+                if ($key === 'http_code') {
+                    $httpCode = $value;
+                }
+            }
+            curl_close($curl);
+        }
+         // Log untuk debugging
+        Log::info('[WSA] listshipWSA Request', ['payload' => $qdocRequest]);
+        Log::info('[WSA] listshipWSA Response', ['response' => $qdocResponse]);
+
+        // Tangani cURL error
+        if ($curlErrno !== 0) {
+            Log::error('[WSA] cURL Error', ['errno' => $curlErrno, 'error' => $curlError]);
+
+            return ['false', [], $curlError];
+        }
+
+        // Tangani HTTP error
+        if ($httpCode !== 200) {
+            Log::error('[WSA] HTTP Error', ['http_code' => $httpCode]);
+
+            return ['false', [], "HTTP Error: $httpCode"];
+        }
+
+        // Parse XML response
+        $xmlResp = simplexml_load_string($qdocResponse);
+
+        if ($xmlResp === false) {
+            Log::error('[WSA] Failed to parse XML response');
+
+            return ['false', [], 'Invalid XML response'];
+        }
+
+        $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
+
+        $dataloop = $xmlResp->xpath('//ns1:tempRow');
+        $qdocResult = (string) ($xmlResp->xpath('//ns1:outOK')[0] ?? 'false');
+        $qdocMessage = (string) ($xmlResp->xpath('//ns1:outMsg')[0] ?? '');
+
+        return [$qdocResult, $dataloop, $qdocMessage];
+
+          
+    }
 
     public function listShipmentScheduleWSA($shipperNumber, $site)
     {
@@ -5523,7 +5613,7 @@ class WSAServices
         return [$qdocResult, $dataloop, $qdocMessage];
     }
 
-    public function wsaGetLot($Item )
+    public function wsaGetLot($Item)
     {
         $wsa = qxwsa::first();
 
@@ -5543,7 +5633,7 @@ class WSAServices
         '<meiji_ld_wms xmlns="'.$wsa->wsa_path.'">'.
             '<inpdomain>'.$domainCode.'</inpdomain>'.
             '<inppart>'.$Item.'</inppart>'.
-
+         
         '</meiji_ld_wms>'.
     '</Body>'.
 '</Envelope>';
