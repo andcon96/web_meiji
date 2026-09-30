@@ -305,6 +305,8 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     // Route::get("wsaWarehousePick", [APIPicklistShopping::class, "wsaWarehouse"]);
     // Route::get("getSearchLocation", [APIPicklistShopping::class, "wsainvdet"]);
     // Route::post("sendTransferItem", [APIPicklistShopping::class, "sendTransferItem"]);
+    Route::get('wsaPenyimpananWarehousePenerimaan', [APIBarangJadi::class, 'wsaPenyimpananWarehousePenerimaan']);
+    
     Route::get('getLocationBarangJadi', [APIBarangJadi::class, 'getLocationBarangJadi']);
     Route::post('getWebLocationDataTransfer', [APIBarangJadi::class, 'getWebLocationBarangJadi']);
     Route::get('getSiteBarangJadi', [APIBarangJadi::class, 'getSiteBarangJadi']);
