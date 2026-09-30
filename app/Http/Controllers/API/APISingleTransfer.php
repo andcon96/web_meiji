@@ -172,6 +172,7 @@ class APISingleTransfer extends Controller
 
             // Potong Stok Asal
             $invFrom->xxinv_qtyoh -= $qtyoh;
+            $invFrom->xxinv_qty_wrh -= $qtyoh;
             $invFrom->save();
 
             Log::info('Transfer data valid', [
@@ -201,6 +202,7 @@ class APISingleTransfer extends Controller
             $invTo = xxinvDet::where('xxinv_part', $part)
                 ->where('xxinv_lot',$lotto)
                 ->where('xxinv_wrh', $buildingto)
+                ->where('xxinv_loc', $locto)
                 ->where('xxinv_level', $levelto)
                 ->where('xxinv_bin', $binto)
                 ->lockForUpdate()
@@ -220,6 +222,7 @@ class APISingleTransfer extends Controller
 
             // Tambah inventory tujuan & simpan
             $invTo->xxinv_qtyoh += $qtyoh;
+            $invTo->xxinv_qty_wrh += $qtyoh;
             $invTo->save();
 
             // ==========================
@@ -227,8 +230,8 @@ class APISingleTransfer extends Controller
             // ==========================
             $newTransactionHistoryfrom = new TransactionHistory();
             $newTransactionHistoryfrom->tr_nbr = $trfid;
-            $newTransactionHistoryfrom->tr_program = 'Single Transfer Module';
-            $newTransactionHistoryfrom->tr_activity = 'Single Transfer From';
+            $newTransactionHistoryfrom->tr_program = 'Transfer WMS';
+            $newTransactionHistoryfrom->tr_activity = 'Transfer WMS';
             $newTransactionHistoryfrom->tr_user = $user;
             $newTransactionHistoryfrom->tr_part = $part ?? '';
             $newTransactionHistoryfrom->tr_uom = '';
@@ -251,8 +254,8 @@ class APISingleTransfer extends Controller
             $newTransactionHistory = new TransactionHistory();
             $newTransactionHistory->tr_nbr = $trfid;
             $newTransactionHistory->tr_order = '';
-            $newTransactionHistory->tr_program = 'Single Transfer Module';
-            $newTransactionHistory->tr_activity = 'Single Transfer To';
+            $newTransactionHistory->tr_program = 'Transfer Receipt WMS';
+            $newTransactionHistory->tr_activity = 'Transfer Receipt WMS';
             $newTransactionHistory->tr_user = $user;
             $newTransactionHistory->tr_part = $part ?? '';
             $newTransactionHistory->tr_uom = '';

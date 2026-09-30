@@ -357,9 +357,19 @@
 
             <td colspan="3">Daftar Sertifikasi Validitas Halal 
                 @if ($halal == 1)
-                    (Ada / <s style="text-decoration-thickness: 3px;">Tidak Ada</s>)
+(Ada / <s style="text-decoration: line-through; text-decoration-thickness: 5px;">
+    Tidak Ada
+</s>)
                 @else
-                    (<s style="text-decoration-thickness: 3px;">Ada</s> / Tidak Ada)
+                    (<s style="
+    text-decoration-line: line-through;
+    text-decoration-thickness: 8px;
+    text-decoration-color: black;
+">
+ Ada
+</s>
+
+ / Tidak Ada)
                 @endif</td>
             
         </tr>
