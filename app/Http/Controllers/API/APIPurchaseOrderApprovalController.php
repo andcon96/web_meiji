@@ -294,10 +294,19 @@ class APIPurchaseOrderApprovalController extends Controller
                             }
                         }
                             */
+                        $domain = Domain::first();
+                        $domainCode = $domain->domain ?? '';
                         $dataReceiptPallet = ReceiptDetail::with('getPallet')->find($tempApprove->art_receipt_det_id);
+
                         foreach ($dataReceiptPallet->getPallet as $dataPallet) {
-                            $domain = Domain::first();
-                            $domainCode = $domain->domain ?? '';
+
+                            if ($expireddate == '-' || $expireddate == '') {
+                                $expireddate = NULL;
+                            }
+                            if ($retestdate == '-' || $retestdate == '') {
+                                $retestdate = NULL;
+                            }
+
 
                             $newxxinv = new xxinvDet();
                             $newxxinv->xxinv_domain = $domainCode;
@@ -314,7 +323,7 @@ class APIPurchaseOrderApprovalController extends Controller
                             $newxxinv->xxinv_entry_date = $dataReceipt->rd_tanggal_datang;
                             $newxxinv->xxinv_exp_date = $expireddate;
                             $newxxinv->xxinv_rel_date = $retestdate;
-                            
+
                             $newxxinv->save();
                         }
                         $qtytotal  = $dataReceipt->rd_qty_terima * $dataReceipt->rd_qty_potensi;

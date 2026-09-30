@@ -298,7 +298,7 @@ class APISampling extends Controller
                 $newTransactionHistory->tr_nbr = 'Sampling';
                 $newTransactionHistory->tr_order = '';
                 $newTransactionHistory->tr_program = 'Sampling Module';
-                $newTransactionHistory->tr_activity = 'Insert Sampling From';
+                $newTransactionHistory->tr_activity = 'Insert Sampling Form';
                 $newTransactionHistory->tr_user = $user ?? '';
                 $newTransactionHistory->tr_part = $item ?? '';
                 $newTransactionHistory->tr_uom = '';

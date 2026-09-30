@@ -264,7 +264,7 @@ class APIPengembalian extends Controller
                 $newTransactionHistory->tr_nbr = 'Sampling';
                 $newTransactionHistory->tr_order = '';
                 $newTransactionHistory->tr_program = 'Sampling Module';
-                $newTransactionHistory->tr_activity = 'Insert Sampling From';
+                $newTransactionHistory->tr_activity = 'Sampling Return';
                 $newTransactionHistory->tr_user = $user ?? '';
                 $newTransactionHistory->tr_part = $item ?? '';
                 $newTransactionHistory->tr_uom = '';
@@ -554,7 +554,7 @@ class APIPengembalian extends Controller
                     $newTransactionHistory->tr_nbr = 'Sampling';
                     $newTransactionHistory->tr_order = '';
                     $newTransactionHistory->tr_program = 'Sampling Confirm Module';
-                    $newTransactionHistory->tr_activity = 'Confirm Sampling From';
+                    $newTransactionHistory->tr_activity = 'Approve Sampling Return';
                     $newTransactionHistory->tr_user = $user ?? '';
                     $newTransactionHistory->tr_part = $item ?? '';
                     $newTransactionHistory->tr_uom = '';
@@ -586,7 +586,18 @@ class APIPengembalian extends Controller
             } else if ($status == 'reject') {
                 $xxinvApproval = xxinvDetApproval::where('id', $id)->where('xxinv_status', 'Waiting')->first();
                 if ($xxinvApproval) {
-                    $xxinvApproval->delete();
+                 
+                    $user = Auth::user()->name;
+                    $item = $xxinvApproval->xxinv_part;
+                    $lot = $xxinvApproval->xxinv_lot;
+                    $siteto = $xxinvApproval->xxinv_siteto;
+                    $locto = $xxinvApproval->xxinv_locto;
+                    $whfrom = $xxinvApproval->xxinv_wrhfrom;
+                    $levelfrom = $xxinvApproval->xxinv_levelfrom;
+                    $binfrom = $xxinvApproval->xxinv_binfrom;
+                    $qty = $xxinvApproval->xxinv_qty_pick;
+
+                    
                     // $xxinvApproval->xxinv_status = 'Rejected';
                     // $xxinvApproval->save();
                     $xxinvDet = xxinvDet::where('xxinv_domain', $inpdomain)
@@ -617,7 +628,7 @@ class APIPengembalian extends Controller
                         $newTransactionHistory->tr_nbr = 'Sampling';
                         $newTransactionHistory->tr_order = '';
                         $newTransactionHistory->tr_program = 'Sampling Confirm Module';
-                        $newTransactionHistory->tr_activity = 'Reject Sampling From';
+                        $newTransactionHistory->tr_activity = 'Reject Sampling Return';
                         $newTransactionHistory->tr_user = $user ?? '';
                         $newTransactionHistory->tr_part = $item ?? '';
                         $newTransactionHistory->tr_uom = '';
@@ -633,7 +644,7 @@ class APIPengembalian extends Controller
                         $newTransactionHistory->tr_bin = $binfrom ?? '';
                         $newTransactionHistory->tr_remark = '';
                         $newTransactionHistory->save();
-
+                        $xxinvApproval->delete();
                         DB::commit();
 
                         return response()->json([
