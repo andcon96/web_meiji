@@ -44,14 +44,14 @@ class ApiSIngelTransferLot extends Controller
 
         $qxtend = $qxtendServices->qxTransferLotSerial($part, $qty, $siteFrom, $locFrom, $lotserFrom, $lotserTo, $rmks, $effdate, $activeConnection);
 
-        if ($qxtend[0] === false) {
-            Log::channel('transferlotserian')->error($qxtend[1]);
+        // if ($qxtend[0] === false) {
+        //     Log::channel('transferlotserian')->error($qxtend[1]);
 
-            return response()->json([
-                'Status'  => 'error',
-                'Message' => $qxtend[1] ?? 'Transfer Lot Serial failed.',
-            ], 422);
-        }
+        //     return response()->json([
+        //         'Status'  => 'error',
+        //         'Message' => $qxtend[1] ?? 'Transfer Lot Serial failed.',
+        //     ], 422);
+        // }
 
         DB::beginTransaction();
         try {
@@ -74,12 +74,11 @@ class ApiSIngelTransferLot extends Controller
                 ->first();
 
             if ($fromRecord) {
-                $fromRecord->xxinv_qtyoh = $fromRecord->xxinv_qtyoh - $qty;
+                $fromRecord->xxinv_lot = $lotserTo;
+                //$fromRecord->xxinv_qtyoh = $fromRecord->xxinv_qtyoh - $qty;
                 $fromRecord->save();
             }
-
-            
-            
+                     
             
             $toRecord = xxinvDet::where('xxinv_part', $part)
                 ->where('xxinv_site', $siteTo)
@@ -123,7 +122,7 @@ class ApiSIngelTransferLot extends Controller
             
             $trHistoryFrom = new TransactionHistory();
             // $trHistoryFrom->tr_nbr       = 'TRF' . date('YmdHis');
-            $trHistoryFrom->tr_program   = 'Single Transfer Lot';
+            $trHistoryFrom->tr_program   = 'Transfer with lot';
             $trHistoryFrom->tr_activity  = 'Transfer Out';
             $trHistoryFrom->tr_user      = $userName;
             $trHistoryFrom->tr_part      = $part;
@@ -142,7 +141,7 @@ class ApiSIngelTransferLot extends Controller
             
             $trHistoryTo = new TransactionHistory();
             $trHistoryTo->tr_nbr       = $trHistoryFrom->tr_nbr;
-            $trHistoryTo->tr_program   = 'Single Transfer Lot';
+            $trHistoryTo->tr_program   = 'Transfer with lot';
             $trHistoryTo->tr_activity  = 'Transfer In';
             $trHistoryTo->tr_user      = $userName;
             $trHistoryTo->tr_part      = $part;
