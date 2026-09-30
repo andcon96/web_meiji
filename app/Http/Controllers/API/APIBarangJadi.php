@@ -438,6 +438,7 @@ class APIBarangJadi extends Controller
                         $invTo->xxinv_level = $palletLevel;
                         $invTo->xxinv_bin = $palletBin;
                         $invTo->xxinv_qtyoh = $palletQty;
+                        $invTo->xxinv_qty_wrh = $palletQty;
                         $invTo->xxinv__dec01 = $palletQty;
                         $invTo->xxinv_domain = $domain->domain;
 
