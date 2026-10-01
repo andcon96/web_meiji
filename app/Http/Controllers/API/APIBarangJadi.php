@@ -1360,9 +1360,10 @@ class APIBarangJadi extends Controller
         
         if ($req->wh) {
             $getAllItemLocation->where('ld_building', $warehouse);
+            
         }
-
         $getAllItemLocation = $getAllItemLocation->get();
+        
     
 
         $domain = Domain::first();
@@ -1377,7 +1378,7 @@ class APIBarangJadi extends Controller
             ->get();
             
         $getDataQAD = $xxinvDet;
-        // dd($xxinvDet);
+        
         $grouped = $getDataQAD->groupBy(function ($item) {
             $site = (string) ($item['xxinv_site'] ?? '');
             $loc = (string) ($item['xxinv_loc'] ?? '');
@@ -1405,7 +1406,7 @@ class APIBarangJadi extends Controller
         
         $dataQAD = $merged->filter(function ($item) use ($getAllItemLocation) {
             foreach ($getAllItemLocation as $datas) {
-                dd($item['xxinv_loc'], $datas->getMaster->location_code);
+                // dd($item['xxinv_loc'], $datas->getMaster->location_code);
                 if (
                     // $this->normalize($item['xxinv_level']) == $this->normalize($datas->ld_rak) &&
                     // $this->normalize($item['xxinv_wrh']) == $this->normalize($datas->ld_building) &&

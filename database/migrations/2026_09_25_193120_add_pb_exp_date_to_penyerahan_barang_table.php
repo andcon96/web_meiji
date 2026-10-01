@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('penyerahan_barang', function (Blueprint $table) {
             //
-            $table->date('pb_exp_date')->nullable();
+            $table->String('pb_exp_date')->nullable();
         });
     }
 

@@ -1600,25 +1600,30 @@ class APIPurchaseOrderController extends Controller
         $item = $req->input('item');
         $lot = $req->input('lot');
         $podid = $req->input('podid');
+        $receiptdetid = $req->input('receiptdetid');
+        $loc = 'WH-QRT';
         // $poddata = PurchaseOrderDetail::with(['getMaster', 'getReceiptDetail.getMaster'])
         //     ->where('id', $podid)->first();
         // // dd($poddata);
         $poddata = PurchaseOrderDetail::with([
             'getMaster',
-            'getReceiptDetail' => function ($query) {
+            'getReceiptDetail' => function ($query) use($receiptdetid) {
                 $query->with('getMaster')
                     ->join('xxinv_det', function ($e) {
                         $e->on('receipt_det.rd_nama_barang', '=', 'xxinv_det.xxinv_part');
                         $e->on('receipt_det.rd_batch', '=', 'xxinv_det.xxinv_lot');
+                        $e->on('receipt_det.rd_location_penyimpanan','xxinv_det.xxinv_loc');
                     })->orderBy('rd_nama_barang')
-                    ->where('xxinv_det.xxinv_loc', 'WH-QRT')
-                    ->select('receipt_det.*', 'xxinv_det.*')
+                    
+                    ->where('receipt_det.id',$receiptdetid)
+                    ->select('receipt_det.*','xxinv_det.*')
                     ->orderBy('xxinv_det.xxinv_wrh')
                     ->orderBy('xxinv_det.xxinv_level')
-                    ->orderBy('xxinv_det.xxinv_bin');
+                    ->orderBy('xxinv_det.xxinv_bin')
+                    ;
             },
         ])->where('id', $podid)->first();
-
+        // dd($poddata);
         return response()->json([
             'DataHeader' => [$poddata->getReceiptDetail[0]->getMaster],
             'DataDetail' => $poddata->getReceiptDetail,
