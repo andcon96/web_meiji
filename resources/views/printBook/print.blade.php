@@ -435,8 +435,24 @@
             </td>
         </tr>
     </table>
-
-    <div class="section-title" style="page-break-before: always;">V. Keterangan</div>
+    <br>
+    <br>
+     <br>
+    <br>
+     <br>
+    <br>
+     <br>
+    <br>
+    
+    <div style="page-break-before: always;">
+        <table class="no-border">
+        <tr>
+            <td>No. Buku Penerimaan Barang: <strong>{{ $no_buku }}</strong></td>
+            <td style="text-align:right;">Tanggal datang: <strong>{{(new DateTime($tanggal))->format('d-m-Y')  }}</strong></td>
+        </tr>
+    </table>
+    </div>
+       <div class="section-title"> V. Keterangan</div>
     <table>
         <tr>
             <td style="height:60px;">{{ $rd_keterangan_tambahan }}</td>
