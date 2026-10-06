@@ -63,6 +63,16 @@
             height: 10px;
             margin-right: 5px;
         }
+        .page-number {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            font-size: 10px;
+            color: #555;
+        }
+        .page-number .page-current::before {
+            content: counter(page);
+        }
     </style>
 </head>
 
@@ -437,12 +447,15 @@
     </table>
     <br>
     <br>
-     <br>
     <br>
-     <br>
     <br>
-     <br>
     <br>
+    <br>
+    <div class="page-number">
+        Page <span class="page-current"></span> of {{ $total_pages }}
+    </div>
+
+    
     
     <div style="page-break-before: always;">
         <table class="no-border">
@@ -487,6 +500,9 @@
             <td>{{ isset($approver[1][2][0]) ? (new DateTime($approver[1][2][0]))->format('d-m-Y H:i:s') : '-' }}</td>
         </tr>
     </table>
+    <div class="page-number" style="text-align:center">
+        Page <span class="page-current"></span> of {{ $total_pages }}
+    </div>
 </body>
 
 </html>

@@ -62,7 +62,7 @@ class APIPurchaseOrderRecheckController extends Controller
             ;
         }
 
-        $data = $data->whereRelation('getReceipt', 'rm_status', 'Waiting For Recheck')->orderBy('id', 'desc')->paginate(10);
+        $data = $data->whereRelation('getReceipt', 'rm_status', 'Waiting For Recheck')->orderBy('id', 'asc')->paginate(10);
 
 
         return GeneralResources::collection($data);

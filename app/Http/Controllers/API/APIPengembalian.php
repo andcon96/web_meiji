@@ -484,8 +484,10 @@ class APIPengembalian extends Controller
                 'xxinv_qty_smp as inv_qtysmp',
                 'xxinv_qty_pick as inv_qtypick',
                 'xxinv_det_approval.id as id',
-                'item_master.im_item_um as inv_um'
+                'item_master.im_item_um as inv_um',
+                'xxinv_det_approval.updated_at as updated_at'
             ])
+            ->orderBy('xxinv_det_approval.updated_at')
             ->get()
             ->values();
         if ($records->isEmpty()) {
