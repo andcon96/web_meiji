@@ -253,7 +253,7 @@ class PackingReplenishmentServices
                 $newTransactionHistory->tr_warehouse = $shipmentScheduleLocation->ssl_warehouse  ?? '';
                 $newTransactionHistory->tr_level     = $shipmentScheduleLocation->ssl_level ?? '0';
                 $newTransactionHistory->tr_bin       = $shipmentScheduleLocation->ssl_bin ?? '0';
-                $newTransactionHistory->tr_remark    = 'Shipment Reject';
+                $newTransactionHistory->tr_remark    = $reason;
                 $newTransactionHistory->save();
 
                 $shipmentScheduleLocation->ssl_qty_pick = 0;

@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+
 class APIBarangJadi extends Controller
 {
     public function getTransferBarangJadi(Request $req)
@@ -37,7 +38,6 @@ class APIBarangJadi extends Controller
             ], 422);
         } else {
             return GeneralResources::collection($trfdata);
-
         }
     }
 
@@ -49,9 +49,9 @@ class APIBarangJadi extends Controller
 
         if ($search) {
             $trfdata->where(function ($query) use ($search) {
-                $query->where('pb_trfid', 'LIKE', '%'.$search.'%')
-                    ->orWhere('pb_item', 'LIKE', '%'.$search.'%')
-                    ->orWhere('pb_lot', 'LIKE', '%'.$search.'%');
+                $query->where('pb_trfid', 'LIKE', '%' . $search . '%')
+                    ->orWhere('pb_item', 'LIKE', '%' . $search . '%')
+                    ->orWhere('pb_lot', 'LIKE', '%' . $search . '%');
             });
         }
 
@@ -100,13 +100,13 @@ class APIBarangJadi extends Controller
 
                 return response()->json([
                     'Status' => 'Error',
-                    'Message' => 'Transfer ID sudah berstatus '.$data->pb_status.', tidak bisa di-reject',
+                    'Message' => 'Transfer ID sudah berstatus ' . $data->pb_status . ', tidak bisa di-reject',
                 ], 422);
             }
 
             $data->pb_status = 'Rejected';
             if ($reason !== '') {
-                $data->pb_remark = trim(($data->pb_remark ? $data->pb_remark.' | ' : '').'Reject: '.$reason);
+                $data->pb_remark = trim(($data->pb_remark ? $data->pb_remark . ' | ' : '') . 'Reject: ' . $reason);
             }
             $data->save();
 
@@ -147,7 +147,7 @@ class APIBarangJadi extends Controller
 
             return response()->json([
                 'Status' => 'Error',
-                'Message' => 'Reject Item Failed :'.$e->getMessage(),
+                'Message' => 'Reject Item Failed :' . $e->getMessage(),
             ], 422);
         }
     }
@@ -275,7 +275,7 @@ class APIBarangJadi extends Controller
 
                 return response()->json([
                     'Status' => 'Error',
-                    'Message' => 'Total Qty pallet ('.$totalPalletQty.') harus sama dengan Qty Penyerahan ('.$qtyoh.')',
+                    'Message' => 'Total Qty pallet (' . $totalPalletQty . ') harus sama dengan Qty Penyerahan (' . $qtyoh . ')',
                 ], 422);
             }
 
@@ -425,7 +425,6 @@ class APIBarangJadi extends Controller
                             'qty_masuk' => $palletQty,
                             'qty_after' => $invTo->xxinv_qtyoh,
                         ]);
-
                     } else {
                         $domain = Domain::first();
                         $invTo = new xxinvDet();
@@ -530,7 +529,6 @@ class APIBarangJadi extends Controller
                     'Status' => 'Success',
                     'Message' => 'Receipt Item Successful',
                 ], 200);
-
             } catch (Exception $e) {
 
                 DB::rollBack();
@@ -545,10 +543,9 @@ class APIBarangJadi extends Controller
 
                 return response()->json([
                     'Status' => 'Error',
-                    'Message' => 'Receipt Item Failed :'.$e->getMessage(),
+                    'Message' => 'Receipt Item Failed :' . $e->getMessage(),
                 ], 422);
             }
-
         } catch (Exception $e) {
 
             $log->error('Unexpected error receiptItempb', [
@@ -560,7 +557,7 @@ class APIBarangJadi extends Controller
 
             return response()->json([
                 'Status' => 'Error',
-                'Message' => 'Receipt Item Failed :'.$e->getMessage(),
+                'Message' => 'Receipt Item Failed :' . $e->getMessage(),
             ], 422);
         }
     }
@@ -843,21 +840,21 @@ class APIBarangJadi extends Controller
                 $qtypick = $det['qtypick'];
                 $qxtendsingleitem = (new QxtendServices())->qxTransferSingleItemWo($wodpart, $wonbr, $site, $site, $loc, 'Shopping', $qtypick, $bin, $level, $wrh, $lot);
                 if ($qxtendsingleitem == 'false') {
-                    Log::channel('Picklist')->info('Transfer Qty Pick Failed for Picklist : '.$picknbr.' WO : '.$wonbr.' Part : '.$wodpart);
+                    Log::channel('Picklist')->info('Transfer Qty Pick Failed for Picklist : ' . $picknbr . ' WO : ' . $wonbr . ' Part : ' . $wodpart);
 
                     return response()->json([
                         'Status' => 'Error',
-                        'Message' => 'Transfer Qty Pick Failed for Picklist : '.$picknbr.' WO : '.$wonbr.' Part : '.$wodpart,
+                        'Message' => 'Transfer Qty Pick Failed for Picklist : ' . $picknbr . ' WO : ' . $wonbr . ' Part : ' . $wodpart,
 
                     ], 422);
                 } else {
                     $hasil = (new WSAServices())->wsaUpdateQtyPick($picknbr, $qtypick, $wonbr, $wodpart, $site, $loc, $lot, $wrh, $level, $bin);
                     if ($hasil == 'false') {
-                        Log::channel('Picklist')->info('Update Qty Pick Failed for Picklist : '.$picknbr.' WO : '.$wonbr.' Part : '.$wodpart);
+                        Log::channel('Picklist')->info('Update Qty Pick Failed for Picklist : ' . $picknbr . ' WO : ' . $wonbr . ' Part : ' . $wodpart);
 
                         return response()->json([
                             'Status' => 'Error',
-                            'Message' => 'Update Qty Pick Failed for Picklist : '.$picknbr.' WO : '.$wonbr.' Part : '.$wodpart,
+                            'Message' => 'Update Qty Pick Failed for Picklist : ' . $picknbr . ' WO : ' . $wonbr . ' Part : ' . $wodpart,
                         ], 422);
                     }
                 }
@@ -975,7 +972,6 @@ class APIBarangJadi extends Controller
 
             return response()->json(['DataWSA' => $listData], 200);
         }
-
     }
 
     public function nullConversion($data)
@@ -1048,7 +1044,7 @@ class APIBarangJadi extends Controller
         $arrayloc = [];
         $stringloc = '';
         foreach ($locationdetail as $locdetail) {
-            $stringloc .= $locdetail.',';
+            $stringloc .= $locdetail . ',';
         }
 
         $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function ($query) {
@@ -1103,7 +1099,7 @@ class APIBarangJadi extends Controller
             $binfrom = $this->nullConversion($data['binfrom'] ?? null);
             $remark = $this->nullConversion($data['remark'] ?? null);
             $exp = $this->nullConversion($data['exp'] ?? null);
-            $qty = $data['qty'];
+            $qty = (int) str_replace(',', '', (string) $data['qty']);
             $wh = $this->nullConversion($data['wh'] ?? null);
             $ref = $this->nullConversion($data['ref'] ?? null);
             $level = $this->nullConversion($data['level'] ?? null);
@@ -1122,7 +1118,6 @@ class APIBarangJadi extends Controller
 
                 $prefix = $prefixTable->pbp_prefix;
                 $runningnbr = (int) $prefixTable->pbp_running_nbr;
-
             } else {
 
                 $prefix = 'PB';
@@ -1138,7 +1133,7 @@ class APIBarangJadi extends Controller
                 STR_PAD_LEFT
             );
 
-            $newPrefix = $prefix.$newRunningNbr;
+            $newPrefix = $prefix . $newRunningNbr;
 
             $newPenyerahanBarang = new PenyerahanBarang();
 
@@ -1181,7 +1176,6 @@ class APIBarangJadi extends Controller
 
                 $prefixTable->pbp_running_nbr = $nextrunningnbr;
                 $prefixTable->save();
-
             } else {
 
                 $insertprefix = new penyerahanBarangPrefix();
@@ -1196,10 +1190,9 @@ class APIBarangJadi extends Controller
 
             return response()->json([
                 'Status' => 'Success',
-                'Message' => 'Transfer Item Success for Item : '.$item,
+                'Message' => 'Transfer Item Success for Item : ' . $item,
                 'trfid' => $newPrefix,
             ], 200);
-
         } catch (\Exception $e) {
 
             DB::rollBack();
@@ -1303,7 +1296,7 @@ class APIBarangJadi extends Controller
 
                 return response()->json([
                     'Status' => 'Error',
-                    'Message' => 'Data dengan trfid '.$trfid.' tidak ditemukan',
+                    'Message' => 'Data dengan trfid ' . $trfid . ' tidak ditemukan',
                 ], 404);
             }
 
@@ -1318,7 +1311,7 @@ class APIBarangJadi extends Controller
 
             return response()->json([
                 'Status' => 'Success',
-                'Message' => 'Transfer Item Updated Success for Item : '.$penyerahanBarang->pb_item,
+                'Message' => 'Transfer Item Updated Success for Item : ' . $penyerahanBarang->pb_item,
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -1357,28 +1350,27 @@ class APIBarangJadi extends Controller
         if ($itemCode) {
             $getAllItemLocation->whereRelation('getListItem.getItem', 'im_item_part', '=', $itemCode);
         }
-        
+
         if ($req->wh) {
             $getAllItemLocation->where('ld_building', $warehouse);
-            
         }
         $getAllItemLocation = $getAllItemLocation->get();
-        
-    
+
+
 
         $domain = Domain::first();
         $domainCode = $domain->domain ?? '';
-    
+
         /**get daata from sql   */
         $xxinvDet = xxinvDet::query()
             ->where('xxinv_domain', $domainCode)
-            ->when($site !== '', fn ($q) => $q->where('xxinv_site', $site))
-            ->when($itemCode !== '', fn ($q) => $q->where('xxinv_part', $itemCode))
-            ->when($warehouse !== '', fn ($q) => $q->where('xxinv_wrh', $warehouse))
+            ->when($site !== '', fn($q) => $q->where('xxinv_site', $site))
+            ->when($itemCode !== '', fn($q) => $q->where('xxinv_part', $itemCode))
+            ->when($warehouse !== '', fn($q) => $q->where('xxinv_wrh', $warehouse))
             ->get();
-            
+
         $getDataQAD = $xxinvDet;
-        
+
         $grouped = $getDataQAD->groupBy(function ($item) {
             $site = (string) ($item['xxinv_site'] ?? '');
             $loc = (string) ($item['xxinv_loc'] ?? '');
@@ -1389,7 +1381,7 @@ class APIBarangJadi extends Controller
             return "{$site}-{$loc}-{$bin}-{$wrh}-{$level}";
         });
         // dd($grouped);
-        
+
         $merged = $grouped->map(function ($items) {
             $first = $items->first();
             $first['xxinv_qtyoh'] = $items->sum(function ($i) {
@@ -1403,7 +1395,7 @@ class APIBarangJadi extends Controller
                 return (float) $item['xxinv_qtyoh'] == 0;
             })
             ->values();
-        
+
         $dataQAD = $merged->filter(function ($item) use ($getAllItemLocation) {
             foreach ($getAllItemLocation as $datas) {
                 // dd($item['xxinv_loc'], $datas->getMaster->location_code);
@@ -1420,7 +1412,7 @@ class APIBarangJadi extends Controller
 
             return false;
         })->values();
-        
+
         $dataQAD = $dataQAD
             ->groupBy('xxinv_wrh')
             ->map(function ($items) {
