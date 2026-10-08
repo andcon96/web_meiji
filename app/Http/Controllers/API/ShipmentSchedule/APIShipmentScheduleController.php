@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\GeneralResources;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleDet;
 use App\Models\API\ShipmentSchedule\ShipmentScheduleMstr;
+use App\Models\API\ShipmentSchedule\ShipmentScheduleApproval;
 use App\Models\Settings\qxwsa;
 use App\Services\ShipmentScheduleServices;
+use Illuminate\Support\Facades\Auth;
+
 use App\Services\WSAServices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,21 +21,33 @@ class APIShipmentScheduleController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $req)
+    public function index(Request $request)
     {
-        $data = ShipmentScheduleMstr::withCount("packingReplenishmentDet")->with(["packingReplenishmentDet"]);
+        $data = ShipmentScheduleMstr::query()
+            ->with([
+                'getShipmentScheduleDetail.shipmentScheduleLoc'
+            ]);
 
-        if ($req->search) {
-            $data->where(function ($query) use ($req) {
-                $query
-                    ->where("ssm_number", "LIKE", "%" . $req->search . "%")
-                    ->orWhere("ssm_cust_code", "LIKE", "%" . $req->search . "%")
-                    ->orWhere("ssm_cust_desc", "LIKE", "%" . $req->search . "%")
-                    ->orWhere("ssm_status", "LIKE", "%" . $req->search . "%");
+        if ($request->search) {
+            $search = $request->search;
+
+            $data->where(function ($q) use ($search) {
+
+                $q->where('ssm_number', 'LIKE', '%' . $search . '%')
+                    ->orWhere('ssm_cust_code', 'LIKE', '%' . $search . '%')
+                    ->orWhere('ssm_cust_desc', 'LIKE', '%' . $search . '%')
+                    ->orWhere('ssm_status', 'LIKE', '%' . $search . '%')
+
+                    ->orWhereHas('getShipmentScheduleDetail', function ($query) use ($search) {
+                        $query->where('ssd_sod_nbr', 'LIKE', '%' . $search . '%')
+                            ->orWhere('ssd_sod_part', 'LIKE', '%' . $search . '%');
+                    });
             });
         }
 
-        $data = $data->orderBy("ssm_number", "desc")->paginate(10);
+        $data = $data
+            ->orderBy('id', 'desc')
+            ->paginate(10);
 
         return GeneralResources::collection($data);
     }
@@ -178,12 +193,12 @@ class APIShipmentScheduleController extends Controller
     {
         // Log::channel('shipmentSchedule')->info(json_encode($request->all()));
 
-        $customerCode = $request->customer_id;
-        $customerName = $request->customer_desc;
-        $salesOrders = $request->sales_orders;
+        $approver = $request->approver;
+        $idPrm = $request->prm_id;
+        $shipmentSchedule = $request->scheduleDetail;
 
         $shipmentScheduleServices = new ShipmentScheduleServices();
-    $saveData = $shipmentScheduleServices->saveShipmentSchedule($customerCode, $customerName, $salesOrders);
+        $saveData = $shipmentScheduleServices->saveShipmentSchedule($approver, $idPrm, $shipmentSchedule);
 
         if ($saveData == false) {
             return response()->json(
@@ -205,109 +220,237 @@ class APIShipmentScheduleController extends Controller
             JSON_UNESCAPED_UNICODE,
         );
     }
-
-    public function delete(Request $request)
+    public function approve(Request $request)
     {
-        $id = $request->id;
+        $request->validate([
+            'id' => 'required|integer',
+            'reason' => 'nullable|string',
+        ]);
 
-        // Ambil data master, loop ke detail, loop ke lokasi, sebelum hapus masukin ke history, terakhir delete
-        $shipmentScheduleMstr = ShipmentScheduleMstr::with(["getShipmentScheduleDetail.getShipmentScheduleLocation"])->find($id);
+        try {
+            $shipmentScheduleServices = new ShipmentScheduleServices();
 
-        if (!$shipmentScheduleMstr) {
-            return response()->json(
-                [
-                    "status" => "Error",
-                    "message" => "Data not found",
-                ],
-                422,
-                ["Content-Type" => "application/json"],
-                JSON_UNESCAPED_UNICODE,
+            $approveData = $shipmentScheduleServices->approveShipment(
+                $request->id,
+                $request->reason
             );
+
+            if ($approveData === false) {
+                return response()->json([
+                    'status' => 'Error',
+                    'message' => 'Failed to approve shipment schedule.',
+                ], 422);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Shipment schedule has been approved.',
+            ], 200);
+        } catch (\Exception $err) {
+            Log::channel('shipmentSchedule')->error($err);
+
+            return response()->json([
+                'status' => 'Error',
+                'message' => $err->getMessage(),
+            ], 422);
+        }
+    }
+
+    public function reject(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|integer',
+            'reason' => 'required|string',
+        ]);
+
+        try {
+            $shipmentScheduleServices = new ShipmentScheduleServices();
+
+            $rejectData = $shipmentScheduleServices->rejectShipment(
+                $request->id,
+                $request->reason
+            );
+
+            if ($rejectData === false) {
+                return response()->json([
+                    'status' => 'Error',
+                    'message' => 'Failed to reject shipment schedule.',
+                ], 422);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Shipment schedule has been rejected.',
+            ], 200);
+        } catch (\Exception $err) {
+            Log::channel('shipmentSchedule')->error($err);
+
+            return response()->json([
+                'status' => 'Error',
+                'message' => $err->getMessage(),
+            ], 422);
+        }
+    }
+    public function getShipmentScheduleApprovalList(Request $request)
+    {
+        $data = ShipmentScheduleApproval::query()
+            ->with([
+                'master.getShipmentScheduleDetail.shipmentScheduleLoc',
+                'creator:id,name,username',
+            ])
+            ->where('ssa_status', 'Waiting for confirmation');
+
+        if ($request->search) {
+            $filter = $request->search;
+
+            $data->where(function ($q) use ($filter) {
+                $q->whereHas('master', function ($subq) use ($filter) {
+                    $subq->where('ssm_number', 'LIKE', '%' . $filter . '%')
+                        ->orWhere('ssm_cust_code', 'LIKE', '%' . $filter . '%')
+                        ->orWhere('ssm_cust_desc', 'LIKE', '%' . $filter . '%');
+                })
+                    ->orWhereHas('master.getShipmentScheduleDetail', function ($subq) use ($filter) {
+                        $subq->where('ssd_sod_nbr', 'LIKE', '%' . $filter . '%')
+                            ->orWhere('ssd_sod_part', 'LIKE', '%' . $filter . '%');
+                    });
+            });
         }
 
-        $shipmentScheduleServices = new ShipmentScheduleServices();
-        $deleteData = $shipmentScheduleServices->deleteShipmentSchedule($shipmentScheduleMstr);
-
-        if ($deleteData == false) {
-            return response()->json(
-                [
-                    "status" => "Error",
-                    "message" => "Failed to delete shipment schedule",
-                ],
-                422,
-                ["Content-Type" => "application/json"],
-                JSON_UNESCAPED_UNICODE,
-            );
-        }
-
-        return response()->json(
-            [
-                "status" => "success",
-                "message" => "Shipment schedule has been deleted",
-            ],
-            200,
-            ["Content-Type" => "application/json"],
-            JSON_UNESCAPED_UNICODE,
+        return GeneralResources::collection(
+            $data->orderBy('created_at', 'desc')->paginate(10)
         );
     }
+
+    // public function delete(Request $request)
+    // {
+    //     $id = $request->id;
+
+    //     // Ambil data master, loop ke detail, loop ke lokasi, sebelum hapus masukin ke history, terakhir delete
+    //     $shipmentScheduleMstr = ShipmentScheduleMstr::with(["getShipmentScheduleDetail.getShipmentScheduleLocation"])->find($id);
+
+    //     if (!$shipmentScheduleMstr) {
+    //         return response()->json(
+    //             [
+    //                 "status" => "Error",
+    //                 "message" => "Data not found",
+    //             ],
+    //             422,
+    //             ["Content-Type" => "application/json"],
+    //             JSON_UNESCAPED_UNICODE,
+    //         );
+    //     }
+
+    //     $shipmentScheduleServices = new ShipmentScheduleServices();
+    //     $deleteData = $shipmentScheduleServices->deleteShipmentSchedule($shipmentScheduleMstr);
+
+    //     if ($deleteData == false) {
+    //         return response()->json(
+    //             [
+    //                 "status" => "Error",
+    //                 "message" => "Failed to delete shipment schedule",
+    //             ],
+    //             422,
+    //             ["Content-Type" => "application/json"],
+    //             JSON_UNESCAPED_UNICODE,
+    //         );
+    //     }
+
+    //     return response()->json(
+    //         [
+    //             "status" => "success",
+    //             "message" => "Shipment schedule has been deleted",
+    //         ],
+    //         200,
+    //         ["Content-Type" => "application/json"],
+    //         JSON_UNESCAPED_UNICODE,
+    //     );
+    // }
 
     public function edit($id)
     {
-        $shipmentSchedule = ShipmentScheduleMstr::with(["getShipmentScheduleDetail.getShipmentScheduleLocation"])->find($id);
+        $shipmentSchedule = ShipmentScheduleMstr::with([
+            'getShipmentScheduleDetail.shipmentScheduleLoc'
+        ])->find($id);
 
         if (!$shipmentSchedule) {
-            return response()->json(
-                [
-                    "status" => "Error",
-                    "message" => "Failed to fetch shipment schedule data",
-                ],
-                422,
-                ["Content-Type" => "application/json"],
-                JSON_UNESCAPED_UNICODE,
-            );
+            return response()->json([
+                "status"  => "Error",
+                "message" => "Failed to fetch shipment schedule data"
+            ], 422, ["Content-Type" => "application/json"], JSON_UNESCAPED_UNICODE);
         }
 
-        return response()->json(
-            [
-                "status" => "success",
-                "shipmentScheduleData" => $shipmentSchedule,
-            ],
-            200,
-            ["Content-Type" => "application/json"],
-            JSON_UNESCAPED_UNICODE,
-        );
+        return response()->json([
+            "status"               => "success",
+            "shipmentScheduleData" => $shipmentSchedule,
+        ], 200, ["Content-Type" => "application/json"], JSON_UNESCAPED_UNICODE);
     }
-
     public function update(Request $request, $id)
     {
-        // Log::channel("shipmentSchedule")->info(json_encode($request->all()));
+        $request->validate([
+            'approver' => 'required',
+            'prm_id' => 'required|integer',
+            'scheduleDetail' => 'required|array',
+        ]);
 
-        $idShipmentScheduleMstr = $id;
-        $salesOrders = $request->sales_orders;
+        try {
+            $shipmentScheduleServices = new ShipmentScheduleServices();
 
-        $shipmentScheduleServices = new ShipmentScheduleServices();
-        $updateData = $shipmentScheduleServices->updateShipmentSchedule($idShipmentScheduleMstr, $salesOrders);
-
-        if ($updateData == false) {
-            return response()->json(
-                [
-                    "Status" => "Error",
-                    "Message" => "Failed To Update Shipment Schedule.",
-                ],
-                422,
+            $updateData = $shipmentScheduleServices->updateShipmentSchedule(
+                $request->approver,
+                $id,
+                $request->scheduleDetail
             );
-        }
 
-        return response()->json(
-            [
-                "status" => "success",
-                "message" => "Shipment schedule has been created",
-            ],
-            200,
-            ["Content-Type" => "application/json"],
-            JSON_UNESCAPED_UNICODE,
-        );
+            if ($updateData === false) {
+                return response()->json([
+                    'status' => 'Error',
+                    'message' => 'Failed to update shipment schedule.',
+                ], 422);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Shipment schedule has been updated.',
+            ], 200);
+        } catch (\Exception $err) {
+            Log::channel('shipmentSchedule')->error($err);
+
+            return response()->json([
+                'status' => 'Error',
+                'message' => $err->getMessage(),
+            ], 422);
+        }
     }
+    // public function update(Request $request, $id)
+    // {
+    //     // Log::channel("shipmentSchedule")->info(json_encode($request->all()));
+
+    //     $idShipmentScheduleMstr = $id;
+    //     $salesOrders = $request->sales_orders;
+
+    //     $shipmentScheduleServices = new ShipmentScheduleServices();
+    //     // $updateData = $shipmentScheduleServices->updateShipmentSchedule($idShipmentScheduleMstr, $salesOrders);
+
+    //     if ($updateData == false) {
+    //         return response()->json(
+    //             [
+    //                 "Status" => "Error",
+    //                 "Message" => "Failed To Update Shipment Schedule.",
+    //             ],
+    //             422,
+    //         );
+    //     }
+
+    //     return response()->json(
+    //         [
+    //             "status" => "success",
+    //             "message" => "Shipment schedule has been created",
+    //         ],
+    //         200,
+    //         ["Content-Type" => "application/json"],
+    //         JSON_UNESCAPED_UNICODE,
+    //     );
+    // }
     //   public function deleteDraft(Request $req)
     // {
 

@@ -16,29 +16,34 @@ class APIShipperConfirmController extends Controller
     public function index(Request $request)
     {
         $data = ShipperConfirm::query()
-            ->with(['getPackingReplenishmentMaster.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster', 'getCreatedBy:id,name,username'])
-            ->where('sc_user_approver', 'LIKE', '%'.Auth::user()->id.'%');
+            ->with([
+                'getShipmentScheduleMaster.getShipmentScheduleDetail.shipmentScheduleLoc',
+                'getCreatedBy:id,name,username',
+            ])
+            ->where('sc_user_approver', 'LIKE', '%' . Auth::user()->id . '%');
 
         if ($request->search) {
             $filter = $request->search;
 
             $data->where(function ($q) use ($filter) {
-
-                $q->whereHas('getPackingReplenishmentMaster', function ($subq) use ($filter) {
-                    $subq->where('prm_shipper_nbr', 'LIKE', '%'.$filter.'%')->where('prm_status', 'Shipper Created');
+                // Shipment number / customer
+                $q->whereHas('getShipmentScheduleMaster', function ($subq) use ($filter) {
+                    $subq->where(function ($w) use ($filter) {
+                        $w->where('ssm_number', 'LIKE', '%' . $filter . '%')
+                            ->orWhere('ssm_cust_code', 'LIKE', '%' . $filter . '%')
+                            ->orWhere('ssm_cust_desc', 'LIKE', '%' . $filter . '%');
+                    });
                 })
-
-                    ->orWhereHas('getPackingReplenishmentMaster.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster', function ($q) use ($filter) {
-                        $q->where('ssm_cust_code', 'LIKE', '%'.$filter.'%')->orWhere('ssm_cust_desc', 'LIKE', '%'.$filter.'%');
-                    })
-
-                    ->orWhereHas('getPackingReplenishmentMaster.getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet', function ($q) use ($filter) {
-                        $q->where('ssd_sod_part', 'LIKE', '%'.$filter.'%');
+                    // Item
+                    ->orWhereHas('getShipmentScheduleMaster.getShipmentScheduleDetail', function ($subq) use ($filter) {
+                        $subq->where('ssd_sod_part', 'LIKE', '%' . $filter . '%');
                     });
             });
         }
 
-        $data = $data->where('sc_status', 'Waiting for confirmation')->orderBy('created_at', 'desc')->paginate(10);
+        $data = $data->where('sc_status', 'Waiting for confirmation')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
         return GeneralResources::collection($data);
     }
@@ -63,8 +68,7 @@ class APIShipperConfirmController extends Controller
         if ($saveData !== true) {
             return response()->json([
                 'Status' => 'error',
-                'Message' => $saveData['message'] ?? 'Unknown QAD error.',
-                // 'qad_message' => $saveData['message'] ?? 'Unknown QAD error.',
+                'Message' => $saveData['message'] ?? 'Failed to confirm shipment.',
             ], 422);
         }
 
@@ -83,23 +87,24 @@ class APIShipperConfirmController extends Controller
         $activeConnection = qxwsa::first();
 
         $confirmServices = new ConfirmShipmentServices();
+
         $saveData = $confirmServices->rejectShipment(
             $request,
             $shipperApproval,
             $reason,
             $activeConnection
         );
+
         if ($saveData !== true) {
             return response()->json([
                 'Status' => 'error',
-                'Message' => $saveData['message'] ?? 'Unknown QAD error.',
-                // 'qad_message' => $saveData['message'] ?? 'Unknown QAD error.',
+                'Message' => $saveData['message'] ?? 'Failed to reject shipment.',
             ], 422);
         }
 
         return response()->json([
             'Status' => 'success',
-            'Message' => 'Shipment has been approved',
+            'Message' => 'Shipment has been rejected',
         ], 200);
     }
 }

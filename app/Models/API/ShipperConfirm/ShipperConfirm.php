@@ -2,7 +2,7 @@
 
 namespace App\Models\API\ShipperConfirm;
 
-use App\Models\API\PackingReplenishment\PackingReplenishmentMstr;
+use App\Models\API\ShipmentSchedule\ShipmentScheduleMstr;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Settings\User;
@@ -13,9 +13,9 @@ class ShipperConfirm extends Model
 
     protected $table = "shipper_confirm";
 
-    public function getPackingReplenishmentMaster()
+    public function getShipmentScheduleMaster()
     {
-        return $this->belongsTo(PackingReplenishmentMstr::class, "prm_id", "id");
+        return $this->belongsTo(ShipmentScheduleMstr::class, "ssm_id", "id");
     }
 
     public function getCreatedBy()
