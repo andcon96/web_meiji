@@ -45,7 +45,7 @@ Route::post('getWorkOrderQad', [APIController::class, 'getWorkOrderQad']);
 // API DKP
 Route::post('sendQxCompIssue', [APIController::class, 'sendQxCompIssue']);
 Route::get('getWipItem', [APIController::class, 'getWipItem']);
-Route::post('sendIssueUnplanned',[APIController::class,'apiIssueUnplanned']);
+Route::post('sendIssueUnplanned', [APIController::class, 'apiIssueUnplanned']);
 
 // Get APK Latest Version
 Route::get('getAPKLatestVersion', [APIController::class, 'getAPKLatestVersion']);
@@ -306,7 +306,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     // Route::get("getSearchLocation", [APIPicklistShopping::class, "wsainvdet"]);
     // Route::post("sendTransferItem", [APIPicklistShopping::class, "sendTransferItem"]);
     Route::get('wsaPenyimpananWarehousePenerimaan', [APIBarangJadi::class, 'wsaPenyimpananWarehousePenerimaan']);
-    
+
     Route::get('getLocationBarangJadi', [APIBarangJadi::class, 'getLocationBarangJadi']);
     Route::post('getWebLocationDataTransfer', [APIBarangJadi::class, 'getWebLocationBarangJadi']);
     Route::get('getSiteBarangJadi', [APIBarangJadi::class, 'getSiteBarangJadi']);
@@ -329,12 +329,13 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getInventoryByWarehouse', [APIDashboard::class, 'getInventoryByWarehouse']);
     Route::get('getDetailInventoryByWarehouse', [APIDashboard::class, 'getDetailInventoryByWarehouse']);
     Route::get('getDetailInventoryByStatus', [APIDashboard::class, 'getDetailInventoryByStatus']);
+    Route::get('getWarehouseData', [APIDashboard::class, 'getWarehouseData']);
+     Route::get('getWarehouseDetailData', [APIDashboard::class, 'getWarehouseDetailData']);
 
     Route::get('getInventoryByStatus', [APIDashboard::class, 'getInventoryByStatus']);
     Route::get('getInventoryByExpDate', [APIDashboard::class, 'getInventoryByExpDate']);
 
     Route::post('singleTransferLot', [ApiSIngelTransferLot::class, 'store']);
-
 });
 // WSA Picklist
 // WSA Picklist

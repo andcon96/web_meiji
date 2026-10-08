@@ -1409,7 +1409,7 @@ class APIPurchaseOrderController extends Controller
         $results = xxinvDet::query()
             ->where('xxinv_domain', $domainCode)
             ->where('xxinv_wrh', $warehouse)
-            ->when($location !== '', fn ($q) => $q->where('xxinv_loc', $location))
+            // ->when($location !== '', fn ($q) => $q->where('xxinv_loc', $location))
             ->when($binSearch !== '', fn ($q) => $q->where('xxinv_bin', $binSearch))
             ->when($levelsearch !== '', fn ($q) => $q->where('xxinv_level', $levelsearch))
             ->selectRaw('max(xxinv_part) as xxinv_part, max(xxinv_loc) as xxinv_loc, max(xxinv_lot) as xxinv_lot, xxinv_bin, xxinv_level, xxinv_site, xxinv_wrh, max(xxinv_qty_pick) as xxinv_qty_pick, sum(xxinv_qtyoh) as xxinv_qtyoh')
