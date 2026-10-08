@@ -1,33 +1,28 @@
 <table class="table-bordered">
     <thead>
         <tr>
-            <th>Nama dan Paraf Operator Persiapan:</th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-
-            <th>Tanggal Persiapan</th>
-            <th></th>
-            <th></th>
-            <th></th>
+            <th><b>Nama dan Paraf Operator Persiapan:</b></th>
             <th></th>
             <th></th>
             <th></th>
             <th></th>
 
-            <th>Tanggal Pengiriman</th>
+            <th><b>Tanggal Persiapan</b></th>
             <th></th>
             <th></th>
             <th></th>
+
+            <th><b>Tanggal Pengiriman</b></th>
             <th></th>
+            <th></th>
+            <th></th>
+
+            <th><b>Distributor Tujuan</b></th>
             <th></th>
             <th></th>
             <th></th>
             <th></th>
         </tr>
-
         <tr></tr>
         <tr></tr>
 
@@ -39,91 +34,92 @@
             <th></th>
             <th></th>
 
-            <th>Jumlah Kemasan</th>
+            <th><b>Jumlah </b></th>
             <th></th>
             <th></th>
             <th></th>
 
-            <th>Jumlah Kemasan</th>
+            <th><b>Jumlah Kemasan</b></th>
             <th></th>
             <th></th>
             <th></th>
 
-            <th>Jumlah Kemasan</th>
+            <th><b>Jumlah Kemasan</b></th>
             <th></th>
             <th></th>
             <th></th>
             <th></th>
             <th></th>
 
-            <th>Scan 2D Barcode</th>
+            <th><b>Scan 2D Barcode</b></th>
             <th></th>
             <th></th>
         </tr>
 
         <tr>
-            <th>Order</th>
-            <th>Sold-To</th>
-            <th>Item Number</th>
-            <th>UM</th>
-            <th>Qty Ordered</th>
-            <th>No. Lot</th>
+            <th><b>Order</b></th>
+            <th><b>Item Number</b></th>
+            <th><b>UM</b></th>
+            <th><b>Qty Ordered</b></th>
+            <th><b>Sold-To</b></th>
 
-            <th>KA</th>
-            <th>per UM</th>
-            <th>Kode PC</th>
-            <th>No Lot</th>
+            <th><b>No. Lot</b></th>
+            <th><b>KA</b></th>
+            <th><b>per UM</b></th>
+            <th><b>Kode PC</b></th>
+            <th><b>No Lot</b></th>
 
-            <th>KA</th>
-            <th>per UM</th>
-            <th>Kode PC</th>
-            <th>No Lot</th>
+            <th><b>KA</b></th>
+            <th><b>per UM</b></th>
+            <th><b>Kode PC</b></th>
+            <th><b>No Lot</b></th>
 
-            <th>KA</th>
-            <th>per UM</th>
-            <th>Kode PC</th>
-            <th>Koli</th>
-            <th>Paraf Opt Pemeriksa</th>
-            <th>Paraf Cek Pecahan (Level Group)</th>
+            <th><b>KA</b></th>
+            <th><b>per UM</b></th>
+            <th><b>Kode PC</b></th>
+            <th><b>Koli</b></th>
+            <th><b>Paraf Opt Pemeriksa</b></th>
+            <th><b>Paraf Cek Pecahan (Level Group)</b></th>
 
-            <th>No. SO TTAC</th>
-            <th>Paraf Scan</th>
-            <th>Paraf TTAC</th>
+            <th><b>No. SO TTAC</b></th>
+            <th><b>Paraf Scan</b></th>
+            <th><b>Paraf TTAC</b></th>
         </tr>
+
     </thead>
-   
+
 
     <tbody>
         @foreach($rows as $row)
-            @foreach($row->get_other_shipment_schedule_location as $loc)
-            <tr>
+        @foreach($row->get_other_shipment_schedule_location as $loc)
+        <tr>
 
-                <td>{{ $row->order }}</td>
-                <td>{{ $row->sold_to }}</td>
-                <td>{{ $row->ossd_part }}</td>
-                <td>{{ $row->ossd_uom }}</td>
-                <td>{{ $row->ossd_qty_ord }}</td>
-                <td>{{ $loc->ossl_lotserial }}</td>
+            <td>{{ $row->order }}</td>
+            <td>{{ $row->ossd_part }}</td>
+            <td>{{ $row->ossd_uom }}</td>
+            <td>{{ $row->ossd_qty_ord }}</td>
+            <td>{{ $row->sold_to }}</td>
+            <td>{{ $loc->ossl_lotserial }}</td>
 
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-            </tr>
-            @endforeach
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        @endforeach
         @endforeach
     </tbody>
 </table>
