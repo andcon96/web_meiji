@@ -234,12 +234,12 @@ class APIController extends Controller
                     return $wmsItem['t_item'] == $item->xxinv_part
                         && $wmsItem['t_lot'] == $item->xxinv_lot;
                 });
-
-                if (! in_array(strtolower($item->xxinv_loc), ['qc-qrt', 'wh-qrt', 'wip'])) {
-                    $loc = 'Pass';
-                } else {
-                    $loc = $item->xxinv_loc;
-                }
+    $loc = $item->xxinv_loc;
+                // if (! in_array(strtolower($item->xxinv_loc), ['qc-qrt', 'wh-qrt', 'wip'])) {
+                //     $loc = 'Pass';
+                // } else {
+                //     $loc = $item->xxinv_loc;
+                // }
 
                 return [
                     // Data dari xxinv_det
@@ -1100,8 +1100,12 @@ class APIController extends Controller
             //     ->toSql();
             // Log::channel('customlog')->info($xxinvDet2. ' '.$data['ldDomain']. ' '.$data['ldSite']. ' '.$data['ldLot']. ' '.$data['ldPart']);
             foreach ($xxinvDet as $det) {
+                if($data['ldRef'] != $det->xxinv_ref){
+                    $det->xxinv_ref = $data['ldRef'];
+                }
                 $det->xxinv_loc = $data['ldLoc'];
                 $det->save();
+
             }
 
             // $xxinvDetApproval = xxinvDetApproval::where('xxinv_domain', $data['ldDomain'])

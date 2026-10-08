@@ -77,6 +77,8 @@ class APIPurchaseOrderApprovalController extends Controller
     public function approveRejectReceipt(Request $req)
     {
         // Log::channel('customlog')->info('Data : ', ['input' => $req->all()]);
+         $statusprint = $req->action == 'Approve' ? 'Approved' : 'Rejected';
+         $statusfailed = $req->action == 'Approve'? 'approve' : 'reject';
         try {
             DB::beginTransaction();
             $approver = Auth::user()->name;
@@ -368,18 +370,18 @@ class APIPurchaseOrderApprovalController extends Controller
                     }
                     break;
             }
-
+           
             DB::commit();
             return response()->json([
                 'Status' => 'Success',
-                'Message' => 'Data Succesfully Approved / Reject',
+                'Message' => 'Data Succesfully ' . $statusprint,
             ], 200);
         } catch (Exception $e) {
             DB::rollback();
             Log::info($e);
             return response()->json([
                 'Status' => 'Error',
-                'Message' => "Failed To Approve / Reject Data"
+                'Message' => "Failed To " . $statusfailed . " Data"
             ], 422);
         }
     }

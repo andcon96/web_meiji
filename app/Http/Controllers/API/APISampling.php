@@ -249,7 +249,9 @@ class APISampling extends Controller
         $levelfrom = $req->levelfrom;
         $binfrom = $req->binfrom;
         $qty = $req->qty;
+        $qtydouble = (double)$qty;
         DB::beginTransaction();
+        
         try {
             $domain = Domain::first();
             $domainCode = $domain->domain ?? '';

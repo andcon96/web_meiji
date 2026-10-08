@@ -1602,17 +1602,20 @@ class APIPurchaseOrderController extends Controller
         $podid = $req->input('podid');
         $receiptdetid = $req->input('receiptdetid');
         $loc = 'WH-QRT';
+        // $receiptdetid = 69;
+        // $podid = 41;
         // $poddata = PurchaseOrderDetail::with(['getMaster', 'getReceiptDetail.getMaster'])
         //     ->where('id', $podid)->first();
         // // dd($poddata);
         $poddata = PurchaseOrderDetail::with([
             'getMaster',
-            'getReceiptDetail' => function ($query) use($receiptdetid) {
+            'getReceiptDetail' 
+            => function ($query) use($receiptdetid) {
                 $query->with('getMaster')
                     ->join('xxinv_det', function ($e) {
                         $e->on('receipt_det.rd_nama_barang', '=', 'xxinv_det.xxinv_part');
                         $e->on('receipt_det.rd_batch', '=', 'xxinv_det.xxinv_lot');
-                        $e->on('receipt_det.rd_location_penyimpanan','xxinv_det.xxinv_loc');
+                        // $e->on('receipt_det.rd_location_penyimpanan','xxinv_det.xxinv_loc');
                     })->orderBy('rd_nama_barang')
                     
                     ->where('receipt_det.id',$receiptdetid)
@@ -1623,7 +1626,7 @@ class APIPurchaseOrderController extends Controller
                     ;
             },
         ])->where('id', $podid)->first();
-        // dd($poddata);
+        // dd($podid,$receiptdetid);
         return response()->json([
             'DataHeader' => [$poddata->getReceiptDetail[0]->getMaster],
             'DataDetail' => $poddata->getReceiptDetail,
@@ -1663,27 +1666,40 @@ class APIPurchaseOrderController extends Controller
         $level = $req->input('level');
         $bin = $req->input('bin');
         $qtyreturn = $req->input('qtyreturn');
+        $qtykonversi = $req->input('qtykonversi');
+        $podid = $req->input('podid');
+        $receiptid = $req->input('receiptid');
         $poid = $req->input('poid');
+        
         $approver = $req->input('approver');
         $podata = PurchaseOrderMaster::with('getReceipt')->where('id', $poid)->first();
-
+        $poddata = PurchaseOrderDetail::where('id', $podid)->first();
+        $receiptdata = ReceiptMaster::where('id', $receiptid)->first();
+        $receiptdetdata = ReceiptDetail::where('rd_rm_id', $receiptid)->where('rd_pod_det_id', $podid)->first();
+        
         DB::beginTransaction();
         try {
             foreach ($qtyreturn as $key => $return) {
                 if (floatval($return) != 0) {
                     $xxinvdet = xxinvDet::where('xxinv_part', $part)
                         ->where('xxinv_lot', $lot)
-                        ->where('xxinv_loc', $loc)
+                        ->where('xxinv_loc', $loc[$key])
                         ->where('xxinv_wrh', $warehouse[$key])
                         ->where('xxinv_level', $level[$key])
                         ->where('xxinv_bin', $bin[$key])
                         ->first();
 
                     if ($xxinvdet) {
-                        $xxinvdet->xxinv_qtyoh = $xxinvdet->xxinv_qtyoh - $return;
-                        $xxinvdet->xxinv_qty_wrh = $xxinvdet->xxinv_qty_wrh - $return;
+                        $xxinvdet->xxinv_qtyoh = $xxinvdet->xxinv_qtyoh - $qtykonversi[$key];
+                        $xxinvdet->xxinv_qty_wrh = $xxinvdet->xxinv_qty_wrh - $qtykonversi[$key];
                         $xxinvdet->save();
 
+                        $poddata->pod_qty_rcpt = $poddata->pod_qty_rcpt - $return;
+                        $poddata->save();
+
+                        $receiptdetdata->rd_qty_terima = $receiptdetdata->rd_qty_terima - $return;
+                        $receiptdetdata->save();
+                        
                         $newTransactionHistory = new TransactionHistory();
                         $newTransactionHistory->tr_nbr = $podata->po_nbr;
                         $newTransactionHistory->tr_order = $podata->po_nbr;

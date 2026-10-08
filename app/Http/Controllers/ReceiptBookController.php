@@ -24,25 +24,26 @@ class ReceiptBookController extends Controller
 
         return view('printBook.index', compact('data', 'menuMaster'));
     }
-function formatNumberCustom($number, $minDecimals = 2, $maxDecimals = 5) {
-    $formatted = number_format($number, $maxDecimals, '.', ',');
-    
-    // Remove trailing zeros but keep minimum decimals
-    $parts = explode('.', $formatted);
-    if (isset($parts[1])) {
-        // Remove trailing zeros
-        $decimals = rtrim($parts[1], '0');
-        // Ensure minimum decimal places
-        $decimals = str_pad($decimals, $minDecimals, '0');
-        return $parts[0] . '.' . $decimals;
+    function formatNumberCustom($number, $minDecimals = 2, $maxDecimals = 5)
+    {
+        $formatted = number_format($number, $maxDecimals, '.', ',');
+
+        // Remove trailing zeros but keep minimum decimals
+        $parts = explode('.', $formatted);
+        if (isset($parts[1])) {
+            // Remove trailing zeros
+            $decimals = rtrim($parts[1], '0');
+            // Ensure minimum decimal places
+            $decimals = str_pad($decimals, $minDecimals, '0');
+            return $parts[0] . '.' . $decimals;
+        }
+
+        // No decimals, add minimum
+        return $parts[0] . '.' . str_repeat('0', $minDecimals);
     }
-    
-    // No decimals, add minimum
-    return $parts[0] . '.' . str_repeat('0', $minDecimals);
-}
     public function printBook(Request $request, $id)
     {
-        $dataReceipt = ReceiptDetail::with(['getPurchaseOrderDetail','getMaster.getPurchaseOrderMaster', 'getDokumen', 'getKemasan', 'getKendaraan', 'getPenanda', 'getPallet', 'getApprovalHist.getUserApprove', 'getApprovalHist.getUserApproveAlt'])->findOrFail($id);
+        $dataReceipt = ReceiptDetail::with(['getPurchaseOrderDetail', 'getMaster.getPurchaseOrderMaster', 'getDokumen', 'getKemasan', 'getKendaraan', 'getPenanda', 'getPallet', 'getApprovalHist.getUserApprove', 'getApprovalHist.getUserApproveAlt'])->findOrFail($id);
         $receiptnumber = $dataReceipt->getMaster->rm_rn_number;
         $transactionHist = TransactionHistory::where('tr_program', 'PO Receipt Module')->where('tr_activity', 'Create Receipt')->where('tr_nbr', $receiptnumber)->first();
         $approverReceipt = ReceiptDetail::with(['getApprovalHist' => function ($query) {
@@ -122,12 +123,23 @@ function formatNumberCustom($number, $minDecimals = 2, $maxDecimals = 5) {
 
             'rd_keterangan_tambahan' => $dataReceipt->rd_keterangan_tambahan,
             'approver' => $approver,
-            
+            'total_pages' => 0,
+
         ];
+
+        // $pdf = Pdf::loadView('printBook.print', $data)
+        //     ->setPaper('A4', 'portrait');
 
         $pdf = Pdf::loadView('printBook.print', $data)
             ->setPaper('A4', 'portrait');
+        $pdf->render();
+        $data['total_pages'] = $pdf->getDomPDF()->getCanvas()->get_page_count();
 
+        // Second pass - actual render with correct total
+        $pdf = Pdf::loadView('printBook.print', $data)
+            ->setPaper('A4', 'portrait');
         return $pdf->stream('checksheet_penerimaan_barang.pdf');
+
+        // return $pdf->stream('checksheet_penerimaan_barang.pdf');
     }
 }
