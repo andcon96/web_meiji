@@ -45,7 +45,7 @@ Route::post('getWorkOrderQad', [APIController::class, 'getWorkOrderQad']);
 // API DKP
 Route::post('sendQxCompIssue', [APIController::class, 'sendQxCompIssue']);
 Route::get('getWipItem', [APIController::class, 'getWipItem']);
-Route::post('sendIssueUnplanned',[APIController::class,'apiIssueUnplanned']);
+Route::post('sendIssueUnplanned', [APIController::class, 'apiIssueUnplanned']);
 
 // Get APK Latest Version
 Route::get('getAPKLatestVersion', [APIController::class, 'getAPKLatestVersion']);
@@ -133,7 +133,10 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::put('updateShipmentSchedule/{id}', [APIShipmentScheduleController::class, 'update']);
     Route::get('getDefaultSampleLoc', [APITrasnferStockController::class, 'getDefaultSampleLoc']);
     Route::post('deleteDraftShipment', [APIShipmentScheduleController::class, 'deleteDraft']);
-
+    Route::post('/shipmentscheduleapprove', [APIShipmentScheduleController::class, 'approve']);
+    Route::post('/shipmentschedulereject', [APIShipmentScheduleController::class, 'reject']);
+    Route::get('getShipmentScheduleApprovalList', [APIShipmentScheduleController::class, 'getShipmentScheduleApprovalList']);
+    Route::post('editShipmentSchedule/{id}', [APIShipmentScheduleController::class, 'update']);
     // Packing Replenishment
     Route::get('getPackingReplenishment', [APIPackingReplenishmentController::class, 'index']);
     Route::get('listShipmentSchedule', [APIPackingReplenishmentController::class, 'listShipmentSchedule']);
@@ -306,7 +309,7 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     // Route::get("getSearchLocation", [APIPicklistShopping::class, "wsainvdet"]);
     // Route::post("sendTransferItem", [APIPicklistShopping::class, "sendTransferItem"]);
     Route::get('wsaPenyimpananWarehousePenerimaan', [APIBarangJadi::class, 'wsaPenyimpananWarehousePenerimaan']);
-    
+
     Route::get('getLocationBarangJadi', [APIBarangJadi::class, 'getLocationBarangJadi']);
     Route::post('getWebLocationDataTransfer', [APIBarangJadi::class, 'getWebLocationBarangJadi']);
     Route::get('getSiteBarangJadi', [APIBarangJadi::class, 'getSiteBarangJadi']);
@@ -334,7 +337,6 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getInventoryByExpDate', [APIDashboard::class, 'getInventoryByExpDate']);
 
     Route::post('singleTransferLot', [ApiSIngelTransferLot::class, 'store']);
-
 });
 // WSA Picklist
 // WSA Picklist

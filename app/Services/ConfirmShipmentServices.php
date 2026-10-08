@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\API\PackingReplenishment\PackingReplenishmentHist;
-use App\Models\API\PackingReplenishment\PackingReplenishmentMstr;
+use App\Models\API\ShipmentSchedule\ShipmentScheduleDet;
+use App\Models\API\ShipmentSchedule\ShipmentScheduleHist;
+use App\Models\API\ShipmentSchedule\ShipmentScheduleLoc;
+use App\Models\API\ShipmentSchedule\ShipmentScheduleMstr;
 use App\Models\API\ShipperConfirm\ShipperConfirm;
 use App\Models\API\TransactionHistory;
 use App\Models\API\xxinvDet;
@@ -12,150 +14,108 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-
 class ConfirmShipmentServices
 {
     public function confirmShipment(Request $request, $confirmApproval, $reason, $activeConnection)
     {
-        $dataArray = [];
         DB::beginTransaction();
 
         try {
-            $packingReplenishmentApproval = ShipperConfirm::where('id', $confirmApproval['id'])->lockForUpdate()->first();
+            $shipperConfirm = ShipperConfirm::where('id', $confirmApproval['id'])->lockForUpdate()->first();
 
-            if (! $packingReplenishmentApproval) {
+            if (! $shipperConfirm) {
                 DB::rollBack();
-                Log::channel('confirmShipment')->info('ShipperConfirm not found for id: '.$confirmApproval['id']);
+                Log::channel('confirmShipment')->info('ShipperConfirm not found for id: ' . $confirmApproval['id']);
 
                 return false;
             }
 
-            if ($packingReplenishmentApproval->sc_status !== 'Waiting for confirmation') {
+            if ($shipperConfirm->sc_status !== 'Waiting for confirmation') {
                 DB::rollBack();
-                Log::channel('confirmShipment')->info('Duplicate confirmShipment request ignored. ShipperConfirm id: '.$confirmApproval['id'].', current status: '.$packingReplenishmentApproval->sc_status);
+                Log::channel('confirmShipment')->info('Duplicate confirmShipment request ignored. ShipperConfirm id: ' . $confirmApproval['id'] . ', current status: ' . $shipperConfirm->sc_status);
 
                 return true;
             }
 
-            $anotherApproval = ShipperConfirm::where('prm_id', $confirmApproval['prm_id'])->where('id', '!=', $confirmApproval['id'])->where('sc_status', '=', 'Waiting for confirmation')->lockForUpdate()->first();
+            // ssm_id diambil dari database, bukan dari payload client
+            $ssmId = $shipperConfirm->ssm_id;
 
-            $packingReplenishmentApproval->sc_status = 'Approved';
-            $packingReplenishmentApproval->updated_by = Auth::user()->id;
-            $packingReplenishmentApproval->sc_reason = $reason;
-            $packingReplenishmentApproval->save();
+            $anotherApproval = ShipperConfirm::where('ssm_id', $ssmId)
+                ->where('id', '!=', $shipperConfirm->id)
+                ->where('sc_status', 'Waiting for confirmation')
+                ->lockForUpdate()
+                ->first();
+
+            $shipperConfirm->sc_status = 'Approved';
+            $shipperConfirm->updated_by = Auth::user()->id;
+            $shipperConfirm->sc_reason = $reason;
+            $shipperConfirm->save();
 
             Log::channel('confirmShipment')->info(json_encode($request->all()));
 
+            // Kalau masih ada approver lain yang belum konfirmasi, tunggu dulu
             if (! $anotherApproval) {
-                $dataPRM = $confirmApproval['get_packing_replenishment_master'];
+                $shipmentScheduleMstr = ShipmentScheduleMstr::with('getShipmentScheduleDetail.shipmentScheduleLoc')
+                    ->findOrFail($ssmId);
 
-                $packingReplenishmentMstr = PackingReplenishmentMstr::with(['getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster'])->find($dataPRM['id']);
+                $shipmentScheduleMstr->ssm_status = 'Shipped';
+                $shipmentScheduleMstr->updated_by = Auth::user()->id;
+                $shipmentScheduleMstr->save();
 
-                $packingReplenishmentMstr->prm_status = 'Shipped';
-                $packingReplenishmentMstr->save();
+                foreach ($shipmentScheduleMstr->getShipmentScheduleDetail as $shipmentScheduleDet) {
+                    foreach ($shipmentScheduleDet->shipmentScheduleLoc as $shipmentScheduleLocation) {
+                        $qtyPick = (float) ($shipmentScheduleLocation->ssl_qty_pick ?? 0);
 
-                $shipmentScheduleMaster = $packingReplenishmentMstr->getPackingReplenishmentDet[0]->getShipmentScheduleLocation->getShipmentScheduleDet->getShipmentScheduleMaster;
+                        if ($qtyPick <= 0) {
+                            continue;
+                        }
 
-                if ($shipmentScheduleMaster) {
-                    $shipmentScheduleMaster->ssm_status = 'Shipped';
-                    $shipmentScheduleMaster->save();
-                }
+                        // History dicatat sebelum qty pick di-nol-kan
+                        // $this->writeScheduleHistory(
+                        //     $shipmentScheduleMstr,
+                        //     $shipmentScheduleDet,
+                        //     $shipmentScheduleLocation,
+                        //     'Confirm Shipment',
+                        //     $reason
+                        // );
 
-                foreach ($packingReplenishmentMstr->getPackingReplenishmentDet as $packingReplenishmentDet) {
-                    $currentSite = strtoupper($packingReplenishmentDet->getShipmentScheduleLocation->ssl_site);
-                    $currentItem = strtoupper($packingReplenishmentDet->getShipmentScheduleLocation->getShipmentScheduleDet->ssd_sod_part);
-                    $currentLot = strtoupper($packingReplenishmentDet->getShipmentScheduleLocation->ssl_lotserial);
-                    $picked = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_qty_pick;
-
-                    $key = $currentSite.'|'.$currentItem.'|'.$currentLot;
-
-                    if (! isset($dataArray[$key])) {
-                        $dataArray[$key] = [
-                            'site' => $currentSite,
-                            'item' => $currentItem,
-                            'lot' => $currentLot,
-                            'pick' => 0,
-                        ];
-                    }
-
-                    $dataArray[$key]['pick'] += $picked;
-
-                    $packingReplenishmentHist = new PackingReplenishmentHist();
-                    $packingReplenishmentHist->prh_shipper_nbr = $packingReplenishmentMstr->prm_shipper_nbr;
-                    $packingReplenishmentHist->prh_so_nbr = $packingReplenishmentDet->getShipmentScheduleLocation->getShipmentScheduleDet->ssd_sod_nbr;
-                    $packingReplenishmentHist->prh_so_line = $packingReplenishmentDet->getShipmentScheduleLocation->getShipmentScheduleDet->ssd_sod_line;
-                    $packingReplenishmentHist->prh_site = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_site;
-                    $packingReplenishmentHist->prh_warehouse = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_warehouse;
-                    $packingReplenishmentHist->prh_location = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_location;
-                    $packingReplenishmentHist->prh_lotserial = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_lotserial;
-                    $packingReplenishmentHist->prh_level = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_level;
-                    $packingReplenishmentHist->prh_bin = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_bin;
-                    $packingReplenishmentHist->prh_qty_pick = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_qty_pick;
-                    $packingReplenishmentHist->prh_status_qad = $packingReplenishmentDet->prd_status_qad;
-                    $packingReplenishmentHist->prh_status = $packingReplenishmentMstr->prm_status;
-                    $packingReplenishmentHist->prh_action = 'Confirm Shipment';
-                    $packingReplenishmentHist->created_by = Auth::user()->name;
-                    $packingReplenishmentHist->save();
-
-                     $shipmentScheduleLocation = $packingReplenishmentDet->getShipmentScheduleLocation;
-                    $shipmentScheduleDet = $shipmentScheduleLocation->getShipmentScheduleDet;
-
-                xxinvDet::where('xxinv_part', $shipmentScheduleDet->ssd_sod_part)
-                        ->where('xxinv_lot', $shipmentScheduleLocation->ssl_lotserial)
-                        ->where('xxinv_bin', $shipmentScheduleLocation->ssl_bin)
-                        ->where('xxinv_level', $shipmentScheduleLocation->ssl_level)
-                        ->update([
-                             'xxinv_qty_shp' => DB::raw(
-                             'xxinv_qty_shp - ' . (float) $shipmentScheduleLocation->ssl_qty_pick
-                        ),
-                         'xxinv_qtyoh' => DB::raw(
-                         'xxinv_qtyoh - ' . (float) $shipmentScheduleLocation->ssl_qty_pick
-                        ),                  
+                        // Stok keluar: shp berkurang, qty on hand berkurang
+                        $this->updateInventory($shipmentScheduleDet, $shipmentScheduleLocation, [
+                            'xxinv_qty_shp' => DB::raw('xxinv_qty_shp - ' . $qtyPick),
+                            'xxinv_qtyoh' => DB::raw('xxinv_qtyoh - ' . $qtyPick),
                         ]);
 
-                    $shipmentScheduleLocation->ssl_qty_pick = 0;
-                    $shipmentScheduleLocation->save();
+                        $this->writeTransactionHistory(
+                            $shipmentScheduleDet,
+                            $shipmentScheduleLocation,
+                            'Shipment Confirm',
+                            $reason ?: 'Shipment Confirm',
+                            $qtyPick
+                        );
 
-                    $dataShipmentScheduleDet = $packingReplenishmentDet->getShipmentScheduleLocation->getShipmentScheduleDet;
-                    if ($dataShipmentScheduleDet->ssd_sod_qty_pick < $dataShipmentScheduleDet->ssd_sod_qty_ord) {
-                        $dataShipmentScheduleDet->ssd_status = 'Shipped (Partial)';
-                    } else {
-                        $dataShipmentScheduleDet->ssd_status = 'Shipped (Full)';
+                        $shipmentScheduleLocation->ssl_qty_pick = 0;
+                        $shipmentScheduleLocation->updated_by = Auth::user()->id;
+                        $shipmentScheduleLocation->save();
                     }
 
-                    $dataShipmentScheduleDet->updated_by = Auth::user()->id;
-                    $dataShipmentScheduleDet->save();
-                }
-   $newTransactionHistory = new TransactionHistory();
-                        $newTransactionHistory->tr_nbr       = $shipmentScheduleDet->ssd_sod_nbr ?? '';
-                        $newTransactionHistory->tr_order     = '';
-                        $newTransactionHistory->tr_program   = 'Shipment Module';
-                        $newTransactionHistory->tr_activity  = 'Shipment Confirm Reject';
-                        $newTransactionHistory->tr_user      = Auth::user()->username ?? '';
-                        $newTransactionHistory->tr_part      = $shipmentScheduleDet->ssd_sod_part ?? '';
-                        $newTransactionHistory->tr_uom       = $shipmentScheduleDet->ssd_uom ?? '';
-                        $newTransactionHistory->tr_line      = $shipmentScheduleDet->ssd_sod_line ?? 0;
-                        $newTransactionHistory->tr_lot       = $shipmentScheduleLocation->ssl_lotserial ?? '';
-                        $newTransactionHistory->tr_qty       = $shipmentScheduleLocation->ssl_qty_to_pick ?? 0;
-                        $newTransactionHistory->tr_date      = now();
-                        $newTransactionHistory->tr_reference = '';
-                        $newTransactionHistory->tr_site      = $shipmentScheduleLocation->ssl_site  ?? '2100';
-                        $newTransactionHistory->tr_location  = $shipmentScheduleLocation->ssl_location ?? '';
-                        $newTransactionHistory->tr_warehouse = $shipmentScheduleLocation->ssl_warehouse  ?? '';
-                        $newTransactionHistory->tr_level     = $shipmentScheduleLocation->ssl_level ?? '0';
-                        $newTransactionHistory->tr_bin       = $shipmentScheduleLocation->ssl_bin ?? '0';
-                        $newTransactionHistory->tr_remark    = 'Shipment Confirm Reject';
-                        $newTransactionHistory->save();
+                    if ((float) $shipmentScheduleDet->ssd_sod_qty_pick < (float) $shipmentScheduleDet->ssd_sod_qty_ord) {
+                        $shipmentScheduleDet->ssd_status = 'Shipped (Partial)';
+                    } else {
+                        $shipmentScheduleDet->ssd_status = 'Shipped (Full)';
+                    }
 
-                $dataArray = array_values($dataArray);
+                    $shipmentScheduleDet->updated_by = Auth::user()->id;
+                    $shipmentScheduleDet->save();
+                }
 
                 Log::info('CALL confirmShipment', [
-                    'prm_id' => $confirmApproval['prm_id'],
+                    'ssm_id' => $ssmId,
                     'time' => now(),
                 ]);
 
                 $qxtendServices = new QxtendServices();
                 $qxtend = $qxtendServices->qxShipperConfirm($confirmApproval, $activeConnection);
+
                 if ($qxtend[0] == false) {
                     DB::rollBack();
 
@@ -188,150 +148,91 @@ class ConfirmShipmentServices
 
     public function rejectShipment(Request $request, $confirmApproval, $reason, $activeConnection)
     {
-        $dataArray = [];
         DB::beginTransaction();
 
         try {
-            $packingReplenishmentApproval = ShipperConfirm::where('id', $confirmApproval['id'])->lockForUpdate()->first();
+            $shipperConfirm = ShipperConfirm::where('id', $confirmApproval['id'])->lockForUpdate()->first();
 
-            if (! $packingReplenishmentApproval) {
+            if (! $shipperConfirm) {
                 DB::rollBack();
-                Log::channel('confirmShipment')->info('ShipperConfirm not found for id: '.$confirmApproval['id']);
+                Log::channel('confirmShipment')->info('ShipperConfirm not found for id: ' . $confirmApproval['id']);
 
                 return false;
             }
 
-            if ($packingReplenishmentApproval->sc_status !== 'Waiting for confirmation') {
+            if ($shipperConfirm->sc_status !== 'Waiting for confirmation') {
                 DB::rollBack();
-                Log::channel('confirmShipment')->info('Duplicate confirmShipment request ignored. ShipperConfirm id: '.$confirmApproval['id'].', current status: '.$packingReplenishmentApproval->sc_status);
+                Log::channel('confirmShipment')->info('Duplicate rejectShipment request ignored. ShipperConfirm id: ' . $confirmApproval['id'] . ', current status: ' . $shipperConfirm->sc_status);
 
                 return true;
             }
 
-            $anotherApproval = ShipperConfirm::where('prm_id', $confirmApproval['prm_id'])->where('id', '!=', $confirmApproval['id'])->where('sc_status', '=', 'Waiting for confirmation')->lockForUpdate()->first();
+            $ssmId = $shipperConfirm->ssm_id;
 
-            $packingReplenishmentApproval->sc_status = 'Draft';
-            $packingReplenishmentApproval->updated_by = Auth::user()->id;
-            $packingReplenishmentApproval->sc_reason = $reason;
-            $packingReplenishmentApproval->save();
+            $anotherApproval = ShipperConfirm::where('ssm_id', $ssmId)
+                ->where('id', '!=', $shipperConfirm->id)
+                ->where('sc_status', 'Waiting for confirmation')
+                ->lockForUpdate()
+                ->first();
+
+            $shipperConfirm->sc_status = 'Draft';
+            $shipperConfirm->updated_by = Auth::user()->id;
+            $shipperConfirm->sc_reason = $reason;
+            $shipperConfirm->save();
 
             Log::channel('confirmShipment')->info(json_encode($request->all()));
 
             if (! $anotherApproval) {
-                $dataPRM = $confirmApproval['get_packing_replenishment_master'];
+                $shipmentScheduleMstr = ShipmentScheduleMstr::with('getShipmentScheduleDetail.shipmentScheduleLoc')
+                    ->findOrFail($ssmId);
 
-                $packingReplenishmentMstr = PackingReplenishmentMstr::with(['getPackingReplenishmentDet.getShipmentScheduleLocation.getShipmentScheduleDet.getShipmentScheduleMaster'])->find($dataPRM['id']);
+                $shipmentScheduleMstr->ssm_status = 'Draft';
+                $shipmentScheduleMstr->updated_by = Auth::user()->id;
+                $shipmentScheduleMstr->save();
 
-                $packingReplenishmentMstr->prm_status = 'Draft';
-                $packingReplenishmentMstr->save();
+                foreach ($shipmentScheduleMstr->getShipmentScheduleDetail as $shipmentScheduleDet) {
+                    foreach ($shipmentScheduleDet->shipmentScheduleLoc as $shipmentScheduleLocation) {
+                        $qtyPick = (float) ($shipmentScheduleLocation->ssl_qty_pick ?? 0);
 
-                $shipmentScheduleMaster = $packingReplenishmentMstr->getPackingReplenishmentDet[0]->getShipmentScheduleLocation->getShipmentScheduleDet->getShipmentScheduleMaster;
+                        if ($qtyPick <= 0) {
+                            continue;
+                        }
 
-                if ($shipmentScheduleMaster) {
-                    $shipmentScheduleMaster->ssm_status = 'Draft';
-                    $shipmentScheduleMaster->save();
-                }
+                        // $this->writeScheduleHistory(
+                        //     $shipmentScheduleMstr,
+                        //     $shipmentScheduleDet,
+                        //     $shipmentScheduleLocation,
+                        //     'Reject Shipment',
+                        //     $reason
+                        // );
 
-                foreach ($packingReplenishmentMstr->getPackingReplenishmentDet as $packingReplenishmentDet) {
-                    $currentSite = strtoupper($packingReplenishmentDet->getShipmentScheduleLocation->ssl_site);
-                    $currentItem = strtoupper($packingReplenishmentDet->getShipmentScheduleLocation->getShipmentScheduleDet->ssd_sod_part);
-                    $currentLot = strtoupper($packingReplenishmentDet->getShipmentScheduleLocation->ssl_lotserial);
-                    $picked = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_qty_pick;
+                        // Kembalikan stok: shp -> wrh
+                        $this->updateInventory($shipmentScheduleDet, $shipmentScheduleLocation, [
+                            'xxinv_qty_shp' => DB::raw('xxinv_qty_shp - ' . $qtyPick),
+                            'xxinv_qty_wrh' => DB::raw('xxinv_qty_wrh + ' . $qtyPick),
+                        ]);
 
-                    $key = $currentSite.'|'.$currentItem.'|'.$currentLot;
+                        $this->writeTransactionHistory(
+                            $shipmentScheduleDet,
+                            $shipmentScheduleLocation,
+                            'Shipment Confirm Reject',
+                            $reason ?: 'Shipment Confirm Reject',
+                            $qtyPick
+                        );
 
-                    if (! isset($dataArray[$key])) {
-                        $dataArray[$key] = [
-                            'site' => $currentSite,
-                            'item' => $currentItem,
-                            'lot' => $currentLot,
-                            'pick' => 0,
-                        ];
+                        $shipmentScheduleLocation->ssl_qty_pick = 0;
+                        $shipmentScheduleLocation->updated_by = Auth::user()->id;
+                        $shipmentScheduleLocation->save();
                     }
 
-                    $dataArray[$key]['pick'] += $picked;
-
-                    $packingReplenishmentHist = new PackingReplenishmentHist();
-                    $packingReplenishmentHist->prh_shipper_nbr = $packingReplenishmentMstr->prm_shipper_nbr;
-                    $packingReplenishmentHist->prh_so_nbr = $packingReplenishmentDet->getShipmentScheduleLocation->getShipmentScheduleDet->ssd_sod_nbr;
-                    $packingReplenishmentHist->prh_so_line = $packingReplenishmentDet->getShipmentScheduleLocation->getShipmentScheduleDet->ssd_sod_line;
-                    $packingReplenishmentHist->prh_site = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_site;
-                    $packingReplenishmentHist->prh_warehouse = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_warehouse;
-                    $packingReplenishmentHist->prh_location = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_location;
-                    $packingReplenishmentHist->prh_lotserial = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_lotserial;
-                    $packingReplenishmentHist->prh_level = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_level;
-                    $packingReplenishmentHist->prh_bin = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_bin;
-                    $packingReplenishmentHist->prh_qty_pick = $packingReplenishmentDet->getShipmentScheduleLocation->ssl_qty_pick;
-                    $packingReplenishmentHist->prh_status_qad = $packingReplenishmentDet->prd_status_qad;
-                    $packingReplenishmentHist->prh_status = $packingReplenishmentMstr->prm_status;
-                    $packingReplenishmentHist->prh_action = 'Draft';
-                    $packingReplenishmentHist->created_by = Auth::user()->name;
-                    $packingReplenishmentHist->save();
-
-                    // === Pengembalian stok (rollback qty pick ke xxinv_qtyoh) ===
-                    $shipmentScheduleLocation = $packingReplenishmentDet->getShipmentScheduleLocation;
-                    $shipmentScheduleDet = $shipmentScheduleLocation->getShipmentScheduleDet;
-                    // log::info($shipmentScheduleDet);
-                    // log::info($shipmentScheduleLocation);
-                    // DB::rollback();
-                    // dd('stop');
-                    xxinvDet::where('xxinv_part', $shipmentScheduleDet->ssd_sod_part)
-                        ->where('xxinv_lot', $shipmentScheduleLocation->ssl_lotserial)
-                        ->where('xxinv_bin', $shipmentScheduleLocation->ssl_bin)
-                        ->where('xxinv_level', $shipmentScheduleLocation->ssl_level)
-                        ->update([
-        'xxinv_qty_shp' => DB::raw(
-            'xxinv_qty_shp - ' . (float) $shipmentScheduleLocation->ssl_qty_pick
-        ),
-        'xxinv_qty_wrh' => DB::raw(
-            'xxinv_qty_wrh + ' . (float) $shipmentScheduleLocation->ssl_qty_pick
-        ),
-                   
-                ]);
-
-
-                $newTransactionHistory = new TransactionHistory();
-                        $newTransactionHistory->tr_nbr       = $shipmentScheduleDet->ssd_sod_nbr ?? '';
-                        $newTransactionHistory->tr_order     = '';
-                        $newTransactionHistory->tr_program   = 'Shipment Module';
-                        $newTransactionHistory->tr_activity  = 'Shipment Confirm Reject';
-                        $newTransactionHistory->tr_user      = Auth::user()->username ?? '';
-                        $newTransactionHistory->tr_part      = $shipmentScheduleDet->ssd_sod_part ?? '';
-                        $newTransactionHistory->tr_uom       = $shipmentScheduleDet->ssd_uom ?? '';
-                        $newTransactionHistory->tr_line      = $shipmentScheduleDet->ssd_sod_line ?? 0;
-                        $newTransactionHistory->tr_lot       = $shipmentScheduleLocation->ssl_lotserial ?? '';
-                        $newTransactionHistory->tr_qty       = $shipmentScheduleLocation->ssl_qty_pick ?? 0;
-                        $newTransactionHistory->tr_date      = now();
-                        $newTransactionHistory->tr_reference = '';
-                        $newTransactionHistory->tr_site      = $shipmentScheduleLocation->ssl_site  ?? '2100';
-                        $newTransactionHistory->tr_location  = $shipmentScheduleLocation->ssl_location ?? '';
-                        $newTransactionHistory->tr_warehouse = $shipmentScheduleLocation->ssl_warehouse  ?? '';
-                        $newTransactionHistory->tr_level     = $shipmentScheduleLocation->ssl_level ?? '0';
-                        $newTransactionHistory->tr_bin       = $shipmentScheduleLocation->ssl_bin ?? '0';
-                        $newTransactionHistory->tr_remark    = 'Shipment Confirm Reject';
-                        $newTransactionHistory->save();
-
-
-
-                    $shipmentScheduleLocation->ssl_qty_to_pick = 0;
-                    $shipmentScheduleLocation->save();
-                    // === akhir pengembalian stok ===
-
-                    $dataShipmentScheduleDet = $packingReplenishmentDet->getShipmentScheduleLocation->getShipmentScheduleDet;
-                    if ($dataShipmentScheduleDet->ssd_sod_qty_pick < $dataShipmentScheduleDet->ssd_sod_qty_ord) {
-                        $dataShipmentScheduleDet->ssd_status = 'Shipped (Partial)';
-                    } else {
-                        $dataShipmentScheduleDet->ssd_status = 'Shipped (Full)';
-                    }
-
-                    $dataShipmentScheduleDet->updated_by = Auth::user()->id;
-                    $dataShipmentScheduleDet->save();
+                    $shipmentScheduleDet->ssd_sod_qty_pick = 0;
+                    $shipmentScheduleDet->ssd_status = 'Pending';
+                    $shipmentScheduleDet->updated_by = Auth::user()->id;
+                    $shipmentScheduleDet->save();
                 }
 
-                $dataArray = array_values($dataArray);
-
-                Log::info('CALL confirmShipment', [
-                    'prm_id' => $confirmApproval['prm_id'],
+                Log::info('CALL rejectShipment', [
+                    'ssm_id' => $ssmId,
                     'time' => now(),
                 ]);
 
@@ -352,5 +253,85 @@ class ConfirmShipmentServices
 
             return false;
         }
+    }
+
+    private function updateInventory(ShipmentScheduleDet $det, ShipmentScheduleLoc $loc, array $values): void
+    {
+        $affected = xxinvDet::where('xxinv_part', $det->ssd_sod_part)
+            ->where('xxinv_lot', $loc->ssl_lotserial)
+            ->where('xxinv_bin', $loc->ssl_bin ?? '0')
+            ->where('xxinv_level', $loc->ssl_level ?? '0')
+            ->update($values);
+
+        if ($affected === 0) {
+            throw new \Exception(
+                'Inventory tidak ditemukan untuk item ' . $det->ssd_sod_part . ' lot ' . $loc->ssl_lotserial . '.'
+            );
+        }
+    }
+
+    private function writeTransactionHistory(
+        ShipmentScheduleDet $det,
+        ShipmentScheduleLoc $loc,
+        string $activity,
+        string $remark,
+        float $qty
+    ): void {
+        $trx = new TransactionHistory();
+        $trx->tr_nbr = $det->ssd_sod_nbr ?? '';
+        $trx->tr_order = '';
+        $trx->tr_program = 'Shipment Module';
+        $trx->tr_activity = $activity;
+        $trx->tr_user = Auth::user()->username ?? '';
+        $trx->tr_part = $det->ssd_sod_part ?? '';
+        $trx->tr_uom = $det->ssd_uom ?? '';
+        $trx->tr_line = $det->ssd_sod_line ?? 0;
+        $trx->tr_lot = $loc->ssl_lotserial ?? '';
+        $trx->tr_qty = $qty;
+        $trx->tr_date = now();
+        $trx->tr_reference = '';
+        $trx->tr_site = $loc->ssl_site ?? '2100';
+        $trx->tr_location = $loc->ssl_location ?? '';
+        $trx->tr_warehouse = $loc->ssl_warehouse ?? '';
+        $trx->tr_level = $loc->ssl_level ?? '0';
+        $trx->tr_bin = $loc->ssl_bin ?? '0';
+        $trx->tr_remark = $remark;
+        $trx->save();
+    }
+
+    private function writeScheduleHistory(
+        ShipmentScheduleMstr $mstr,
+        ShipmentScheduleDet $det,
+        ShipmentScheduleLoc $loc,
+        string $action,
+        ?string $reason = null
+    ): void {
+        $hist = new ShipmentScheduleHist();
+        $hist->ssh_number = $mstr->ssm_number;
+        $hist->ssh_cust_code = $mstr->ssm_cust_code;
+        $hist->ssh_cust_desc = $mstr->ssm_cust_desc;
+        $hist->ssh_status_mstr = $mstr->ssm_status;
+        $hist->ssh_sod_nbr = $det->ssd_sod_nbr;
+        $hist->ssh_sod_site = $det->ssd_sod_site;
+        $hist->ssh_sod_shipto = $det->ssd_sod_shipto;
+        $hist->ssh_sod_line = $det->ssd_sod_line;
+        $hist->ssh_sod_part = $det->ssd_sod_part;
+        $hist->ssh_sod_desc = $det->ssd_sod_desc;
+        $hist->ssh_uom = $det->ssd_uom;
+        $hist->ssh_sod_qty_ord = $det->ssd_sod_qty_ord;
+        $hist->ssh_sod_qty_pick = $det->ssd_sod_qty_pick;
+        $hist->ssh_sod_lot = $det->ssd_sod_lot;
+        $hist->ssh_status_det = $det->ssd_status;
+        $hist->ssh_site = $loc->ssl_site;
+        $hist->ssh_warehouse = $loc->ssl_warehouse;
+        $hist->ssh_location = $loc->ssl_location;
+        $hist->ssh_lotserial = $loc->ssl_lotserial;
+        $hist->ssh_level = $loc->ssl_level;
+        $hist->ssh_bin = $loc->ssl_bin;
+        $hist->ssh_qty_to_pick = $loc->ssl_qty_to_pick;
+        $hist->ssh_action = $action;
+        $hist->ssh_reason = $reason;
+        $hist->created_by = Auth::user()->name;
+        $hist->save();
     }
 }

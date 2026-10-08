@@ -1420,14 +1420,25 @@ class QxtendServices
 
         return $this->sendQdocRequest($qdocRequest, $activeConnection);
     }
-
     public function qxShipperConfirm($confirmApproval, $activeConnection)
     {
         $receiver = 'QADERP';
-        $shipFrom =
-            $confirmApproval['get_packing_replenishment_master']['get_packing_replenishment_det'][0]['get_shipment_schedule_location']['ssl_site'];
-        $absID = $confirmApproval['get_packing_replenishment_master']['prm_shipper_nbr'];
-        $vehicleRefID = $confirmApproval['prm_id'];
+
+        $master = $confirmApproval['get_shipment_schedule_master'] ?? null;
+        $firstDet = $master['get_shipment_schedule_detail'][0] ?? null;
+        $firstLoc = $firstDet['shipment_schedule_loc'][0] ?? null;
+
+        $shipFromRaw = $firstLoc['ssl_site'] ?? $firstDet['ssd_sod_site'] ?? null;
+        $absIDRaw = $master['ssm_number'] ?? null;
+        $vehicleRefIDRaw = $confirmApproval['ssm_id'] ?? $master['id'] ?? null;
+
+        if (! $shipFromRaw || ! $absIDRaw || ! $vehicleRefIDRaw) {
+            return [false, 'Data shipper confirm tidak lengkap (site / shipper number / ssm_id).'];
+        }
+
+        $shipFrom = htmlspecialchars((string) $shipFromRaw, ENT_XML1);
+        $absID = htmlspecialchars((string) $absIDRaw, ENT_XML1);
+        $vehicleRefID = htmlspecialchars((string) $vehicleRefIDRaw, ENT_XML1);
 
         $domain = Domain::first();
         $domainCode = $domain->domain ?? '';
@@ -2921,7 +2932,7 @@ class QxtendServices
             return [false, $output];
         }
     }
-    public function qxIssueUnplannedApi($req, $xxinvdet,$activeConnection = null,)
+    public function qxIssueUnplannedApi($req, $xxinvdet, $activeConnection = null,)
     {
         $receiver = 'QADERP';
 
