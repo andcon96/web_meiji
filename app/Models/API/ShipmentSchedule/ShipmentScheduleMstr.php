@@ -5,6 +5,8 @@ namespace App\Models\API\ShipmentSchedule;
 use App\Models\API\PackingReplenishment\PackingReplenishmentDet;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\API\ShipmentSchedule\ShipmentScheduleLoc;
+use App\Models\API\ShipmentSchedule\ShipmentScheduleDet;
 
 class ShipmentScheduleMstr extends Model
 {
@@ -16,6 +18,7 @@ class ShipmentScheduleMstr extends Model
     {
         return $this->hasMany(ShipmentScheduleDet::class, 'ssm_id', 'id');
     }
+
 
     public function shipmentScheduleLoc()
     {

@@ -42,21 +42,22 @@ class ShipmentReportController extends Controller
     public function getAllSSM()
     {
         $rows = ShipmentScheduleMstr::with(['getShipmentScheduleDetail'])
-        ->where('ssm_status', 'Scheduled')
-        ->get()
-        ->map(function($row){
-            $row->getShipmentScheduleDetail->map(function($det) use ($row){
-                $det->setAttribute('sold_to', $row->ssm_cust_code);
-                return $det;
-            });
+            ->where('ssm_status', 'Shipped')
+            ->get()
+            ->map(function ($row) {
+                $row->getShipmentScheduleDetail->map(function ($det) use ($row) {
+                    $det->setAttribute('sold_to', $row->ssm_cust_code);
+                    return $det;
+                });
 
-            return $row;
-        });
+                return $row;
+            });
 
         return DataTables::of($rows)->make(true);
     }
 
-    public function SSDExport(Request $req){
-        return Excel::download(new SSDExport(json_decode($req->ssdrows)), $req->nbr_mstr.'.xlsx');
+    public function SSDExport(Request $req)
+    {
+        return Excel::download(new SSDExport(json_decode($req->ssdrows)), $req->nbr_mstr . '.xlsx');
     }
 }

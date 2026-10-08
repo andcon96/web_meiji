@@ -133,7 +133,10 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::put('updateShipmentSchedule/{id}', [APIShipmentScheduleController::class, 'update']);
     Route::get('getDefaultSampleLoc', [APITrasnferStockController::class, 'getDefaultSampleLoc']);
     Route::post('deleteDraftShipment', [APIShipmentScheduleController::class, 'deleteDraft']);
-
+    Route::post('/shipmentscheduleapprove', [APIShipmentScheduleController::class, 'approve']);
+    Route::post('/shipmentschedulereject', [APIShipmentScheduleController::class, 'reject']);
+    Route::get('getShipmentScheduleApprovalList', [APIShipmentScheduleController::class, 'getShipmentScheduleApprovalList']);
+    Route::post('editShipmentSchedule/{id}', [APIShipmentScheduleController::class, 'update']);
     // Packing Replenishment
     Route::get('getPackingReplenishment', [APIPackingReplenishmentController::class, 'index']);
     Route::get('listShipmentSchedule', [APIPackingReplenishmentController::class, 'listShipmentSchedule']);
