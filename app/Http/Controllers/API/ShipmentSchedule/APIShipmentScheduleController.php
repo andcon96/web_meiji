@@ -191,34 +191,86 @@ class APIShipmentScheduleController extends Controller
 
     public function store(Request $request)
     {
-        // Log::channel('shipmentSchedule')->info(json_encode($request->all()));
+        Log::channel('shipmentSchedule')->info('=== CREATE SHIPMENT SCHEDULE START ===');
 
-        $approver = $request->approver;
-        $idPrm = $request->prm_id;
-        $shipmentSchedule = $request->scheduleDetail;
+        Log::channel('shipmentSchedule')->info('Request:', [
+            'all' => $request->all(),
+            'approver' => $request->approver,
+            'prm_id' => $request->prm_id,
+            'ssm_status' => $request->ssm_status,
+            'scheduleDetail_count' => is_array($request->scheduleDetail)
+                ? count($request->scheduleDetail)
+                : 0,
+        ]);
 
-        $shipmentScheduleServices = new ShipmentScheduleServices();
-        $saveData = $shipmentScheduleServices->saveShipmentSchedule($approver, $idPrm, $shipmentSchedule);
+        try {
+            $approver = $request->approver;
+            $idPrm = $request->prm_id;
+            $shipmentSchedule = $request->scheduleDetail;
+            $status = $request->ssm_status ?? 'Waiting for approval';
 
-        if ($saveData == false) {
-            return response()->json(
-                [
-                    "Status" => "Error",
-                    "Message" => "Failed To Save Shipment Schedule.",
-                ],
-                422,
+            Log::channel('shipmentSchedule')->info('Before saveShipmentSchedule:', [
+                'approver' => $approver,
+                'idPrm' => $idPrm,
+                'status' => $status,
+                'shipmentSchedule' => $shipmentSchedule,
+            ]);
+
+            $shipmentScheduleServices = new ShipmentScheduleServices();
+
+            $saveData = $shipmentScheduleServices->saveShipmentSchedule(
+                $approver,
+                $idPrm,
+                $shipmentSchedule,
+                $status
             );
-        }
 
-        return response()->json(
-            [
-                "status" => "success",
-                "message" => "Shipment schedule has been created",
-            ],
-            200,
-            ["Content-Type" => "application/json"],
-            JSON_UNESCAPED_UNICODE,
-        );
+            Log::channel('shipmentSchedule')->info('saveShipmentSchedule result:', [
+                'result' => $saveData,
+            ]);
+
+            if ($saveData == false) {
+                Log::channel('shipmentSchedule')->error(
+                    'saveShipmentSchedule returned FALSE'
+                );
+
+                return response()->json([
+                    'Status' => 'Error',
+                    'Message' => 'Failed To Save Shipment Schedule.',
+                ], 422);
+            }
+
+            Log::channel('shipmentSchedule')->info(
+                '=== CREATE SHIPMENT SCHEDULE SUCCESS ==='
+            );
+
+            return response()->json([
+                'Status' => 'Success',
+                'Message' => 'Shipment Schedule Saved Successfully.',
+            ], 200);
+        } catch (\Exception $err) {
+            Log::channel('shipmentSchedule')->error(
+                '=== CREATE SHIPMENT SCHEDULE EXCEPTION ==='
+            );
+
+            Log::channel('shipmentSchedule')->error('Message:', [
+                'message' => $err->getMessage(),
+            ]);
+
+            Log::channel('shipmentSchedule')->error('File:', [
+                'file' => $err->getFile(),
+                'line' => $err->getLine(),
+            ]);
+
+            Log::channel('shipmentSchedule')->error('Trace:', [
+                'trace' => $err->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'Status' => 'Error',
+                'Message' => $err->getMessage(),
+            ], 422);
+        }
     }
     public function approve(Request $request)
     {
@@ -387,10 +439,21 @@ class APIShipmentScheduleController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'approver' => 'required',
-            'prm_id' => 'required|integer',
+            'prm_id' => 'required',
             'scheduleDetail' => 'required|array',
+            'ssm_status' => 'required|in:Draft,Waiting for approval',
+            'approver' => 'nullable',
         ]);
+
+        if (
+            $request->ssm_status === 'Waiting for approval' &&
+            empty($request->approver)
+        ) {
+            return response()->json([
+                'status' => 'Error',
+                'message' => 'Approver wajib dipilih.',
+            ], 422);
+        }
 
         try {
             $shipmentScheduleServices = new ShipmentScheduleServices();
@@ -398,7 +461,8 @@ class APIShipmentScheduleController extends Controller
             $updateData = $shipmentScheduleServices->updateShipmentSchedule(
                 $request->approver,
                 $id,
-                $request->scheduleDetail
+                $request->scheduleDetail,
+                $request->ssm_status
             );
 
             if ($updateData === false) {
@@ -408,9 +472,13 @@ class APIShipmentScheduleController extends Controller
                 ], 422);
             }
 
+            $message = $request->ssm_status === 'Draft'
+                ? 'Shipment schedule draft has been saved.'
+                : 'Shipment schedule has been submitted for approval.';
+
             return response()->json([
                 'status' => 'success',
-                'message' => 'Shipment schedule has been updated.',
+                'message' => $message,
             ], 200);
         } catch (\Exception $err) {
             Log::channel('shipmentSchedule')->error($err);
