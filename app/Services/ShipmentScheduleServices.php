@@ -17,186 +17,171 @@ use Illuminate\Support\Facades\Log;
 
 class ShipmentScheduleServices
 {
-    public function saveShipmentSchedule(
-        $approver,
-        $idPrm,
-        $shipmentSchedule,
-        $status = 'Waiting for approval'
-    ) {
-        DB::beginTransaction();
+public function saveShipmentSchedule(
+    $approver,
+    $idPrm,
+    $shipmentSchedule,
+    $status = 'Waiting for approval'
+) {
+    DB::beginTransaction();
 
-        try {
-            Log::channel('shipmentSchedule')->info('SERVICE START', [
-                'approver' => $approver,
-                'idPrm' => $idPrm,
-                'status' => $status,
-                'detail_count' => is_array($shipmentSchedule)
-                    ? count($shipmentSchedule)
-                    : 0,
-            ]);
+    try {
+        $userId = Auth::id();
 
-            $shipmentScheduleMstr = ShipmentScheduleMstr::find($idPrm);
+        Log::channel('shipmentSchedule')->info('SERVICE START', [
+            'approver' => $approver,
+            'idPrm' => $idPrm,
+            'status' => $status,
+            'detail_count' => is_array($shipmentSchedule)
+                ? count($shipmentSchedule)
+                : 0,
+        ]);
 
-            Log::channel('shipmentSchedule')->info('MASTER FIND', [
-                'found' => (bool) $shipmentScheduleMstr,
-                'id' => $shipmentScheduleMstr?->id,
-            ]);
+        $shipmentScheduleMstr = ShipmentScheduleMstr::find($idPrm);
 
-            if (! $shipmentScheduleMstr) {
-                $shipmentScheduleMstr = new ShipmentScheduleMstr();
-                $shipmentScheduleMstr->created_by = Auth::user()->id;
-
-                Log::channel('shipmentSchedule')->info(
-                    'MASTER CREATED NEW'
-                );
-            }
-
-            $shipmentScheduleMstr->ssm_status = $status;
-            $shipmentScheduleMstr->ssm_number =
-                $shipmentSchedule[0]['sodNbr'] ?? null;
-
-            $shipmentScheduleMstr->save();
-
-            Log::channel('shipmentSchedule')->info('MASTER SAVED', [
-                'id' => $shipmentScheduleMstr->id,
-                'ssm_number' => $shipmentScheduleMstr->ssm_number,
-                'ssm_status' => $shipmentScheduleMstr->ssm_status,
-            ]);
-
-            foreach ($shipmentSchedule as $index => $order) {
-                Log::channel('shipmentSchedule')->info('DETAIL START', [
-                    'index' => $index,
-                    'sodNbr' => $order['sodNbr'] ?? null,
-                    'sodLine' => $order['sodLine'] ?? null,
-                    'sodPart' => $order['sodPart'] ?? null,
-                    'totalToPickQty' => $order['totalToPickQty'] ?? null,
-                    'totalPickedQty' => $order['totalPickedQty'] ?? null,
-                    'locations_count' => isset($order['locations'])
-                        && is_array($order['locations'])
-                        ? count($order['locations'])
-                        : 0,
-                ]);
-
-                $shipmentScheduleDet = new ShipmentScheduleDet();
-
-                $shipmentScheduleDet->ssm_id =
-                    $shipmentScheduleMstr->id;
-
-                $shipmentScheduleDet->ssd_sod_nbr =
-                    $order['sodNbr'];
-
-                $shipmentScheduleDet->created_by =
-                    Auth::user()->id;
-
-                $shipmentScheduleDet->ssd_sod_site =
-                    $order['sodSite'];
-
-                $shipmentScheduleDet->ssd_sod_shipto =
-                    $order['sodShip'];
-
-                $shipmentScheduleDet->ssd_sod_line =
-                    $order['sodLine'];
-
-                $shipmentScheduleDet->ssd_sod_part =
-                    $order['sodPart'];
-
-                $shipmentScheduleDet->ssd_sod_desc =
-                    $order['sodDesc'];
-
-                $shipmentScheduleDet->ssd_sod_lot =
-                    $order['sodLot'] ?? null;
-
-                $shipmentScheduleDet->ssd_sod_qty_ord =
-                    $order['totalToPickQty'];
-
-                $shipmentScheduleDet->ssd_sod_qty_pick =
-                    $order['totalPickedQty'];
-
-                $shipmentScheduleDet->ssd_status = 'Pending';
-
-                $shipmentScheduleDet->save();
-
-                Log::channel('shipmentSchedule')->info('DETAIL SAVED', [
-                    'detail_id' => $shipmentScheduleDet->id,
-                ]);
-
-                foreach ($order['locations'] as $locationIndex => $location) {
-                    Log::channel('shipmentSchedule')->info('LOCATION START', [
-                        'detail_id' => $shipmentScheduleDet->id,
-                        'index' => $locationIndex,
-                        'location' => $location,
-                    ]);
-
-                    // kode lokasi kamu tetap di sini
-
-                    Log::channel('shipmentSchedule')->info(
-                        'LOCATION SAVED',
-                        [
-                            'detail_id' => $shipmentScheduleDet->id,
-                            'index' => $locationIndex,
-                        ]
-                    );
-                }
-            }
-
-            if ($status === 'Waiting for approval') {
-                Log::channel('shipmentSchedule')->info(
-                    'CREATING APPROVAL'
-                );
-
-                $approval = new ShipmentScheduleApproval();
-
-                $approval->ssm_id =
-                    $shipmentScheduleMstr->id;
-
-                $approval->ssa_status =
-                    'Waiting for confirmation';
-
-                $approval->ssa_sequence = 1;
-
-                $approval->ssa_user_approver =
-                    $approver;
-
-                $approval->created_by =
-                    Auth::user()->id;
-
-                $approval->updated_by =
-                    Auth::user()->id;
-
-                $approval->save();
-
-                Log::channel('shipmentSchedule')->info(
-                    'APPROVAL SAVED',
-                    [
-                        'approval_id' => $approval->id,
-                        'approver' => $approver,
-                    ]
-                );
-            }
-
-            DB::commit();
-
-            Log::channel('shipmentSchedule')->info(
-                'SERVICE SUCCESS'
-            );
-
-            return true;
-        } catch (\Exception $err) {
-            DB::rollBack();
-
-            Log::channel('shipmentSchedule')->error(
-                'SERVICE EXCEPTION',
-                [
-                    'message' => $err->getMessage(),
-                    'file' => $err->getFile(),
-                    'line' => $err->getLine(),
-                    'trace' => $err->getTraceAsString(),
-                ]
-            );
-
-            return false;
+        if (! $shipmentScheduleMstr) {
+            $shipmentScheduleMstr = new ShipmentScheduleMstr();
+            $shipmentScheduleMstr->created_by = $userId;
         }
+
+        $shipmentScheduleMstr->ssm_status = $status;
+        $shipmentScheduleMstr->ssm_number =
+            $shipmentSchedule[0]['sodNbr'] ?? null;
+
+        $shipmentScheduleMstr->save();
+
+        Log::channel('shipmentSchedule')->info('MASTER SAVED', [
+            'id' => $shipmentScheduleMstr->id,
+            'ssm_number' => $shipmentScheduleMstr->ssm_number,
+            'ssm_status' => $shipmentScheduleMstr->ssm_status,
+        ]);
+
+        foreach ($shipmentSchedule as $index => $order) {
+            $shipmentScheduleDet = new ShipmentScheduleDet();
+
+            $shipmentScheduleDet->ssm_id =
+                $shipmentScheduleMstr->id;
+
+            $shipmentScheduleDet->ssd_sod_nbr =
+                $order['sodNbr'];
+
+            $shipmentScheduleDet->created_by = $userId;
+            $shipmentScheduleDet->ssd_sod_site = $order['sodSite'];
+            $shipmentScheduleDet->ssd_sod_shipto = $order['sodShip'];
+            $shipmentScheduleDet->ssd_sod_line = $order['sodLine'];
+            $shipmentScheduleDet->ssd_sod_part = $order['sodPart'];
+            $shipmentScheduleDet->ssd_sod_desc = $order['sodDesc'];
+            $shipmentScheduleDet->ssd_sod_lot = $order['sodLot'] ?? null;
+
+            $shipmentScheduleDet->ssd_sod_qty_ord =
+                $order['totalToPickQty'];
+
+            $shipmentScheduleDet->ssd_sod_qty_pick =
+                $order['totalPickedQty'];
+
+            $shipmentScheduleDet->ssd_status = 'Pending';
+
+            $shipmentScheduleDet->save();
+
+            Log::channel('shipmentSchedule')->info('DETAIL SAVED', [
+                'detail_id' => $shipmentScheduleDet->id,
+                'sodNbr' => $order['sodNbr'] ?? null,
+                'sodLine' => $order['sodLine'] ?? null,
+            ]);
+
+            foreach (($order['locations'] ?? []) as $locationIndex => $location) {
+                Log::channel('shipmentSchedule')->info('LOCATION START', [
+                    'detail_id' => $shipmentScheduleDet->id,
+                    'index' => $locationIndex,
+                    'location' => $location,
+                ]);
+
+                $shipmentScheduleLocation = new ShipmentScheduleLoc();
+
+                $shipmentScheduleLocation->created_by = $userId;
+                $shipmentScheduleLocation->ssd_id =
+                    $shipmentScheduleDet->id;
+
+                $shipmentScheduleLocation->ssl_site =
+                    $location['site'] ?? $order['sodSite'] ?? '0';
+
+                $shipmentScheduleLocation->ssl_warehouse =
+                    $location['wh'] ?? '0';
+
+                $shipmentScheduleLocation->ssl_location =
+                    $location['loc'] ?? '0';
+
+                $shipmentScheduleLocation->ssl_lotserial =
+                    $location['lot'] ?? $order['sodLot'] ?? '';
+
+                $shipmentScheduleLocation->ssl_level =
+                    $location['level'] ?? '0';
+
+                $shipmentScheduleLocation->ssl_bin =
+                    $location['bin'] ?? '0';
+
+                $shipmentScheduleLocation->ssl_qty_to_pick =
+                    is_numeric($location['qtyToPick'] ?? null)
+                        ? $location['qtyToPick']
+                        : 0;
+
+                $shipmentScheduleLocation->ssl_qty_pick =
+                    is_numeric($location['qtyPick'] ?? null)
+                        ? $location['qtyPick']
+                        : 0;
+
+                $shipmentScheduleLocation->save();
+
+                Log::channel('shipmentSchedule')->info('LOCATION SAVED', [
+                    'location_id' => $shipmentScheduleLocation->id,
+                    'detail_id' => $shipmentScheduleDet->id,
+                    'site' => $shipmentScheduleLocation->ssl_site,
+                    'warehouse' => $shipmentScheduleLocation->ssl_warehouse,
+                    'location' => $shipmentScheduleLocation->ssl_location,
+                    'lotserial' => $shipmentScheduleLocation->ssl_lotserial,
+                    'qty_to_pick' => $shipmentScheduleLocation->ssl_qty_to_pick,
+                    'qty_pick' => $shipmentScheduleLocation->ssl_qty_pick,
+                ]);
+            }
+        }
+
+        if ($status === 'Waiting for approval') {
+            $approval = new ShipmentScheduleApproval();
+
+            $approval->ssm_id = $shipmentScheduleMstr->id;
+            $approval->ssa_status = 'Waiting for confirmation';
+            $approval->ssa_sequence = 1;
+            $approval->ssa_user_approver = $approver;
+            $approval->created_by = $userId;
+            $approval->updated_by = $userId;
+
+            $approval->save();
+
+            Log::channel('shipmentSchedule')->info('APPROVAL SAVED', [
+                'approval_id' => $approval->id,
+                'approver' => $approver,
+            ]);
+        }
+
+        DB::commit();
+
+        Log::channel('shipmentSchedule')->info('SERVICE SUCCESS');
+
+        return true;
+    } catch (\Throwable $err) {
+        DB::rollBack();
+
+        Log::channel('shipmentSchedule')->error('SERVICE EXCEPTION', [
+            'message' => $err->getMessage(),
+            'file' => $err->getFile(),
+            'line' => $err->getLine(),
+            'trace' => $err->getTraceAsString(),
+        ]);
+
+        return false;
     }
+}
+
     public function rejectShipment($idSsm, $reason)
     {
         DB::beginTransaction();
