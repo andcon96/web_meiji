@@ -975,17 +975,30 @@ class APIController extends Controller
             'Data' => $data->im_item_um,
         ], 200);
     }
+ 
 
-   public function getItem(Request $request)
+public function getItem(Request $request)
 {
-    
     $perPage = $request->input('per_page', 10);
-     
-    $data = Item::paginate($perPage);
+    // Ambil parameter 'search' yang dikirim dari Flutter
+    $search  = $request->input('search');
+
+    $query = Item::query();
+
+    // Jalankan filter jika keyword search tidak kosong
+    if (!empty($search)) {
+        $query->where(function($q) use ($search) {
+            $q->where('im_item_part', 'LIKE', "%{$search}%")
+              ->orWhere('im_item_desc', 'LIKE', "%{$search}%");
+        });
+    }
+
+    // Jalankan pagination setelah query dibentuk
+    $data = $query->paginate($perPage);
 
     return response()->json([
         'Status' => 'Success',
-        'Data'   => $data->items(), 
+        'Data'   => $data->items(),
         'Meta'   => [
             'current_page' => $data->currentPage(),
             'last_page'    => $data->lastPage(),
