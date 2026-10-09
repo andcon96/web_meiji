@@ -56,9 +56,9 @@ class APISingleTransfer extends Controller
         if ($search) {
 
             $trfdata->where(function ($query) use ($search) {
-                $query->where('st_trfid', 'LIKE', '%'.$search.'%')
-                    ->orWhere('st_item', 'LIKE', '%'.$search.'%')
-                    ->orWhere('st_lot', 'LIKE', '%'.$search.'%');
+                $query->where('st_trfid', 'LIKE', '%' . $search . '%')
+                    ->orWhere('st_item', 'LIKE', '%' . $search . '%')
+                    ->orWhere('st_lot', 'LIKE', '%' . $search . '%');
             });
         }
 
@@ -123,6 +123,8 @@ class APISingleTransfer extends Controller
             $buildingto = $req->whto ?? '';
             $levelto = $req->levelto ?? '';
             $binto = $req->binto ?? '';
+            $wip = $req->wip ?? '';
+
 
             // ==========================
             // VALIDASI DESTINATION & QTY
@@ -130,17 +132,23 @@ class APISingleTransfer extends Controller
             if (empty($locto)) {
                 throw new Exception('Location To wajib diisi.');
             }
-
-            if (empty($buildingto)) {
-                throw new Exception('Warehouse To wajib diisi.');
+            if ($wip === false) {
+                if (empty($buildingto)) {
+                    throw new Exception('Warehouse To wajib diisi.');
+                }
+            } else {
+                $buildingto = "wip";
             }
 
-            if (empty($levelto)) {
-                throw new Exception('Level To wajib diisi.');
+            if ($wip === false) {
+                if (empty($levelto)) {
+                    throw new Exception('Level To wajib diisi.');
+                }
             }
-
-            if (empty($binto)) {
-                throw new Exception('Bin To wajib diisi.');
+            if ($wip === false) {
+                if (empty($binto)) {
+                    throw new Exception('Bin To wajib diisi.');
+                }
             }
 
             if ($qtyoh <= 0) {
@@ -151,7 +159,7 @@ class APISingleTransfer extends Controller
             // VALIDASI STOK ASAL (INVENTORY FROM)
             // ==========================
             $invFrom = xxinvDet::where('xxinv_part', $part)
-                          ->where('xxinv_lot',$lotfrom)
+                ->where('xxinv_lot', $lotfrom)
                 ->where('xxinv_wrh', $buildingfrom)
                 ->where('xxinv_level', $levelfrom)
                 ->where('xxinv_bin', $binfrom)
@@ -171,7 +179,7 @@ class APISingleTransfer extends Controller
             }
 
             // Potong Stok Asal
-            $invFrom->xxinv_qtyoh -= $qtyoh;
+            // $invFrom->xxinv_qtyoh -= $qtyoh;
             $invFrom->xxinv_qty_wrh -= $qtyoh;
             $invFrom->save();
 
@@ -200,7 +208,7 @@ class APISingleTransfer extends Controller
             // INVENTORY TO (UPSERT LOGIC)
             // ==========================
             $invTo = xxinvDet::where('xxinv_part', $part)
-                ->where('xxinv_lot',$lotto)
+                ->where('xxinv_lot', $lotto)
                 ->where('xxinv_wrh', $buildingto)
                 ->where('xxinv_loc', $locto)
                 ->where('xxinv_level', $levelto)
@@ -282,7 +290,6 @@ class APISingleTransfer extends Controller
                 'Status' => 'Success',
                 'Message' => 'Receipt Item Successful',
             ], 200);
-
         } catch (Exception $e) {
             DB::rollBack();
 
@@ -836,21 +843,21 @@ class APISingleTransfer extends Controller
                 $qtypick = $det['qtypick'];
                 $qxtendsingleitem = (new QxtendServices())->qxTransferSingleItemWo($wodpart, $wonbr, $site, $site, $loc, 'Shopping', $qtypick, $bin, $level, $wrh, $lot);
                 if ($qxtendsingleitem == 'false') {
-                    Log::channel('Picklist')->info('Transfer Qty Pick Failed for Picklist : '.$picknbr.' WO : '.$wonbr.' Part : '.$wodpart);
+                    Log::channel('Picklist')->info('Transfer Qty Pick Failed for Picklist : ' . $picknbr . ' WO : ' . $wonbr . ' Part : ' . $wodpart);
 
                     return response()->json([
                         'Status' => 'Error',
-                        'Message' => 'Transfer Qty Pick Failed for Picklist : '.$picknbr.' WO : '.$wonbr.' Part : '.$wodpart,
+                        'Message' => 'Transfer Qty Pick Failed for Picklist : ' . $picknbr . ' WO : ' . $wonbr . ' Part : ' . $wodpart,
                         //'Message'=> $qxtendsingleitem[1];
                     ], 422);
                 } else {
                     $hasil = (new WSAServices())->wsaUpdateQtyPick($picknbr, $qtypick, $wonbr, $wodpart, $site, $loc, $lot, $wrh, $level, $bin);
                     if ($hasil == 'false') {
-                        Log::channel('Picklist')->info('Update Qty Pick Failed for Picklist : '.$picknbr.' WO : '.$wonbr.' Part : '.$wodpart);
+                        Log::channel('Picklist')->info('Update Qty Pick Failed for Picklist : ' . $picknbr . ' WO : ' . $wonbr . ' Part : ' . $wodpart);
 
                         return response()->json([
                             'Status' => 'Error',
-                            'Message' => 'Update Qty Pick Failed for Picklist : '.$picknbr.' WO : '.$wonbr.' Part : '.$wodpart,
+                            'Message' => 'Update Qty Pick Failed for Picklist : ' . $picknbr . ' WO : ' . $wonbr . ' Part : ' . $wodpart,
                         ], 422);
                     }
                 }
@@ -1293,8 +1300,8 @@ class APISingleTransfer extends Controller
         $domainCode = $domain->domain ?? '';
         $hasil = xxinvDet::select('xxinv_site as t_site')->where('xxinv_domain', $domainCode)
             ->where('xxinv_part', $item)
-            ->when($site !== '', fn ($q) => $q->where('xxinv_site', $site))
-            ->when($location !== '', fn ($q) => $q->where('xxinv_loc', $location))
+            ->when($site !== '', fn($q) => $q->where('xxinv_site', $site))
+            ->when($location !== '', fn($q) => $q->where('xxinv_loc', $location))
             ->groupBy('xxinv_site')
             ->get()
             ->values();
@@ -1361,7 +1368,9 @@ class APISingleTransfer extends Controller
 
     public function sendTransferItem(Request $req)
     {
-        log::info('a');
+        // log::info('a');
+        // Log::channel('customlogg')->info('sendTransferItem : ', ['input' => $req->all()]);
+        // dd('stop');
         DB::beginTransaction();
         try {
             $data = $req->all();
@@ -1379,39 +1388,55 @@ class APISingleTransfer extends Controller
             $level = $this->nullConversion($data['level']);
             $bin = $this->nullConversion($data['bin']);
             $lot = $this->nullConversion($data['lot']);
+            $wip = $this->nullConversion($data['wip']);
             $prefixTable = singleTransferPrefix::first();
             $prefix = $prefixTable->stp_prefix;
             $runningnbr = $prefixTable->stp_running_nbr;
             $nextrunningnbr = (int) $runningnbr + 1;
             $newRunningNbr = str_pad($nextrunningnbr, 6, '0', STR_PAD_LEFT);
-            $newPrefix = $prefix.$newRunningNbr;
+            $newPrefix = $prefix . $newRunningNbr;
             log::info('b');
 
-            $invFrom = xxinvDet::where('xxinv_part', $item)
-               ->where('xxinv_lot', $lot)
-                ->where('xxinv_wrh', $whfrom)
-                ->where('xxinv_level', $levelfrom)
-                ->where('xxinv_bin', $binfrom)
-                ->first();
+            $invFrom = '';
+
+            if ($wip === "true") {
+                // dd(1);
+                $whfrom = "wip";
+                $invFrom = xxinvDet::where('xxinv_part', $item)
+                    ->where('xxinv_lot', $lot)
+                    ->where('xxinv_wrh', $whfrom)
+                    ->first();
+            } else {
+                // dd(2);
+                $invFrom = xxinvDet::where('xxinv_part', $item)
+                    ->where('xxinv_lot', $lot)
+                    ->where('xxinv_wrh', $whfrom)
+                    ->where('xxinv_level', $levelfrom)
+                    ->where('xxinv_bin', $binfrom)
+                    ->first();
+            }
+
+            // dd($invFrom);
+
 
             if (! $invFrom) {
 
                 throw new Exception(
-                    'Inventory From tidak ditemukan. '.
-                    "lot:{$lot}".
-                    "Part: {$item}, ".
-                    "Warehouse: {$whfrom}, ".
-                    "Level: {$levelfrom}, ".
-                    "Bin: {$binfrom}"
+                    'Inventory From tidak ditemukan. ' .
+                        "lot:{$lot}" .
+                        "Part: {$item}, " .
+                        "Warehouse: {$whfrom}, " .
+                        "Level: {$levelfrom}, " .
+                        "Bin: {$binfrom}"
                 );
             }
 
             if ($invFrom->xxinv_qtyoh < $qty) {
 
                 throw new Exception(
-                    'Qty inventory tidak mencukupi. '.
-                    "Available: {$invFrom->xxinv_qtyoh}, ".
-                    "Request: {$qty}"
+                    'Qty inventory tidak mencukupi. ' .
+                        "Available: {$invFrom->xxinv_qtyoh}, " .
+                        "Request: {$qty}"
                 );
             }
 
@@ -1443,8 +1468,8 @@ class APISingleTransfer extends Controller
             $newTransactionHistory = new TransactionHistory();
             $newTransactionHistory->tr_nbr = $newPrefix;
             $newTransactionHistory->tr_order = '';
-            $newTransactionHistory->tr_program = 'Single Transfer Module';
-            $newTransactionHistory->tr_activity = 'Create Single Transfer';
+            $newTransactionHistory->tr_program = 'Transfer WMS';
+            $newTransactionHistory->tr_activity = 'Transfer WMS';
             $newTransactionHistory->tr_user = Auth::user()->username ?? '';
             // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
             $newTransactionHistory->tr_part = $item ?? '';
@@ -1466,7 +1491,7 @@ class APISingleTransfer extends Controller
 
             return response()->json([
                 'Status' => 'Success',
-                'Message' => 'Transfer Item Success for Item : '.$item,
+                'Message' => 'Transfer Item Success for Item : ' . $item,
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -1846,7 +1871,7 @@ class APISingleTransfer extends Controller
         $arrayloc = [];
         $stringloc = '';
         foreach ($locationdetail as $locdetail) {
-            $stringloc .= $locdetail.',';
+            $stringloc .= $locdetail . ',';
         }
         // dd($stringloc, $itemQuery->id);
         $getAllItemLocation = ItemLocation::with(['getLocationDetail' => function ($query) {
@@ -1921,7 +1946,7 @@ class APISingleTransfer extends Controller
             $runningnbr = $prefixTable->pbp_running_nbr;
             $nextrunningnbr = (int) $runningnbr + 1;
             $newRunningNbr = str_pad($nextrunningnbr, 6, '0', STR_PAD_LEFT);
-            $newPrefix = $prefix.$newRunningNbr;
+            $newPrefix = $prefix . $newRunningNbr;
 
             $newTransferData = new PenyerahanBarang();
             $newTransferData->pb_trfid = $newPrefix;
@@ -1971,7 +1996,7 @@ class APISingleTransfer extends Controller
 
             return response()->json([
                 'Status' => 'Success',
-                'Message' => 'Transfer Item Success for Item : '.$item,
+                'Message' => 'Transfer Item Success for Item : ' . $item,
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();

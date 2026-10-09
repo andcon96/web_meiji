@@ -262,7 +262,7 @@ class APIZebraPrinterController extends Controller
         public function getLotPrint(Request $request)
     {
         $data = ReceiptDetail::query();
-        $data->where('rd_part','like', '%' . $request->item . '%');
+        $data->where('rd_nama_barang','like', '%' . $request->item . '%');
         if ($request->search) {
             $data->where('rd_batch', 'like', '%' . $request->search . '%');
         }

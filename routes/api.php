@@ -332,6 +332,8 @@ Route::middleware(['auth:api', 'token.api'])->group(function () {
     Route::get('getInventoryByWarehouse', [APIDashboard::class, 'getInventoryByWarehouse']);
     Route::get('getDetailInventoryByWarehouse', [APIDashboard::class, 'getDetailInventoryByWarehouse']);
     Route::get('getDetailInventoryByStatus', [APIDashboard::class, 'getDetailInventoryByStatus']);
+    Route::get('getWarehouseData', [APIDashboard::class, 'getWarehouseData']);
+     Route::get('getWarehouseDetailData', [APIDashboard::class, 'getWarehouseDetailData']);
 
     Route::get('getInventoryByStatus', [APIDashboard::class, 'getInventoryByStatus']);
     Route::get('getInventoryByExpDate', [APIDashboard::class, 'getInventoryByExpDate']);
