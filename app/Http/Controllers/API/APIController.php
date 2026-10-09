@@ -976,15 +976,25 @@ class APIController extends Controller
         ], 200);
     }
 
-    public function getItem()
-    {
-        $data = Item::get();
+   public function getItem(Request $request)
+{
+    
+    $perPage = $request->input('per_page', 10);
+     
+    $data = Item::paginate($perPage);
 
-        return response()->json([
-            'Status' => 'Success',
-            'Data' => $data,
-        ], 200);
-    }
+    return response()->json([
+        'Status' => 'Success',
+        'Data'   => $data->items(), 
+        'Meta'   => [
+            'current_page' => $data->currentPage(),
+            'last_page'    => $data->lastPage(),
+            'per_page'     => $data->perPage(),
+            'total'        => $data->total(),
+            'has_more'     => $data->hasMorePages(),
+        ]
+    ], 200);
+}
 
     public function getLocation()
     {
