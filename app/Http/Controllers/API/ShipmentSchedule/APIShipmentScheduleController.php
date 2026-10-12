@@ -191,6 +191,7 @@ class APIShipmentScheduleController extends Controller
 
     public function store(Request $request)
     {
+        dd($request->all());
         Log::channel('shipmentSchedule')->info('=== CREATE SHIPMENT SCHEDULE START ===');
 
         Log::channel('shipmentSchedule')->info('Request:', [

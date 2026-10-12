@@ -48,6 +48,9 @@ public function saveShipmentSchedule(
         $shipmentScheduleMstr->ssm_number =
             $shipmentSchedule[0]['sodNbr'] ?? null;
 
+            
+        // $shipmentScheduleMstr->ssm_cust_code = 'AJS';
+
         $shipmentScheduleMstr->save();
 
         Log::channel('shipmentSchedule')->info('MASTER SAVED', [

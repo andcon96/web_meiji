@@ -150,7 +150,8 @@ class APIPackingReplenishmentController extends Controller
                 ];
             }
 
-            $rows[] = [
+            $rows[] = 
+            [
                 'domain' => (string) $row->t_domain,
                 'site' => $siteRow,
                 'part' => $part,
@@ -161,6 +162,8 @@ class APIPackingReplenishmentController extends Controller
                 'lot' => $lot,
                 'qty' => (int) $row->t_qty,
                 'item_id' => $itemId,
+                'nbrx' => (string) $row->t_nbrx,
+                'custx' => (string) $row->t_custx,
                 'location_detail' => $locationDetail,
             ];
         }

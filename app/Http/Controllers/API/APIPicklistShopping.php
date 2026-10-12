@@ -1008,8 +1008,10 @@ class APIPicklistShopping extends Controller
                 // }
 
                 if ($currentpart != $item) {
+                    // dump($currentpart);
+                    // dump($item);
+                    $locationlist = [];
                     $currentpart = $item;
-                    
                     $xxinvdet = xxinvDet::where('xxinv_part', $item)
                         // ->when($item !== '', fn($query) => $query->where('xxinv_part', $item))
                         // ->when($site !== '', fn($query) => $query->where('xxinv_site', $site))
@@ -1085,6 +1087,8 @@ class APIPicklistShopping extends Controller
                            
                             if (!$picklistRecord) {
                                 foreach ($xxinvdet as $xxinvdet) {
+                            
+                                    
                                     if ($xxinvdet->xxinv_part == $item && $xxinvdet->xxinv_lot == $lot && $xxinvdet->xxinv_site == $site) {
                                         log::info($xxinvdet);
                                         $locationlist[] =  [
@@ -1098,6 +1102,7 @@ class APIPicklistShopping extends Controller
                                         ];
                                     }
                                 }
+                                        
                                if (empty($wonbr[$currentWo])){
                                      $detail[] = [
                                     'wodpart' => (string)$value->t_comp ?? '',
@@ -1138,27 +1143,29 @@ class APIPicklistShopping extends Controller
                                 }
                                 else{
                                      $wonbr[$currentWo]['detail'][] = [
-                                    'wodpart' => (string)$value->t_comp,
-                                    'qtyreq' => (string)$value->t_qty,
-                                    'qtypick' => (string)$value->t_qty_pick,
-                                    'qtytopick' => (string)$value->t_qty_pick,
-                                    'qtykemasan' => (string)$value->t_qty_kem,
-                                    'lot' => (string)$value->t_lot,
-                                    'id' => (string)$value->t_id,
-                                    // 'wrh' => (string)$xxinvdet->xxinv_wrh,
-                                    // 'level' => (string)$xxinvdet->xxinv_level,
-                                    // 'bin' => (string)$xxinvdet->xxinv_bin,
-                                    'dd' => (string)$value->t_duedate,
-                                    'od' => (string)$value->t_orddate,
-                                    'rd' => (string)$value->t_reldate,
-                                    'ref' => (string)$value->t_ref,
-                                    'um' => (string)$value->t_um,
-                                    'qtyoh' => (string)$value->t_qty_oh,
-                                    'qtytopickkemasan' => (string)$value->t_qty_topick_kem,
-                                    'edfuc' => (string)$value->t_ed_fuc,
-                                    'qtyshp' => (string)$value->t_qty_shp,
-                                    'qtywip' => (string)$value->t_qty_wip,
-                                    'loc' => (string)$value->t_loc,
+                                    'wodpart' => (string)$value->t_comp ?? '',
+                                    'qtyreq' => (string)$value->t_qty ?? '',
+                                    'qtypick' => (string)$value->t_qty_pick ?? '',
+                                    'qtytopick' => (string)$value->t_qty_pick ?? '',
+                                    'qtykemasan' => (string)$value->t_qty_kem ?? '',
+                                    'lot' => (string)$value->t_lot ?? '',
+                                    'id' => (string)$value->t_id ?? '',
+                                    // 'wrh' => (string)$xxinvdet->xxinv_wrh ?? '',
+                                    // 'level' => (string)$xxinvdet->xxinv_level ?? '',
+                                    // 'bin' => (string)$xxinvdet->xxinv_bin ?? '',
+                                    'dd' => (string)$value->t_duedate ?? '',
+                                    'od' => (string)$value->t_orddate ?? '',
+                                    'rd' => (string)$value->t_reldate ?? '',
+                                    'ref' => (string)$value->t_ref ?? '',
+                                    'um' => (string)$value->t_um ?? '',
+                                    'qtyoh' => (string)$value->t_qty_oh ?? '',
+                                    'qtytopickkemasan' => (string)$value->t_qty_kem ?? '',
+                                    'edfuc' => (string)$value->t_ed_fuc ?? '',
+                                    'qtyshp' => (string)$value->t_qty_shp ?? '',
+                                    'qtywip' => (string)$value->t_qty_wip ?? '',
+                                    'loc' => (string)$value->t_loc ?? '',
+                                    'oldloc' => (string)$value->t_loc ?? '',
+                                    'locationlist' => $locationlist
                                 ];
                                 }
                                
@@ -1240,7 +1247,7 @@ class APIPicklistShopping extends Controller
                                 $level = $locdet['level'];
                                 $bin = $locdet['bin'];
                                 $qty = $locdet['qtyloc'];
-
+                                $edfuc = $det['edfuc'];
                                 $qtypick = $det['qtypick'];
                                 $loc = $det['loc'];
                                 $oldloc = $locdet['loc'];
@@ -1309,6 +1316,7 @@ class APIPicklistShopping extends Controller
                                                     $xxinvdetblt->save();
                                                     $xxinvdet->xxinv_qty_pick = $qtysisa;
                                                     $xxinvdet->xxinv__dec02 = $qtyreq;
+                                                    $xxinvdet->xxinv__chr02 = $edfuc;
                                                     $xxinvdet->save();
                                                 }
                                             }
@@ -1316,6 +1324,7 @@ class APIPicklistShopping extends Controller
                                             $xxinvdet->xxinv_qty_pick = $xxinvdet->xxinv_qty_pick + $requested;
                                             $xxinvdet->xxinv_qty_wrh = $xxinvdet->xxinv_qtyoh - $requested - $xxinvdet->xxinv_qty_wip;
                                             $xxinvdet->xxinv__dec02 = $qtyreq;
+                                            $xxinvdet->xxinv__chr02 = $edfuc;
                                             $xxinvdet->save();
 
                                             // return response()->json([
@@ -1346,6 +1355,7 @@ class APIPicklistShopping extends Controller
                                         $xxinvdet->xxinv_qty_pick = $xxinvdet->xxinv_qty_pick + $requested;
                                         $xxinvdet->xxinv_qty_wrh = $xxinvdet->xxinv_qtyoh - $requested;
                                         $xxinvdet->xxinv__dec02 = $qtyreq;
+                                        $xxinvdet->xxinv__chr02 = $edfuc;
                                         // $xxinvdet->xxinv_loc = $loc;
                                         $xxinvdet->save();
                                     }
@@ -2132,7 +2142,7 @@ class APIPicklistShopping extends Controller
                             'um' => (string)$xxinvdet->itemMaster->im_item_um ?? '',
                             'qtyoh' => (string)$xxinvdet->xxinv_qtyoh ?? '',
                             'qtytopickkemasan' => (string)$check->getPicklistShoppingDetail[0]->psd_qty_kemasan ?? '',
-                            'edfuc' =>  '',
+                            'edfuc' =>  (string)$xxinvdet->xxinv__chr02 ?? '',
                             'qtyshp' => (string)$xxinvdet->xxinv_qty_shp ?? '',
                             'qtywip' => (string)$check->getPicklistShoppingDetail[0]->psd_loc ?? '',
                             'loc' => (string)$xxinvdet->xxinv_loc ?? '',
@@ -2179,7 +2189,7 @@ class APIPicklistShopping extends Controller
                             'um' => (string)$xxinvdet->itemMaster->im_item_um ?? '',
                             'qtyoh' => (string)$xxinvdet->xxinv_qtyoh ?? '',
                             'qtytopickkemasan' => (string)$check->getPicklistShoppingDetail[0]->psd_qty_kemasan ?? '',
-                            'edfuc' =>  '',
+                            'edfuc' =>  (string)$xxinvdet->xxinv__chr02 ?? '',
                             'qtyshp' => (string)$xxinvdet->xxinv_qty_shp ?? '',
                             'qtywip' => (string)$check->getPicklistShoppingDetail[0]->psd_loc ?? '',
                             'loc' => (string)$xxinvdet->xxinv_loc ?? '',
@@ -2768,7 +2778,7 @@ class APIPicklistShopping extends Controller
                             // $newTransactionHistory->save();
                         }
                     }
-                    dd('stop');
+                    // dd('stop');
                 }
 
                 // $pickloctodata = PicklistLocationTo::where('picklist_number', $picknbr)->first();
@@ -2885,7 +2895,7 @@ class APIPicklistShopping extends Controller
                                 $xxinvdet->xxinv__dec02 = 0;
                                 $xxinvdet->save();
                                 log::info($xxinvdet->xxinv_qty_pick);
-                                dd('stop');
+                                // dd('stop');
                                 $newTransactionHistory = new TransactionHistory();
                                 $newTransactionHistory->tr_nbr = $wonbr;
                                 $newTransactionHistory->tr_order = $wonbr;
