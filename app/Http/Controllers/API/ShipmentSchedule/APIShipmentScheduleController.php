@@ -138,7 +138,6 @@ class APIShipmentScheduleController extends Controller
     public function wsaInventoryDetail(Request $request)
     {
         $searchData = $request->search;
-        // return response()->json(['data' => $searchData, 200, ['Content-Type' => 'application/json']], JSON_UNESCAPED_UNICODE);
 
         // split by "|"
         $parts = explode("|", $searchData);
@@ -191,7 +190,6 @@ class APIShipmentScheduleController extends Controller
 
     public function store(Request $request)
     {
-        dd($request->all());
         Log::channel('shipmentSchedule')->info('=== CREATE SHIPMENT SCHEDULE START ===');
 
         Log::channel('shipmentSchedule')->info('Request:', [
@@ -209,21 +207,27 @@ class APIShipmentScheduleController extends Controller
             $idPrm = $request->prm_id;
             $shipmentSchedule = $request->scheduleDetail;
             $status = $request->ssm_status ?? 'Waiting for approval';
+            $custCode = $request->ssm_cust_code ?? null;
+            $custDesc = $request->ssm_cust_desc ?? null;
 
             Log::channel('shipmentSchedule')->info('Before saveShipmentSchedule:', [
                 'approver' => $approver,
                 'idPrm' => $idPrm,
                 'status' => $status,
+                'custCode' => $custCode,
+                'custDesc' => $custDesc,
                 'shipmentSchedule' => $shipmentSchedule,
             ]);
 
             $shipmentScheduleServices = new ShipmentScheduleServices();
 
-            $saveData = $shipmentScheduleServices->saveShipmentSchedule(
+            $saveData = $shipmentScheduleServices->saveShipmentSchedule(    
                 $approver,
                 $idPrm,
                 $shipmentSchedule,
-                $status
+                $status,
+                $custCode,
+                $custDesc
             );
 
             Log::channel('shipmentSchedule')->info('saveShipmentSchedule result:', [
@@ -273,6 +277,7 @@ class APIShipmentScheduleController extends Controller
             ], 422);
         }
     }
+
     public function approve(Request $request)
     {
         $request->validate([
@@ -344,6 +349,7 @@ class APIShipmentScheduleController extends Controller
             ], 422);
         }
     }
+
     public function getShipmentScheduleApprovalList(Request $request)
     {
         $data = ShipmentScheduleApproval::query()
@@ -374,51 +380,6 @@ class APIShipmentScheduleController extends Controller
         );
     }
 
-    // public function delete(Request $request)
-    // {
-    //     $id = $request->id;
-
-    //     // Ambil data master, loop ke detail, loop ke lokasi, sebelum hapus masukin ke history, terakhir delete
-    //     $shipmentScheduleMstr = ShipmentScheduleMstr::with(["getShipmentScheduleDetail.getShipmentScheduleLocation"])->find($id);
-
-    //     if (!$shipmentScheduleMstr) {
-    //         return response()->json(
-    //             [
-    //                 "status" => "Error",
-    //                 "message" => "Data not found",
-    //             ],
-    //             422,
-    //             ["Content-Type" => "application/json"],
-    //             JSON_UNESCAPED_UNICODE,
-    //         );
-    //     }
-
-    //     $shipmentScheduleServices = new ShipmentScheduleServices();
-    //     $deleteData = $shipmentScheduleServices->deleteShipmentSchedule($shipmentScheduleMstr);
-
-    //     if ($deleteData == false) {
-    //         return response()->json(
-    //             [
-    //                 "status" => "Error",
-    //                 "message" => "Failed to delete shipment schedule",
-    //             ],
-    //             422,
-    //             ["Content-Type" => "application/json"],
-    //             JSON_UNESCAPED_UNICODE,
-    //         );
-    //     }
-
-    //     return response()->json(
-    //         [
-    //             "status" => "success",
-    //             "message" => "Shipment schedule has been deleted",
-    //         ],
-    //         200,
-    //         ["Content-Type" => "application/json"],
-    //         JSON_UNESCAPED_UNICODE,
-    //     );
-    // }
-
     public function edit($id)
     {
         $shipmentSchedule = ShipmentScheduleMstr::with([
@@ -437,6 +398,7 @@ class APIShipmentScheduleController extends Controller
             "shipmentScheduleData" => $shipmentSchedule,
         ], 200, ["Content-Type" => "application/json"], JSON_UNESCAPED_UNICODE);
     }
+
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -463,7 +425,9 @@ class APIShipmentScheduleController extends Controller
                 $request->approver,
                 $id,
                 $request->scheduleDetail,
-                $request->ssm_status
+                $request->ssm_status,
+                $request->ssm_cust_code ?? null,
+                $request->ssm_cust_desc ?? null
             );
 
             if ($updateData === false) {
@@ -490,135 +454,33 @@ class APIShipmentScheduleController extends Controller
             ], 422);
         }
     }
-    // public function update(Request $request, $id)
-    // {
-    //     // Log::channel("shipmentSchedule")->info(json_encode($request->all()));
+    public function deleteDraftShipment(Request $request)
+{
+    $request->validate([
+        'id' => 'required',
+    ]);
 
-    //     $idShipmentScheduleMstr = $id;
-    //     $salesOrders = $request->sales_orders;
+    try {
+        $service = new ShipmentScheduleServices();
+        $result = $service->deleteDraftShipment($request->id);
 
-    //     $shipmentScheduleServices = new ShipmentScheduleServices();
-    //     // $updateData = $shipmentScheduleServices->updateShipmentSchedule($idShipmentScheduleMstr, $salesOrders);
+        if (!$result) {
+            return response()->json([
+                'status' => 'Error',
+                'message' => 'Gagal menghapus draft shipment.'
+            ], 422);
+        }
 
-    //     if ($updateData == false) {
-    //         return response()->json(
-    //             [
-    //                 "Status" => "Error",
-    //                 "Message" => "Failed To Update Shipment Schedule.",
-    //             ],
-    //             422,
-    //         );
-    //     }
+        return response()->json([
+            'status' => 'Success',
+            'message' => 'Draft berhasil dihapus.'
+        ], 200);
 
-    //     return response()->json(
-    //         [
-    //             "status" => "success",
-    //             "message" => "Shipment schedule has been created",
-    //         ],
-    //         200,
-    //         ["Content-Type" => "application/json"],
-    //         JSON_UNESCAPED_UNICODE,
-    //     );
-    // }
-    //   public function deleteDraft(Request $req)
-    // {
-
-    //     DB::beginTransaction();
-    //     try {
-    //         $id = $req->id;
-    //         $data ShipmentScheduleMstr::with(['ShipmentScheduleDet'])
-    //         $data = ReceiptDetail::with([
-    //             'getMaster',
-    //             'getPurchaseOrderDetail.getMaster',
-    //             'getPallet',
-    //             'getAttachment',
-    //             'getDokumen',
-    //             'getKemasan',
-    //             'getKendaraan',
-    //             'getPenanda',
-
-    //             'getUserSeenBy',
-    //             'getApprovalTemp',
-    //             'getApprovalHist'
-    //         ])->findOrFail($id);
-    //         $master = ReceiptMaster::with('getPurchaseOrderMaster.getDetail')->findOrFail($data->rd_rm_id);
-    //         $getPurchaseOrderDetail = $data->getPurchaseOrderDetail;
-    //         $getPallet = $data->getPallet;
-    //         foreach ($getPallet as $plt) {
-
-
-    //             $newTransactionHistory = new TransactionHistory();
-    //             $newTransactionHistory->tr_nbr = $data->getMaster->rm_rn_number;
-    //             $newTransactionHistory->tr_order = $getPurchaseOrderDetail->getMaster->po_nbr;
-    //             $newTransactionHistory->tr_program = 'PO Approval Module';
-    //             $newTransactionHistory->tr_activity = 'Delete Receipt';
-    //             $newTransactionHistory->tr_user =  Auth::user()->username ?? '';
-    //             // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
-    //             $newTransactionHistory->tr_part = $getPurchaseOrderDetail->pod_part ?? '';
-    //             $newTransactionHistory->tr_uom = $data->rd_pt_um ?? '';
-    //             $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
-    //             $newTransactionHistory->tr_lot = $data->rd_batch ?? '';
-    //             $newTransactionHistory->tr_qty = $data->rd_qty_terima ?? '';
-    //             $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-    //             $newTransactionHistory->tr_reference = $data->rd_kode_cetak ?? '';
-    //             $newTransactionHistory->tr_site = $data->rd_site_penyimpanan ?? '';
-    //             $newTransactionHistory->tr_location = $data->rd_location_penyimpanan ?? '';
-    //             $newTransactionHistory->tr_warehouse = $data->rd_building_penyimpanan ?? '';
-    //             $newTransactionHistory->tr_level = $plt->rdp_level_penyimpanan ?? '';
-    //             $newTransactionHistory->tr_bin = $plt->rdp_bin_penyimpanan ?? '';
-    //             $newTransactionHistory->tr_remark = '';
-    //             $newTransactionHistory->save();
-    //         }
-
-    //         $allDetails = ReceiptDetail::where('rd_rm_id', $master->id)->get();
-
-    //         foreach ($allDetails as $detail) {
-    //             $poDetail = PurchaseOrderDetail::find($detail->rd_pod_det_id);
-    //             $poDetail->pod_qty_rcpt = $poDetail->pod_qty_rcpt - $data->rd_qty_terima;
-    //             $poDetail->save();
-    //             $detail->getAttachment()->delete();
-    //             $detail->getDokumen()->delete();
-    //             $detail->getKemasan()->delete();
-    //             $detail->getKendaraan()->delete();
-    //             $detail->getPenanda()->delete();
-    //             $detail->getPallet()->delete();
-    //             $detail->getUserSeenBy()->delete();
-    //             $detail->getApprovalTemp()->delete();
-    //             $detail->getApprovalHist()->delete();
-    //             $detail->delete(); // delete this detail after all its children
-    //         }
-
-    //         $master->delete(); // delete master only after all details are gone
-    //         // // Delete all related records using query builder (more efficient)
-    //         // $data->getAttachment()->delete();
-    //         // $data->getDokumen()->delete();
-    //         // $data->getKemasan()->delete();
-    //         // $data->getKendaraan()->delete();
-    //         // $data->getPenanda()->delete();
-    //         // $data->getPallet()->delete();
-    //         // $data->getUserSeenBy()->delete();
-    //         // $data->getApprovalTemp()->delete();
-    //         // $data->getApprovalHist()->delete();
-
-
-    //         // // Delete the main record
-    //         // $data->delete();
-    //         // $master->delete();
-
-    //         DB::commit();
-
-    //         return response()->json([
-    //             'Status' => 'Success',
-    //             'Message' => "Data deleted successfully"
-    //         ], 200);
-    //     } catch (Exception $err) {
-    //         DB::rollback();
-    //         Log::error($err);
-    //         return response()->json([
-    //             'Status' => 'Error',
-    //             'Message' => "Failed to delete data"
-    //         ], 422);
-    //     }
-    // }
-
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'Error',
+            'message' => $e->getMessage()
+        ], 422);
+    }
+}
 }
