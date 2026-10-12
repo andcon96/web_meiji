@@ -80,6 +80,7 @@ class ShipmentScheduleServices
                 $shipmentScheduleDet->ssd_sod_part = $order['sodPart'];
                 $shipmentScheduleDet->ssd_sod_desc = $order['sodDesc'];
                 $shipmentScheduleDet->ssd_sod_lot = $order['sodLot'] ?? null;
+                $shipmentScheduleDet->ssd_uom = $order['ssdUom'] ?? $order['sodUom'] ?? null;
 
                 $shipmentScheduleDet->ssd_sod_qty_ord =
                     $order['totalToPickQty'];
@@ -139,6 +140,23 @@ class ShipmentScheduleServices
                             : 0;
 
                     $shipmentScheduleLocation->save();
+
+                    // Pindahkan inventory & catat Transaction History jika qtyPick > 0
+                    if ($shipmentScheduleLocation->ssl_qty_pick > 0) {
+                        $this->moveInventory(
+                            $shipmentScheduleDet->ssd_sod_part,
+                            $shipmentScheduleLocation,
+                            $shipmentScheduleLocation->ssl_qty_pick
+                        );
+
+                        $this->writeTransactionHistory(
+                            $shipmentScheduleDet,
+                            $shipmentScheduleLocation,
+                            'Shipment Preparation Create',
+                            'Save Shipment Schedule',
+                            $shipmentScheduleLocation->ssl_qty_pick
+                        );
+                    }
 
                     Log::channel('shipmentSchedule')->info('LOCATION SAVED', [
                         'location_id' => $shipmentScheduleLocation->id,
@@ -272,6 +290,14 @@ class ShipmentScheduleServices
                     if ($qtyPick <= 0) {
                         continue;
                     }
+
+                    $this->writeTransactionHistory(
+                        $shipmentScheduleDet,
+                        $shipmentScheduleLocation,
+                        'Shipment Approved',
+                        $reason ?? 'Approved Shipment Schedule',
+                        $qtyPick
+                    );
                 }
 
                 $shipmentScheduleDet->ssd_status = 'Approved';
@@ -300,125 +326,6 @@ class ShipmentScheduleServices
 
             return false;
         }
-    }
-
-    private function toNumber($value): float
-    {
-        if ($value === null || $value === '') {
-            return 0.0;
-        }
-
-        if (is_numeric($value)) {
-            return (float) $value;
-        }
-
-        $clean = str_replace(',', '', trim((string) $value));
-
-        return is_numeric($clean) ? (float) $clean : 0.0;
-    }
-
-    private function getApprovalForAction(ShipmentScheduleMstr $mstr): ShipmentScheduleApproval
-    {
-        if ($mstr->ssm_status !== 'Waiting for approval') {
-            throw new \Exception('Status shipment schedule bukan Waiting for approval.');
-        }
-
-        $approval = ShipmentScheduleApproval::where('ssm_id', $mstr->id)
-            ->where('ssa_sequence', 1)
-            ->firstOrFail();
-
-        $allowed = [(string) $approval->ssa_user_approver];
-        if ($approval->ssa_alt_user_approver) {
-            $allowed[] = (string) $approval->ssa_alt_user_approver;
-        }
-
-        if (! in_array((string) Auth::user()->id, $allowed, true)) {
-            throw new \Exception('User bukan approver.');
-        }
-
-        return $approval;
-    }
-
-    private function moveInventory($part, ShipmentScheduleLoc $loc, float $qty): void
-    {
-        $inventory = xxinvDet::where('xxinv_part', $part)
-            ->where('xxinv_lot', $loc->ssl_lotserial)
-            ->where('xxinv_bin', $loc->ssl_bin ?? '0')
-            ->where('xxinv_level', $loc->ssl_level ?? '0')
-            ->first();
-
-        if (! $inventory) {
-            throw new \Exception('Inventory tidak ditemukan.');
-        }
-
-        $inventory->xxinv_qty_wrh = max(0, (float) $inventory->xxinv_qty_wrh - $qty);
-        $inventory->xxinv_qty_shp = max(0, (float) $inventory->xxinv_qty_shp + $qty);
-        $inventory->save();
-    }
-
-    private function writeTransactionHistory(
-        ShipmentScheduleDet $det,
-        ShipmentScheduleLoc $loc,
-        string $activity,
-        string $remark,
-        float $qty
-    ): void {
-        $trx = new TransactionHistory();
-        $trx->tr_nbr = $det->ssd_sod_nbr ?? '';
-        $trx->tr_order = '';
-        $trx->tr_program = 'Shipment Module';
-        $trx->tr_activity = $activity;
-        $trx->tr_user = Auth::user()->username ?? '';
-        $trx->tr_part = $det->ssd_sod_part ?? '';
-        $trx->tr_uom = $det->ssd_uom ?? '';
-        $trx->tr_line = $det->ssd_sod_line ?? 0;
-        $trx->tr_lot = $loc->ssl_lotserial ?? '';
-        $trx->tr_qty = $qty;
-        $trx->tr_date = now();
-        $trx->tr_reference = '';
-        $trx->tr_site = $loc->ssl_site ?? '2100';
-        $trx->tr_location = $loc->ssl_location ?? '';
-        $trx->tr_warehouse = $loc->ssl_warehouse ?? '';
-        $trx->tr_level = $loc->ssl_level ?? '0';
-        $trx->tr_bin = $loc->ssl_bin ?? '0';
-        $trx->tr_remark = $remark;
-        $trx->save();
-    }
-
-    private function writeScheduleHistory(
-        ShipmentScheduleMstr $mstr,
-        ShipmentScheduleDet $det,
-        ShipmentScheduleLoc $loc,
-        string $action,
-        ?string $reason = null
-    ): void {
-        $hist = new ShipmentScheduleHist();
-        $hist->ssh_number = $mstr->ssm_number;
-        $hist->ssh_cust_code = $mstr->ssm_cust_code;
-        $hist->ssh_cust_desc = $mstr->ssm_cust_desc;
-        $hist->ssh_status_mstr = $mstr->ssm_status;
-        $hist->ssh_sod_nbr = $det->ssd_sod_nbr;
-        $hist->ssh_sod_site = $det->ssd_sod_site;
-        $hist->ssh_sod_shipto = $det->ssd_sod_shipto;
-        $hist->ssh_sod_line = $det->ssd_sod_line;
-        $hist->ssh_sod_part = $det->ssd_sod_part;
-        $hist->ssh_sod_desc = $det->ssd_sod_desc;
-        $hist->ssh_uom = $det->ssd_uom;
-        $hist->ssh_sod_qty_ord = $det->ssd_sod_qty_ord;
-        $hist->ssh_sod_qty_pick = $det->ssd_sod_qty_pick;
-        $hist->ssh_sod_lot = $det->ssd_sod_lot;
-        $hist->ssh_status_det = $det->ssd_status;
-        $hist->ssh_site = $loc->ssl_site;
-        $hist->ssh_warehouse = $loc->ssl_warehouse;
-        $hist->ssh_location = $loc->ssl_location;
-        $hist->ssh_lotserial = $loc->ssl_lotserial;
-        $hist->ssh_level = $loc->ssl_level;
-        $hist->ssh_bin = $loc->ssl_bin;
-        $hist->ssh_qty_to_pick = $loc->ssl_qty_to_pick;
-        $hist->ssh_action = $action;
-        $hist->ssh_reason = $reason;
-        $hist->created_by = Auth::user()->name;
-        $hist->save();
     }
 
     public function updateShipmentSchedule(
@@ -693,39 +600,175 @@ class ShipmentScheduleServices
             return false;
         }
     }
+
     public function deleteDraftShipment($id)
-    
-{
-    DB::beginTransaction();
-    try {
-        $shipment = ShipmentScheduleMstr::with('getShipmentScheduleDetail.shipmentScheduleLoc')->find($id);
+    {
+        DB::beginTransaction();
+        try {
+            $shipment = ShipmentScheduleMstr::with('getShipmentScheduleDetail.shipmentScheduleLoc')->find($id);
 
-        if (!$shipment) {
-            throw new \Exception('Data shipment tidak ditemukan.');
+            if (!$shipment) {
+                throw new \Exception('Data shipment tidak ditemukan.');
+            }
+
+            if ($shipment->ssm_status !== 'Draft') {
+                throw new \Exception('Hanya data berpembawaan status Draft yang dapat dihapus.');
+            }
+
+            // Hapus lokasi & detail + kembalikan inventory jika ada stok terisi
+            foreach ($shipment->getShipmentScheduleDetail as $detail) {
+                foreach ($detail->shipmentScheduleLoc as $location) {
+                    $qtyPick = (float) ($location->ssl_qty_pick ?? 0);
+
+                    if ($qtyPick > 0) {
+                        // Kembalikan persediaan: shp -> wrh
+                        $this->moveInventory($detail->ssd_sod_part, $location, -$qtyPick);
+
+                        $this->writeTransactionHistory(
+                            $detail,
+                            $location,
+                            'Shipment Delete Draft',
+                            'Delete Draft Shipment',
+                            $qtyPick
+                        );
+                    }
+
+                    $location->delete();
+                }
+                $detail->delete();
+            }
+
+            // Hapus approval jika ada
+            ShipmentScheduleApproval::where('ssm_id', $shipment->id)->delete();
+
+            // Hapus master
+            $shipment->delete();
+
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::channel('shipmentSchedule')->error($e);
+            return false;
         }
-
-        if ($shipment->ssm_status !== 'Draft') {
-            throw new \Exception('Hanya data berpembawaan status Draft yang dapat dihapus.');
-        }
-
-        // Hapus lokasi & detail
-        foreach ($shipment->getShipmentScheduleDetail as $detail) {
-            $detail->shipmentScheduleLoc()->delete();
-            $detail->delete();
-        }
-
-        // Hapus approval jika ada
-        ShipmentScheduleApproval::where('ssm_id', $shipment->id)->delete();
-
-        // Hapus master
-        $shipment->delete();
-
-        DB::commit();
-        return true;
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::channel('shipmentSchedule')->error($e);
-        return false;
     }
-}
+
+    private function toNumber($value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+
+        $clean = str_replace(',', '', trim((string) $value));
+
+        return is_numeric($clean) ? (float) $clean : 0.0;
+    }
+
+    private function getApprovalForAction(ShipmentScheduleMstr $mstr): ShipmentScheduleApproval
+    {
+        if ($mstr->ssm_status !== 'Waiting for approval') {
+            throw new \Exception('Status shipment schedule bukan Waiting for approval.');
+        }
+
+        $approval = ShipmentScheduleApproval::where('ssm_id', $mstr->id)
+            ->where('ssa_sequence', 1)
+            ->firstOrFail();
+
+        $allowed = [(string) $approval->ssa_user_approver];
+        if ($approval->ssa_alt_user_approver) {
+            $allowed[] = (string) $approval->ssa_alt_user_approver;
+        }
+
+        if (! in_array((string) Auth::user()->id, $allowed, true)) {
+            throw new \Exception('User bukan approver.');
+        }
+
+        return $approval;
+    }
+
+    private function moveInventory($part, ShipmentScheduleLoc $loc, float $qty): void
+    {
+        $inventory = xxinvDet::where('xxinv_part', $part)
+            ->where('xxinv_lot', $loc->ssl_lotserial)
+            ->where('xxinv_bin', $loc->ssl_bin ?? '0')
+            ->where('xxinv_level', $loc->ssl_level ?? '0')
+            ->first();
+
+        if (! $inventory) {
+            throw new \Exception('Inventory tidak ditemukan.');
+        }
+
+        $inventory->xxinv_qty_wrh = max(0, (float) $inventory->xxinv_qty_wrh - $qty);
+        $inventory->xxinv_qty_shp = max(0, (float) $inventory->xxinv_qty_shp + $qty);
+        $inventory->save();
+    }
+
+    private function writeTransactionHistory(
+        ShipmentScheduleDet $det,
+        ShipmentScheduleLoc $loc,
+        string $activity,
+        string $remark,
+        float $qty
+    ): void {
+        $trx = new TransactionHistory();
+        $trx->tr_nbr = $det->ssd_sod_nbr ?? '';
+        $trx->tr_order = '';
+        $trx->tr_program = 'Shipment Module';
+        $trx->tr_activity = $activity;
+        $trx->tr_user = Auth::user()->username ?? '';
+        $trx->tr_part = $det->ssd_sod_part ?? '';
+        $trx->tr_uom = $det->ssd_uom ?? '';
+        $trx->tr_line = $det->ssd_sod_line ?? 0;
+        $trx->tr_lot = $loc->ssl_lotserial ?? '';
+        $trx->tr_qty = $qty;
+        $trx->tr_date = now();
+        $trx->tr_reference = '';
+        $trx->tr_site = $loc->ssl_site ?? '2100';
+        $trx->tr_location = $loc->ssl_location ?? '';
+        $trx->tr_warehouse = $loc->ssl_warehouse ?? '';
+        $trx->tr_level = $loc->ssl_level ?? '0';
+        $trx->tr_bin = $loc->ssl_bin ?? '0';
+        $trx->tr_remark = $remark;
+        $trx->save();
+    }
+
+    private function writeScheduleHistory(
+        ShipmentScheduleMstr $mstr,
+        ShipmentScheduleDet $det,
+        ShipmentScheduleLoc $loc,
+        string $action,
+        ?string $reason = null
+    ): void {
+        $hist = new ShipmentScheduleHist();
+        $hist->ssh_number = $mstr->ssm_number;
+        $hist->ssh_cust_code = $mstr->ssm_cust_code;
+        $hist->ssh_cust_desc = $mstr->ssm_cust_desc;
+        $hist->ssh_status_mstr = $mstr->ssm_status;
+        $hist->ssh_sod_nbr = $det->ssd_sod_nbr;
+        $hist->ssh_sod_site = $det->ssd_sod_site;
+        $hist->ssh_sod_shipto = $det->ssd_sod_shipto;
+        $hist->ssh_sod_line = $det->ssd_sod_line;
+        $hist->ssh_sod_part = $det->ssd_sod_part;
+        $hist->ssh_sod_desc = $det->ssd_sod_desc;
+        $hist->ssh_uom = $det->ssd_uom;
+        $hist->ssh_sod_qty_ord = $det->ssd_sod_qty_ord;
+        $hist->ssh_sod_qty_pick = $det->ssd_sod_qty_pick;
+        $hist->ssh_sod_lot = $det->ssd_sod_lot;
+        $hist->ssh_status_det = $det->ssd_status;
+        $hist->ssh_site = $loc->ssl_site;
+        $hist->ssh_warehouse = $loc->ssl_warehouse;
+        $hist->ssh_location = $loc->ssl_location;
+        $hist->ssh_lotserial = $loc->ssl_lotserial;
+        $hist->ssh_level = $loc->ssl_level;
+        $hist->ssh_bin = $loc->ssl_bin;
+        $hist->ssh_qty_to_pick = $loc->ssl_qty_to_pick;
+        $hist->ssh_action = $action;
+        $hist->ssh_reason = $reason;
+        $hist->created_by = Auth::user()->name;
+        $hist->save();
+    }
 }
