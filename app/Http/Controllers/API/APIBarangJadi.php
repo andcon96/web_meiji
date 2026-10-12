@@ -245,6 +245,15 @@ class APIBarangJadi extends Controller
             $buildingto = $whto;
             $levelfrom = $data->pb_level_from ?? '';
             $binfrom = $data->pb_bin_from ?? '';
+            $expdate = $data->pb_exp_date ?? '';
+            
+
+            $expdateDate = \DateTime::createFromFormat('d-m-Y', $expdate)->format('Y-m-d');
+            
+            // Parse from 'd-m-Y' format and output as 'Y-m-d'
+            // $expdateDate = $expdate ? Carbon::createFromFormat('d-m-Y', $expdate)->format('Y-m-d') : null;
+
+            
 
             $totalPalletQty = 0;
 
@@ -440,6 +449,8 @@ class APIBarangJadi extends Controller
                         $invTo->xxinv_qty_wrh = $palletQty;
                         $invTo->xxinv__dec01 = $palletQty;
                         $invTo->xxinv_domain = $domain->domain;
+                        $invTo->xxinv_exp_date = $expdateDate;
+                        
 
                         $invTo->save();
 
@@ -1400,11 +1411,11 @@ class APIBarangJadi extends Controller
             foreach ($getAllItemLocation as $datas) {
                 // dd($item['xxinv_loc'], $datas->getMaster->location_code);
                 if (
-                    // $this->normalize($item['xxinv_level']) == $this->normalize($datas->ld_rak) &&
-                    // $this->normalize($item['xxinv_wrh']) == $this->normalize($datas->ld_building) &&
-                    // $this->normalize($item['xxinv_bin']) == $this->normalize($datas->ld_bin) 
+                    $this->normalize($item['xxinv_level']) == $this->normalize($datas->ld_rak) &&
+                    $this->normalize($item['xxinv_wrh']) == $this->normalize($datas->ld_building) &&
+                    $this->normalize($item['xxinv_bin']) == $this->normalize($datas->ld_bin)
                     // &&
-                    $this->normalize($item['xxinv_loc']) == $this->normalize($datas->getMaster->location_code)
+                    // $this->normalize($item['xxinv_loc']) == $this->normalize($datas->getMaster->location_code)
                 ) {
                     return true;
                 }

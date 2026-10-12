@@ -53,7 +53,11 @@ class ShipmentScheduleServices
 
             $shipmentScheduleMstr->ssm_status = $status;
             $shipmentScheduleMstr->ssm_number =
-                $shipmentSchedule[0]['sodNbr'] ?? null;
+            $shipmentSchedule[0]['sodNbr'] ?? null;
+            
+            //dummy data, nanti dihapus
+            $shipmentScheduleMstr->ssm_cust_code = 'AJS';
+            $shipmentScheduleMstr->ssm_cust_desc = 'AJS';
 
             $shipmentScheduleMstr->save();
 
