@@ -1110,7 +1110,7 @@ class APIBarangJadi extends Controller
             $binfrom = $this->nullConversion($data['binfrom'] ?? null);
             $remark = $this->nullConversion($data['remark'] ?? null);
             $exp = $this->nullConversion($data['exp'] ?? null);
-            $qty = (int) str_replace(',', '', (string) $data['qty']);
+            $qty = (float) str_replace(',', '', (string) $data['qty']);
             $wh = $this->nullConversion($data['wh'] ?? null);
             $ref = $this->nullConversion($data['ref'] ?? null);
             $level = $this->nullConversion($data['level'] ?? null);
