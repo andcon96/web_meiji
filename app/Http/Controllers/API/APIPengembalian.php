@@ -537,12 +537,16 @@ class APIPengembalian extends Controller
                         ->where('xxinv_bin', $xxinvApproval->xxinv_binfrom)
                         ->first();
                         $qtysend = $xxinvApproval->xxinv_qty_smp - $qty;
+                        log::info($qtysend);
+                        log::info($xxinvApproval->xxinv_qty_smp);
+                        log::info($qty);
                     $wsaData = (new WSAServices())->wsaConfirmSampling($item, $lot, 'QC-QRT', $qtysend, $siteto);
                     $xxinvDet->xxinv_qty_wrh = floatval($xxinvDet->xxinv_qty_wrh) + $qty;
                     $xxinvDet->xxinv_qty_smp = floatval($xxinvDet->xxinv_qty_smp) - $qty;
                     // log::info($qty);
                     $xxinvDet->save();
                     if ($wsaData[0] == 'false') {
+                        log::info('wsa failed');
                         DB::rollback();
                         return response()->json([
                             'Status' => 'Error',

@@ -641,13 +641,14 @@ class APIPurchaseOrderRecheckController extends Controller
                 })
                 ->where('rd_status','=', 'Checked')
                 ->first();
+                log::info($findduplicate);
             // $findduplicate = xxinvDet::where('xxinv_loc', $location)
             //     ->where('xxinv_site', $site)
             //     ->where('xxinv_wrh', $warehouse)
             //     ->where('xxinv_level', $level)
             //     ->where('xxinv_bin', $bin)
             //     ->first();
-                
+            log::info($site .' '. $location . ' ' .$warehouse . ' '.$level . ' ' .$bin);
             if($findduplicate){
                 return response()->json('yes');
             }
