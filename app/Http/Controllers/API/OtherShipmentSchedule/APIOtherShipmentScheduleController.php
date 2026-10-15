@@ -34,7 +34,7 @@ class APIOtherShipmentScheduleController extends Controller
 
     public function getItemOSS(Request $request)
     {
-        $items = Item::with(['getLoadedBy:id,name', 'getUpdatedBy:id,name'])->where()
+        $items = Item::with(['getLoadedBy:id,name', 'getUpdatedBy:id,name'])
             ->orderBy('im_item_part')
             ->get();
 
@@ -99,7 +99,7 @@ class APIOtherShipmentScheduleController extends Controller
                 't_inv_level' => $item->xxinv_level,
                 't_inv_site' => $item->xxinv_site,
                 't_inv_wrh' => $item->xxinv_wrh,
-                't_inv_qtyoh' => $item->xxinv_qtyoh,
+                't_inv_qtyoh' => $item->xxinv_qty_wrh,
                 't_inv_uom' => 'null', // atau ambil dari tabel Item jika diperlukan
             ];
         });

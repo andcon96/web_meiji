@@ -104,7 +104,7 @@ class OtherShipmentScheduleServices
                 $newTransactionHistory->tr_order     = '';
                 $newTransactionHistory->tr_program   = 'Other Transaction Module';
                 $newTransactionHistory->tr_activity  = 'Create Other Transaction';
-                $newTransactionHistory->tr_user      = Auth::user()->id ?? '';
+                $newTransactionHistory->tr_user      = Auth::user()->name ?? '';
                 $newTransactionHistory->tr_part      = $item["itemPart"] ?? '';
                 $newTransactionHistory->tr_uom       = $item["UM"] ?? '';
                 $newTransactionHistory->tr_line      = '';

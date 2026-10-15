@@ -83,7 +83,7 @@ class APIOtherShipmentPreparationController extends Controller
                         return trim($inv->xxinv_part) == $part && trim((string) $inv->xxinv_lot) === $lot && trim($inv->xxinv_loc) == $loc && strtoupper($cleanInvLevel) == strtoupper($cleanLocalLevel) && trim($inv->xxinv_bin) == $bin;
                     });
 
-                    $location->setAttribute('stock', (float) ($stockRow->xxinv_qtyoh ?? 0));
+                    $location->setAttribute('stock', (float) ($stockRow->xxinv_qty_wrh ?? 0));
                 }
             }
         }
@@ -279,7 +279,7 @@ class APIOtherShipmentPreparationController extends Controller
                     'level' => (string) $stockRow->xxinv_level,
                     'bin' => (string) $stockRow->xxinv_bin,
                     'location' => (string) $stockRow->xxinv_loc,
-                    'stock' => (float) ($stockRow->xxinv_qtyoh ?? 0),
+                    'stock' => (float) ($stockRow->xxinv_qty_wrh ?? 0),
                 ];
             })->values();
 

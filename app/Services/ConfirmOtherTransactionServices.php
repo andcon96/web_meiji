@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
+use App\Models\API\TransactionHistory;
 class ConfirmOtherTransactionServices
 {
     public function confirmOtherTransaction(Request $request, $otcApproval, $reason, $activeConnection)
@@ -38,7 +38,7 @@ class ConfirmOtherTransactionServices
             $anotherConfirm = OtherTransactionConfirm::where('otpm_id', $otcApproval['otpm_id'])->where('id', '!=', $otcApproval['id'])->where('otc_status', '=', 'Waiting for confirmation')->lockForUpdate()->first();
 
             $otherTransactionConfirm->otc_status = 'Approved';
-            $otherTransactionConfirm->updated_by = Auth::user()->id;
+            $otherTransactionConfirm->updated_by = Auth::user()->name;
             $otherTransactionConfirm->otc_reason = $reason;
             $otherTransactionConfirm->save();
 
@@ -96,13 +96,24 @@ class ConfirmOtherTransactionServices
                     // -------------------------------------------------------------
                     //  INSERT GENERAL TRANSACTION HISTORY (CONFIRM TRANSACTION)
                     // -------------------------------------------------------------
+                    $qtyPick = $locationDetail->ossl_qty_pick;
+                    $inventory = xxinvDet::where('xxinv_lot', $locationDetail->ossl_lotserial ?? '')
+                            ->where('xxinv_bin', $locationDetail->ossl_bin ?? '')
+                            ->where('xxinv_level',$locationDetail->ossl_level ?? '' )
+                            ->first();
+
+                    $inventory->xxinv_qtyoh = max(0, (float) $inventory->xxinv_qtyoh - $qtyPick);
+                    $inventory->xxinv_qty_pick = max(0, (float) $inventory->xxinv_qty_pick - $qtyPick);
+                    $inventory->save();
+
+
                     if ((float) $locationDetail->ossl_qty_pick > 0) {
                         $newTransactionHistory = new TransactionHistory();
                         $newTransactionHistory->tr_nbr = $scheduleMaster->ossm_number ?? '';
                         $newTransactionHistory->tr_order = '';
                         $newTransactionHistory->tr_program = 'Other Transaction Module';
                         $newTransactionHistory->tr_activity = 'Confirm Other Transaction';
-                        $newTransactionHistory->tr_user = Auth::user()->id ?? '';
+                        $newTransactionHistory->tr_user = Auth::user()->name ?? '';
                         $newTransactionHistory->tr_part = $scheduleDet->ossd_part ?? '';
                         $newTransactionHistory->tr_uom = $scheduleDet->ossd_uom ?? '';
                         $newTransactionHistory->tr_line = '';

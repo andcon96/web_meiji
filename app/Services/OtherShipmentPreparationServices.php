@@ -100,7 +100,9 @@ public function saveOtherShipmentPreparation($approver, $ossmId, $otherShipmentP
                             throw new \Exception('Inventory tidak ditemukan.');
                         }
 
-                        $inventory->xxinv_qtyoh = max(0, (float) $inventory->xxinv_qtyoh - $qtyPick);
+                        //$inventory->xxinv_qtyoh = max(0, (float) $inventory->xxinv_qtyoh - $qtyPick);
+                        $inventory->xxinv_qty_wrh = max(0, (float) $inventory->xxinv_qty_wrh - $qtyPick);
+                        $inventory->xxinv_qty_pick = max(0, (float) $inventory->xxinv_qty_pick + $qtyPick);
                         $inventory->save();
 
                         // -------------------------------------------------------------
@@ -111,7 +113,7 @@ public function saveOtherShipmentPreparation($approver, $ossmId, $otherShipmentP
                         $newTransactionHistory->tr_order     = '';
                         $newTransactionHistory->tr_program   = 'Other Transaction Module';
                         $newTransactionHistory->tr_activity  = 'Preparation Other Transaction';
-                        $newTransactionHistory->tr_user      = Auth::user()->id ?? '';
+                        $newTransactionHistory->tr_user      = Auth::user()->name ?? '';
                         $newTransactionHistory->tr_part      = $shipmentPreparation['ossdPart'] ?? $otherShipmentScheduleDet->ossd_part;
                         $newTransactionHistory->tr_uom       = $otherShipmentScheduleDet->ossd_uom ?? '';
                         $newTransactionHistory->tr_line      = '';
@@ -293,7 +295,9 @@ public function saveOtherShipmentPreparation($approver, $ossmId, $otherShipmentP
                     ->first();
 
                 if ($inventory) {
-                    $inventory->xxinv_qtyoh += $qtyPick;
+                   //$inventory->xxinv_qtyoh += $qtyPick; 
+                    $inventory->xxinv_qty_wrh += $qtyPick;
+                    $inventory->xxinv_qty_pick -= $qtyPick;
                     $inventory->save();
                 }
 
@@ -315,7 +319,7 @@ public function saveOtherShipmentPreparation($approver, $ossmId, $otherShipmentP
                 $newTransactionHistory->tr_order     = '';
                 $newTransactionHistory->tr_program   = 'Other Transaction Module';
                 $newTransactionHistory->tr_activity  = 'Reject Other Transaction ';
-                $newTransactionHistory->tr_user      = Auth::user()->id ?? '';
+                $newTransactionHistory->tr_user      = Auth::user()->name;
                 $newTransactionHistory->tr_part      = $scheduleDet->ossd_part ?? '';
                 $newTransactionHistory->tr_uom       = $scheduleDet->ossd_uom ?? '';
                 $newTransactionHistory->tr_line      = '';
@@ -407,7 +411,7 @@ public function approveOtherShipmentPreparation($shipmentPreparation, $reason, $
                         $newTransactionHistory->tr_order     = '';
                         $newTransactionHistory->tr_program   = 'Other Transaction Module';
                         $newTransactionHistory->tr_activity  = 'Approve Other Transaction  ';
-                        $newTransactionHistory->tr_user      = Auth::user()->id ?? '';
+                        $newTransactionHistory->tr_user      = Auth::user()->name ?? '';
                         $newTransactionHistory->tr_part      = $scheduleDet->ossd_part ?? '';
                         $newTransactionHistory->tr_uom       = $scheduleDet->ossd_uom ?? '';
                         $newTransactionHistory->tr_line      = '';
