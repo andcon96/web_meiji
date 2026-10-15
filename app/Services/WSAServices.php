@@ -5466,7 +5466,7 @@ class WSAServices
             </meiji_confirm_sampling>'.
             '</Body>'.
             '</Envelope>';
-
+        
         $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout,        // in seconds, 0 = unlimited / wait indefinitely.
@@ -5507,7 +5507,8 @@ class WSAServices
             }
             curl_close($curl);
         }
-        // dd($qdocRequest, $qdocResponse);
+        log::info($qdocRequest);
+        log::info($qdocResponse);
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', $wsa->wsa_path);
