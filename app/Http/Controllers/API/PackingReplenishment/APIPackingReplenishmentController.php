@@ -160,7 +160,7 @@ class APIPackingReplenishmentController extends Controller
                 'loc' => $loc,
                 'line' => (string) $row->t_line,
                 'lot' => $lot,
-                'qty' => (int) $row->t_qty,
+                'qty' => (float) number_format((float) $row->t_qty, 5, '.', ''),
                 'item_id' => $itemId,
                 'nbrx' => (string) $row->t_nbrx,
                 'custx' => (string) $row->t_custx,

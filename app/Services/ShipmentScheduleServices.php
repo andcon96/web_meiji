@@ -290,6 +290,10 @@ class ShipmentScheduleServices
                     if ($qtyPick <= 0) {
                         continue;
                     }
+                 // Kembalikan stok: shp -> wrh
+                    $this->issso($shipmentScheduleDet->ssd_sod_part, $shipmentScheduleLocation,$qtyPick);
+
+                    
 
                     $this->writeTransactionHistory(
                         $shipmentScheduleDet,
@@ -704,6 +708,23 @@ class ShipmentScheduleServices
 
         $inventory->xxinv_qty_wrh = max(0, (float) $inventory->xxinv_qty_wrh - $qty);
         $inventory->xxinv_qty_shp = max(0, (float) $inventory->xxinv_qty_shp + $qty);
+        $inventory->save();
+    }
+
+    private function issso($part, ShipmentScheduleLoc $loc, float $qty): void
+    {
+        $inventory = xxinvDet::where('xxinv_part', $part)
+            ->where('xxinv_lot', $loc->ssl_lotserial)
+            ->where('xxinv_bin', $loc->ssl_bin ?? '0')
+            ->where('xxinv_level', $loc->ssl_level ?? '0')
+            ->first();
+
+        if (! $inventory) {
+            throw new \Exception('Inventory tidak ditemukan.');
+        }
+
+        $inventory->xxinv_qtyoh = max(0, (float) $inventory->xxinv_qty_wrh - $qty);
+        $inventory->xxinv_qty_shp = max(0, (float) $inventory->xxinv_qty_shp - $qty);
         $inventory->save();
     }
 
