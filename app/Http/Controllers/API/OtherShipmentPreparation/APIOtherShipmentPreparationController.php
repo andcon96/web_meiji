@@ -39,7 +39,7 @@ class APIOtherShipmentPreparationController extends Controller
             });
         }
 
-        $data = $data->orderBy('id', 'desc')->paginate(10);
+        $data = $data->orderBy('created_at', 'desc')->paginate(10);
 
         return GeneralResources::collection($data);
     }

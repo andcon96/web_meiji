@@ -27,7 +27,7 @@ class APIOtherShipmentScheduleController extends Controller
             });
         }
 
-        $data = $data->orderBy('ossm_number', 'desc')->paginate(10);
+        $data = $data->orderBy('created_at', 'desc')->paginate(10);
 
         return GeneralResources::collection($data);
     }

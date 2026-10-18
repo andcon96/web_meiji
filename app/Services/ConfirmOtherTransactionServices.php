@@ -103,7 +103,7 @@ class ConfirmOtherTransactionServices
                             ->first();
 
                     $inventory->xxinv_qtyoh = max(0, (float) $inventory->xxinv_qtyoh - $qtyPick);
-                    $inventory->xxinv_qty_pick = max(0, (float) $inventory->xxinv_qty_pick - $qtyPick);
+                    $inventory->xxinv_qty_shp = max(0, (float) $inventory->xxinv_qty_shp - $qtyPick);
                     $inventory->save();
 
 
