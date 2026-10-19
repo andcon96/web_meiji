@@ -84,25 +84,24 @@
             <td>No. Buku Penerimaan Barang: <strong>{{ $no_buku }}</strong></td>
             <td style="text-align:right;">Tanggal datang: <strong>{{(new DateTime($tanggal))->format('d-m-Y')  }}</strong></td>
         </tr>
-    </table>
-
+    </table>z
     <div class="section-title">I. Catatan Kelengkapan Dokumen Penerimaan Barang</div>
     <table>
         <tr>
             <td style="width: 30%">Purchase order</td>
             <td style="width: 20%">
                 @if ($is_po == 1)
-                    (Sesuai / <s style="text-decoration-thickness: 3px;">Tidak Sesuai</s>)
+                    Sesuai
                 @else
-                    (<s style="text-decoration-thickness: 3px;">Sesuai</s> / Tidak Sesuai)
+                    Tidak Sesuai
                 @endif
             </td>
             <td style="width: 30%">Material Safety Data Sheet (MSDS)</td>
             <td style="width: 20%">
                 @if ($is_msds == 1)
-                    (Ada / <s >Tidak ada</s>)
+                    Ada
                 @else
-                    (<s style="text-decoration-thickness: 3px;">Ada</s> / Tidak ada)
+                    Tidak ada
                 @endif
             </td>
         </tr>
@@ -110,9 +109,9 @@
             <td>Surat Jalan/surat kirim/invoice</td>
             <td>
                 @if ($is_sj == 1)
-                    (Ada / <s style="text-decoration-thickness: 3px;">Tidak ada</s>)
+                    Ada
                 @else
-                    (<s style="text-decoration-thickness: 3px;">Ada</s> / Tidak ada)
+                    Tidak ada
                 @endif
             </td>
             <td>No. Surat Jalan/surat kirim/invoice</td>
@@ -124,17 +123,17 @@
             <td>Daftar barang/Packing List</td>
             <td>
                 @if ($is_packing_list == 1)
-                    (Ada / <s style="text-decoration-thickness: 3px;">Tidak ada</s>)
+                    Ada
                 @else
-                    (<s style="text-decoration-thickness: 3px;">Ada</s> / Tidak ada)
+                    Tidak ada
                 @endif
             </td>
             <td>Certificate of Analysis</td>
             <td>
                 @if ($is_coa == 1)
-                    (Ada / <s style="text-decoration-thickness: 3px;">Tidak ada</s>)
+                    Ada
                 @else
-                    (<s style="text-decoration-thickness: 3px;">Ada</s> / Tidak ada)
+                    Tidak ada
                 @endif
             </td>
             {{-- <td colspan="2"></td> --}}
@@ -159,12 +158,12 @@
 
             @if ($note_namabarang == '')
                 <td>
-                    (Sesuai / <s style="text-decoration-thickness: 3px;">Tidak Sesuai</s>)
+                    Sesuai
                 </td>
                 <td style="text-align:center">{{ '-' }}</td>
             @else
                 <td>
-                    (<s style="text-decoration-thickness: 3px;">Sesuai</s> / Tidak Sesuai)
+                    Tidak Sesuai
                 </td>
                 <td>{{ $note_namabarang }}</td>
             @endif
@@ -180,12 +179,12 @@
 
             @if ($note_batch == '')
                 <td>
-                    (Sesuai / <s style="text-decoration-thickness: 3px;">Tidak Sesuai</s>)
+                    Sesuai
                 </td>
                 <td style="text-align:center">{{ '-' }}</td>
             @else
                 <td>
-                    (<s style="text-decoration-thickness: 3px;">Sesuai</s> / Tidak Sesuai)
+                    Tidak Sesuai
                 </td>
                 <td>{{ $note_batch }}</td>
             @endif
@@ -203,12 +202,12 @@
 
             @if ($note_expdate == '')
                 <td>
-                    (Sesuai / <s style="text-decoration-thickness: 3px;">Tidak Sesuai</s>)
+                    Sesuai
                 </td>
                 <td style="text-align:center">{{ '-' }}</td>
             @else
                 <td>
-                    (<s style="text-decoration-thickness: 3px;">Sesuai</s> / Tidak Sesuai)
+                    Tidak Sesuai
                 </td>
                 <td>{{ $note_expdate }}</td>
             @endif
@@ -225,12 +224,12 @@
 
             @if ($note_retestdate == '')
                 <td>
-                    (Sesuai / <s style="text-decoration-thickness: 3px;">Tidak Sesuai</s>)
+                    Sesuai
                 </td>
                 <td style="text-align:center">{{ '-' }}</td>
             @else
                 <td>
-                    (<s style="text-decoration-thickness: 3px;">Sesuai</s> / Tidak Sesuai)
+                    Tidak Sesuai
                 </td>
                 <td>{{ $note_retestdate }}</td>
             @endif
@@ -248,12 +247,12 @@
 
             @if ($note_kodecetak == '')
                 <td>
-                    (Sesuai / <s style="text-decoration-thickness: 3px;">Tidak Sesuai</s>)
+                    Sesuai
                 </td>
                 <td style="text-align:center">{{ '-' }}</td>
             @else
                 <td>
-                    (<s style="text-decoration-thickness: 3px;">Sesuai</s> / Tidak Sesuai)
+                    Tidak Sesuai
                 </td>
                 <td>{{ $note_kodecetak }}</td>
             @endif
@@ -269,12 +268,12 @@
 
             @if ($note_jumlahterima == '')
                 <td>
-                    (Sesuai / <s style="text-decoration-thickness: 3px;">Tidak Sesuai</s>)
+                    Sesuai
                 </td>
                 <td style="text-align:center">{{ '-' }}</td>
             @else
                 <td>
-                    (<s style="text-decoration-thickness: 3px;">Sesuai</s> / Tidak Sesuai)
+                    Tidak Sesuai
                 </td>
                 <td>{{ $note_jumlahterima }}</td>
             @endif
@@ -288,9 +287,9 @@
             <td style="width: 20%; vertical-align:middle;">Pabrik Pembuat</td>
             <td style="width: 24%; vertical-align:middle;">
                 @if ($is_pabrikpembuat == 1)
-                    (Sesuai / <s style="text-decoration-thickness: 3px;">Tidak Sesuai</s>)
+                    Sesuai
                 @else
-                    (<s style="text-decoration-thickness: 3px;">Sesuai</s> / Tidak Sesuai)
+                    Tidak Sesuai
                 @endif
             </td>
             <td rowspan="2" style="width: 15%; vertical-align:middle;">JUMLAH KEMASAN</td>
@@ -303,9 +302,9 @@
             <td>Alamat Pembuat </td>
             <td>
                 @if ($is_alamatpembuat == 1)
-                    (Sesuai / <s style="text-decoration-thickness: 3px;">Tidak Sesuai</s>)
+                    Sesuai
                 @else
-                    (<s style="text-decoration-thickness: 3px;">Sesuai</s> / Tidak Sesuai)
+                    Tidak Sesuai
                 @endif
             </td>
             <td>Kemasan Dalam</td>
@@ -317,9 +316,9 @@
             <td>Pemasok / Agent </td>
             <td>
                 @if ($is_agenpemasok == 1)
-                    (Sesuai / <s style="text-decoration-thickness: 3px;">Tidak Sesuai</s>)
+                    Sesuai
                 @else
-                    (<s style="text-decoration-thickness: 3px;">Sesuai</s> / Tidak Sesuai)
+                    Tidak Sesuai
                 @endif
             </td>
             <td rowspan="4">KONDISI & JUMLAH</td>
@@ -367,19 +366,9 @@
 
             <td colspan="3">Daftar Sertifikasi Validitas Halal 
                 @if ($halal == 1)
-(Ada / <s style="text-decoration: line-through; text-decoration-thickness: 5px;">
-    Tidak Ada
-</s>)
+( Ada )
                 @else
-                    (<s style="
-    text-decoration-line: line-through;
-    text-decoration-thickness: 8px;
-    text-decoration-color: black;
-">
- Ada
-</s>
-
- / Tidak Ada)
+                    ( Tidak Ada )
                 @endif</td>
             
         </tr>
@@ -444,6 +433,10 @@
                 </label>
             </td>
         </tr>
+        <tr>
+        <td width="25%">Keterangan</td>            
+                    <td colspan="2">{{ $keterangan_kendaraan }}</td>           
+    </tr>
     </table>
     <br>
     <br>

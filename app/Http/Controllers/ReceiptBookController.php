@@ -91,7 +91,7 @@ class ReceiptBookController extends Controller
             'note_expdate' => $dataReceipt->rd_tgl_expire_note,
             'note_retestdate' => $dataReceipt->rd_tgl_retest_note,
             'note_kodecetak' => $dataReceipt->rd_kode_cetak_note,
-            'note_jumlahterima' => $dataReceipt->rd_qty_terima_note_note,
+            'note_jumlahterima' => $dataReceipt->rd_qty_terima_note,
             'jumlahterima_um' => $dataReceipt->getPurchaseOrderDetail->pod_um,
             'is_pabrikpembuat' => $dataReceipt->getKemasan->rdk_is_pabrik_pembuat,
             'is_alamatpembuat' => $dataReceipt->getKemasan->rdk_is_alamat_pembuat,
@@ -120,7 +120,7 @@ class ReceiptBookController extends Controller
             'kendaraan_is_bersih' => $dataReceipt->getKendaraan->rdken_is_bersih,
             'kendaraan_is_tidak_bersih' => $dataReceipt->getKendaraan->rdken_is_tidak_bersih,
             'kendaraan_is_serangga' => $dataReceipt->getKendaraan->rdken_is_ada_serangga,
-
+            'keterangan_kendaraan' => $dataReceipt->getKendaraan->rdken_keterangan,
             'rd_keterangan_tambahan' => $dataReceipt->rd_keterangan_tambahan,
             'approver' => $approver,
             'total_pages' => 0,
