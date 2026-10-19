@@ -48,7 +48,7 @@ class APIOtherShipmentPreparationController extends Controller
     {
         $listOtherShipmentSchedule = OtherShipmentScheduleMstr::whereDoesntHave('getOtherShipmentScheduleDetail.getOtherShipmentScheduleLocation.getOtherShipmentPreparationDet')
             ->with(['getOtherShipmentScheduleDetail.getOtherShipmentScheduleLocation'])
-            ->orderBy('ossm_number', 'desc')
+            ->orderBy('created_at', 'asc')
             ->get();
 
         if ($listOtherShipmentSchedule->count() == 0) {
