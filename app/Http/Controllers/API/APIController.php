@@ -740,7 +740,7 @@ class APIController extends Controller
         $perPage = $req->query('per_page') ?? 20; // let frontend control this
         $data = TransactionHistory::query();
         if (! empty($number)) {
-            $data->where('tr_nbr', 'LIKE', '%'.$number.'%');
+            $data->where('tr_order', 'LIKE', '%'.$number.'%');
         }
         if (! empty($part)) {
             $data->where('tr_part', 'LIKE', '%'.$part.'%');
@@ -941,7 +941,8 @@ class APIController extends Controller
         // $site     = isset($data['site']) && $data['site'] !== '' ? explode(';', $data['site']) : [];
         // $lotserial = isset($data['lotserial']) && $data['lotserial'] !== '' ? explode(';', $data['lotserial']) : [];
 
-        $sendQxCompIssue = (new QxtendServices())->qxWorkOrderComponentIssue($wonbr, $lot, $effdate, $part, $qty, $site, $location, $lotserial);
+        $sendQxCompIssue = (new QxtendServices())->qxWorkOrderComponentIssueDKP($wonbr, $lot, $effdate, $part, $qty, $site, $location, $lotserial);
+
         if ($sendQxCompIssue[0] == 'true') {
             return response()->json([
                 'Status' => 'Success',

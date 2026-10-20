@@ -136,7 +136,7 @@ class APIPurchaseOrderRecheckController extends Controller
                 // }
                 $getPurchaseOrderDetail = $receiptDetail->getPurchaseOrderDetail;
                 $getPallet = $receiptDetail->getPallet;
-                foreach($listlevel as $key => $level){
+                foreach ($listlevel as $key => $level) {
 
                     $getPallet[$key]->rdp_level_penyimpanan = $level;
                     $getPallet[$key]->rdp_bin_penyimpanan = $listbin[$key];
@@ -329,7 +329,7 @@ class APIPurchaseOrderRecheckController extends Controller
 
         // $dataQAD = $dataQAD->sortByDesc('t_is_prioritize')->values();
         //save point
-            $domain = Domain::first();
+        $domain = Domain::first();
         $domainCode = $domain->domain ?? '';
         $getDataQAD = xxinvDet::where('xxinv_domain', $domainCode)
             ->where('xxinv_part', $itemCode)
@@ -489,7 +489,7 @@ class APIPurchaseOrderRecheckController extends Controller
         $listbin = $req->listbin;
         $duplicate = false;
 
-        
+
         try {
             $receiptMstr = ReceiptMaster::where('rm_rn_number', $receiptnbr)->first();
             $receiptDetail = ReceiptDetail::with('getPallet')
@@ -502,7 +502,7 @@ class APIPurchaseOrderRecheckController extends Controller
                 ->where('rd_location_penyimpanan', $receiptDetail->rd_location_penyimpanan)
                 ->whereIn('rd_status', ['checked', 'draft'])
                 ->get();
-            if($listlevel == null || count($listlevel) == 0){
+            if ($listlevel == null || count($listlevel) == 0) {
                 foreach ($receiptDetail->getPallet as $rp) {
                     foreach ($receiptDetailCheck as $rdc) {
                         foreach ($rdc->getPallet as $rp2) {
@@ -517,8 +517,7 @@ class APIPurchaseOrderRecheckController extends Controller
                         }
                     }
                 }
-            }
-            else{
+            } else {
                 foreach ($listlevel as $key => $level) {
                     $bin = $listbin[$key];
                     foreach ($receiptDetailCheck as $rdc) {
@@ -535,7 +534,7 @@ class APIPurchaseOrderRecheckController extends Controller
                     }
                 }
             }
-            
+
             Log::info('duplicate:' . var_export($duplicate, true)); // "true" or "false"
             return response()->json([
                 'Status' => 'Success',
@@ -543,7 +542,7 @@ class APIPurchaseOrderRecheckController extends Controller
                 'duplicate' => $duplicate
             ], 200);
         } catch (Exception $e) {
-            
+
             Log::error('Error validating Receipt Recheck: ' . $e->getMessage());
             return response()->json([
                 'Status' => 'Error',
@@ -603,8 +602,6 @@ class APIPurchaseOrderRecheckController extends Controller
                         }
                     }
                 }
-
-               
             }
             Log::info('duplicate:' . var_export($isDuplicate, true)); // "true" or "false"
             return response()->json([
@@ -628,7 +625,7 @@ class APIPurchaseOrderRecheckController extends Controller
         $warehouse = $req->warehouse ?? '';
         $level = $req->level ?? '';
         $bin = $req->bin ?? '';
-
+        $status = 'no';
         $keyDuplicate = [];
 
         try {
@@ -639,23 +636,30 @@ class APIPurchaseOrderRecheckController extends Controller
                     $query->where('rdp_level_penyimpanan', $level)
                         ->where('rdp_bin_penyimpanan', $bin);
                 })
-                ->where('rd_status','=', 'Checked')
+                ->where('rd_status', '=', 'Checked')
                 ->first();
-                log::info($findduplicate);
+            log::info($findduplicate);
             // $findduplicate = xxinvDet::where('xxinv_loc', $location)
             //     ->where('xxinv_site', $site)
             //     ->where('xxinv_wrh', $warehouse)
             //     ->where('xxinv_level', $level)
             //     ->where('xxinv_bin', $bin)
             //     ->first();
-            log::info($site .' '. $location . ' ' .$warehouse . ' '.$level . ' ' .$bin);
-            if($findduplicate){
-                return response()->json('yes');
+            // log::info($site . ' ' . $location . ' ' . $warehouse . ' ' . $level . ' ' . $bin);
+            if ($findduplicate) {
+                $status = 'yes';
+            } else {
+                $xxinvdet = xxinvDet::where('xxinv_site', $site)
+                    ->where('xxinv_wrh', $warehouse)
+                    ->where('xxinv_level', $level)
+                    ->where('xxinv_bin', $bin)
+                    ->where('xxinv_qty_wrh', '>', 0)
+                    ->first();
+                if ($xxinvdet) {
+                    $status = 'yes';
+                }
             }
-            else{
-                return response()->json('no');
-            }
-            
+            return response()->json($status);
         } catch (Exception $e) {
 
             Log::error('Error validating Receipt Recheck: ' . $e->getMessage());
@@ -665,5 +669,4 @@ class APIPurchaseOrderRecheckController extends Controller
             ], 422);
         }
     }
-    
 }
