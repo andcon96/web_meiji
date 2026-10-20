@@ -27,14 +27,14 @@ class APIOtherShipmentPreparationController extends Controller
 
             $data->where(function ($q) use ($search) {
 
-                $q->where('ospm_number', 'LIKE', '%'.$search.'%')
+                $q->where('ospm_number', 'LIKE', '%' . $search . '%')
 
                     ->orWhereHas('getOtherShipmentPreparationDet.getOtherShipmentScheduleLocation.getOtherShipmentScheduleDet.getOtherShipmentScheduleMaster', function ($query) use ($search) {
-                        $query->where('ossm_cust_code', 'LIKE', '%'.$search.'%')->orWhere('ossm_cust_desc', 'LIKE', '%'.$search.'%');
+                        $query->where('ossm_cust_code', 'LIKE', '%' . $search . '%')->orWhere('ossm_cust_desc', 'LIKE', '%' . $search . '%');
                     })
 
                     ->orWhereHas('getOtherShipmentPreparationDet.getOtherShipmentScheduleLocation.getOtherShipmentScheduleDet', function ($query) use ($search) {
-                        $query->where('ossd_part', 'LIKE', '%'.$search.'%');
+                        $query->where('ossd_part', 'LIKE', '%' . $search . '%');
                     });
             });
         }
@@ -42,6 +42,26 @@ class APIOtherShipmentPreparationController extends Controller
         $data = $data->orderBy('created_at', 'desc')->paginate(10);
 
         return GeneralResources::collection($data);
+    }
+
+    public function getoth(Request $request)
+    {
+
+  
+        $data = OtherShipmentScheduleMstr::where(
+            'ossm_number',
+            $request->oth
+        )->first();
+  //dd($data);
+        if ($data->count() > 0) {
+            return response()->json(
+                [
+                    'Status' => 'Error',
+                    'Message' => 'No Other Shipment Schedule found.',
+                ],
+                422,
+            );
+        }
     }
 
     public function listOtherShipmentSchedule()
@@ -61,7 +81,7 @@ class APIOtherShipmentPreparationController extends Controller
             );
         }
 
-        $partNumbers = $listOtherShipmentSchedule->flatMap(fn ($mstr) => $mstr->getOtherShipmentScheduleDetail)->pluck('ossd_part')->map(fn ($part) => (string) $part)->unique()->values()->all();
+        $partNumbers = $listOtherShipmentSchedule->flatMap(fn($mstr) => $mstr->getOtherShipmentScheduleDetail)->pluck('ossd_part')->map(fn($part) => (string) $part)->unique()->values()->all();
 
         $inventory = xxinvDet::whereIn('xxinv_part', $partNumbers)->get();
 
@@ -242,14 +262,14 @@ class APIOtherShipmentPreparationController extends Controller
             ->getOtherShipmentScheduleDet;
 
         $parts = $shipmentPreparationDet
-            ->map(fn ($det) => trim((string) $det->getOtherShipmentScheduleLocation
+            ->map(fn($det) => trim((string) $det->getOtherShipmentScheduleLocation
                 ->getOtherShipmentScheduleDet->ossd_part))
             ->unique()
             ->values()
             ->all();
 
         $lots = $shipmentPreparationDet
-            ->map(fn ($det) => trim((string) $det->getOtherShipmentScheduleLocation
+            ->map(fn($det) => trim((string) $det->getOtherShipmentScheduleLocation
                 ->ossl_lotserial))
             ->unique()
             ->values()
@@ -260,7 +280,7 @@ class APIOtherShipmentPreparationController extends Controller
             ->get();
 
         $inventoryGrouped = $inventory->groupBy(function ($row) {
-            return trim((string) $row->xxinv_part).'|'.trim((string) $row->xxinv_lot);
+            return trim((string) $row->xxinv_part) . '|' . trim((string) $row->xxinv_lot);
         });
 
         foreach ($shipmentPreparationDet as $det) {
@@ -270,7 +290,7 @@ class APIOtherShipmentPreparationController extends Controller
             $part = trim((string) $location->getOtherShipmentScheduleDet->ossd_part);
             $lot = trim((string) $location->ossl_lotserial);
 
-            $stockRows = $inventoryGrouped->get($part.'|'.$lot, collect());
+            $stockRows = $inventoryGrouped->get($part . '|' . $lot, collect());
 
             $locationDetail = $stockRows->map(function ($stockRow) {
                 return [
@@ -302,7 +322,7 @@ class APIOtherShipmentPreparationController extends Controller
     {
         $data = OtherShipmentPreparationApproval::query()
             ->with(['getOtherShipmentPreparationMstr.getOtherShipmentPreparationDet.getOtherShipmentScheduleLocation.getOtherShipmentScheduleDet.getOtherShipmentScheduleMaster', 'getCreatedBy:id,name,username'])
-            ->where('ospa_user_approver', 'LIKE', '%'.Auth::user()->id.'%');
+            ->where('ospa_user_approver', 'LIKE', '%' . Auth::user()->id . '%');
 
         if ($request->search) {
             $filter = $request->search;
@@ -310,15 +330,15 @@ class APIOtherShipmentPreparationController extends Controller
             $data->where(function ($q) use ($filter) {
 
                 $q->whereHas('getOtherShipmentPreparationMstr', function ($subq) use ($filter) {
-                    $subq->where('ospm_number', 'LIKE', '%'.$filter.'%')->where('ospm_status', 'Shipper Created');
+                    $subq->where('ospm_number', 'LIKE', '%' . $filter . '%')->where('ospm_status', 'Shipper Created');
                 })
 
                     ->orWhereHas('getOtherShipmentPreparationMstr.getOtherShipmentPreparationDet.getOtherShipmentScheduleLocation.getOtherShipmentScheduleDet.getOtherShipmentScheduleMaster', function ($q) use ($filter) {
-                        $q->where('ossm_cust_code', 'LIKE', '%'.$filter.'%')->orWhere('ossm_cust_desc', 'LIKE', '%'.$filter.'%');
+                        $q->where('ossm_cust_code', 'LIKE', '%' . $filter . '%')->orWhere('ossm_cust_desc', 'LIKE', '%' . $filter . '%');
                     })
 
                     ->orWhereHas('getOtherShipmentPreparationMstr.getOtherShipmentPreparationDet.getOtherShipmentScheduleLocation.getOtherShipmentScheduleDet.getOtherShipmentScheduleMaster', function ($q) use ($filter) {
-                        $q->where('ossd_part', 'LIKE', '%'.$filter.'%');
+                        $q->where('ossd_part', 'LIKE', '%' . $filter . '%');
                     });
             });
         }

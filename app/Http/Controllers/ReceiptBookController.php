@@ -105,9 +105,9 @@ class ReceiptBookController extends Controller
             'halal' => $dataReceipt->getKemasan->rdk_is_halal,
 
             'qty_jumlahkemasanluar' => $dataReceipt->getKemasan->rdk_jumlah_kemasan_luar,
-            'qty_jumlahkemasandalam' => $dataReceipt->getKemasan->rdk_jumlah_kemasan_luar_baik,
-            'qty_kondisikemasanluarbaik' => $dataReceipt->getKemasan->rdk_jumlah_kemasan_luar_tidak_baik,
-            'qty_kondisikemasanluartidakbaik' => $dataReceipt->getKemasan->rdk_jumlah_kemasan_dalam,
+            'qty_jumlahkemasandalam' => $dataReceipt->getKemasan->rdk_jumlah_kemasan_dalam,
+            'qty_kondisikemasanluarbaik' => $dataReceipt->getKemasan->rdk_jumlah_kemasan_luar_baik,
+            'qty_kondisikemasanluartidakbaik' => $dataReceipt->getKemasan->rdk_jumlah_kemasan_luar_tidak_baik,
             'qty_kondisikemasandalambaik' => $dataReceipt->getKemasan->rdk_jumlah_kemasan_dalam_baik,
             'qty_kondisikemasandalamtidakbaik' => $dataReceipt->getKemasan->rdk_jumlah_kemasan_dalam_tidak_baik,
 

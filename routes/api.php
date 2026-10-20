@@ -174,6 +174,7 @@ Route::post('/deleteDraftShipment', [APIShipmentScheduleController::class, 'dele
     Route::put('updateOtherShipmentSchedule/{id}', [APIOtherShipmentScheduleController::class, 'update']);
 
     // Other Shipment Preparation
+    Route::get('/getoth', [APIOtherShipmentPreparationController::class, 'getoth']);
     Route::get('getOtherShipmentPreparation', [APIOtherShipmentPreparationController::class, 'index']);
     Route::get('listOtherShipmentSchedule', [APIOtherShipmentPreparationController::class, 'listOtherShipmentSchedule']);
     Route::post('saveOtherShipmentPreparation', [APIOtherShipmentPreparationController::class, 'store']);
