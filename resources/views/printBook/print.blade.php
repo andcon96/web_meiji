@@ -458,7 +458,7 @@
         </tr>
     </table>
     </div>
-       <div class="section-title"> V. Keterangan</div>
+       <div class="section-title"> V. Keterangan Tambahan</div>
     <table>
         <tr>
             <td style="height:60px;">{{ $rd_keterangan_tambahan }}</td>
