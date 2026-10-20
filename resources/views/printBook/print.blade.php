@@ -84,7 +84,7 @@
             <td>No. Buku Penerimaan Barang: <strong>{{ $no_buku }}</strong></td>
             <td style="text-align:right;">Tanggal datang: <strong>{{(new DateTime($tanggal))->format('d-m-Y')  }}</strong></td>
         </tr>
-    </table>z
+    </table>
     <div class="section-title">I. Catatan Kelengkapan Dokumen Penerimaan Barang</div>
     <table>
         <tr>
