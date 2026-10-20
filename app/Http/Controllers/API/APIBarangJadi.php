@@ -114,7 +114,7 @@ class APIBarangJadi extends Controller
             $history->tr_nbr = $trfid;
             $history->tr_order = '';
             $history->tr_program = 'Barang Jadi Module';
-            $history->tr_activity = 'Penolakan Barang Jadi';
+            $history->tr_activity = 'Reject Barang Jadi';
             $history->tr_user = Auth::user()->name ?? '';
             $history->tr_part = $data->pb_item ?? '';
             $history->tr_uom = '';
