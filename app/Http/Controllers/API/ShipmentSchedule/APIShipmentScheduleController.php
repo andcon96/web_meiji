@@ -221,7 +221,7 @@ class APIShipmentScheduleController extends Controller
 
             $shipmentScheduleServices = new ShipmentScheduleServices();
 
-            $saveData = $shipmentScheduleServices->saveShipmentSchedule(    
+            $saveData = $shipmentScheduleServices->saveShipmentSchedule(
                 $approver,
                 $idPrm,
                 $shipmentSchedule,
@@ -382,10 +382,30 @@ class APIShipmentScheduleController extends Controller
 
     public function edit($id)
     {
+
+        $part = ShipmentScheduleMstr::find($id)?->getShipmentScheduleDetail[0]?->ssd_sod_part;
+
+
         $shipmentSchedule = ShipmentScheduleMstr::with([
             'getShipmentScheduleDetail.shipmentScheduleLoc'
         ])->find($id);
-
+        $shipmentSchedule = ShipmentScheduleMstr::with([
+            'getShipmentScheduleDetail' => function ($query) use ($part){
+                $query->with([
+                    'shipmentScheduleLoc' => function ($q) use ($part){
+                        $q->join('xxinv_det', function ($join) {
+                            $join->on('shipment_schedule_location.ssl_site', '=', 'xxinv_det.xxinv_site')
+                                ->on('shipment_schedule_location.ssl_lotserial', '=', 'xxinv_det.xxinv_lot')
+                                ->on('shipment_schedule_location.ssl_warehouse', '=', 'xxinv_det.xxinv_wrh')
+                                ->on('shipment_schedule_location.ssl_level', '=', 'xxinv_det.xxinv_level')
+                                ->on('shipment_schedule_location.ssl_bin', '=', 'xxinv_det.xxinv_bin');
+                        })
+                            ->where('xxinv_det.xxinv_part', $part)
+                            ->select('shipment_schedule_location.*', 'xxinv_det.*','xxinv_det.xxinv_qty_wrh as stock');
+                    }
+                ]);
+            }
+        ])->find($id);
         if (!$shipmentSchedule) {
             return response()->json([
                 "status"  => "Error",
@@ -455,32 +475,31 @@ class APIShipmentScheduleController extends Controller
         }
     }
     public function deleteDraftShipment(Request $request)
-{
-    $request->validate([
-        'id' => 'required',
-    ]);
+    {
+        $request->validate([
+            'id' => 'required',
+        ]);
 
-    try {
-        $service = new ShipmentScheduleServices();
-        $result = $service->deleteDraftShipment($request->id);
+        try {
+            $service = new ShipmentScheduleServices();
+            $result = $service->deleteDraftShipment($request->id);
 
-        if (!$result) {
+            if (!$result) {
+                return response()->json([
+                    'status' => 'Error',
+                    'message' => 'Gagal menghapus draft shipment.'
+                ], 422);
+            }
+
+            return response()->json([
+                'status' => 'Success',
+                'message' => 'Draft berhasil dihapus.'
+            ], 200);
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => 'Error',
-                'message' => 'Gagal menghapus draft shipment.'
+                'message' => $e->getMessage()
             ], 422);
         }
-
-        return response()->json([
-            'status' => 'Success',
-            'message' => 'Draft berhasil dihapus.'
-        ], 200);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => 'Error',
-            'message' => $e->getMessage()
-        ], 422);
     }
-}
 }

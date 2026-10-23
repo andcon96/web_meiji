@@ -68,7 +68,7 @@ class APIOtherTransactionConfirmController extends Controller
                 [
                     'status' => 'error',
                     'message' => 'Failed To Confirm Other Transaction.',
-                    'qad_message' => $saveData['message'] ?? 'Unknown QAD error.',
+                    'qad_message' => $saveData['message'] ?? 'Unknown QAD error3.',
                 ],
                 422,
             );
@@ -105,7 +105,7 @@ class APIOtherTransactionConfirmController extends Controller
                 [
                     'status' => 'error',
                     'message' => 'Failed To Confirm Other Transaction.',
-                    'qad_message' => $saveData['message'] ?? 'Unknown QAD error.',
+                    'qad_message' => $saveData['message'] ?? 'Unknown QAD error2.',
                 ],
                 422,
             );

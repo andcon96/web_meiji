@@ -63,7 +63,7 @@ class APIPurchaseOrderApprovalController extends Controller
                             ->where('prev.art_status', 'approved');
                     });
             })
-            ->orderBy('art_receipt_det_id', 'desc')
+            ->orderBy('art_receipt_det_id', 'asc')
             ->paginate(10);
 
 

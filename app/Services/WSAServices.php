@@ -9,6 +9,7 @@ use App\Models\Settings\Domain;
 use App\Models\Settings\qxwsa;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Models\API\xxinvDet;
 
 class WSAServices
 {
@@ -161,20 +162,53 @@ class WSAServices
         $dataloop = $xmlResp->xpath('//ns1:tempRow');
         $qdocResult = (string) $xmlResp->xpath('//ns1:outOK')[0];
         $dataBatchWeb = ReceiptDetail::where('rd_status', '!=', 'Approved')->get();
+        $dataBatchInventory = xxinvDet::query();
+        $dataBatchInventory->where('xxinv_part',$item);
+        if ($batch != '') {
+            $batch = '%' . $batch . '%';
+            $dataBatchInventory->where('xxinv_lot', 'like', $batch);
+        }
+        $dataInventory = $dataBatchInventory->groupBy('xxinv_lot')->orderBy('xxinv_lot', 'desc')->select('xxinv_lot')->get();
 
-        foreach ($dataBatchWeb as $datas) {
-            if ($batch === '' || Str::contains(Str::lower($datas->rd_batch), Str::lower($batch))) {
+        // foreach ($dataBatchWeb as $datas) {
+        //     if ($batch === '' || Str::contains(Str::lower($datas->rd_batch), Str::lower($batch))) {
+        //         $dataloop[] = (object) [
+        //             't_domain' => $domainCode,
+        //             't_site' => $datas->rd_site_penyimpanan,
+        //             't_loc' => $datas->rd_location_penyimpanan,
+        //             't_warehouse' => $datas->rd_building_penyimpanan,
+        //             't_level' => $datas->rd_level_penyimpanan,
+        //             't_bin' => $datas->rd_bin_penyimpanan,
+        //             't_lot' => $datas->rd_batch,
+        //         ];
+        //     }
+        // }
+
+        $lotsIndex = [];
+
+        $lotsIndex = array_flip(array_column(array_map(fn($d) => (array)$d, $dataloop), 't_lot'));
+
+        foreach ($dataInventory as $datas) {
+            if (!isset($lotsIndex[$datas->xxinv_lot])) {
+                $lotsIndex[$datas->xxinv_lot] = true;
+
                 $dataloop[] = (object) [
-                    't_domain' => $domainCode,
-                    't_site' => $datas->rd_site_penyimpanan,
-                    't_loc' => $datas->rd_location_penyimpanan,
-                    't_warehouse' => $datas->rd_building_penyimpanan,
-                    't_level' => $datas->rd_level_penyimpanan,
-                    't_bin' => $datas->rd_bin_penyimpanan,
-                    't_lot' => $datas->rd_batch,
+                    't_lot' => $datas->xxinv_lot,
                 ];
             }
+
+
+            // $dataloop[] = (object) [
+            //     // 't_domain' => $domainCode,
+            //     // 't_site' => $datas->xxinv_site,
+            //     // 't_loc' => $datas->xxinv_lot,
+            //     // 't_warehouse' => $datas->xxinv_wrh,
+            //     // 't_level' => $datas->xxinv_level,
+            //     // 't_bin' => $datas->xxinv_bin,
+            //     't_lot' => $datas->xxinv_lot,
+            // ];
         }
+        usort($dataloop, fn($a, $b) => (int)$a->t_lot <=> (int)$b->t_lot);
 
         return [
             $qdocResult,

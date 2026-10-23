@@ -38,7 +38,7 @@ class ConfirmOtherTransactionServices
             $anotherConfirm = OtherTransactionConfirm::where('otpm_id', $otcApproval['otpm_id'])->where('id', '!=', $otcApproval['id'])->where('otc_status', '=', 'Waiting for confirmation')->lockForUpdate()->first();
 
             $otherTransactionConfirm->otc_status = 'Approved';
-            $otherTransactionConfirm->updated_by = Auth::user()->name;
+            $otherTransactionConfirm->updated_by = Auth::user()->id;
             $otherTransactionConfirm->otc_reason = $reason;
             $otherTransactionConfirm->save();
 
