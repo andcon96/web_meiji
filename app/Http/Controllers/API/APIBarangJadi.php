@@ -109,28 +109,6 @@ class APIBarangJadi extends Controller
                 $data->pb_remark = trim(($data->pb_remark ? $data->pb_remark . ' | ' : '') . 'Reject: ' . $reason);
             }
             $data->save();
-
-            $history = new TransactionHistory();
-            $history->tr_nbr = $trfid;
-            $history->tr_order = '';
-            $history->tr_program = 'Picklist Module';
-            $history->tr_activity = 'Reject Barang Jadi';
-            $history->tr_user = Auth::user()->name ?? '';
-            $history->tr_part = $data->pb_item ?? '';
-            $history->tr_uom = '';
-            $history->tr_line = '';
-            $history->tr_lot = $data->pb_lot ?? '';
-            $history->tr_qty = $data->pb_qty ?? '';
-            $history->tr_date = date('Y-m-d H:i:s');
-            $history->tr_reference = '';
-            $history->tr_site = $data->pb_site_from ?? '';
-            $history->tr_location = $data->pb_loc_from ?? '';
-            $history->tr_warehouse = $data->pb_wh_from ?? '';
-            $history->tr_level = $data->pb_level_from ?? '';
-            $history->tr_bin = $data->pb_bin_from ?? '';
-            $history->tr_remark = $reason;
-            $history->save();
-
             $history = new TransactionHistory();
             $history->tr_nbr = $trfid;
             $history->tr_order = '';
@@ -152,7 +130,27 @@ class APIBarangJadi extends Controller
             $history->tr_remark = $reason;
             $history->save();
 
-            
+            $history = new TransactionHistory();
+            $history->tr_nbr = $trfid;
+            $history->tr_order = '';
+            $history->tr_program = 'Picklist Module';
+            $history->tr_activity = 'Reject Barang Jadi';
+            $history->tr_user = Auth::user()->name ?? '';
+            $history->tr_part = $data->pb_item ?? '';
+            $history->tr_uom = '';
+            $history->tr_line = '';
+            $history->tr_lot = $data->pb_lot ?? '';
+            $history->tr_qty = $data->pb_qty ?? '';
+            $history->tr_date = date('Y-m-d H:i:s');
+            $history->tr_reference = '';
+            $history->tr_site = $data->pb_site_from ?? '';
+            $history->tr_location = $data->pb_loc_from ?? '';
+            $history->tr_warehouse = $data->pb_wh_from ?? '';
+            $history->tr_level = $data->pb_level_from ?? '';
+            $history->tr_bin = $data->pb_bin_from ?? '';
+            $history->tr_remark = $reason;
+            $history->save();
+         
             DB::commit();
 
             return response()->json([
