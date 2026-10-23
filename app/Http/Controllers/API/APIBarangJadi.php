@@ -113,7 +113,7 @@ class APIBarangJadi extends Controller
             $history = new TransactionHistory();
             $history->tr_nbr = $trfid;
             $history->tr_order = '';
-            $history->tr_program = 'Barang Jadi Module';
+            $history->tr_program = 'Picklist Module';
             $history->tr_activity = 'Reject Barang Jadi';
             $history->tr_user = Auth::user()->name ?? '';
             $history->tr_part = $data->pb_item ?? '';
@@ -131,6 +131,28 @@ class APIBarangJadi extends Controller
             $history->tr_remark = $reason;
             $history->save();
 
+            $history = new TransactionHistory();
+            $history->tr_nbr = $trfid;
+            $history->tr_order = '';
+            $history->tr_program = 'Picklist Module';
+            $history->tr_activity = 'Penyerahan Barang Jadi';
+            $history->tr_user = Auth::user()->name ?? '';
+            $history->tr_part = $data->pb_item ?? '';
+            $history->tr_uom = '';
+            $history->tr_line = '';
+            $history->tr_lot = $data->pb_lot ?? '';
+            $history->tr_qty = $data->pb_qty ?? '';
+            $history->tr_date = date('Y-m-d H:i:s');
+            $history->tr_reference = '';
+            $history->tr_site = $data->pb_site_from ?? '';
+            $history->tr_location = $data->pb_loc_from ?? '';
+            $history->tr_warehouse = $data->pb_wh_from ?? '';
+            $history->tr_level = $data->pb_level_from ?? '';
+            $history->tr_bin = $data->pb_bin_from ?? '';
+            $history->tr_remark = $reason;
+            $history->save();
+
+            
             DB::commit();
 
             return response()->json([
@@ -351,8 +373,8 @@ class APIBarangJadi extends Controller
 
                 $newTransactionHistoryfrom = new TransactionHistory();
                 $newTransactionHistoryfrom->tr_nbr = $trfid;
-                $newTransactionHistoryfrom->tr_program = 'Barang Jadi Module';
-                $newTransactionHistoryfrom->tr_activity = 'Penerimaan Barang Jadi From';
+                $newTransactionHistoryfrom->tr_program = 'Picklist Module';
+                $newTransactionHistoryfrom->tr_activity = 'Penyerahan Barang Jado';
                 $newTransactionHistoryfrom->tr_user = $user ?? '';
                 $newTransactionHistoryfrom->tr_part = $part ?? '';
                 $newTransactionHistoryfrom->tr_uom = '';
@@ -482,8 +504,8 @@ class APIBarangJadi extends Controller
                     $newTransactionHistory = new TransactionHistory();
                     $newTransactionHistory->tr_nbr = $trfid;
                     $newTransactionHistory->tr_order = '';
-                    $newTransactionHistory->tr_program = 'Barang Jadi Module';
-                    $newTransactionHistory->tr_activity = 'Penerimaan Barang Jadi To';
+                    $newTransactionHistory->tr_program = 'Picklist Module';
+                    $newTransactionHistory->tr_activity = 'Penerimaan Barang';
                     $newTransactionHistory->tr_user = $user ?? '';
                     $newTransactionHistory->tr_part = $part ?? '';
                     $newTransactionHistory->tr_uom = '';
