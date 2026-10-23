@@ -1335,6 +1335,7 @@ class APIBarangJadi extends Controller
             $remark = $this->nullConversion($data['remark'] ?? null);
 
             $penyerahanBarang->pb_qty = $qty;
+            $penyerahanBarang->pb_status = 'open';
             $penyerahanBarang->pb_remark = $remark;
             $penyerahanBarang->save();
 
