@@ -76,7 +76,8 @@ class QxtendServices
         $xmlResp = simplexml_load_string($qdocResponse);
 
         $xmlResp->registerXPathNamespace('ns1', 'urn:schemas-qad-com:xml-services');
-
+        log::info($qdocResponse);
+        log::info($qdocRequest);
         $qdocResult = (string) $xmlResp->xpath('//ns1:result')[0];
 
         // $qdocResult = 'success';
@@ -1488,18 +1489,18 @@ class QxtendServices
                         <qcom:propertyName>mnemonicsRaw</qcom:propertyName>
                         <qcom:propertyValue>false</qcom:propertyValue>
                         </qcom:ttContext>
-                        <!--
+                        
                         <qcom:ttContext>
                         <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
                         <qcom:propertyName>username</qcom:propertyName>
-                        <qcom:propertyValue/>
+                        <qcom:propertyValue>mfg</qcom:propertyValue>
                         </qcom:ttContext>
                         <qcom:ttContext>
                         <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
                         <qcom:propertyName>password</qcom:propertyName>
-                        <qcom:propertyValue/>
+                        <qcom:propertyValue>4dm1nQAD</qcom:propertyValue>
                         </qcom:ttContext>
-                        -->
+                        
                         <qcom:ttContext>
                         <qcom:propertyQualifier>QAD</qcom:propertyQualifier>
                         <qcom:propertyName>action</qcom:propertyName>
@@ -1915,7 +1916,7 @@ class QxtendServices
 </soapenv:Envelope>';
 
         $qdocRequest = $qdocHead . $qdocBody . $qdocFoot;
-
+            log::info($qdocRequest);
         $curlOptions = [
             CURLOPT_URL => $qxUrl,
             CURLOPT_CONNECTTIMEOUT => $timeout, // in seconds, 0 = unlimited / wait indefinitely.
@@ -2944,12 +2945,11 @@ class QxtendServices
         }
 
         $xmlResp = simplexml_load_string($qdocResponse);
-        log::channel('Picklist')->info($qdocRequest);
-            log::channel('Picklist')->info($qdocResponse);
+
         $xmlResp->registerXPathNamespace('ns1', 'urn:schemas-qad-com:xml-services');
 
         $qdocResult = (string) $xmlResp->xpath('//ns1:result')[0];
-
+        log::info('result : '. $qdocResult);
         if ($qdocResult == 'success' or $qdocResult == 'warning') {
             return [true, ''];
         } else {

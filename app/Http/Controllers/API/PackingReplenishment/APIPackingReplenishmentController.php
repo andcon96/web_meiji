@@ -122,7 +122,7 @@ class APIPackingReplenishmentController extends Controller
         $inventory = xxinvDet::whereIn('xxinv_part', $partNumbers)->get();
 
         $inventoryGrouped = $inventory->groupBy(function ($row) {
-            return trim((string) $row->xxinv_part) . '|' . trim((string) $row->xxinv_lot);
+            return strtoupper(trim((string) $row->xxinv_part)) . '|' . strtoupper(trim((string) $row->xxinv_lot));
         });
 
         $rows = [];
@@ -136,36 +136,37 @@ class APIPackingReplenishmentController extends Controller
             $item = $items->get($part);
             $itemId = $item->id ?? null;
 
-            $stockRows = $inventoryGrouped->get($part . '|' . $lot, collect());
-
+         $stockRows = $inventoryGrouped->get(strtoupper(trim($part)) . '|' . strtoupper(trim($lot)), collect());
+            // dd($stockRows, $lot);
             $locationDetail = [];
             foreach ($stockRows as $stockRow) {
+
                 $locationDetail[] = [
                     'lot_serial' => (string) $stockRow->xxinv_lot,
                     'wrh' => (string) $stockRow->xxinv_wrh,
                     'level' => (string) $stockRow->xxinv_level,
                     'bin' => (string) $stockRow->xxinv_bin,
                     'location' => (string) $stockRow->xxinv_loc,
-                    'stock' => (float) ($stockRow->xxinv_qtyoh ?? 0),
+                    'stock' => (float) ($stockRow->xxinv_qty_wrh ?? 0),
                 ];
             }
 
-            $rows[] = 
-            [
-                'domain' => (string) $row->t_domain,
-                'site' => $siteRow,
-                'part' => $part,
-                'desc' => (string) $row->t_desc,
-                'um' => (string) $row->t_um,
-                'loc' => $loc,
-                'line' => (string) $row->t_line,
-                'lot' => $lot,
-                'qty' => (float) number_format((float) $row->t_qty, 5, '.', ''),
-                'item_id' => $itemId,
-                'nbrx' => (string) $row->t_nbrx,
-                'custx' => (string) $row->t_custx,
-                'location_detail' => $locationDetail,
-            ];
+            $rows[] =
+                [
+                    'domain' => (string) $row->t_domain,
+                    'site' => $siteRow,
+                    'part' => $part,
+                    'desc' => (string) $row->t_desc,
+                    'um' => (string) $row->t_um,
+                    'loc' => $loc,
+                    'line' => (string) $row->t_line,
+                    'lot' => $lot,
+                    'qty' => (float) number_format((float) $row->t_qty, 5, '.', ''),
+                    'item_id' => $itemId,
+                    'nbrx' => (string) $row->t_nbrx,
+                    'custx' => (string) $row->t_custx,
+                    'location_detail' => $locationDetail,
+                ];
         }
 
         return response()->json(
@@ -371,7 +372,7 @@ class APIPackingReplenishmentController extends Controller
                     'level' => (string) $stockRow->xxinv_level,
                     'bin' => (string) $stockRow->xxinv_bin,
                     'location' => (string) $stockRow->xxinv_loc,
-                    'stock' => (float) ($stockRow->xxinv_qtyoh ?? 0),
+                    'stock' => (float) ($stockRow->xxinv_qty_wrh ?? 0),
                 ];
             })->values();
 

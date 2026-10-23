@@ -839,7 +839,7 @@ class APIPicklistShopping extends Controller
                         ->where('xxinv_qty_wrh', '<>', null)
                         ->where('xxinv_qty_wrh', '>', 0)
                         ->get();
-                    log::info($xxinvdet);
+
                     // log::info('item '. $item . ' site '. $site. ' lot '. $lot);
                     if (count($xxinvdet) > 0) {
 
@@ -1090,7 +1090,7 @@ class APIPicklistShopping extends Controller
 
 
                                     if ($xxinvdet->xxinv_part == $item && $xxinvdet->xxinv_lot == $lot && $xxinvdet->xxinv_site == $site) {
-                                        log::info($xxinvdet);
+
                                         $locationlist[] =  [
                                             // 'id' => (string)$value->t_id ?? '',
                                             'wrh' => (string)$xxinvdet->xxinv_wrh ?? '',
@@ -1442,7 +1442,7 @@ class APIPicklistShopping extends Controller
                                     $newTransactionHistory->tr_order = $wonbr;
                                     $newTransactionHistory->tr_program = 'Picklist Module';
                                     $newTransactionHistory->tr_activity = 'Shopping';
-                                    $newTransactionHistory->tr_user =  $approver ?? '';
+                                    $newTransactionHistory->tr_user =  Auth::user()->username  ?? '';
                                     // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
                                     $newTransactionHistory->tr_part = $wodpart ?? '';
                                     $newTransactionHistory->tr_uom =  '';
@@ -1557,8 +1557,8 @@ class APIPicklistShopping extends Controller
                 $newTransactionHistory->tr_nbr = $wonbr;
                 $newTransactionHistory->tr_order = $wonbr;
                 $newTransactionHistory->tr_program = 'Picklist Module';
-                $newTransactionHistory->tr_activity = 'Approval';
-                $newTransactionHistory->tr_user =  $approver ?? '';
+                $newTransactionHistory->tr_activity = $status == 'PICK' ? 'Reject' : 'Approval';
+                $newTransactionHistory->tr_user =  Auth::user()->username  ?? '';
                 // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
                 $newTransactionHistory->tr_part = $part ?? '';
                 $newTransactionHistory->tr_uom =  '';
@@ -1584,8 +1584,7 @@ class APIPicklistShopping extends Controller
                         ->where('xxinv_bin', $bin)
                         ->first();
                     if ($xxinvdet) {
-                        log::info($xxinvdet);
-                        log::info($qty);
+
                         $xxinvdet->xxinv_qty_pick = $xxinvdet->xxinv_qty_pick - $qty;
                         $xxinvdet->xxinv_qty_wrh = $xxinvdet->xxinv_qty_wrh + $qty;
                         $xxinvdet->save();
@@ -2026,11 +2025,15 @@ class APIPicklistShopping extends Controller
         //     $listData = $hasil[1];
         // }    
 
-        $checkpicklistshopping = PicklistShopping::with('getPicklistShoppingDetail')->where('ps_status', $statusreq)
-            ->where('ps_approver', $req->player)
-            ->when($part != '', fn($query) => $query->where('ps_wo_part', $part))
-            ->when($batch != '', fn($query) => $query->where('ps_wo_batch', $batch))
-            ->get();
+        $checkpicklistshoppingnew = PicklistShopping::with('getPicklistShoppingDetail');
+        $checkpicklistshoppingnew->where('ps_status', $statusreq);
+        if ($status == 'shopping') {
+            $checkpicklistshoppingnew->where('ps_approver', $req->player);
+        }
+
+        $checkpicklistshoppingnew->when($part != '', fn($query) => $query->where('ps_wo_part', $part));
+        $checkpicklistshoppingnew->when($batch != '', fn($query) => $query->where('ps_wo_batch', $batch));
+        $checkpicklistshopping = $checkpicklistshoppingnew->get();
         // dd($checkpicklistshopping, $req->all(),$wonbr,$statusreq);
         // dump($checkpicklistshopping);
         if ($checkpicklistshopping) {
@@ -2437,7 +2440,7 @@ class APIPicklistShopping extends Controller
                         $newTransactionHistory->tr_order = $wonbr;
                         $newTransactionHistory->tr_program = 'Picklist Module';
                         $newTransactionHistory->tr_activity = 'Transfer';
-                        $newTransactionHistory->tr_user =  $user ?? '';
+                        $newTransactionHistory->tr_user =  Auth::user()->username ?? '';
                         // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
                         $newTransactionHistory->tr_part = $part ?? '';
                         $newTransactionHistory->tr_uom =  '';
@@ -2500,7 +2503,7 @@ class APIPicklistShopping extends Controller
         $wonbr = $req->input('wonbr');
         $loc = '';
         $id = [];
-        log::info($data);
+
         // dd('stop');
         DB::beginTransaction();
         try {
@@ -2535,7 +2538,7 @@ class APIPicklistShopping extends Controller
                             } else {
                                 $picklist->ps_status = $status;
                                 $picklist->save();
-                                
+
                                 $xxinvdet = xxinvDet::where('xxinv_part', $picklist->ps_part)
                                     ->where('xxinv_site', $site)
                                     ->where('xxinv_loc', $loc)
@@ -2548,9 +2551,9 @@ class APIPicklistShopping extends Controller
                                 if ($xxinvdet->xxinv_loc == 'WIP') {
                                     $qtyreq = $value['qtyreq'];
                                     $qtytopick = $value['qtytopick'];
-                                    log::info('1');
+
                                     if ($qtypick < $qtyreq) {
-                                        log::info('2');
+
                                         $qtynegative = $qtyreq - $xxinvdet->xxinv_qty_pick;
                                         $xxinvdet->xxinv_qty_wip = $xxinvdet->xxinv_qty_wip + $qtyreq;
                                         $xxinvdet->xxinv_qty_pick = 0;
@@ -2589,7 +2592,7 @@ class APIPicklistShopping extends Controller
                                     $newTransactionHistory->tr_order = $wonbr;
                                     $newTransactionHistory->tr_program = 'Picklist Module';
                                     $newTransactionHistory->tr_activity = 'Receipt';
-                                    $newTransactionHistory->tr_user =  $user ?? '';
+                                    $newTransactionHistory->tr_user =  Auth::user()->username ?? '';
                                     // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
                                     $newTransactionHistory->tr_part = $xxinvdet->xxinv_part ?? '';
                                     $newTransactionHistory->tr_uom =  '';
@@ -2616,7 +2619,7 @@ class APIPicklistShopping extends Controller
                                     $newTransactionHistory->tr_order = $wonbr;
                                     $newTransactionHistory->tr_program = 'Picklist Module';
                                     $newTransactionHistory->tr_activity = 'Receipt';
-                                    $newTransactionHistory->tr_user =  $user ?? '';
+                                    $newTransactionHistory->tr_user =  Auth::user()->username ?? '';
                                     // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
                                     $newTransactionHistory->tr_part = $xxinvdet->xxinv_part ?? '';
                                     $newTransactionHistory->tr_uom =  '';
@@ -2821,14 +2824,14 @@ class APIPicklistShopping extends Controller
                                 $xxinvdet->xxinv_qty_pick = 0;
                                 $xxinvdet->xxinv__dec02 = 0;
                                 $xxinvdet->save();
-                                log::info($xxinvdet->xxinv_qty_pick);
+
                                 // dd('stop');
                                 $newTransactionHistory = new TransactionHistory();
                                 $newTransactionHistory->tr_nbr = $wonbr;
                                 $newTransactionHistory->tr_order = $wonbr;
                                 $newTransactionHistory->tr_program = 'Picklist Module';
                                 $newTransactionHistory->tr_activity = 'Deny Receipt';
-                                $newTransactionHistory->tr_user =  $user ?? '';
+                                $newTransactionHistory->tr_user =  Auth::user()->username ?? '';
                                 // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
                                 $newTransactionHistory->tr_part = $part ?? '';
                                 $newTransactionHistory->tr_uom =  '';
@@ -3296,6 +3299,7 @@ class APIPicklistShopping extends Controller
             // log::info($data);
             // dd('stop');
             foreach ($data['detail'] as $key => $value) {
+
                 $wodpart = $value['wodpart'];
 
                 $user = $req->approver ?? '';
@@ -3319,6 +3323,7 @@ class APIPicklistShopping extends Controller
                     $qtyissue = $location['qtyissue'];
                     $lotlocation = $location['lot'];
                     $locdetail2 = $location['loc'];
+                    log::info($part . ' ' . $lotlocation . ' ' . $lotserial);
                     if ($qtyissue != 0) {
 
                         if ($lotlocation == $lotserial) {
@@ -3332,19 +3337,36 @@ class APIPicklistShopping extends Controller
                                 ->where('ps_bin', $bin)
                                 ->where('ps_status', 'Receipt')
                                 ->first();
+                            $picklistdet = PicklistShoppingDetail::where('ps_id', $picklist->id)
+                                ->where('psd_part', $wodpart)
+                                ->where('psd_lot', $currentlot)
+                                // ->where('psd_wh',  $wrh)
+                                ->where('psd_level', $level)
+                                ->where('psd_bin', $bin)
+                                ->first();
+
+                            $oldloc = $picklistdet->psd_loc;
                         } else {
                             $currentlot = $lotlocation;
-                            $picklist = PicklistShopping::
-                                // where('ps_number', $wonbr)
-                                where('ps_part', $wodpart)
-                                ->where('ps_lot', $lotlocation)
-                                // ->where('ps_wo_lot', $woid)
-                                ->where('ps_warehouse', $wrh)
-                                ->where('ps_level', $level)
-                                ->where('ps_bin', $bin)
+                            $picklist = xxinvDet::where('xxinv_part', $wodpart)
+                                ->where('xxinv_lot', $lotlocation)
+                                ->where('xxinv_wrh', $wrh)
+                                ->where('xxinv_level', $level)
+                                ->where('xxinv_bin', $bin)
+                                ->where('xxinv_loc','<>','WIP')
                                 ->first();
+                                $oldloc = $picklist->xxinv_loc;
+                            // $picklist = PicklistShopping::
+                            //     // where('ps_number', $wonbr)
+                            //     where('ps_part', $wodpart)
+                            //     ->where('ps_lot', $lotlocation)
+                            //     // ->where('ps_wo_lot', $woid)
+                            //     ->where('ps_warehouse', $wrh)
+                            //     ->where('ps_level', $level)
+                            //     ->where('ps_bin', $bin)
+                            //     ->first();
                         }
-                        log::info($currentlot);
+
 
                         if (!$picklist) {
 
@@ -3357,20 +3379,13 @@ class APIPicklistShopping extends Controller
                             // log::channel('Picklist')->info($picklist);
 
 
-                            if (
-                                $currentlot == $lotserial
-                            ) {
-                                // $picklist->ps_status = 'Issued';
-                                // $picklist->save();
-                            }
-                            $picklistdet = PicklistShoppingDetail::where('ps_id', $picklist->id)
-                                ->where('psd_part', $wodpart)
-                                ->where('psd_lot', $currentlot)
-                                ->where('psd_wh',  $wrh)
-                                ->where('psd_level', $level)
-                                ->where('psd_bin', $bin)
-                                ->first();
-                            $oldloc = $picklistdet->psd_loc;
+                            // if (
+                            //     $currentlot == $lotserial
+                            // ) {
+                            //     // $picklist->ps_status = 'Issued';
+                            //     // $picklist->save();
+                            // }
+
 
                             $xxinvdet = xxinvDet::where('xxinv_part', $wodpart)
                                 ->where('xxinv_site', $site)
@@ -3381,6 +3396,7 @@ class APIPicklistShopping extends Controller
                                 ->where('xxinv_level', $level)
                                 ->where('xxinv_bin', $bin)
                                 ->first();
+
                             if ($xxinvdet) {
 
                                 $newqty = $xxinvdet->xxinvdet_qty_wip - $qty;
@@ -3400,6 +3416,7 @@ class APIPicklistShopping extends Controller
                                     ->where('xxinv_level', $level)
                                     ->where('xxinv_bin', $bin)
                                     ->first();
+
                                 $ref = $otherxxinvdet->xxinv_ref;
 
 
@@ -3408,17 +3425,17 @@ class APIPicklistShopping extends Controller
                                 $newTransactionHistory->tr_order = $wonbr;
                                 $newTransactionHistory->tr_program = 'Picklist Module';
                                 $newTransactionHistory->tr_activity = 'WO Issue';
-                                $newTransactionHistory->tr_user =  $user ?? '';
+                                $newTransactionHistory->tr_user =  Auth::user()->username ?? '';
                                 // $newTransactionHistory->tr_part = $data->nama_barang ?? '';
                                 $newTransactionHistory->tr_part = $part ?? '';
                                 $newTransactionHistory->tr_uom =  '';
                                 $newTransactionHistory->tr_line = ''; // Tambahkan nilai tr_line jika diperlukan
                                 $newTransactionHistory->tr_lot =  $currentlot ?? '';
-                                $newTransactionHistory->tr_qty =  $qty ?? '';
+                                $newTransactionHistory->tr_qty =  $qtyissue ?? '';
                                 $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
                                 $newTransactionHistory->tr_reference =  '';
                                 $newTransactionHistory->tr_site =  $site ?? '';
-                                $newTransactionHistory->tr_location = $loc ?? '';
+                                $newTransactionHistory->tr_location = $oldloc ?? '';
                                 $newTransactionHistory->tr_warehouse =  $wrh ?? '';
                                 $newTransactionHistory->tr_level = $level ?? '';
                                 $newTransactionHistory->tr_bin =  $bin ?? '';
@@ -3428,12 +3445,12 @@ class APIPicklistShopping extends Controller
                         }
 
                         // }
-                        log::info('1');
+
                         $qxtendWoIssue = (new QxtendServices())->qxWorkOrderComponentIssue($wonbr,  $woid, $effdate, $wodpart, $qtyissue, $site, $oldloc, $currentlot, $ref);
                         // $effdata =
                         // $qxtendWoIssue = [true, ''];
                         log::info($qxtendWoIssue);
-                        if ($qxtendWoIssue[0] == 'false') {
+                        if ($qxtendWoIssue[0] === false) {
                             Log::channel('Picklist')->info("Wo issue failed for picklist WO : " . $wonbr . " Part : " . $part);
 
                             return response()->json([
@@ -3442,21 +3459,19 @@ class APIPicklistShopping extends Controller
                                 'Message' => $qxtendWoIssue[1] ?? 'Unknown error occurred'
                             ], 422);
                             //'Message' => "Wo issue failed for picklist : " . $picknbr . " WO : " . $wonbr. " Part : " . $part
-                        }
-                        else{
+                        } else {
                             $cekdata = (new WSAServices())->wsaCekWoStatus($wonbr);
-                            if($cekdata == "true"){
-                                log::info('wsastatus' . $cekdata);
+                            if ($cekdata == "true") {
+
                                 $picklist = PicklistShopping::where('ps_number', $wonbr)
-                                ->where('ps_status','Receipt')
-                                ->get();
-                                foreach($picklist as $pick){
+                                    ->where('ps_status', 'Receipt')
+                                    ->get();
+                                foreach ($picklist as $pick) {
                                     $pick->ps_status = 'Issued';
                                     $pick->save();
                                 }
                             }
                         }
-                       
                     }
                 }
             }
@@ -3520,7 +3535,7 @@ class APIPicklistShopping extends Controller
         // }    
 
         $checkpicklistshopping = PicklistShopping::with('getPicklistShoppingDetail')->where('ps_status', $statusreq)
-            ->where('ps_approver', $req->player)
+            // ->where('ps_approver', $req->player)
             ->when($part != '', fn($query) => $query->where('ps_wo_part', $part))
             ->when($batch != '', fn($query) => $query->where('ps_wo_batch', $batch))
             ->get();
@@ -3787,7 +3802,6 @@ class APIPicklistShopping extends Controller
 
                         ];
                     }
-                    log::info($wonbrarray);
                 }
             }
 

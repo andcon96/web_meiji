@@ -57,13 +57,13 @@ class APIPurchaseOrderController extends Controller
         ]);
 
         if ($req->search) {
-            $data->where('po_nbr', 'LIKE', '%'.$req->search.'%')
-                ->orWhere('po_vend', 'LIKE', '%'.$req->search.'%')
-                ->orWhere('po_vend_desc', 'LIKE', '%'.$req->search.'%')
-                ->orWhereRelation('getReceipt', 'rm_rn_number', 'LIKE', '%'.$req->search.'%')
-                ->orWhereRelation('getReceipt.getDetailReceipt', 'rd_nomor_buku', 'LIKE', '%'.$req->search.'%')
-                ->orWhereRelation('getDetail', 'pod_part', 'LIKE', '%'.$req->search.'%')
-                ->orWhereRelation('getDetail', 'pod_part_desc', 'LIKE', '%'.$req->search.'%');
+            $data->where('po_nbr', 'LIKE', '%' . $req->search . '%')
+                ->orWhere('po_vend', 'LIKE', '%' . $req->search . '%')
+                ->orWhere('po_vend_desc', 'LIKE', '%' . $req->search . '%')
+                ->orWhereRelation('getReceipt', 'rm_rn_number', 'LIKE', '%' . $req->search . '%')
+                ->orWhereRelation('getReceipt.getDetailReceipt', 'rd_nomor_buku', 'LIKE', '%' . $req->search . '%')
+                ->orWhereRelation('getDetail', 'pod_part', 'LIKE', '%' . $req->search . '%')
+                ->orWhereRelation('getDetail', 'pod_part_desc', 'LIKE', '%' . $req->search . '%');
         }
 
         $data = $data->orderBy('id', 'desc')->paginate(10);
@@ -77,7 +77,7 @@ class APIPurchaseOrderController extends Controller
         if ($hasil[0] == 'false') {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => 'Purchase Order : '.$req->search.' Not Found.',
+                'Message' => 'Purchase Order : ' . $req->search . ' Not Found.',
             ], 422);
         }
 
@@ -105,7 +105,7 @@ class APIPurchaseOrderController extends Controller
 
                 if ($file instanceof \Illuminate\Http\UploadedFile) {
                     $dataTime = date('Ymd_His');
-                    $filename = $dataTime.'-'.$file->getClientOriginalName();
+                    $filename = $dataTime . '-' . $file->getClientOriginalName();
 
                     // Simpan File Upload pada Public
                     $savepath = public_path('upload/receipttemp/');
@@ -137,7 +137,7 @@ class APIPurchaseOrderController extends Controller
 
         return response()->json([
             'Status' => 'Success',
-            'Message' => 'Data Receipt Saved, Receipt Number : '.$saveData[1],
+            'Message' => 'Data Receipt Saved, Receipt Number : ' . $saveData[1],
             'ReceiptNumber' => 'RCPT00001',
         ], 200);
     }
@@ -161,7 +161,7 @@ class APIPurchaseOrderController extends Controller
             foreach ($data['images'] as $key => $dataImage) {
                 if ($dataImage->isValid()) {
                     $dataTime = date('Ymd_His');
-                    $filename = $dataTime.'-EDIT-'.$dataImage->getClientOriginalName();
+                    $filename = $dataTime . '-EDIT-' . $dataImage->getClientOriginalName();
 
                     // Simpan File Upload pada Public
                     $savepath = public_path('upload/receipt/');
@@ -170,7 +170,7 @@ class APIPurchaseOrderController extends Controller
 
                     $newReceiptAttachment = new ReceiptAttachment();
                     $newReceiptAttachment->rda_rd_det_id = $inputan->id;
-                    $newReceiptAttachment->rda_filepath = $filepath.$filename;
+                    $newReceiptAttachment->rda_filepath = $filepath . $filename;
                     $newReceiptAttachment->save();
                 }
             }
@@ -263,7 +263,7 @@ class APIPurchaseOrderController extends Controller
 
         $merged = $grouped->map(function ($items) {
             $first = $items->first();
-            $first->xxinv_qtyoh = $items->sum(fn ($i) => (int) $i->xxinv_qtyoh);
+            $first->xxinv_qtyoh = $items->sum(fn($i) => (int) $i->xxinv_qtyoh);
 
             return $first;
         })
@@ -492,12 +492,12 @@ class APIPurchaseOrderController extends Controller
 
         return response()->json($dataQAD);
         */
-        
+
         /**get daata from sql   */
         $xxinvDet = xxinvDet::query()
             ->where('xxinv_domain', $domainCode)
-            ->when($itemCode !== '', fn ($q) => $q->where('xxinv_part', $itemCode))
-            ->when($warehouse !== '', fn ($q) => $q->where('xxinv_wrh', $warehouse))
+            ->when($itemCode !== '', fn($q) => $q->where('xxinv_part', $itemCode))
+            ->when($warehouse !== '', fn($q) => $q->where('xxinv_wrh', $warehouse))
             ->get();
         $getDataQAD = $xxinvDet;
         // dd($xxinvDet);
@@ -540,7 +540,7 @@ class APIPurchaseOrderController extends Controller
 
             return false;
         })->values();
-        
+
         // $dataQAD = $merged->filter(function ($item) use ($getAllItemLocation) {
         //     foreach ($getAllItemLocation as $datas) {
         //         // dd($datas->getItem);
@@ -574,7 +574,7 @@ class APIPurchaseOrderController extends Controller
         // dd($dataQAD);
         return response()->json($dataQAD);
     }
-      
+
 
     private function normalize($value)
     {
@@ -681,9 +681,9 @@ class APIPurchaseOrderController extends Controller
             ->where('xxinv_domain', $domainCode)
             ->where('xxinv_part', $itemCode)
             ->where('xxinv_wrh', $warehouse)
-            ->when($location !== '', fn ($q) => $q->where('xxinv_loc', $location))
-            ->when($binSearch !== '', fn ($q) => $q->where('xxinv_bin', $binSearch))
-            ->when($levelsearch !== '', fn ($q) => $q->where('xxinv_level', $levelsearch))
+            ->when($location !== '', fn($q) => $q->where('xxinv_loc', $location))
+            ->when($binSearch !== '', fn($q) => $q->where('xxinv_bin', $binSearch))
+            ->when($levelsearch !== '', fn($q) => $q->where('xxinv_level', $levelsearch))
             ->orderBy('xxinv_level')
             ->orderBy('xxinv_bin')
             ->get();
@@ -768,7 +768,7 @@ class APIPurchaseOrderController extends Controller
             ->where('xxinv_domain', $domainCode)
             ->where('xxinv_part', $itemCode)
 
-            ->when($warehouse !== '', fn ($q) => $q->where('xxinv_wrh', $warehouse))
+            ->when($warehouse !== '', fn($q) => $q->where('xxinv_wrh', $warehouse))
             ->groupBy('xxinv_wrh')
             ->get();
 
@@ -855,10 +855,17 @@ class APIPurchaseOrderController extends Controller
     {
         $wsaData = (new WSAServices())->wsaLastBatch($req->search, $req->search2);
         if ($wsaData[0] == 'false') {
-            return response()->json([
-                'No Data',
-            ], 200);
+            
+            $xxinvdet = xxinvDet::where('xxinv_part',$req->search2)->where('xxinv_lot', $req->search)->first();
+            
+            if (!$xxinvdet) {
+                log::info('test');
+                return response()->json([
+                    'No Data',
+                ], 200);
+            }
         }
+        
 
         return response()->json($wsaData[0], 422);
     }
@@ -919,9 +926,9 @@ class APIPurchaseOrderController extends Controller
         $domainCode = $domain->domain ?? '';
         $xxinvDet = xxinvDet::query()
             ->where('xxinv_domain', $domainCode)
-            ->when($part !== '', fn ($q) => $q->where('xxinv_part', $part))
-            ->when($lot !== '', fn ($q) => $q->where('xxinv_lot', $lot))
-            ->when($level !== '', fn ($q) => $q->where('xxinv_level', $level))
+            ->when($part !== '', fn($q) => $q->where('xxinv_part', $part))
+            ->when($lot !== '', fn($q) => $q->where('xxinv_lot', $lot))
+            ->when($level !== '', fn($q) => $q->where('xxinv_level', $level))
             ->where('xxinv_site', $site)
             ->where('xxinv_loc', $loc)
             ->where('xxinv_wrh', $wrh)
@@ -952,13 +959,13 @@ class APIPurchaseOrderController extends Controller
         $domainCode = $domain->domain ?? '';
         $xxinvDet = xxinvDet::query()
             ->where('xxinv_domain', $domainCode)
-            ->when($part !== '', fn ($q) => $q->where('xxinv_part', $part))
-            ->when($lot !== '', fn ($q) => $q->where('xxinv_lot', $lot))
+            ->when($part !== '', fn($q) => $q->where('xxinv_part', $part))
+            ->when($lot !== '', fn($q) => $q->where('xxinv_lot', $lot))
             ->where('xxinv_site', $site)
             ->where('xxinv_loc', $loc)
             ->where('xxinv_wrh', $wrh)
             ->where('xxinv_level', $level)
-            ->when($bin !== '', fn ($q) => $q->where('xxinv_bin', $bin))
+            ->when($bin !== '', fn($q) => $q->where('xxinv_bin', $bin))
             ->where('xxinv_qtyoh', '=', 0)
             ->orderBy('xxinv_bin')
             ->get();
@@ -1009,7 +1016,7 @@ class APIPurchaseOrderController extends Controller
             ->where('ld_location_id', $location->id);
 
         if ($search != '') {
-            $warehouse = $warehouse->whereRaw('LOWER(ld_building) LIKE ?', ['%'.strtolower($search).'%']);
+            $warehouse = $warehouse->whereRaw('LOWER(ld_building) LIKE ?', ['%' . strtolower($search) . '%']);
             // $warehouse->where('ld_building', 'like', '%' . $search . '%');
         }
 
@@ -1040,7 +1047,7 @@ class APIPurchaseOrderController extends Controller
             ->where('ld_building', $warehouse);
 
         if ($search != '') {
-            $level = $level->whereRaw('LOWER(ld_rak) LIKE ?', ['%'.strtolower($search).'%']);
+            $level = $level->whereRaw('LOWER(ld_rak) LIKE ?', ['%' . strtolower($search) . '%']);
             //$level = $level->where('ld_rak', 'like', '%' . $search . '%');
         }
 
@@ -1067,7 +1074,7 @@ class APIPurchaseOrderController extends Controller
             ->where('ld_building', $warehouse)
             ->where('ld_rak', $level);
         if ($search != '') {
-            $bin = $bin->whereRaw('LOWER(ld_bin) LIKE ?', ['%'.strtolower($search).'%']);
+            $bin = $bin->whereRaw('LOWER(ld_bin) LIKE ?', ['%' . strtolower($search) . '%']);
             // $bin = $bin->where('ld_bin','like','%'.$search.'%');
         }
         $bin = $bin->groupBy('ld_bin')->orderBy('ld_bin')->select('ld_bin')->get();
@@ -1130,13 +1137,13 @@ class APIPurchaseOrderController extends Controller
         $domainCode = $domain->domain ?? '';
         $xxinvDet = xxinvDet::query()
             ->where('xxinv_domain', $domainCode)
-            ->when($item !== '', fn ($q) => $q->where('xxinv_part', $item))
-            ->when($lot !== '', fn ($q) => $q->where('xxinv_lot', $lot))
-            ->when($site !== '', fn ($q) => $q->where('xxinv_site', $site))
-            ->when($loc !== '', fn ($q) => $q->where('xxinv_loc', $loc))
-            ->when($warehouse !== '', fn ($q) => $q->where('xxinv_wrh', $warehouse))
-            ->when($level !== '', fn ($q) => $q->where('xxinv_level', $level))
-            ->when($bin !== '', fn ($q) => $q->where('xxinv_bin', $bin))
+            ->when($item !== '', fn($q) => $q->where('xxinv_part', $item))
+            ->when($lot !== '', fn($q) => $q->where('xxinv_lot', $lot))
+            ->when($site !== '', fn($q) => $q->where('xxinv_site', $site))
+            ->when($loc !== '', fn($q) => $q->where('xxinv_loc', $loc))
+            ->when($warehouse !== '', fn($q) => $q->where('xxinv_wrh', $warehouse))
+            ->when($level !== '', fn($q) => $q->where('xxinv_level', $level))
+            ->when($bin !== '', fn($q) => $q->where('xxinv_bin', $bin))
             ->get();
 
         if ($xxinvDet->isNotEmpty()) {
@@ -1395,7 +1402,7 @@ class APIPurchaseOrderController extends Controller
             $location = $req->location;
         }
 
-        Log::info('time1 : '.now());
+        Log::info('time1 : ' . now());
 
         $receiptDetail = ReceiptPallet::with('getDetail')
             ->whereRelation('getDetail', 'rd_status', '!=', 'Approved')
@@ -1410,15 +1417,15 @@ class APIPurchaseOrderController extends Controller
             ->where('xxinv_domain', $domainCode)
             ->where('xxinv_wrh', $warehouse)
             // ->when($location !== '', fn ($q) => $q->where('xxinv_loc', $location))
-            ->when($binSearch !== '', fn ($q) => $q->where('xxinv_bin', $binSearch))
-            ->when($levelsearch !== '', fn ($q) => $q->where('xxinv_level', $levelsearch))
+            ->when($binSearch !== '', fn($q) => $q->where('xxinv_bin', $binSearch))
+            ->when($levelsearch !== '', fn($q) => $q->where('xxinv_level', $levelsearch))
             ->selectRaw('max(xxinv_part) as xxinv_part, max(xxinv_loc) as xxinv_loc, max(xxinv_lot) as xxinv_lot, xxinv_bin, xxinv_level, xxinv_site, xxinv_wrh, max(xxinv_qty_pick) as xxinv_qty_pick, sum(xxinv_qtyoh) as xxinv_qtyoh')
             ->groupBy('xxinv_wrh', 'xxinv_level', 'xxinv_bin', 'xxinv_site')
             ->orderBy('xxinv_level')
             ->orderBy('xxinv_bin')
             ->get();
 
-        Log::info('time2 : '.now());
+        Log::info('time2 : ' . now());
 
         if ($results->isEmpty()) {
             return response()->json([
@@ -1448,7 +1455,7 @@ class APIPurchaseOrderController extends Controller
             }
         }
 
-        Log::info('time3 : '.now());
+        Log::info('time3 : ' . now());
 
         // Use $temp (processed) instead of $results (raw DB rows)
         $getDataQAD = $temp;
@@ -1564,7 +1571,7 @@ class APIPurchaseOrderController extends Controller
             'getDetail',
             'getReceipt.getDetailReceipt' => function ($query) {
                 // $query->selectRaw('rd_pod_det_id, sum(rd_qty_terima * rd_qty_potensi) as total_qty_terima')
-                    $query->where('rd_status', '=', 'Approved')
+                $query->where('rd_status', '=', 'Approved')
                     ->with('getPurchaseOrderDetail');
                 //     ->groupBy('rd_pod_det_id');
             },
@@ -1573,7 +1580,7 @@ class APIPurchaseOrderController extends Controller
         if (! $purchaseOrder) {
             return response()->json([
                 'Status' => 'Error',
-                'Message' => 'Purchase Order : '.$req->search.' Not Found.',
+                'Message' => 'Purchase Order : ' . $req->search . ' Not Found.',
             ], 422);
         } else {
             return response()->json([
@@ -1609,21 +1616,21 @@ class APIPurchaseOrderController extends Controller
         // // dd($poddata);
         $poddata = PurchaseOrderDetail::with([
             'getMaster',
-            'getReceiptDetail' 
-            => function ($query) use($receiptdetid) {
+            'getReceiptDetail'
+            => function ($query) use ($receiptdetid) {
                 $query->with('getMaster')
                     ->join('xxinv_det', function ($e) {
                         $e->on('receipt_det.rd_nama_barang', '=', 'xxinv_det.xxinv_part');
                         $e->on('receipt_det.rd_batch', '=', 'xxinv_det.xxinv_lot');
                         // $e->on('receipt_det.rd_location_penyimpanan','xxinv_det.xxinv_loc');
                     })->orderBy('rd_nama_barang')
-                    
-                    ->where('receipt_det.id',$receiptdetid)
-                    ->select('receipt_det.*','xxinv_det.*')
+
+                    ->where('receipt_det.id', $receiptdetid)
+                    ->select('receipt_det.*', 'xxinv_det.*')
                     ->orderBy('xxinv_det.xxinv_wrh')
                     ->orderBy('xxinv_det.xxinv_level')
                     ->orderBy('xxinv_det.xxinv_bin')
-                    ;
+                ;
             },
         ])->where('id', $podid)->first();
         // dd($podid,$receiptdetid);
@@ -1670,13 +1677,13 @@ class APIPurchaseOrderController extends Controller
         $podid = $req->input('podid');
         $receiptid = $req->input('receiptid');
         $poid = $req->input('poid');
-        
+
         $approver = $req->input('approver');
         $podata = PurchaseOrderMaster::with('getReceipt')->where('id', $poid)->first();
         $poddata = PurchaseOrderDetail::where('id', $podid)->first();
         $receiptdata = ReceiptMaster::where('id', $receiptid)->first();
         $receiptdetdata = ReceiptDetail::where('rd_rm_id', $receiptid)->where('rd_pod_det_id', $podid)->first();
-        
+
         DB::beginTransaction();
         try {
             foreach ($qtyreturn as $key => $return) {
@@ -1699,7 +1706,7 @@ class APIPurchaseOrderController extends Controller
 
                         $receiptdetdata->rd_qty_terima = $receiptdetdata->rd_qty_terima - $return;
                         $receiptdetdata->save();
-                        
+
                         $newTransactionHistory = new TransactionHistory();
                         $newTransactionHistory->tr_nbr = $podata->po_nbr;
                         $newTransactionHistory->tr_order = $podata->po_nbr;
@@ -1721,10 +1728,9 @@ class APIPurchaseOrderController extends Controller
                         $newTransactionHistory->tr_bin = $xxinvdet->xxinv_bin ?? '';
                         $newTransactionHistory->tr_remark = '';
                         $newTransactionHistory->save();
-
                     } else {
                         DB::rollback();
-                        log::info('data not found for po return '.$part.' lot '.$lot.' warehouse '.$warehouse[$key].' level '.$level[$key].' bin '.$bin[$key]);
+                        log::info('data not found for po return ' . $part . ' lot ' . $lot . ' warehouse ' . $warehouse[$key] . ' level ' . $level[$key] . ' bin ' . $bin[$key]);
 
                         return response()->json([
                             'Status' => 'Error',
@@ -1741,7 +1747,7 @@ class APIPurchaseOrderController extends Controller
             ], 200);
         } catch (Exception $err) {
             DB::rollback();
-            log::info('error po return item'.$part.' : '.$err);
+            log::info('error po return item' . $part . ' : ' . $err);
 
             return response()->json([
                 'Status' => 'Error',
