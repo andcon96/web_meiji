@@ -35,7 +35,7 @@
                             <tr>
                                 <th>Number</th>
                                 <th>Customer Code</th>
-                                <th>Customer Description</th>
+                                <!-- <th>Customer Description</th> -->
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -45,7 +45,7 @@
                             <tr>
                                 <th>Number</th>
                                 <th>Customer Code</th>
-                                <th>Customer Description</th>
+                                <!-- <th>Customer Description</th> -->
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -68,7 +68,7 @@
                 columns: [
                     {data: 'ssm_number',    width: '8em'},
                     {data: 'ssm_cust_code', width: '12em'},
-                    {data: 'ssm_cust_desc', width: '24em'},
+                    // {data: 'ssm_cust_desc', width: '24em'},
                     {data: 'ssm_status',    width: '8em'},
                     {
                         data: null,
