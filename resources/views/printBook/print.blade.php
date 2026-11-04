@@ -389,7 +389,7 @@
 
         </tr>
         <tr>
-            <td>Expiry Date</td>
+            <td>Tanggal Daluarsa</td>
 
             <td>{{  $expire_date_penanda}}</td>
 
