@@ -192,7 +192,7 @@
 
         </tr>
         <tr>
-            <td>Expire Date</td>
+            <td>Tanggal Daluarsa</td>
             @if ($expire_date != null || $expire_date != '')
                 <td>{{ isset($expire_date) ? (new DateTime($expire_date))->format('d-m-Y') : '-'}}</td>
             @else
@@ -389,7 +389,7 @@
 
         </tr>
         <tr>
-            <td>Tanggal Daluarsa</td>
+            <td>Expiry Date</td>
 
             <td>{{  $expire_date_penanda}}</td>
 
