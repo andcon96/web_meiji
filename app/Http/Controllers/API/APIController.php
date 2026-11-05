@@ -1127,6 +1127,8 @@ public function getItem(Request $request)
                 if($data['ldRef'] != $det->xxinv_ref){
                     $det->xxinv_ref = $data['ldRef'];
                 }
+                $det->xxinv_qtyoh =  $det->xxinv_qtyoh - $det->xxinv_qty_smp;
+                $det->xxinv_qty_smp = 0;
                 $det->xxinv_loc = $data['ldLoc'];
                 $det->save();
 
