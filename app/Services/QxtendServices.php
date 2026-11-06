@@ -2346,6 +2346,7 @@ class QxtendServices
         $site      = $req->site;
         $location  = $req->location;
         $lotserial = $req->lotserial;
+        $ref        = $req->ref;
         $um = $req->um;
 
         $domain     = Domain::first();
@@ -2436,6 +2437,7 @@ class QxtendServices
                     <site>' . $site . '</site>
                     <location>' . $location . '</location>
                     <lotserial>' . $lotserial . '</lotserial>
+                    <lotref>' . $ref . '</lotref>
                     <rmks>Other Transaction</rmks>
                     <yn>true</yn>
                     <yn1>true</yn1>
@@ -2443,7 +2445,6 @@ class QxtendServices
             </dsInventoryIssue>
         </issueInventory>
     </soapenv:Body>
-
 </soapenv:Envelope>';
 
         Log::channel('confirmOtherTransaction')->info($qdocRequest);

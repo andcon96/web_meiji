@@ -53,6 +53,8 @@ class APITransIssUnpController extends Controller
             $warehouse = $req->warehouse;
             $level = $req->level;
             $bin = $req->bin;
+            $ref = $req->ref;
+            
 
             $existingInv = xxinvDet::where('xxinv_part', $part)
                 ->where('xxinv_site', $site)
@@ -86,7 +88,7 @@ class APITransIssUnpController extends Controller
                 $newInv->xxinv_level = $level;
                 $newInv->xxinv_bin = $bin;
                 $newInv->xxinv_qtyoh = $qty;
-                $newInv->xxinv_ref = $req->lotref ?? null;
+                $newInv->xxinv_ref = $req->ref ?? null;
                 $newInv->xxinv_exp_date = $req->exp_date ?? null;
                 $newInv->save();
             }
@@ -99,7 +101,7 @@ class APITransIssUnpController extends Controller
 
             $newTransfer->location = $req->location;
             $newTransfer->pallet_no = $req->lotserial;
-            $newTransfer->batch_no = $req->lotref;
+            $newTransfer->batch_no = $req->ref;
             $newTransfer->quantity = $qty;
             $newTransfer->created_by = Auth::user()->id;
             $newTransfer->save();
@@ -116,7 +118,7 @@ class APITransIssUnpController extends Controller
             $newTransactionHistory->tr_lot = $req->lotserial ?? '';
             $newTransactionHistory->tr_qty = $qty;
             $newTransactionHistory->tr_date = date('Y-m-d H:i:s');
-            $newTransactionHistory->tr_reference = $req->lotref ?? '';
+            $newTransactionHistory->tr_reference = $req->ref ?? '';
             $newTransactionHistory->tr_site = $req->site ?? '';
             $newTransactionHistory->tr_location = $req->location ?? '';
             $newTransactionHistory->tr_warehouse = $req->warehouse ?? '';
